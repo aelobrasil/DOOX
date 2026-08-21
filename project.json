@@ -1,0 +1,13 @@
+{
+  "name": "DOOX Studios — HOCCO. Inserções",
+  "version": "0.1.0-mvp",
+  "stack": [
+    "HTML",
+    "CSS",
+    "Vanilla JS"
+  ],
+  "hosting": "Vercel",
+  "database": false,
+  "payment": "PIX manual + WhatsApp",
+  "public_pix_key": false
+}
