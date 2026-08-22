@@ -1,13 +1,13 @@
 {
-  "name": "DOOX",
-  "short_name": "DOOX",
-  "description": "DOOX",
+  "name": "DOOX STUDIOS",
+  "short_name": "DOOX STUDIOS",
+  "description": "DOOX STUDIOS — HOCCO.",
   "lang": "pt-BR",
   "start_url": "./",
   "id": "doox",
   "display": "standalone",
-  "theme_color": "#ff6a00",
-  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "background_color": "#111111",
   "icons": [
     {
       "src": "./icon-192.png",

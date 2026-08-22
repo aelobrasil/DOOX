@@ -1,4 +1,4 @@
-const CACHE="doox-v2";
+const CACHE="doox-v6";
 const ASSETS=[
   "./","./index.html","./style.css","./app.js","./site.webmanifest",
   "./favicon.ico","./favicon-16x16.png","./favicon-32x32.png",

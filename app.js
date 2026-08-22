@@ -11,96 +11,38 @@ const CONFIG = {
 };
 
 const PRODUCTS = {
-  apoiador: {
-    id: "apoiador",
-    title: "Apoiador Individual",
-    short: "Apoio à produção",
-    price: 9.90,
-    priceLabel: "R$ 9,90",
-    description: "Seu nome ou @ entra no Painel de Apoiadores e nos créditos finais do episódio.",
-    details: ["Painel de Apoiadores", "Créditos finais", "50 vagas por episódio"],
-    type: "support"
-  },
-  master: {
-    id: "master",
-    title: "Apoiador Master",
-    short: "Apoio premium",
-    price: 20.00,
-    priceLabel: "R$ 20,00 / semana",
-    description: "Uma posição de destaque para quem quer apoiar a história desde o começo.",
-    details: ["Destaque no Painel", "Créditos finais", "@ fixado na descrição", "Vigência semanal"],
-    type: "support"
-  },
-  curso: {
-    id: "curso",
-    title: "Inserção em Curso",
-    short: "Seu @ dentro do episódio",
-    price: 39.9,
-    priceLabel: "R$ 39,90 / nome",
-    description: "Seu @ aparece em uma faixa inferior por aproximadamente 5 segundos, em grupos de até 5 nomes.",
-    details: ["~5 segundos", "Até 5 nomes por entrada", "Grupos distribuídos no episódio"],
-    type: "display"
-  },
-  overlay: {
-    id: "overlay",
-    title: "Sponsor Overlay",
-    short: "Publicidade gráfica",
-    price: 179.90,
-    priceLabel: "A partir de R$ 69,90",
-    description: "Uma inserção gráfica curta que aparece sobre a narrativa, sem interromper o episódio. A identidade HOCCO. surge primeiro e, em seguida, a identificação do episódio e a marca anunciante.",
-    details: ["Dedicado a empresas", "~5 segundos", "10 posições por episódio", "DOOX define o encaixe final"],
-    type: "overlay"
-  },
-  overlayAudio: {
-    id: "overlayAudio",
-    title: "Sponsor Overlay + Áudio",
-    short: "Publicidade gráfica com som",
-    price: 229.90,
-    priceLabel: "A partir de R$ 119,90",
-    description: "A mesma lógica do Sponsor Overlay, com um áudio curto integrado à entrada da marca. O áudio pode ser um som de marca ou um efeito/notificação aprovado pela produção.",
-    details: ["Inclui Sponsor Overlay", "Áudio curto integrado", "Som da marca ou efeito aprovado", "10 posições por episódio"],
-    type: "overlayAudio"
-  },
-  documental: {
-    id: "documental",
-    title: "Inserção Documental",
-    short: "Sua marca dentro da história",
-    price: null,
-    priceLabel: "Sob consulta",
-    description: "Produto, serviço ou empresa integrados naturalmente à história documental.",
-    details: ["Integração narrativa", "Planejamento editorial", "Projeto personalizado"],
-    type: "consult"
-  }
+  apoiador: { id:"apoiador", title:"Apoiador Individual", short:"Créditos", price:9.90, priceLabel:"R$ 9,90", description:"Seu nome ou @ aparece no painel de apoiadores/créditos.", details:["Painel de apoiadores","Créditos"], type:"support" },
+  master: { id:"master", title:"Apoiador Master", short:"Destaque", price:49.90, priceLabel:"R$ 49,90", description:"Uma presença de maior destaque dentro do painel de apoiadores.", details:["Maior destaque","Painel de apoiadores"], type:"support" },
+  curso: { id:"curso", title:"Inserção em Curso", short:"Exposição", price:39.90, priceLabel:"R$ 39,90", description:"Seu @ aparece em uma faixa inferior por aproximadamente 5 segundos.", details:["~5 segundos","Exposição gráfica"], type:"display" },
+  overlay: { id:"overlay", title:"Sponsor Overlay", short:"Inserção visual", price:null, priceLabel:"R$ 9,90", description:"Inserção visual curta integrada à narrativa. A categoria de momento define o valor.", details:["~5 segundos","Controle editorial DOOX"], type:"overlay" },
+  overlayAudio: { id:"overlayAudio", title:"Sponsor Overlay + Áudio", short:"Inserção visual + som", price:null, priceLabel:"R$ 29,90", description:"Inserção visual curta com um elemento sonoro aprovado pela DOOX Studios.", details:["~5 segundos","Áudio curto integrado"], type:"overlayAudio" },
+  documental: { id:"documental", title:"Inserção Documental", short:"Projeto personalizado", price:null, priceLabel:"Sob consulta", description:"Integração de marca, produto ou serviço em projeto audiovisual personalizado.", details:["Integração narrativa","Projeto personalizado"], type:"consult" }
 };
 
-const OVERLAY_SLOTS = [
-  {id:"SO-01", label:"Premium 1", time:"abertura / maior atenção", price:179.90, status:"Disponível"},
-  {id:"SO-02", label:"Premium 2", time:"abertura / alta atenção", price:159.90, status:"Disponível"},
-  {id:"SO-03", label:"Alto 1", time:"parte inicial", price:139.90, status:"Disponível"},
-  {id:"SO-04", label:"Alto 2", time:"parte inicial", price:124.90, status:"Disponível"},
-  {id:"SO-05", label:"Médio 1", time:"meio / cena relevante", price:109.90, status:"Disponível"},
-  {id:"SO-06", label:"Médio 2", time:"meio", price:99.90, status:"Disponível"},
-  {id:"SO-07", label:"Médio 3", time:"meio / menor pressão", price:89.90, status:"Disponível"},
-  {id:"SO-08", label:"Baixo 1", time:"parte final", price:79.90, status:"Disponível"},
-  {id:"SO-09", label:"Baixo 2", time:"parte final", price:69.90, status:"Disponível"},
-  {id:"SO-10", label:"Final", time:"encerramento / alta retenção", price:119.90, status:"Disponível"}
+const OVERLAY_CATEGORIES = [
+  {id:"essencial", label:"Entrada Essencial", desc:"Momento de menor relevância narrativa", price:9.90},
+  {id:"regular", label:"Entrada Regular", desc:"Momento comum da história", price:14.90},
+  {id:"valorizada", label:"Entrada Valorizada", desc:"Momento de maior atenção", price:19.90},
+  {id:"premium", label:"Entrada Premium", desc:"Momento importante da narrativa", price:29.90},
+  {id:"especial", label:"Entrada Especial", desc:"Momento de altíssima relevância", price:39.90}
 ];
-
-const OVERLAY_AUDIO_SURCHARGE = 50.00;
-
-function overlaySlotPrice(slotId, withAudio=false){
-  const slot = OVERLAY_SLOTS.find(s=>s.id===slotId);
-  if(!slot) return null;
-  return slot.price + (withAudio ? OVERLAY_AUDIO_SURCHARGE : 0);
-}
+const AUDIO_CATEGORIES = [
+  {id:"essencial", label:"Entrada Essencial + Áudio", desc:"Momento de menor relevância narrativa", price:29.90},
+  {id:"regular", label:"Entrada Regular + Áudio", desc:"Momento comum da história", price:39.90},
+  {id:"valorizada", label:"Entrada Valorizada + Áudio", desc:"Momento de maior atenção", price:49.90},
+  {id:"premium", label:"Entrada Premium + Áudio", desc:"Momento importante da narrativa", price:59.90},
+  {id:"especial", label:"Entrada Especial + Áudio", desc:"Momento de altíssima relevância", price:79.90}
+];
+function categoryFor(productId,id){ return (productId==="overlayAudio"?AUDIO_CATEGORIES:OVERLAY_CATEGORIES).find(x=>x.id===id); }
+function categoryPrice(productId,id){ const c=categoryFor(productId,id); return c?c.price:null; }
 
 const state = {
   productId: null,
-  slotId: null,
+  categoryId: null,
   quantity: 1,
   preference: "Próximo episódio disponível",
   customer: {
-    name:"", whatsapp:"", email:"", document:"", company:"", handle:"", note:""
+    kind:"pf", name:"", whatsapp:"", email:"", document:"", company:"", handle:"", note:""
   },
   termsAccepted: false
 };
@@ -108,6 +50,10 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const app = $("#app");
 const toast = $("#toast");
+
+function persistState(){ try{sessionStorage.setItem("doox_hocco_state",JSON.stringify(state));}catch(e){} }
+function restoreState(){ try{const raw=sessionStorage.getItem("doox_hocco_state"); if(raw){const saved=JSON.parse(raw); Object.assign(state,saved); state.customer={...state.customer,...(saved.customer||{})};}}catch(e){} }
+
 
 function money(v){
   return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v);
@@ -165,9 +111,11 @@ function validatePublicText(value){
 }
 
 function setRoute(path){
+  const current = window.location.hash.replace(/^#/,'') || "/";
+  if(current===path){ render(); return; }
   history.pushState({dooxRoute:path}, "", "#" + path);
   render();
-  window.scrollTo({top:0,behavior:"smooth"});
+  requestAnimationFrame(()=>window.scrollTo({top:0,behavior:"smooth"}));
 }
 
 document.addEventListener("click",(e)=>{
@@ -196,11 +144,10 @@ function pageShell(inner, options={}){
 }
 
 function goBack(){
-  if (window.history.length > 1) {
-    window.history.back();
-    return;
-  }
-  setRoute("/");
+  const path=window.location.hash.replace(/^#/,'') || "/";
+  if(path==="/"){ return; }
+  if(window.history.length>1){ window.history.back(); return; }
+  setRoute("/insercoes");
 }
 
 function youtubeLogo(size=22){
@@ -226,8 +173,8 @@ function home(){
       <div class="hero-bg"></div>
       <div class="hero-content">
         <div class="kicker"><span class="rec"></span> produção audiovisual</div>
-        <h1>Tem um<br><span>projeto?</span></h1>
-        <p>Coloque sua marca dentro das histórias que a DOOX Studios produz. A HOCCO. é uma série documental original em constante evolução.</p>
+        <h1>INSIRA SUA<br><span>MARCA.</span></h1>
+        <p>Inserções comerciais dentro do universo audiovisual da HOCCO. Formatos definidos para entrar na narrativa sem transformar a experiência em uma página de publicidade.</p>
         <div class="cta-row">
           <a class="btn primary" href="#/insercoes" data-route>Ver inserções</a>
           <a class="btn secondary" href="#/hocco" data-route>Conhecer a HOCCO.</a>
@@ -264,7 +211,7 @@ function home(){
           <div class="inner">
             <h3>Você pode fazer parte.</h3>
             <p>Sua participação entra no arquivo público da história, conforme a modalidade escolhida.</p>
-            <div class="home-inline-socials" aria-label="Redes sociais">
+            <div class="memory-social-title">Acompanhe nossos vídeos aqui</div><div class="home-inline-socials" aria-label="Redes sociais">
               <a class="home-inline-social" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="YouTube HOCCPOV" title="YouTube">${youtubeLogo(26)}</a>
               <a class="home-inline-social" href="https://www.tiktok.com/@HOCCOBRASIL" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(26)}</a>
             </div>
@@ -298,11 +245,11 @@ function home(){
         <a class="btn secondary" href="#/insercoes" data-route>Ver todos</a>
       </div>
       <div class="cards">
-        ${productCard(PRODUCTS.apoiador,"mais simples","R$ 5,00")}
-        ${productCard(PRODUCTS.master,"apoio premium","R$ 20,00 / semana")}
+        ${productCard(PRODUCTS.apoiador,"mais simples","R$ 9,90")}
+        ${productCard(PRODUCTS.master,"maior destaque","R$ 49,90")}
         ${productCard(PRODUCTS.curso,"exposição","R$ 39,90")}
-        ${productCard(PRODUCTS.overlay,"dedicado a empresas","A partir de R$ 69,90")}
-      ${productCard(PRODUCTS.overlayAudio,"com áudio integrado","A partir de R$ 119,90")}
+        ${productCard(PRODUCTS.overlay,"dedicado a empresas","R$ 9,90")}
+      ${productCard(PRODUCTS.overlayAudio,"produto separado","R$ 29,90")}
       </div>
     </div>
   `, {showBack:false});
@@ -334,7 +281,7 @@ function attachProductSounds(){
     btn.addEventListener("mouseleave",()=>{ armed=false; });
     btn.addEventListener("click",()=>{
       const id=btn.dataset.productId;
-      state.productId=id; state.slotId=null; state.quantity=1;
+      state.productId=id; state.categoryId=null; state.quantity=1;
       if(id==="documental") setRoute("/insercao-documental");
       else setRoute("/escolher");
     });
@@ -344,25 +291,16 @@ function attachProductSounds(){
 function insertions(){
   return pageShell(`
     <div class="section-head">
-      <div>
-        <div class="card-code">DOOX Studios</div>
-        <h1 style="font-size:58px;line-height:.98;letter-spacing:-.05em;margin:.15em 0 0">Escolha como participar do universo HOCCO.</h1>
-      </div>
-      <p>Os formatos são simples. O controle editorial continua com a DOOX Studios.</p>
+      <div><div class="card-code">DOOX STUDIOS / HOCCO.</div><h1 style="font-size:58px;line-height:.94;letter-spacing:-.06em;margin:.15em 0 0">Escolha sua inserção.</h1></div>
+      <p>Formatos comerciais integrados ao universo audiovisual da HOCCO. Você escolhe o formato, a categoria e a quantidade. A DOOX define o encaixe final.</p>
     </div>
     <div class="cards">
-      ${productCard(PRODUCTS.apoiador,"apoio","R$ 9,90")}
-      ${productCard(PRODUCTS.master,"apoio premium","R$ 20,00 / semana")}
-      ${productCard(PRODUCTS.curso,"exposição","R$ 39,90 / nome")}
-      ${productCard(PRODUCTS.overlay,"dedicado a empresas","A partir de R$ 69,90")}
-      ${productCard(PRODUCTS.overlayAudio,"com áudio integrado","A partir de R$ 119,90")}
-      ${productCard(PRODUCTS.documental,"projeto","Sob consulta")}
-    </div>
-    <div class="section">
-      <div class="warning"><strong>Novo modelo de preços:</strong> no Sponsor Overlay, cada posição possui um valor próprio. O preço varia conforme a importância editorial do momento, a atenção esperada e a posição da inserção no episódio. O valor não é igual para todos os momentos. <strong>O preço exibido é referente à posição escolhida.</strong> O Sponsor Overlay + Áudio acrescenta R$ 50,00 à posição selecionada.</div>
-    </div>
-    <div class="section">
-      <div class="mvp-notice"><strong>MVP DOOX Studios:</strong> este site representa uma versão inicial do projeto comercial da DOOX Studios. Produtos, preços, formatos, posições e regras estão sujeitos a alterações e atualizações em breve.</div>
+      ${productCard(PRODUCTS.apoiador,"APOIADOR","R$ 9,90")}
+      ${productCard(PRODUCTS.master,"APOIADOR MASTER","R$ 49,90")}
+      ${productCard(PRODUCTS.curso,"EXPOSIÇÃO","R$ 39,90")}
+      ${productCard(PRODUCTS.overlay,"SPONSOR OVERLAY","R$ 9,90")}
+      ${productCard(PRODUCTS.overlayAudio,"SPONSOR OVERLAY + ÁUDIO","R$ 29,90")}
+      ${productCard(PRODUCTS.documental,"PROJETO","Sob consulta")}
     </div>
   `);
 }
@@ -409,16 +347,12 @@ function howWorks(){
     </div>
     <div class="timeline">
       <div class="timeline-item"><strong>1. Pedido</strong><span>Você escolhe a inserção e preenche seus dados.</span></div>
-      <div class="timeline-item"><strong>2. Pagamento</strong><span>O pedido segue para o WhatsApp da DOOX.</span></div>
+      <div class="timeline-item"><strong>2. Triagem</strong><span>O pedido segue para o WhatsApp da DOOX.</span></div>
       <div class="timeline-item"><strong>3. Produção</strong><span>A equipe encaixa a inserção no planejamento editorial.</span></div>
       <div class="timeline-item"><strong>4. Aviso</strong><span>Você recebe episódio e tempo previsto antes da publicação.</span></div>
     </div>
-    <div class="section">
-      <div class="section-head"><div><div class="card-code">Regra central</div><h2>Você não compra o minuto.</h2></div></div>
-      <div class="detail-panel">
-        <p style="font-size:20px;color:#222;max-width:900px">Ao adquirir uma inserção, você compra o formato e o espaço comercial correspondente — não um minuto específico do episódio. A DOOX Studios mantém o controle editorial da HOCCO. e define em qual episódio e em qual momento sua inserção será utilizada, considerando a narrativa, a edição, a disponibilidade e o planejamento da produção. Quando sua inserção for programada, você receberá uma mensagem da DOOX Studios informando o episódio e o tempo previsto de aparição. <strong>Você não compra o minuto. Você compra uma posição comercial cujo valor varia conforme a importância do momento. O minuto e o segundo finais são definidos pela DOOX na edição.</strong></p>
-      </div>
-    </div>
+    <div class="section"><button class="rule-trigger standalone" id="ruleCentral" type="button">REGRA CENTRAL</button></div>
+    <div id="ruleModal" class="modal" hidden><div class="modal-backdrop" data-close-modal></div><div class="modal-card"><button class="modal-close" data-close-modal aria-label="Fechar">×</button><div class="card-code">REGRA CENTRAL</div><h2>Você não compra o minuto.<br>Você compra a inserção.</h2><p>A DOOX Studios mantém o controle editorial da HOCCO. O cliente escolhe a modalidade, a categoria de momento e a quantidade desejada.</p><p>A DOOX analisa narrativa, edição, importância da cena, planejamento, disponibilidade e equilíbrio do episódio para definir o encaixe final.</p><p>A categoria escolhida representa uma faixa de relevância, não um minuto específico. Quando a inserção estiver programada, a DOOX informará o episódio e o tempo previsto de aparição.</p><button class="btn primary full" data-close-modal>ENTENDI</button></div></div>
   `);
 }
 
@@ -429,125 +363,72 @@ function choose(){
   return pageShell(`
     <div class="insert-grid">
       <div class="detail-panel">
-        <div class="card-code">${p.type}</div>
-        <h1>${p.title}</h1>
-        <p>${p.description}</p>
+        <div class="card-code">${p.type}</div><h1>${p.title}</h1><p>${p.description}</p>
         <ul style="padding-left:18px;color:#5f5f5f;font-size:13px">${p.details.map(d=>`<li>${d}</li>`).join("")}</ul>
-        ${p.price != null ? `
-          <div class="section quantity-box" style="margin-top:28px">
-            <div class="card-code">Quantidade</div>
-            <div class="quantity-control" style="margin-top:10px">
-              <button class="btn secondary" id="minusQty" type="button" aria-label="Diminuir quantidade">−</button>
-              <div id="qtyValue" class="quantity-value">${state.quantity}</div>
-              <button class="btn secondary" id="plusQty" type="button" aria-label="Aumentar quantidade">+</button>
-            </div>
-            <div class="small-note" style="margin-top:9px">${state.productId==="curso" ? `Cada nome custa ${money(p.price)}.` : `Cada unidade custa ${money(p.price)}.`}</div>
-          </div>` : ""}
+        <div class="section quantity-box" style="margin-top:28px"><div class="card-code">Quantidade</div><div class="quantity-control" style="margin-top:10px"><button class="btn secondary" id="minusQty" type="button">−</button><div class="quantity-value">${state.quantity}</div><button class="btn secondary" id="plusQty" type="button">+</button></div><div class="small-note" style="margin-top:9px">${money(p.price)} por inserção.</div></div>
       </div>
-      <div class="detail-panel">
-        <div class="card-code">Preferência</div>
-        <h2 style="font-size:28px;letter-spacing:-.04em;margin:4px 0 10px">Quando você gostaria de aparecer?</h2>
-        <div class="option-row">
-          ${["Próximo episódio disponível","Nos próximos episódios","Não tenho preferência"].map(v=>`
-            <button type="button" class="option preference ${state.preference===v?"selected":""}" data-pref="${v}">
-              <span class="left"><strong>${v}</strong><span>Preferência editorial, não garantia.</span></span>
-              <span>${state.preference===v?"✓":""}</span>
-            </button>`).join("")}
-        </div>
-        <div class="warning" style="margin-top:18px">A DOOX Studios define o episódio e o momento exato. Você será notificado quando a inserção for programada.</div>
-        <div class="summary" style="margin-top:18px">
-          <div class="summary-row"><span>${p.title}</span><strong>${state.quantity} × ${money(p.price)}</strong></div>
-          <div class="summary-row summary-total"><span>Total inicial</span><strong>${money(p.price * state.quantity)}</strong></div>
-        </div>
-        <div style="margin-top:15px"><button class="btn primary full" id="continueCustomer" type="button">Continuar</button></div>
-      </div>
-    </div>
-  `);
+      <div class="detail-panel"><div class="card-code">Resumo</div><div class="summary" style="margin-top:12px"><div class="summary-row"><span>Modalidade</span><strong>${p.title}</strong></div><div class="summary-row"><span>Quantidade</span><strong>${state.quantity}</strong></div><div class="summary-row summary-total"><span>Total</span><strong>${money(p.price*state.quantity)}</strong></div></div><div class="warning" style="margin-top:16px">Todos os pedidos passam por análise antes de serem aceitos.</div><div style="margin-top:15px"><button class="btn primary full" id="continueCustomer" type="button">Continuar</button></div></div>
+    </div>`);
 }
 
 function overlayChooser(){
-  const withAudio = state.productId === "overlayAudio";
-  const title = withAudio ? "Sponsor Overlay + Áudio" : "Sponsor Overlay";
-  const overlaySlot = OVERLAY_SLOTS.find(s=>s.id===state.slotId);
-  const selectedPrice = overlaySlotPrice(state.slotId, withAudio);
+  const p=PRODUCTS[state.productId], isAudio=state.productId==="overlayAudio", categories=isAudio?AUDIO_CATEGORIES:OVERLAY_CATEGORIES;
+  const selected=categoryFor(state.productId,state.categoryId);
   return pageShell(`
-    <div class="section-head">
-      <div><div class="card-code">${withAudio ? "Sponsor Overlay + Áudio" : "Sponsor Overlay"}</div><h1 style="font-size:58px;line-height:.98;letter-spacing:-.05em;margin:.15em 0">${title}</h1></div>
-      <p>O valor não é fixo: cada momento do episódio tem um preço próprio conforme sua importância editorial e o potencial de atenção daquela cena.</p>
-    </div>
+    <div class="section-head"><div><div class="card-code">${p.title}</div><h1>${isAudio?"Imagem + som.":"A marca entra na cena."}</h1></div><p>${isAudio?"Modalidade própria com elemento sonoro curto integrado à aparição. O áudio é analisado pela produção.":"Inserção visual de aproximadamente 5 segundos integrada à narrativa."}</p></div>
     <div class="insert-grid">
       <div class="detail-panel">
-        <div class="muted-box"><strong>Como aparece:</strong> HOCCO. → identificação do episódio → logo da empresa. ${withAudio ? "Além da identidade visual, há um áudio curto integrado à entrada da marca." : "A inserção é visual e integrada à narrativa, sem interromper o episódio."}</div>
-        <div class="section" style="margin-top:20px">
-          <div class="card-code">Por que os preços mudam?</div>
-          <p style="font-size:17px;color:#222">Uma inserção em uma cena de alta atenção vale mais do que uma inserção em um momento de menor relevância. Por isso, a tabela considera a <strong>posição e o valor editorial do momento</strong>, e não apenas a quantidade de segundos.</p>
-          <div class="steps" style="grid-template-columns:1fr 1fr;margin-top:10px">
-            <div class="step"><div class="step-num">01</div><h3>Você escolhe a posição</h3><p>Veja o valor individual de cada momento disponível.</p></div>
-            <div class="step"><div class="step-num">02</div><h3>A DOOX encaixa</h3><p>O minuto e o segundo finais são definidos na edição.</p></div>
-          </div>
-        </div>
-        <div class="mvp-notice" style="margin-top:20px"><strong>Importante:</strong> a faixa representa o valor comercial daquela posição. O momento exato pode sofrer ajuste na edição para preservar a narrativa.</div>
+        <div class="card-code">Escolha a categoria</div>
+        <div class="slot-grid">${categories.map(c=>`<button class="slot-card ${state.categoryId===c.id?"selected":""}" data-category="${c.id}" type="button"><span><strong>${c.label}</strong><small>${c.desc}</small></span><span class="price">${money(c.price)}</span></button>`).join("")}</div>
+        <button class="rule-trigger" id="ruleCentral" type="button">REGRA CENTRAL</button>
       </div>
       <div class="detail-panel">
-        <div class="card-code">Posições disponíveis</div>
-        <div class="small-note" style="margin:7px 0 12px">${withAudio ? "Os valores abaixo já incluem o áudio curto integrado (+ R$ 50,00 por posição)." : "Cada posição tem seu próprio preço, definido pela importância do momento."}</div>
-        <div class="option-row">
-          ${OVERLAY_SLOTS.map(slot=>{
-            const price=overlaySlotPrice(slot.id, withAudio);
-            return `<button type="button" class="option bug-option ${state.slotId===slot.id?"selected":""}" data-slot="${slot.id}">
-              <span class="left"><strong>${slot.label} · ${slot.time}</strong><span>${slot.id} · ${slot.status}</span></span>
-              <span class="price">${money(price)}</span>
-            </button>`;
-          }).join("")}
-        </div>
-        <div class="summary" style="margin-top:16px">
-          <div class="summary-row"><span>Slot</span><strong>${state.slotId || "Selecione"}</strong></div>
-          ${state.slotId ? `<div class="summary-row"><span>Valor da posição</span><strong>${money(selectedPrice)}</strong></div>` : ""}
-          ${state.slotId ? `<div class="summary-row"><span>Quantidade</span><strong>${state.quantity} × ${money(selectedPrice)}</strong></div>` : ""}
-          <div class="summary-row summary-total"><span>Total</span><strong>${state.slotId ? money(selectedPrice * state.quantity) : "—"}</strong></div>
-        </div>
-        <div class="quantity-control" style="margin-top:14px">
-          <button class="btn secondary" id="minusQty" type="button" aria-label="Diminuir quantidade">−</button>
-          <div id="qtyValue" class="quantity-value">${state.quantity}</div>
-          <button class="btn secondary" id="plusQty" type="button" aria-label="Aumentar quantidade">+</button>
-        </div>
-        <div style="margin-top:15px"><button class="btn primary full" id="continueBug" type="button" ${state.slotId?"":"disabled"}>Continuar</button></div>
+        <div class="card-code">Resumo da solicitação</div>
+        <div class="summary" style="margin-top:12px"><div class="summary-row"><span>Modalidade</span><strong>${p.title}</strong></div><div class="summary-row"><span>Categoria</span><strong>${selected?selected.label:"Selecione"}</strong></div><div class="summary-row"><span>Quantidade</span><strong>${state.quantity}</strong></div><div class="summary-row"><span>Valor por inserção</span><strong>${selected?money(selected.price):"—"}</strong></div><div class="summary-row summary-total"><span>Total</span><strong>${selected?money(selected.price*state.quantity):"—"}</strong></div></div>
+        <div class="quantity-box" style="margin-top:18px"><div class="card-code">Quantidade</div><div class="quantity-control" style="margin-top:10px"><button class="btn secondary" id="minusQty" type="button">−</button><div class="quantity-value">${state.quantity}</div><button class="btn secondary" id="plusQty" type="button">+</button></div><div class="small-note" style="margin-top:8px">Mínimo 1 · máximo 50</div></div>
+        <div class="warning" style="margin-top:16px">A categoria representa uma faixa de relevância do momento. Ela não garante um minuto específico.</div>
+        <div style="margin-top:15px"><button class="btn primary full" id="continueBug" type="button" ${selected?"":"disabled"}>Continuar</button></div>
       </div>
     </div>
-  `);
+    <div id="ruleModal" class="modal" hidden><div class="modal-backdrop" data-close-modal></div><div class="modal-card"><button class="modal-close" data-close-modal aria-label="Fechar">×</button><div class="card-code">REGRA CENTRAL</div><h2>Você não compra o minuto.<br>Você compra a inserção.</h2><p>A DOOX Studios mantém o controle editorial da HOCCO. O cliente escolhe a modalidade, a categoria e a quantidade desejada.</p><p>A DOOX analisa narrativa, edição, importância da cena, planejamento, disponibilidade e equilíbrio do episódio para definir o encaixe final.</p><p>A categoria escolhida representa uma faixa de relevância, não um minuto específico. Quando a inserção estiver programada, a DOOX informará o episódio e o tempo previsto de aparição.</p><button class="btn primary full" data-close-modal>ENTENDI</button></div></div>`);
 }
 
 function customerForm(){
   const p=PRODUCTS[state.productId];
   let unitPrice = p.price;
-  if(p.type==="overlay" || p.type==="overlayAudio"){
-    unitPrice = overlaySlotPrice(state.slotId, p.type==="overlayAudio") ?? p.price;
-  }
-  let total = unitPrice * state.quantity;
+  if(state.productId==="overlay") unitPrice = categoryPrice(state.productId,state.categoryId);
+  if(state.productId==="overlayAudio") unitPrice = categoryPrice(state.productId,state.categoryId);
+  const total = unitPrice * state.quantity;
+  const isCompany = state.customer.kind === "empresa";
   return pageShell(`
     <div class="section-head">
       <div><div class="card-code">Pedido</div><h1 style="font-size:58px;line-height:.98;letter-spacing:-.05em;margin:.15em 0">Quase lá.</h1></div>
-      <p>Precisamos só dos dados básicos para gerar seu pedido e abrir a conversa com a DOOX no WhatsApp.</p>
+      <p>Agora diga se a solicitação será feita como pessoa física ou empresa. Depois do cadastro, você será encaminhado diretamente ao WhatsApp da DOOX para concluir a triagem.</p>
     </div>
     <div class="insert-grid">
       <div class="detail-panel">
-        <div class="card-code">Seus dados</div>
+        <div class="card-code">Quem está participando?</div>
+        <div class="participant-switch" role="group" aria-label="Tipo de participante">
+          <button type="button" class="participant-option ${!isCompany?"selected":""}" data-kind="pf">Pessoa física<span>CPF</span></button>
+          <button type="button" class="participant-option ${isCompany?"selected":""}" data-kind="empresa">Empresa<span>CNPJ</span></button>
+        </div>
         <div class="form-grid" style="margin-top:16px">
-          <div class="field"><label for="name">Nome *</label><input id="name" maxlength="80" value="${escapeAttr(state.customer.name)}" autocomplete="name"></div>
-          <div class="field"><label for="whatsapp">WhatsApp *</label><input id="whatsapp" maxlength="20" value="${escapeAttr(state.customer.whatsapp)}" autocomplete="tel"></div>
-          <div class="field"><label for="email">E-mail *</label><input id="email" maxlength="150" value="${escapeAttr(state.customer.email)}" type="email" autocomplete="email"></div>
-          <div class="field"><label for="document">CPF/CNPJ *</label><input id="document" maxlength="18" value="${escapeAttr(state.customer.document)}" inputmode="numeric"></div>
-          <div class="field"><label for="company">Empresa</label><input id="company" maxlength="100" value="${escapeAttr(state.customer.company)}"></div>
-          <div class="field"><label for="handle">@ / identificação pública</label><input id="handle" maxlength="40" value="${escapeAttr(state.customer.handle)}" placeholder="@seunome"></div>
+          <div class="field"><label for="name">${isCompany?"Nome do responsável":"Nome completo"} *</label><input id="name" maxlength="80" value="${escapeAttr(state.customer.name)}" autocomplete="name"></div>
+          <div class="field"><label for="whatsapp">WhatsApp *</label><input id="whatsapp" maxlength="20" value="${escapeAttr(state.customer.whatsapp)}" autocomplete="tel" inputmode="tel"></div>
+          <div class="field"><label for="email">E-mail *</label><input id="email" maxlength="150" value="${escapeAttr(state.customer.email)}" type="email" autocomplete="email" inputmode="email"></div>
+          <div class="field"><label for="document">${isCompany?"CNPJ":"CPF"} *</label><input id="document" maxlength="18" value="${escapeAttr(state.customer.document)}" inputmode="numeric" autocomplete="off"></div>
+          ${isCompany ? `<div class="field full"><label for="company">Razão social / nome da empresa *</label><input id="company" maxlength="100" value="${escapeAttr(state.customer.company)}" autocomplete="organization"></div>` : ""}
+          <div class="field ${isCompany?"":"full"}"><label for="handle">@ / identificação pública</label><input id="handle" maxlength="40" value="${escapeAttr(state.customer.handle)}" placeholder="@seunome"></div>
           <div class="field full"><label for="note">Observação (opcional)</label><textarea id="note" maxlength="300" placeholder="Algo que a DOOX deva saber sobre o pedido.">${escapeAttr(state.customer.note)}</textarea></div>
         </div>
-        <div class="small-note" style="margin-top:12px">Nomes, @ e identificações públicas passam por validação de conteúdo. Não envie senhas, dados bancários ou informações sensíveis.</div>
+        <div class="small-note" style="margin-top:12px">Não envie senhas, dados bancários ou informações sensíveis. O CPF/CNPJ é usado para identificação da solicitação.</div>
       </div>
       <div class="detail-panel">
         <div class="card-code">Resumo</div>
         <div class="summary" style="margin-top:12px">
+          <div class="summary-row"><span>Participação</span><strong>${isCompany?"Empresa":"Pessoa física"}</strong></div>
           <div class="summary-row"><span>Produto</span><strong>${p.title}</strong></div>
-          ${state.slotId?`<div class="summary-row"><span>Slot</span><strong>${state.slotId}</strong></div>`:""}
+          ${state.categoryId?`<div class="summary-row"><span>Categoria</span><strong>${categoryFor(state.productId,state.categoryId)?.label||state.categoryId}</strong></div>`:""}
           <div class="summary-row"><span>Quantidade</span><strong>${state.quantity}</strong></div>
           <div class="summary-row"><span>Preferência</span><strong>${state.preference}</strong></div>
           <div class="summary-row summary-total"><span>Total</span><strong>${money(total)}</strong></div>
@@ -556,8 +437,9 @@ function customerForm(){
           <input id="termsCheck" type="checkbox" ${state.termsAccepted ? "checked" : ""}>
           <label for="termsCheck">Li e aceito os <a href="#/termos" data-route style="color:var(--orange);font-weight:700">Termos de Uso</a> e a <a href="#/privacidade" data-route style="color:var(--orange);font-weight:700">Política de Privacidade</a>.</label>
         </div>
-        <div class="warning" style="margin-top:16px">A aquisição não garante episódio ou segundo exatos. A DOOX Studios faz o encaixe final e notifica você quando a inserção for programada.</div>
-        <div style="margin-top:16px"><button class="btn primary full" id="createOrder" type="button">Criar pedido</button></div>
+        <div class="warning" style="margin-top:16px">Ao criar o pedido, o site abrirá a etapa de triagem. <strong>O próximo passo é o WhatsApp da DOOX.</strong></div>
+        <div style="margin-top:16px"><button class="btn primary full" id="reviewOrder" type="button">Rever pedido</button></div>
+        <div style="margin-top:10px"><button class="btn secondary full" id="backToChoose" type="button">Voltar à escolha</button></div>
       </div>
     </div>
   `);
@@ -567,24 +449,45 @@ function escapeAttr(s){
   return safeText(s,200).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-function orderSuccess(orderId,total){
+function reviewOrder(){
+  const p=PRODUCTS[state.productId];
+  let unitPrice=p.price;
+  if(state.productId==="overlay") unitPrice=categoryPrice(state.productId,state.categoryId);
+  if(state.productId==="overlayAudio") unitPrice=categoryPrice(state.productId,state.categoryId);
+  const total=unitPrice*state.quantity, c=state.customer;
   return pageShell(`
-    <div class="detail-panel" style="max-width:820px;margin:0 auto;text-align:center">
-      <div class="kicker" style="justify-content:center"><span class="rec"></span> pedido criado</div>
-      <h1 style="font-size:64px;line-height:.96;letter-spacing:-.06em;margin:10px 0">Entrou na fila.</h1>
-      <p style="max-width:650px;margin:0 auto 24px;color:var(--muted)">Seu pedido foi criado. O próximo passo é continuar pelo WhatsApp oficial da DOOX Studios para receber as instruções de pagamento.</p>
-      <div class="confirmation-card">
-        <div class="confirmation-step"><span>1</span><div><strong>Confira seus dados</strong><small>Revise o pedido antes de seguir.</small></div></div>
-        <div class="confirmation-divider"></div>
-        <div class="confirmation-step"><span>2</span><div><strong>Confirmação no WhatsApp</strong><small>Ao clicar, você será encaminhado diretamente para a triagem.</small></div></div>
-        <div class="confirmation-order"><span>Pedido ${orderId}</span><b>${money(total)}</b></div>
+    <div class="section-head"><div><div class="card-code">Última conferência</div><h1>Rever pedido.</h1></div>
+    <p>Confira tudo antes de enviar. Se algo estiver errado, volte para editar. Se estiver tudo certo, continue para o WhatsApp.</p></div>
+    <div class="detail-panel review-panel">
+      <div class="summary">
+        <div class="summary-row"><span>Participação</span><strong>${c.kind==="empresa"?"Empresa":"Pessoa física"}</strong></div>
+        <div class="summary-row"><span>Nome</span><strong>${escapeAttr(c.name)}</strong></div>
+        ${c.company?`<div class="summary-row"><span>Empresa</span><strong>${escapeAttr(c.company)}</strong></div>`:""}
+        <div class="summary-row"><span>${c.kind==="empresa"?"CNPJ":"CPF"}</span><strong>${escapeAttr(c.document)}</strong></div>
+        <div class="summary-row"><span>Produto</span><strong>${p.title}</strong></div>
+        ${state.categoryId?`<div class="summary-row"><span>Categoria</span><strong>${categoryFor(state.productId,state.categoryId)?.label||state.categoryId}</strong></div>`:""}
+        <div class="summary-row"><span>Quantidade</span><strong>${state.quantity}</strong></div>
+        <div class="summary-row summary-total"><span>Total</span><strong>${money(total)}</strong></div>
       </div>
-      <div style="margin-top:22px" class="cta-row confirmation-actions">
-        <button class="btn primary" id="openWhatsApp" type="button">Finalizar no WhatsApp</button>
-        <a class="btn secondary" href="#/insercoes" data-route>Voltar às inserções</a>
+      <div class="warning" style="margin-top:18px">Todos os pedidos passam por análise antes de serem aceitos. O envio não representa aprovação automática.</div>
+      <div class="cta-row review-actions" style="margin-top:20px">
+        <button class="btn secondary" id="editOrder" type="button">Voltar e editar</button>
+        <button class="btn primary" id="confirmOrder" type="button">Está tudo certo — continuar</button>
       </div>
-    </div>
-  `);
+    </div>`);
+}
+
+function orderSuccess(orderId,total){
+  return pageShell(`<div class="handoff-screen">
+    <div class="handoff-rec"><span class="rec"></span> pedido recebido</div>
+    <div class="handoff-title">BEM-VINDO AO UNIVERSO</div>
+    <div class="handoff-hocco">HOCCO.</div>
+    <p>Seu pedido foi registrado. Agora vamos continuar a triagem no WhatsApp da DOOX Studios.</p>
+    <div class="handoff-order">Pedido ${orderId} · ${money(total)}</div>
+    <div class="handoff-loader"><span></span><span></span><span></span></div>
+    <small>Preparando o WhatsApp…</small>
+    <button class="btn secondary" id="openWhatsApp" type="button" style="margin-top:20px">Ir ao WhatsApp agora</button>
+  </div>`);
 }
 
 function documental(){
@@ -616,9 +519,9 @@ function terms(){
     <h1>Termos de Uso</h1>
     <p>Versão inicial do MVP comercial da DOOX Studios. Este texto é um modelo operacional e deve ser revisado juridicamente antes da utilização comercial definitiva.</p>
     <h2>1. Objeto</h2>
-    <p>Este site permite solicitar e adquirir modalidades de apoio e inserção relacionadas à série HOCCO., produzida pela DOOX Studios.</p>
-    <h2>2. Pedido e pagamento</h2>
-    <p>O pedido é criado no site e concluído por meio do atendimento oficial da DOOX Studios. O pagamento é realizado conforme as instruções fornecidas no atendimento oficial. O pedido só é considerado pago após a confirmação do recebimento.</p>
+    <p>Este site permite solicitar e adquirir modalidades comerciais e inserções relacionadas à série HOCCO., produzida pela DOOX Studios.</p>
+    <h2>2. Pedido, análise e atendimento</h2>
+    <p>O pedido é criado no site e encaminhado ao atendimento oficial da DOOX Studios. A solicitação passa por análise de disponibilidade, formato, quantidade e encaixe editorial antes da confirmação. Eventuais condições de pagamento serão informadas pela equipe no atendimento oficial.</p>
     <h2>3. Controle editorial</h2>
     <p>A aquisição de uma inserção não garante ao comprador o direito de escolher episódio, data, posição, minuto, segundo ou ordem de exibição. A DOOX Studios mantém o controle editorial e define o encaixe de acordo com a produção, a narrativa, a disponibilidade e o planejamento.</p>
     <p>Quando uma inserção for programada, a DOOX Studios informará ao comprador o episódio e o momento previsto de exibição. O tempo comunicado é estimado e pode sofrer pequenos ajustes na edição final.</p>
@@ -660,6 +563,7 @@ function privacy(){
 }
 
 function render(){
+  persistState();
   const path=window.location.hash.replace(/^#/,"") || "/";
   let html="";
   if(path==="/" ) html=home();
@@ -669,14 +573,47 @@ function render(){
   else if(path==="/escolher") html=choose();
   else if(path==="/sponsor-overlay") html=overlayChooser();
   else if(path==="/cliente") html=customerForm();
+  else if(path==="/rever-pedido") html=reviewOrder();
   else if(path==="/insercao-documental") html=documental();
   else if(path==="/termos") html=terms();
   else if(path==="/privacidade") html=privacy();
+  else if(path==="/pedido") { const raw=sessionStorage.getItem("doox_last_order"); html=raw ? orderSuccess(JSON.parse(raw).id, JSON.parse(raw).total) : pageShell(`<div class="empty"><h2>Pedido não encontrado.</h2><a class="btn primary" href="#/insercoes" data-route>Voltar às inserções</a></div>`); }
   else html=pageShell(`<div class="empty"><h2>Página não encontrada.</h2><a class="btn primary" href="#/" data-route>Voltar</a></div>`);
   app.innerHTML=html;
   const headerHomeBack = document.getElementById("headerHomeBack");
   if(headerHomeBack){ headerHomeBack.hidden = path === "/"; }
   bindPage();
+}
+
+function sendOrderToWhatsApp(order){
+  const msg = [
+    "Olá, DOOX Studios. Quero finalizar meu pedido.",
+    "",
+    `Pedido: ${order.id}.`,
+    `Participação: ${order.customer.kind==="empresa" ? "Empresa" : "Pessoa física"}.`,
+    `Produto: ${order.product}.`,
+    order.productId==="overlayAudio" ? "Formato: Sponsor Overlay + Áudio (produto separado)." : null,
+    order.categoryId?`Categoria: ${categoryFor(order.productId,order.categoryId)?.label||order.categoryId}.`:null,
+    `Quantidade: ${order.quantity}.`,
+    order.unitPrice ? `Valor por posição/unidade: ${money(order.unitPrice)}.` : null,
+    `Valor: ${money(order.total)}.`,
+    `Preferência: ${order.preference}.`,
+    `Nome: ${order.customer.name}`,
+    `WhatsApp: ${order.customer.whatsapp}`,
+    `E-mail: ${order.customer.email}`,
+    `${order.customer.kind==="empresa" ? "CNPJ" : "CPF"}: ${order.customer.document}`,
+    order.customer.company?`Empresa: ${order.customer.company}`:null,
+    order.customer.handle?`@: ${order.customer.handle}`:null,
+    order.customer.note?`Observação: ${order.customer.note}`:null,
+    "",
+    "Estou seguindo para a triagem."
+  ].filter(Boolean).join("\n");
+  if(CONFIG.whatsappNumber==="SEU_NUMERO_WHATSAPP_AQUI"){
+    flashToast("Configure o número do WhatsApp em app.js antes de publicar.");
+    return false;
+  }
+  window.location.href=`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+  return true;
 }
 
 function bindPage(){
@@ -694,12 +631,12 @@ function bindPage(){
     });
   });
 
-  document.querySelectorAll(".bug-option").forEach(btn=>{
+  document.querySelectorAll("[data-category]").forEach(btn=>{
     let armed=false;
     btn.addEventListener("mouseenter",()=>{if(!armed){armed=true;playSelectSound();}});
     btn.addEventListener("mouseleave",()=>{armed=false;});
     btn.addEventListener("click",()=>{
-      state.slotId=btn.dataset.slot;
+      state.categoryId=btn.dataset.category;
       playSelectSound();
       render();
     });
@@ -714,7 +651,7 @@ function bindPage(){
   const cont=$("#continueCustomer");
   if(cont){
     cont.addEventListener("click",()=>{
-      if(state.productId==="overlay" && !state.slotId){flashToast("Escolha um slot.");return;}
+      if((state.productId==="overlay" || state.productId==="overlayAudio") && !state.categoryId){flashToast("Escolha uma categoria.");return;}
       setRoute("/cliente");
     });
   }
@@ -722,11 +659,31 @@ function bindPage(){
   const contBug=$("#continueBug");
   if(contBug){
     contBug.addEventListener("click",()=>{
-      if(!state.slotId){flashToast("Escolha um slot.");return;}
+      if(!state.categoryId){flashToast("Escolha uma categoria.");return;}
       state.preference="Próximo episódio disponível";
       setRoute("/cliente");
     });
   }
+
+  const ruleModal=$("#ruleModal");
+  if(ruleModal){
+    document.querySelectorAll("[data-close-modal]").forEach(el=>el.addEventListener("click",()=>ruleModal.hidden=true));
+    const trigger=$("#ruleCentral"); if(trigger) trigger.addEventListener("click",()=>ruleModal.hidden=false);
+  }
+
+  document.querySelectorAll(".participant-option").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      state.customer.kind=btn.dataset.kind;
+      playSelectSound();
+      render();
+    });
+  });
+
+  const backToChoose=$("#backToChoose");
+  if(backToChoose) backToChoose.addEventListener("click",()=>{
+    if(state.productId==="overlay" || state.productId==="overlayAudio") setRoute("/sponsor-overlay");
+    else setRoute("/escolher");
+  });
 
   const customerFields=["name","whatsapp","email","document","company","handle","note"];
   customerFields.forEach(id=>{
@@ -736,88 +693,48 @@ function bindPage(){
   const termsCheck=$("#termsCheck");
   if(termsCheck) termsCheck.addEventListener("change",()=>{state.termsAccepted=termsCheck.checked;});
 
-  const create=$("#createOrder");
-  if(create){
-    create.addEventListener("click",()=>{
-      const fields = {
-        name: $("#name")?.value,
-        whatsapp: $("#whatsapp")?.value,
-        email: $("#email")?.value,
-        document: $("#document")?.value,
-        company: $("#company")?.value,
-        handle: $("#handle")?.value,
-        note: $("#note")?.value
-      };
-      if(!validateText(fields.name,80) || !validateText(fields.whatsapp,20) || !validateText(fields.email,150) || !validateText(fields.document,18)){
-        flashToast("Preencha corretamente os campos obrigatórios.");
-        return;
-      }
-      if(fields.handle && !validatePublicText(fields.handle)){
-        flashToast("O @ informado não pode ser usado.");
-        return;
-      }
-      if(!$("#termsCheck").checked){
-        flashToast("Aceite os termos para continuar.");
-        return;
-      }
-      state.customer=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,safeText(v,k==="note"?300:k==="name"?80:k==="company"?100:k==="handle"?40:180)]));
-      const orderId=randomId();
-      let unitPrice=PRODUCTS[state.productId].price;
-      if(state.productId==="overlay" || state.productId==="overlayAudio"){
-        unitPrice=overlaySlotPrice(state.slotId,state.productId==="overlayAudio") ?? unitPrice;
-      }
-      let total=unitPrice * state.quantity;
-
-      const order = {
-        id: orderId,
-        product: PRODUCTS[state.productId].title,
-        productId: state.productId,
-        slotId: state.slotId,
-        quantity: state.quantity,
-        unitPrice,
-        preference: state.preference,
-        total,
-        customer: state.customer,
-        createdAt: new Date().toISOString()
-      };
-      sessionStorage.setItem("doox_last_order", JSON.stringify(order));
-      setRoute("/pedido");
+  const review=$("#reviewOrder");
+  if(review){
+    review.addEventListener("click",()=>{
+      const fields={name:$("#name")?.value,whatsapp:$("#whatsapp")?.value,email:$("#email")?.value,document:$("#document")?.value,company:$("#company")?.value,handle:$("#handle")?.value,note:$("#note")?.value};
+      if(!validateText(fields.name,80)||!validateText(fields.whatsapp,20)||!validateText(fields.email,150)||!validateText(fields.document,18)){flashToast("Preencha corretamente os campos obrigatórios.");return;}
+      if(state.customer.kind==="empresa"&&!validateText(fields.company,100)){flashToast("Informe o nome da empresa.");return;}
+      if(fields.handle&&!validatePublicText(fields.handle)){flashToast("O @ informado não pode ser usado.");return;}
+      if(!$("#termsCheck").checked){flashToast("Aceite os termos para continuar.");return;}
+      state.customer={kind:state.customer.kind,...Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,safeText(v,k==="note"?300:k==="name"?80:k==="company"?100:k==="handle"?40:180)]))};
+      setRoute("/rever-pedido");
     });
   }
-
+  const editOrder=$("#editOrder");
+  if(editOrder) editOrder.addEventListener("click",()=>setRoute("/cliente"));
+  const confirmOrder=$("#confirmOrder");
+  if(confirmOrder) confirmOrder.addEventListener("click",()=>{
+    const orderId=randomId();
+    let unitPrice=PRODUCTS[state.productId].price;
+    if(state.productId==="overlay") unitPrice=categoryPrice(state.productId,state.categoryId)??unitPrice;
+    if(state.productId==="overlayAudio") unitPrice=categoryPrice(state.productId,state.categoryId)??unitPrice;
+    const total=unitPrice*state.quantity;
+    const order={id:orderId,product:PRODUCTS[state.productId].title,productId:state.productId,categoryId:state.categoryId,quantity:state.quantity,unitPrice,preference:state.preference,total,customer:state.customer,createdAt:new Date().toISOString()};
+    sessionStorage.setItem("doox_last_order",JSON.stringify(order));
+    setRoute("/pedido");
+  });
   const open=$("#openWhatsApp");
   if(open){
     open.addEventListener("click",()=>{
       const raw=sessionStorage.getItem("doox_last_order");
       if(!raw){flashToast("Pedido não encontrado nesta sessão.");return;}
-      const order=JSON.parse(raw);
-      const msg = [
-        "Olá, DOOX Studios. Quero finalizar meu pedido.",
-        "",
-        `Pedido: ${order.id}.`,
-        `Produto: ${order.product}.`,
-        order.productId==="overlayAudio" ? "Inclui áudio curto integrado." : null,
-        order.slotId?`Slot: ${order.slotId}.`:null,
-        `Quantidade: ${order.quantity}.`,
-        order.unitPrice ? `Valor por posição/unidade: ${money(order.unitPrice)}.` : null,
-        `Valor: ${money(order.total)}.`,
-        `Preferência: ${order.preference}.`,
-        `Nome: ${order.customer.name}`,
-        `WhatsApp: ${order.customer.whatsapp}`,
-        `E-mail: ${order.customer.email}`,
-        `CPF/CNPJ: ${order.customer.document}`,
-        order.customer.company?`Empresa: ${order.customer.company}`:null,
-        order.customer.handle?`@: ${order.customer.handle}`:null,
-        "",
-        "Estou seguindo para a triagem."
-      ].filter(Boolean).join("\n");
-      if(CONFIG.whatsappNumber==="SEU_NUMERO_WHATSAPP_AQUI"){
-        flashToast("Configure o número do WhatsApp em app.js antes de publicar.");
-        return;
-      }
-      window.location.href=`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+      sendOrderToWhatsApp(JSON.parse(raw));
     });
+    if(window.location.hash==="#/pedido"){
+      setTimeout(()=>{
+        const raw=sessionStorage.getItem("doox_last_order");
+        if(raw) sendOrderToWhatsApp(JSON.parse(raw));
+      },1800);
+    }
   }
+
+  const returnToSite=$("#returnToSite");
+  if(returnToSite) returnToSite.addEventListener("click",()=>setRoute("/insercoes"));
 
   const req=$("#requestProject");
   if(req){
@@ -839,15 +756,8 @@ function bindPage(){
     });
   }
 
-  if(window.location.hash==="#/pedido"){
-    // render order summary from session
-    const raw=sessionStorage.getItem("doox_last_order");
-    if(raw){
-      const order=JSON.parse(raw);
-      app.innerHTML=orderSuccess(order.id,order.total);
-      bindPage();
-    }
-  }
 }
 
+restoreState();
+if(!history.state || !history.state.dooxRoute){ history.replaceState({dooxRoute: window.location.hash.replace(/^#/ ,"") || "/"}, "", window.location.href); }
 render();
