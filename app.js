@@ -7,7 +7,7 @@ const CONFIG = {
   whatsappNumber: "5514981150675", // formato internacional, ex.: 5514999999999
   publicInstagram: "https://www.instagram.com/", // opcional
   youtube: "https://www.youtube.com/@HOCCPOV",
-  tiktok: "https://www.tiktok.com/@HOCCOBRASIL"
+  tiktok: "https://www.tiktok.com/@hoccobrasil"
 };
 
 const PRODUCTS = {
@@ -181,7 +181,7 @@ function home(){
         </div>
         <div class="home-socials" aria-label="Redes sociais">
           <a class="home-social-icon" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="Abrir canal no YouTube">${youtubeLogo(30)}</a>
-          <a class="home-social-icon" href="https://www.tiktok.com/@HOCCOBRASIL" target="_blank" rel="noopener noreferrer" aria-label="Abrir perfil no TikTok">${tiktokLogo(30)}</a>
+          <a class="home-social-icon" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener noreferrer" aria-label="Abrir perfil no TikTok">${tiktokLogo(30)}</a>
         </div>
         <div class="hero-points">
           <div class="hero-point"><strong>Você escolhe.</strong><span>A modalidade e a quantidade.</span></div>
@@ -213,7 +213,7 @@ function home(){
             <p>Sua participação entra no arquivo público da história, conforme a modalidade escolhida.</p>
             <div class="memory-social-title">Acompanhe nossos vídeos aqui</div><div class="home-inline-socials" aria-label="Redes sociais">
               <a class="home-inline-social" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="YouTube HOCCPOV" title="YouTube">${youtubeLogo(26)}</a>
-              <a class="home-inline-social" href="https://www.tiktok.com/@HOCCOBRASIL" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(26)}</a>
+              <a class="home-inline-social" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(26)}</a>
             </div>
             <div class="stat-line"><span>Produção</span><strong>DOOX Studios</strong></div>
           </div>
@@ -327,7 +327,7 @@ function hocco(){
           <p>Você pode fazer parte de algo que continua sendo construído.</p>
           <div class="social-dock" aria-label="Redes sociais da HOCCO">
             <a class="social-icon-button" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="YouTube HOCCPOV" title="YouTube">${youtubeLogo(34)}</a>
-            <a class="social-icon-button" href="https://www.tiktok.com/@HOCCOBRASIL" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(34)}</a>
+            <a class="social-icon-button" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(34)}</a>
           </div>
           <div class="production-note"><span>Produção</span><strong>DOOX Studios</strong></div>
         </div>
@@ -586,27 +586,40 @@ function render(){
 }
 
 function sendOrderToWhatsApp(order){
+  const customerType = order.customer.kind==="empresa" ? "EMPRESA" : "PESSOA FÍSICA";
+  const category = order.categoryId ? (categoryFor(order.productId,order.categoryId)?.label || order.categoryId) : "—";
   const msg = [
-    "Olá, DOOX Studios. Quero finalizar meu pedido.",
+    "🔶 DOOX STUDIOS",
+    "🔸 SOLICITAÇÃO HOCCO.",
     "",
-    `Pedido: ${order.id}.`,
-    `Participação: ${order.customer.kind==="empresa" ? "Empresa" : "Pessoa física"}.`,
-    `Produto: ${order.product}.`,
-    order.productId==="overlayAudio" ? "Formato: Sponsor Overlay + Áudio (produto separado)." : null,
-    order.categoryId?`Categoria: ${categoryFor(order.productId,order.categoryId)?.label||order.categoryId}.`:null,
-    `Quantidade: ${order.quantity}.`,
-    order.unitPrice ? `Valor por posição/unidade: ${money(order.unitPrice)}.` : null,
-    `Valor: ${money(order.total)}.`,
-    `Preferência: ${order.preference}.`,
-    `Nome: ${order.customer.name}`,
-    `WhatsApp: ${order.customer.whatsapp}`,
-    `E-mail: ${order.customer.email}`,
-    `${order.customer.kind==="empresa" ? "CNPJ" : "CPF"}: ${order.customer.document}`,
-    order.customer.company?`Empresa: ${order.customer.company}`:null,
-    order.customer.handle?`@: ${order.customer.handle}`:null,
-    order.customer.note?`Observação: ${order.customer.note}`:null,
+    "━━━━━━━━━━━━━━━━━━",
+    `✅ PEDIDO ${order.id}`,
+    "━━━━━━━━━━━━━━━━━━",
     "",
-    "Estou seguindo para a triagem."
+    `🎬 Produto: ${order.product}`,
+    `◈ Categoria: ${category}`,
+    `◈ Quantidade: ${order.quantity}`,
+    order.unitPrice ? `◈ Valor por inserção: ${money(order.unitPrice)}` : null,
+    `🔶 TOTAL: ${money(order.total)}`,
+    `⏹️ Preferência: ${order.preference}`,
+    "",
+    "━━━━━━━━━━━━━━━━━━",
+    "👤 DADOS DO CLIENTE",
+    "━━━━━━━━━━━━━━━━━━",
+    `• Tipo: ${customerType}`,
+    `• Nome: ${order.customer.name}`,
+    `• WhatsApp: ${order.customer.whatsapp}`,
+    `• E-mail: ${order.customer.email}`,
+    `• ${order.customer.kind==="empresa" ? "CNPJ" : "CPF"}: ${order.customer.document}`,
+    order.customer.company?`• Empresa: ${order.customer.company}`:null,
+    order.customer.handle?`• @: ${order.customer.handle}`:null,
+    order.customer.note?`• Observação: ${order.customer.note}`:null,
+    "",
+    "🔸 STATUS",
+    "Solicitação enviada para triagem.",
+    "Aguardo a análise e confirmação da DOOX Studios.",
+    "",
+    "🔶 HOCCO. — DOOX STUDIOS"
   ].filter(Boolean).join("\n");
   if(CONFIG.whatsappNumber==="SEU_NUMERO_WHATSAPP_AQUI"){
     flashToast("Configure o número do WhatsApp em app.js antes de publicar.");

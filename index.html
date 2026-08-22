@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DOOX STUDIOS" />
+  <meta name="apple-mobile-web-app-title" content="HOCCO." />
   <link rel="icon" href="./favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
@@ -22,13 +22,13 @@
 </head>
 <body>
   <div id="intro" class="intro-screen" aria-label="Bem-vindo ao universo HOCCO.">
-  <div class="intro-welcome">BEM-VINDO AO UNIVERSO <strong>HOCCO.</strong></div>
-  <div class="intro-sequence" aria-hidden="true">
-    <div class="intro-word intro-camera">CÂMERA.</div>
-    <div class="intro-word intro-recording">GRAVANDO.</div>
-    <div class="intro-word intro-action">AÇÃO!</div>
+    <div class="intro-stack">
+      <div class="intro-welcome">BEM-VINDO AO UNIVERSO <strong>HOCCO.</strong></div>
+      <div class="intro-word intro-camera">CÂMERA.</div>
+      <div class="intro-word intro-recording">GRAVANDO.</div>
+      <div class="intro-word intro-action">AÇÃO!</div>
+    </div>
   </div>
-</div>
 
   <header class="topbar">
     <a class="brand" href="#/" data-route>
@@ -75,7 +75,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./app.js" defer></script>
-  <script>window.addEventListener("load",()=>setTimeout(()=>document.body.classList.add("intro-done"),2600));</script>
+  <script>window.addEventListener("load",()=>setTimeout(()=>document.body.classList.add("intro-done"),3600));</script>
 <script>if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));</script>
 </body>
 </html>
