@@ -364,6 +364,15 @@ button{cursor:pointer}
 .intro-recording{font-size:clamp(38px,8vw,82px);color:#fff;animation:introRecording .46s 1.48s both;margin-bottom:22px}
 .intro-action{font-size:clamp(46px,10vw,100px);color:#ff6a00;animation:introActionFinal .62s 2.24s both}
 .intro-done .intro-screen{animation:introOut .6s 0s both}
+.intro-screen{will-change:opacity,transform}
+.intro-stack{contain:layout paint}
+.low-bandwidth .hero-bg,.low-bandwidth .media-card{background-image:none!important}
+.low-bandwidth *{scroll-behavior:auto!important}
+.reduced-motion .intro-screen{animation:introOut .2s .2s both!important}
+.reduced-motion .intro-word,.reduced-motion .intro-welcome{animation:none!important;opacity:1!important;transform:none!important}
+.reduced-motion .intro-camera,.reduced-motion .intro-recording{display:none}
+.reduced-motion .intro-action{margin-top:22px}
+.offline::after{content:"OFFLINE";position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:80;padding:6px 10px;border:1px solid rgba(255,106,0,.4);border-radius:999px;background:#111;color:#fff;font-size:9px;font-weight:800;letter-spacing:.12em}
 @keyframes introWelcome{0%{opacity:0;transform:translateY(-12px);filter:blur(6px)}30%{opacity:1;transform:translateY(0);filter:none}70%{opacity:1;transform:translateY(0);filter:none}100%{opacity:0;transform:translateY(-8px);filter:blur(4px)}}
 @keyframes introCamera{0%{opacity:0;transform:translateY(18px);filter:blur(6px)}22%{opacity:1;transform:none;filter:none}72%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:translateY(-10px);filter:blur(4px)}}
 @keyframes introRecording{0%{opacity:0;transform:translateY(18px);filter:blur(6px)}22%{opacity:1;transform:none;filter:none}72%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:translateY(-10px);filter:blur(4px)}}
@@ -406,8 +415,11 @@ button{cursor:pointer}
   .confirmation-card{padding:16px}
 }
 @media (prefers-reduced-motion:reduce){
-  .intro-word,.intro-screen,.intro-screen::before{animation:none!important}
-  .intro-screen{display:none!important}
+  .intro-screen{animation:none!important}
+  .intro-screen::before{animation:none!important}
+  .intro-welcome{opacity:1!important;transform:none!important}
+  .intro-camera,.intro-recording{animation:none!important;opacity:0!important}
+  .intro-action{animation:none!important;opacity:1!important;transform:none!important}
 }
 
 .mvp-notice{

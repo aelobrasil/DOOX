@@ -1,6 +1,6 @@
-/* DOOX Studios — static MVP
-   Sem banco de dados. Pedido fechado no WhatsApp.
-   IMPORTANTE: não coloque segredos ou chave PIX neste arquivo.
+/* DOOX Studios — HOCCO. PWA MVP
+   Persistência local no aparelho: IndexedDB + sessionStorage.
+   Sem banco de dados central. Pedido finalizado no WhatsApp.
 */
 
 const CONFIG = {
@@ -51,8 +51,35 @@ const $ = (sel) => document.querySelector(sel);
 const app = $("#app");
 const toast = $("#toast");
 
-function persistState(){ try{sessionStorage.setItem("doox_hocco_state",JSON.stringify(state));}catch(e){} }
-function restoreState(){ try{const raw=sessionStorage.getItem("doox_hocco_state"); if(raw){const saved=JSON.parse(raw); Object.assign(state,saved); state.customer={...state.customer,...(saved.customer||{})};}}catch(e){} }
+const LOCAL_DB={name:"hocco-local",version:1,store:"app"};
+let dbPromise=null;
+function openLocalDB(){
+  if(dbPromise) return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error("IndexedDB unavailable"));return;}
+    const req=indexedDB.open(LOCAL_DB.name,LOCAL_DB.version);
+    req.onupgradeneeded=()=>{ if(!req.result.objectStoreNames.contains(LOCAL_DB.store)) req.result.createObjectStore(LOCAL_DB.store); };
+    req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+  });
+  return dbPromise;
+}
+async function localSet(key,value){
+  try{const db=await openLocalDB(); await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB.store,"readwrite"); tx.objectStore(LOCAL_DB.store).put(value,key); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);});}catch(e){}
+}
+async function localGet(key){
+  try{const db=await openLocalDB(); return await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB.store,"readonly"); const req=tx.objectStore(LOCAL_DB.store).get(key); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);});}catch(e){return null;}
+}
+async function localDelete(key){
+  try{const db=await openLocalDB(); await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB.store,"readwrite"); tx.objectStore(LOCAL_DB.store).delete(key); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);});}catch(e){}
+}
+function persistState(){
+  try{sessionStorage.setItem("doox_hocco_state",JSON.stringify(state));}catch(e){}
+  localSet("draft",JSON.parse(JSON.stringify(state)));
+}
+function restoreState(){
+  try{const raw=sessionStorage.getItem("doox_hocco_state"); if(raw){const saved=JSON.parse(raw); Object.assign(state,saved); state.customer={...state.customer,...(saved.customer||{})}; return;}}catch(e){}
+  localGet("draft").then(saved=>{if(saved){Object.assign(state,saved);state.customer={...state.customer,...(saved.customer||{})};render();}});
+}
 
 
 function money(v){
@@ -181,7 +208,7 @@ function home(){
         </div>
         <div class="home-socials" aria-label="Redes sociais">
           <a class="home-social-icon" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="Abrir canal no YouTube">${youtubeLogo(30)}</a>
-          <a class="home-social-icon" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener noreferrer" aria-label="Abrir perfil no TikTok">${tiktokLogo(30)}</a>
+          <a class="home-social-icon" href="https://www.tiktok.com/@hoccobrasil" data-external-tiktok target="_blank" rel="noopener noreferrer" aria-label="Abrir perfil no TikTok">${tiktokLogo(30)}</a>
         </div>
         <div class="hero-points">
           <div class="hero-point"><strong>Você escolhe.</strong><span>A modalidade e a quantidade.</span></div>
@@ -213,7 +240,7 @@ function home(){
             <p>Sua participação entra no arquivo público da história, conforme a modalidade escolhida.</p>
             <div class="memory-social-title">Acompanhe nossos vídeos aqui</div><div class="home-inline-socials" aria-label="Redes sociais">
               <a class="home-inline-social" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="YouTube HOCCPOV" title="YouTube">${youtubeLogo(26)}</a>
-              <a class="home-inline-social" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(26)}</a>
+              <a class="home-inline-social" href="https://www.tiktok.com/@hoccobrasil" data-external-tiktok target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(26)}</a>
             </div>
             <div class="stat-line"><span>Produção</span><strong>DOOX Studios</strong></div>
           </div>
@@ -327,7 +354,7 @@ function hocco(){
           <p>Você pode fazer parte de algo que continua sendo construído.</p>
           <div class="social-dock" aria-label="Redes sociais da HOCCO">
             <a class="social-icon-button" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="YouTube HOCCPOV" title="YouTube">${youtubeLogo(34)}</a>
-            <a class="social-icon-button" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(34)}</a>
+            <a class="social-icon-button" href="https://www.tiktok.com/@hoccobrasil" data-external-tiktok target="_blank" rel="noopener noreferrer" aria-label="TikTok HOCCOBRASIL" title="TikTok">${tiktokLogo(34)}</a>
           </div>
           <div class="production-note"><span>Produção</span><strong>DOOX Studios</strong></div>
         </div>
@@ -586,51 +613,71 @@ function render(){
 }
 
 function sendOrderToWhatsApp(order){
-  const customerType = order.customer.kind==="empresa" ? "EMPRESA" : "PESSOA FÍSICA";
-  const category = order.categoryId ? (categoryFor(order.productId,order.categoryId)?.label || order.categoryId) : "—";
-  const msg = [
+  const customer = order.customer || {};
+  const customerType = customer.kind === "empresa" ? "EMPRESA" : "PESSOA FÍSICA";
+  const category = order.categoryId
+    ? (categoryFor(order.productId, order.categoryId)?.label || order.categoryId)
+    : null;
+
+  const lines = [
     "🔶 DOOX STUDIOS",
-    "🔸 SOLICITAÇÃO HOCCO.",
-    "",
-    "━━━━━━━━━━━━━━━━━━",
-    `✅ PEDIDO ${order.id}`,
+    "🔸 NOVA SOLICITAÇÃO HOCCO.",
     "━━━━━━━━━━━━━━━━━━",
     "",
-    `🎬 Produto: ${order.product}`,
-    `◈ Categoria: ${category}`,
-    `◈ Quantidade: ${order.quantity}`,
-    order.unitPrice ? `◈ Valor por inserção: ${money(order.unitPrice)}` : null,
-    `🔶 TOTAL: ${money(order.total)}`,
-    `⏹️ Preferência: ${order.preference}`,
+    `✅ PEDIDO ${order.id || "#DOOX-XXXX"}`,
+    "",
+    "🎬 INSERÇÃO",
+    order.product || "Não informado",
+    category ? `◈ CATEGORIA\n${category}` : null,
+    `◈ QUANTIDADE\n${order.quantity || 1} inserção${Number(order.quantity) === 1 ? "" : "ões"}`,
+    order.unitPrice != null ? `◈ VALOR UNITÁRIO\n${money(order.unitPrice)}` : null,
+    order.total != null ? `🔶 TOTAL\n${money(order.total)}` : null,
+    `⏹️ PREFERÊNCIA\n${order.preference || "Próximo episódio disponível"}`,
     "",
     "━━━━━━━━━━━━━━━━━━",
-    "👤 DADOS DO CLIENTE",
+    "👤 CLIENTE",
     "━━━━━━━━━━━━━━━━━━",
-    `• Tipo: ${customerType}`,
-    `• Nome: ${order.customer.name}`,
-    `• WhatsApp: ${order.customer.whatsapp}`,
-    `• E-mail: ${order.customer.email}`,
-    `• ${order.customer.kind==="empresa" ? "CNPJ" : "CPF"}: ${order.customer.document}`,
-    order.customer.company?`• Empresa: ${order.customer.company}`:null,
-    order.customer.handle?`• @: ${order.customer.handle}`:null,
-    order.customer.note?`• Observação: ${order.customer.note}`:null,
+    `Tipo: ${customerType}`,
+    customer.name ? `Nome: ${customer.name}` : null,
+    customer.kind === "empresa" && customer.company ? `Empresa: ${customer.company}` : null,
+    customer.document ? `${customer.kind === "empresa" ? "CNPJ" : "CPF"}: ${customer.document}` : null,
+    customer.whatsapp ? `WhatsApp: ${customer.whatsapp}` : null,
+    customer.email ? `E-mail: ${customer.email}` : null,
+    customer.handle ? `@ / PERFIL\n${customer.handle}` : null,
+    customer.note ? `📝 OBSERVAÇÃO\n${customer.note}` : null,
     "",
+    "━━━━━━━━━━━━━━━━━━",
     "🔸 STATUS",
     "Solicitação enviada para triagem.",
     "Aguardo a análise e confirmação da DOOX Studios.",
     "",
-    "🔶 HOCCO. — DOOX STUDIOS"
+    "⏹️ Este envio não representa aprovação automática.",
+    "",
+    "🔶 HOCCO. · DOOX STUDIOS"
   ].filter(Boolean).join("\n");
-  if(CONFIG.whatsappNumber==="SEU_NUMERO_WHATSAPP_AQUI"){
-    flashToast("Configure o número do WhatsApp em app.js antes de publicar.");
+
+  const number = String(CONFIG.whatsappNumber || "").replace(/\D/g, "");
+  if (!number || number === "SEUNUMEROWHATSAPPAQUI") {
+    flashToast("Número do WhatsApp da DOOX Studios não configurado.");
     return false;
   }
-  window.location.href=`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+
+  const url = `https://wa.me/${number}?text=${encodeURIComponent(lines)}`;
+
+  // Redirecionamento funciona tanto no navegador quanto no PWA instalado.
+  window.location.assign(url);
   return true;
 }
 
 function bindPage(){
   attachProductSounds();
+
+  document.querySelectorAll("[data-external-tiktok]").forEach(link=>{
+    link.addEventListener("click",()=>{
+      // URL oficial única; mantém o destino correto mesmo dentro do PWA.
+      link.href=CONFIG.tiktok;
+    });
+  });
 
   document.querySelectorAll("[data-back]").forEach(btn=>{
     btn.addEventListener("click",()=>goBack());
@@ -729,6 +776,8 @@ function bindPage(){
     const total=unitPrice*state.quantity;
     const order={id:orderId,product:PRODUCTS[state.productId].title,productId:state.productId,categoryId:state.categoryId,quantity:state.quantity,unitPrice,preference:state.preference,total,customer:state.customer,createdAt:new Date().toISOString()};
     sessionStorage.setItem("doox_last_order",JSON.stringify(order));
+    localSet("lastOrder",order);
+    localSet("draft",{...state,customer:{...state.customer}});
     setRoute("/pedido");
   });
   const open=$("#openWhatsApp");
@@ -738,12 +787,6 @@ function bindPage(){
       if(!raw){flashToast("Pedido não encontrado nesta sessão.");return;}
       sendOrderToWhatsApp(JSON.parse(raw));
     });
-    if(window.location.hash==="#/pedido"){
-      setTimeout(()=>{
-        const raw=sessionStorage.getItem("doox_last_order");
-        if(raw) sendOrderToWhatsApp(JSON.parse(raw));
-      },1800);
-    }
   }
 
   const returnToSite=$("#returnToSite");
@@ -771,6 +814,15 @@ function bindPage(){
 
 }
 
+function applyDeviceHints(){
+  const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  if(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType||""))) document.documentElement.classList.add("low-bandwidth");
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("reduced-motion");
+  document.documentElement.classList.toggle("offline",!navigator.onLine);
+}
+window.addEventListener("online",()=>document.documentElement.classList.remove("offline"));
+window.addEventListener("offline",()=>document.documentElement.classList.add("offline"));
+applyDeviceHints();
 restoreState();
 if(!history.state || !history.state.dooxRoute){ history.replaceState({dooxRoute: window.location.hash.replace(/^#/ ,"") || "/"}, "", window.location.href); }
 render();
