@@ -1,4 +1,28 @@
-/* DOOX Studios — HOCCO. PWA MVP
+
+/* DOOX DEFINITIVO — pricing consistency patch */
+const DOOX_FINAL_PRICES = {
+  apoiador: 9.90,
+  master: 20.00,
+  overlay: { ess: 9.90, reg: 14.90, val: 19.90, prem: 29.90, esp: 39.90 },
+  overlayAudio: { ess: 29.90, reg: 39.90, val: 49.90, prem: 59.90, esp: 79.90 },
+  rodape: { standard: 14.90, premium: 29.90 },
+  comercial: { standard: 19.90 },
+  documental: { standard: 49.90 }
+};
+function dooxCategoryPrice(product, category) {
+  const map = product === 'overlay' ? DOOX_FINAL_PRICES.overlay :
+              product === 'overlay-audio' ? DOOX_FINAL_PRICES.overlayAudio :
+              product === 'rodape' ? DOOX_FINAL_PRICES.rodape :
+              product === 'comercial' ? DOOX_FINAL_PRICES.comercial :
+              product === 'documental' ? DOOX_FINAL_PRICES.documental : null;
+  if (!map) return null;
+  return Number(map[category] ?? map.standard ?? Object.values(map)[0]);
+}
+function dooxFormatBRL(v) {
+  return Number(v || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+
+/* DOOX Studios —  PWA MVP
    Persistência local no aparelho: IndexedDB + sessionStorage.
    Sem banco de dados central. Pedido finalizado no WhatsApp.
 */
@@ -11,30 +35,41 @@ const CONFIG = {
 };
 
 const PRODUCTS = {
-  apoiador: { id:"apoiador", title:"Apoiador Individual", short:"Créditos", price:9.90, priceLabel:"R$ 9,90", description:"Seu nome ou @ aparece no painel de apoiadores/créditos.", details:["Painel de apoiadores","Créditos"], type:"support" },
-  master: { id:"master", title:"Apoiador Master", short:"Destaque", price:49.90, priceLabel:"R$ 49,90", description:"Uma presença de maior destaque dentro do painel de apoiadores.", details:["Maior destaque","Painel de apoiadores"], type:"support" },
-  curso: { id:"curso", title:"Inserção em Curso", short:"Exposição", price:39.90, priceLabel:"R$ 39,90", description:"Seu @ aparece em uma faixa inferior por aproximadamente 5 segundos.", details:["~5 segundos","Exposição gráfica"], type:"display" },
-  overlay: { id:"overlay", title:"Sponsor Overlay", short:"Inserção visual", price:null, priceLabel:"R$ 9,90", description:"Inserção visual curta integrada à narrativa. A categoria de momento define o valor.", details:["~5 segundos","Controle editorial DOOX"], type:"overlay" },
-  overlayAudio: { id:"overlayAudio", title:"Sponsor Overlay + Áudio", short:"Inserção visual + som", price:null, priceLabel:"R$ 29,90", description:"Inserção visual curta com um elemento sonoro aprovado pela DOOX Studios.", details:["~5 segundos","Áudio curto integrado"], type:"overlayAudio" },
+  apoiador: { id:"apoiador", title:"Apoiador Individual", short:"Créditos", price:9.90, priceLabel:"R$ 9,90", description:"Seu nome ou @ aparece no painel de apoiadores/créditos. Não é publicidade dentro da narrativa.", details:["Painel de apoiadores","Apoio à "], type:"support" },
+  master: { id:"master", title:"Apoiador Master", short:"Destaque", price:49.90, priceLabel:"R$ 49,90", description:"Uma presença de maior destaque dentro do painel de apoiadores/créditos. Não é publicidade dentro da narrativa.", details:["Maior destaque","Painel de apoiadores"], type:"support" },
+  curso: { id:"curso", title:"Rodapé Comercial", short:"Exposição discreta", price:null, priceLabel:"R$ 15,00", description:"Identificação visual discreta da marca na parte inferior da tela, integrada à narrativa por aproximadamente 5 segundos. A categoria define a relevância esperada do momento.", details:["~5 segundos","Faixa inferior"], type:"display" },
+  insercao: { id:"insercao", title:"Inserção Comercial", short:"Empresas", price:49.90, priceLabel:"R$ 49,90", description:"Pequeno quadro retangular com a identidade visual da empresa por aproximadamente 5 segundos. Até 10 empresas por episódio.", details:["~5 segundos","Até 10 empresas por episódio"], type:"company" },
+  overlay: { id:"overlay", title:"Sponsor Overlay", short:"Inserção visual", price:null, priceLabel:"R$ 20,00", description:"Inserção visual de aproximadamente 5 segundos integrada à narrativa. A categoria define a relevância esperada do momento.", details:["~5 segundos","Controle editorial DOOX"], type:"overlay" },
+  overlayAudio: { id:"overlayAudio", title:"Sponsor Overlay + Áudio", short:"Inserção visual + som", price:null, priceLabel:"R$ 39,90", description:"Inserção visual de aproximadamente 5 segundos com um elemento sonoro curto aprovado pela DOOX Studios. A categoria define a relevância esperada do momento.", details:["~5 segundos","Áudio curto integrado"], type:"overlayAudio" },
   documental: { id:"documental", title:"Inserção Documental", short:"Projeto personalizado", price:null, priceLabel:"Sob consulta", description:"Integração de marca, produto ou serviço em projeto audiovisual personalizado.", details:["Integração narrativa","Projeto personalizado"], type:"consult" }
 };
 
 const OVERLAY_CATEGORIES = [
-  {id:"essencial", label:"Entrada Essencial", desc:"Momento de menor relevância narrativa", price:9.90},
-  {id:"regular", label:"Entrada Regular", desc:"Momento comum da história", price:14.90},
-  {id:"valorizada", label:"Entrada Valorizada", desc:"Momento de maior atenção", price:19.90},
-  {id:"premium", label:"Entrada Premium", desc:"Momento importante da narrativa", price:29.90},
-  {id:"especial", label:"Entrada Especial", desc:"Momento de altíssima relevância", price:39.90}
+  {id:"essencial", label:"Entrada Essencial", moment:"Momento de menor atenção narrativa", desc:"Inserção em um momento de baixa relevância da cena, sem conflito com acontecimentos importantes da narrativa.", price:20.00},
+  {id:"regular", label:"Entrada Regular", moment:"Momento de atenção normal", desc:"Inserção durante um momento comum do episódio, integrada naturalmente ao andamento da história.", price:29.90},
+  {id:"valorizada", label:"Entrada Valorizada", moment:"Momento de maior atenção", desc:"Inserção em uma passagem que naturalmente concentra mais atenção do espectador.", price:39.90},
+  {id:"premium", label:"Entrada Premium", moment:"Momento importante da narrativa", desc:"Inserção em uma parte relevante da narrativa, com maior potencial de atenção e retenção.", price:49.90},
+  {id:"especial", label:"Entrada Especial", moment:"Momento de alta relevância", desc:"Inserção destinada a momentos de grande destaque, tensão, expectativa ou forte atenção narrativa.", price:59.90}
 ];
 const AUDIO_CATEGORIES = [
-  {id:"essencial", label:"Entrada Essencial + Áudio", desc:"Momento de menor relevância narrativa", price:29.90},
-  {id:"regular", label:"Entrada Regular + Áudio", desc:"Momento comum da história", price:39.90},
-  {id:"valorizada", label:"Entrada Valorizada + Áudio", desc:"Momento de maior atenção", price:49.90},
-  {id:"premium", label:"Entrada Premium + Áudio", desc:"Momento importante da narrativa", price:59.90},
-  {id:"especial", label:"Entrada Especial + Áudio", desc:"Momento de altíssima relevância", price:79.90}
+  {id:"essencial", label:"Entrada Essencial + Áudio", moment:"Momento de menor atenção narrativa", desc:"Inserção visual discreta acompanhada de um elemento sonoro curto, integrada a um momento de baixa relevância.", price:39.90},
+  {id:"regular", label:"Entrada Regular + Áudio", moment:"Momento de atenção normal", desc:"Inserção visual + áudio curto durante um momento comum do episódio, integrada naturalmente à história.", price:49.90},
+  {id:"valorizada", label:"Entrada Valorizada + Áudio", moment:"Momento de maior atenção", desc:"Inserção visual + áudio em uma passagem com maior concentração de atenção do espectador.", price:59.90},
+  {id:"premium", label:"Entrada Premium + Áudio", moment:"Momento importante da narrativa", desc:"Inserção visual + áudio integrada a uma parte relevante da narrativa, com maior potencial de atenção.", price:69.90},
+  {id:"especial", label:"Entrada Especial + Áudio", moment:"Momento de alta relevância", desc:"Inserção visual + áudio em um momento de grande destaque, tensão, expectativa ou forte atenção narrativa.", price:89.90}
 ];
-function categoryFor(productId,id){ return (productId==="overlayAudio"?AUDIO_CATEGORIES:OVERLAY_CATEGORIES).find(x=>x.id===id); }
+const FOOTER_CATEGORIES = [
+  {id:"essencial", label:"Rodapé Essencial", moment:"Momento de menor atenção", desc:"Identificação discreta da marca na parte inferior da tela durante um momento de baixa relevância narrativa.", price:15.00},
+  {id:"regular", label:"Rodapé Regular", moment:"Momento de atenção normal", desc:"Presença da marca no rodapé durante um momento comum do episódio, integrada ao andamento da história.", price:20.00},
+  {id:"valorizada", label:"Rodapé Valorizado", moment:"Momento de maior atenção", desc:"Presença no rodapé durante uma passagem com maior atenção do espectador.", price:29.90},
+  {id:"premium", label:"Rodapé Premium", moment:"Momento importante da narrativa", desc:"Presença destacada no rodapé durante uma parte relevante da narrativa.", price:39.90}
+];
+function categoryFor(productId,id){
+  const cats = productId==="overlayAudio" ? AUDIO_CATEGORIES : productId==="curso" ? FOOTER_CATEGORIES : OVERLAY_CATEGORIES;
+  return cats.find(x=>x.id===id);
+}
 function categoryPrice(productId,id){ const c=categoryFor(productId,id); return c?c.price:null; }
+
 
 const state = {
   productId: null,
@@ -201,10 +236,10 @@ function home(){
       <div class="hero-content">
         <div class="kicker"><span class="rec"></span> produção audiovisual</div>
         <h1>INSIRA SUA<br><span>MARCA.</span></h1>
-        <p>Inserções comerciais dentro do universo audiovisual da HOCCO. Formatos definidos para entrar na narrativa sem transformar a experiência em uma página de publicidade.</p>
+        <p>Inserções comerciais dentro do universo audiovisual da  Formatos definidos para entrar na narrativa sem transformar a experiência em uma página de publicidade.</p>
         <div class="cta-row">
           <a class="btn primary" href="#/insercoes" data-route>Ver inserções</a>
-          <a class="btn secondary" href="#/hocco" data-route>Conhecer a HOCCO.</a>
+          <a class="btn secondary" href="#/hocco" data-route>Conhecer a </a>
         </div>
         <div class="home-socials" aria-label="Redes sociais">
           <a class="home-social-icon" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="Abrir canal no YouTube">${youtubeLogo(30)}</a>
@@ -224,12 +259,12 @@ function home(){
           <div class="card-code">O universo</div>
           <h2>Você chegou no meio da história.</h2>
         </div>
-        <p>HOCCO. acompanha a vida e a evolução de Alex Hocc diante das câmeras. A série não tem um final pronto.</p>
+        <p> acompanha a vida e a evolução de Alex Hocc diante das câmeras. A série não tem um final pronto.</p>
       </div>
       <div class="video-strip">
         <div class="media-card">
           <div class="media-content">
-            <div class="small">HOCCO.</div>
+            <div class="small"></div>
             <h3>Uma cápsula do tempo digital.</h3>
             <div>Hoje é um episódio. Daqui a anos, é memória.</div>
           </div>
@@ -274,9 +309,10 @@ function home(){
       <div class="cards">
         ${productCard(PRODUCTS.apoiador,"mais simples","R$ 9,90")}
         ${productCard(PRODUCTS.master,"maior destaque","R$ 49,90")}
-        ${productCard(PRODUCTS.curso,"exposição","R$ 39,90")}
-        ${productCard(PRODUCTS.overlay,"dedicado a empresas","R$ 9,90")}
-      ${productCard(PRODUCTS.overlayAudio,"produto separado","R$ 29,90")}
+        ${productCard(PRODUCTS.curso,"exposição","R$ 15,00")}
+        ${productCard(PRODUCTS.overlay,"dedicado a empresas","R$ 20,00")}
+      ${productCard(PRODUCTS.overlayAudio,"produto separado","R$ 39,90")}
+        ${productCard(PRODUCTS.insercao,"para empresas","R$ 49,90")}
       </div>
     </div>
   `, {showBack:false});
@@ -285,7 +321,7 @@ function home(){
 function productCard(p, ribbon, customPrice){
   return `
     <article class="card insert-card" data-product="${p.id}">
-      <div class="ribbon">${p.id === "overlay" || p.id === "overlayAudio" ? "Dedicado a empresas" : ribbon}</div>
+      <div class="ribbon">${p.type === "company" || p.type === "display" || p.type === "overlay" || p.type === "overlayAudio" ? "Dedicado a empresas" : ribbon}</div>
       <div class="card-top">
         <div class="card-code">${p.type === "support" ? "apoio" : p.type === "display" ? "faixa" : p.type === "overlay" || p.type === "overlayAudio" ? "overlay" : "projeto"}</div>
         
@@ -310,6 +346,7 @@ function attachProductSounds(){
       const id=btn.dataset.productId;
       state.productId=id; state.categoryId=null; state.quantity=1;
       if(id==="documental") setRoute("/insercao-documental");
+      else if(id==="insercao") setRoute("/escolher");
       else setRoute("/escolher");
     });
   });
@@ -318,16 +355,26 @@ function attachProductSounds(){
 function insertions(){
   return pageShell(`
     <div class="section-head">
-      <div><div class="card-code">DOOX STUDIOS / HOCCO.</div><h1 style="font-size:58px;line-height:.94;letter-spacing:-.06em;margin:.15em 0 0">Escolha sua inserção.</h1></div>
-      <p>Formatos comerciais integrados ao universo audiovisual da HOCCO. Você escolhe o formato, a categoria e a quantidade. A DOOX define o encaixe final.</p>
+      <div><div class="card-code">DOOX STUDIOS / </div><h1 style="font-size:58px;line-height:.94;letter-spacing:-.06em;margin:.15em 0 0">Escolha sua inserção.</h1></div>
+      <p>Formatos comerciais e modalidades de apoio integrados ao universo audiovisual da  Os valores completos aparecem dentro de cada modalidade.</p>
     </div>
-    <div class="cards">
-      ${productCard(PRODUCTS.apoiador,"APOIADOR","R$ 9,90")}
-      ${productCard(PRODUCTS.master,"APOIADOR MASTER","R$ 49,90")}
-      ${productCard(PRODUCTS.curso,"EXPOSIÇÃO","R$ 39,90")}
-      ${productCard(PRODUCTS.overlay,"SPONSOR OVERLAY","R$ 9,90")}
-      ${productCard(PRODUCTS.overlayAudio,"SPONSOR OVERLAY + ÁUDIO","R$ 29,90")}
-      ${productCard(PRODUCTS.documental,"PROJETO","Sob consulta")}
+
+    <div class="section" style="margin-bottom:26px">
+      <div class="card-code">PARA EMPRESAS</div>
+      <div class="cards">
+        ${productCard(PRODUCTS.insercao,"10 vagas por episódio","R$ 49,90")}
+        ${productCard(PRODUCTS.curso,"exposição discreta","R$ 15,00")}
+        ${productCard(PRODUCTS.overlay,"inserção visual","R$ 20,00")}
+        ${productCard(PRODUCTS.overlayAudio,"visual + áudio","R$ 39,90")}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card-code">PARA APOIADORES</div>
+      <div class="cards">
+        ${productCard(PRODUCTS.apoiador,"apoio","R$ 9,90")}
+        ${productCard(PRODUCTS.master,"maior destaque","R$ 49,90")}
+      </div>
     </div>
   `);
 }
@@ -336,7 +383,7 @@ function hocco(){
   return pageShell(`
     <div class="section-head">
       <div>
-        <div class="kicker"><span class="rec"></span> HOCCO.</div>
+        <div class="kicker"><span class="rec"></span> </div>
         <h1 style="font-size:64px;line-height:.96;letter-spacing:-.06em;margin:.15em 0">Uma série original<br>DOOX Studios.</h1>
       </div>
     </div>
@@ -344,13 +391,13 @@ function hocco(){
       <div class="detail-panel">
         <div class="card-code">A história</div>
         <h2 style="font-size:34px;line-height:1;letter-spacing:-.04em">Você chegou no meio da história.</h2>
-        <p>HOCCO. acompanha a vida de Alex Hocc enquanto novos projetos, empresas, pessoas, erros, decisões e acontecimentos surgem diante das câmeras.</p>
+        <p> acompanha a vida de Alex Hocc enquanto novos projetos, empresas, pessoas, erros, decisões e acontecimentos surgem diante das câmeras.</p>
         <p>A série não tem um fim programado. Ela está em constante evolução. O próximo episódio ainda não aconteceu.</p>
         <div class="muted-box">A proposta é guardar momentos do presente como uma cápsula do tempo digital: pessoas, lugares e acontecimentos que poderão ser revistos muitos anos depois.</div>
       </div>
       <div class="stat-card">
         <div class="inner">
-          <h3>Memória HOCCO.</h3>
+          <h3>Memória </h3>
           <p>Você pode fazer parte de algo que continua sendo construído.</p>
           <div class="social-dock" aria-label="Redes sociais da HOCCO">
             <a class="social-icon-button" href="https://www.youtube.com/@HOCCPOV" target="_blank" rel="noopener noreferrer" aria-label="YouTube HOCCPOV" title="YouTube">${youtubeLogo(34)}</a>
@@ -378,15 +425,15 @@ function howWorks(){
       <div class="timeline-item"><strong>3. Produção</strong><span>A equipe encaixa a inserção no planejamento editorial.</span></div>
       <div class="timeline-item"><strong>4. Aviso</strong><span>Você recebe episódio e tempo previsto antes da publicação.</span></div>
     </div>
-    <div class="section"><button class="rule-trigger standalone" id="ruleCentral" type="button">REGRA CENTRAL</button></div>
-    <div id="ruleModal" class="modal" hidden><div class="modal-backdrop" data-close-modal></div><div class="modal-card"><button class="modal-close" data-close-modal aria-label="Fechar">×</button><div class="card-code">REGRA CENTRAL</div><h2>Você não compra o minuto.<br>Você compra a inserção.</h2><p>A DOOX Studios mantém o controle editorial da HOCCO. O cliente escolhe a modalidade, a categoria de momento e a quantidade desejada.</p><p>A DOOX analisa narrativa, edição, importância da cena, planejamento, disponibilidade e equilíbrio do episódio para definir o encaixe final.</p><p>A categoria escolhida representa uma faixa de relevância, não um minuto específico. Quando a inserção estiver programada, a DOOX informará o episódio e o tempo previsto de aparição.</p><button class="btn primary full" data-close-modal>ENTENDI</button></div></div>
+    <div class="section"></div>
+    <div id="ruleModal" class="modal" hidden><div class="modal-backdrop" data-close-modal></div><div class="modal-card"><button class="modal-close" data-close-modal aria-label="Fechar">×</button><h2><br></h2><p> O cliente escolhe a modalidade, a categoria de momento e a quantidade desejada.</p><p>A DOOX analisa narrativa, edição, importância da cena, planejamento, disponibilidade e equilíbrio do episódio para definir o encaixe final.</p><p>A categoria escolhida representa uma faixa de relevância, não um minuto específico. Quando a inserção estiver programada, a DOOX informará o episódio e o tempo previsto de aparição.</p><button class="btn primary full" data-close-modal></button></div></div>
   `);
 }
 
 function choose(){
   if(!state.productId) return setRoute("/insercoes");
   const p=PRODUCTS[state.productId];
-  if(state.productId==="overlay" || state.productId==="overlayAudio") return overlayChooser();
+  if(state.productId==="overlay" || state.productId==="overlayAudio" || state.productId==="curso") return overlayChooser();
   return pageShell(`
     <div class="insert-grid">
       <div class="detail-panel">
@@ -399,15 +446,15 @@ function choose(){
 }
 
 function overlayChooser(){
-  const p=PRODUCTS[state.productId], isAudio=state.productId==="overlayAudio", categories=isAudio?AUDIO_CATEGORIES:OVERLAY_CATEGORIES;
+  const p=PRODUCTS[state.productId], isAudio=state.productId==="overlayAudio", isFooter=state.productId==="curso", categories=isAudio?AUDIO_CATEGORIES:isFooter?FOOTER_CATEGORIES:OVERLAY_CATEGORIES;
   const selected=categoryFor(state.productId,state.categoryId);
   return pageShell(`
-    <div class="section-head"><div><div class="card-code">${p.title}</div><h1>${isAudio?"Imagem + som.":"A marca entra na cena."}</h1></div><p>${isAudio?"Modalidade própria com elemento sonoro curto integrado à aparição. O áudio é analisado pela produção.":"Inserção visual de aproximadamente 5 segundos integrada à narrativa."}</p></div>
+    <div class="section-head"><div><div class="card-code">${p.title}</div><h1>${isAudio?"Imagem + som.":isFooter?"Presença no rodapé.":"A marca entra na cena."}</h1></div><p>${isAudio?"Modalidade própria com elemento sonoro curto integrado à aparição. O áudio é analisado pela produção.":isFooter?"Identificação visual discreta na parte inferior da tela, aproximadamente 5 segundos, com categoria definida pela relevância esperada do momento.":"Inserção visual de aproximadamente 5 segundos integrada à narrativa."}</p></div>
     <div class="insert-grid">
       <div class="detail-panel">
         <div class="card-code">Escolha a categoria</div>
-        <div class="slot-grid">${categories.map(c=>`<button class="slot-card ${state.categoryId===c.id?"selected":""}" data-category="${c.id}" type="button"><span><strong>${c.label}</strong><small>${c.desc}</small></span><span class="price">${money(c.price)}</span></button>`).join("")}</div>
-        <button class="rule-trigger" id="ruleCentral" type="button">REGRA CENTRAL</button>
+        <div class="slot-grid">${categories.map(c=>`<button class="slot-card ${state.categoryId===c.id?"selected":""}" data-category="${c.id}" type="button"><span><strong>${c.label}</strong><small>${c.moment}</small><em>${c.desc}</em></span><span class="price">${money(c.price)}</span></button>`).join("")}</div>
+        
       </div>
       <div class="detail-panel">
         <div class="card-code">Resumo da solicitação</div>
@@ -417,7 +464,7 @@ function overlayChooser(){
         <div style="margin-top:15px"><button class="btn primary full" id="continueBug" type="button" ${selected?"":"disabled"}>Continuar</button></div>
       </div>
     </div>
-    <div id="ruleModal" class="modal" hidden><div class="modal-backdrop" data-close-modal></div><div class="modal-card"><button class="modal-close" data-close-modal aria-label="Fechar">×</button><div class="card-code">REGRA CENTRAL</div><h2>Você não compra o minuto.<br>Você compra a inserção.</h2><p>A DOOX Studios mantém o controle editorial da HOCCO. O cliente escolhe a modalidade, a categoria e a quantidade desejada.</p><p>A DOOX analisa narrativa, edição, importância da cena, planejamento, disponibilidade e equilíbrio do episódio para definir o encaixe final.</p><p>A categoria escolhida representa uma faixa de relevância, não um minuto específico. Quando a inserção estiver programada, a DOOX informará o episódio e o tempo previsto de aparição.</p><button class="btn primary full" data-close-modal>ENTENDI</button></div></div>`);
+    <div id="ruleModal" class="modal" hidden><div class="modal-backdrop" data-close-modal></div><div class="modal-card"><button class="modal-close" data-close-modal aria-label="Fechar">×</button><h2><br></h2><p> O cliente escolhe a modalidade, a categoria e a quantidade desejada.</p><p>A DOOX analisa narrativa, edição, importância da cena, planejamento, disponibilidade e equilíbrio do episódio para definir o encaixe final.</p><p>A categoria escolhida representa uma faixa de relevância, não um minuto específico. Quando a inserção estiver programada, a DOOX informará o episódio e o tempo previsto de aparição.</p><button class="btn primary full" data-close-modal></button></div></div>`);
 }
 
 function customerForm(){
@@ -425,6 +472,7 @@ function customerForm(){
   let unitPrice = p.price;
   if(state.productId==="overlay") unitPrice = categoryPrice(state.productId,state.categoryId);
   if(state.productId==="overlayAudio") unitPrice = categoryPrice(state.productId,state.categoryId);
+  if(state.productId==="curso") unitPrice = categoryPrice(state.productId,state.categoryId);
   const total = unitPrice * state.quantity;
   const isCompany = state.customer.kind === "empresa";
   return pageShell(`
@@ -507,8 +555,8 @@ function reviewOrder(){
 function orderSuccess(orderId,total){
   return pageShell(`<div class="handoff-screen">
     <div class="handoff-rec"><span class="rec"></span> pedido recebido</div>
-    <div class="handoff-title">BEM-VINDO AO UNIVERSO</div>
-    <div class="handoff-hocco">HOCCO.</div>
+    
+    <div class="handoff-hocco"></div>
     <p>Seu pedido foi registrado. Agora vamos continuar a triagem no WhatsApp da DOOX Studios.</p>
     <div class="handoff-order">Pedido ${orderId} · ${money(total)}</div>
     <div class="handoff-loader"><span></span><span></span><span></span></div>
@@ -546,7 +594,7 @@ function terms(){
     <h1>Termos de Uso</h1>
     <p>Versão inicial do MVP comercial da DOOX Studios. Este texto é um modelo operacional e deve ser revisado juridicamente antes da utilização comercial definitiva.</p>
     <h2>1. Objeto</h2>
-    <p>Este site permite solicitar e adquirir modalidades comerciais e inserções relacionadas à série HOCCO., produzida pela DOOX Studios.</p>
+    <p>Este site permite solicitar e adquirir modalidades comerciais e inserções relacionadas à série , produzida pela DOOX Studios.</p>
     <h2>2. Pedido, análise e atendimento</h2>
     <p>O pedido é criado no site e encaminhado ao atendimento oficial da DOOX Studios. A solicitação passa por análise de disponibilidade, formato, quantidade e encaixe editorial antes da confirmação. Eventuais condições de pagamento serão informadas pela equipe no atendimento oficial.</p>
     <h2>3. Controle editorial</h2>
@@ -563,7 +611,7 @@ function terms(){
     <h2>8. Comunicação</h2>
     <p>O comprador autoriza comunicações operacionais relacionadas ao pedido por WhatsApp e/ou e-mail, incluindo confirmação, pagamento, programação, alteração e publicação.</p>
     <h2>9. Propriedade intelectual</h2>
-    <p>Nome, identidade visual, conteúdo, materiais e marcas da DOOX Studios e da HOCCO. permanecem protegidos pelas normas aplicáveis e não podem ser explorados comercialmente sem autorização.</p>
+    <p>Nome, identidade visual, conteúdo, materiais e marcas da DOOX Studios e da  permanecem protegidos pelas normas aplicáveis e não podem ser explorados comercialmente sem autorização.</p>
     <h2>10. Atualizações</h2>
     <p>A DOOX Studios pode atualizar estes termos para refletir mudanças no site, nos produtos ou na legislação, sem afastar direitos já consolidados dos consumidores.</p>
   </div>`);
@@ -621,7 +669,7 @@ function sendOrderToWhatsApp(order){
 
   const lines = [
     "🔶 DOOX STUDIOS",
-    "🔸 NOVA SOLICITAÇÃO HOCCO.",
+    "🔸 NOVA SOLICITAÇÃO ",
     "━━━━━━━━━━━━━━━━━━",
     "",
     `✅ PEDIDO ${order.id || "#DOOX-XXXX"}`,
@@ -653,7 +701,7 @@ function sendOrderToWhatsApp(order){
     "",
     "⏹️ Este envio não representa aprovação automática.",
     "",
-    "🔶 HOCCO. · DOOX STUDIOS"
+    "🔶  · DOOX STUDIOS"
   ].filter(Boolean).join("\n");
 
   const number = String(CONFIG.whatsappNumber || "").replace(/\D/g, "");
@@ -826,3 +874,20 @@ applyDeviceHints();
 restoreState();
 if(!history.state || !history.state.dooxRoute){ history.replaceState({dooxRoute: window.location.hash.replace(/^#/ ,"") || "/"}, "", window.location.href); }
 render();
+
+
+/* DOOX DEFINITIVO — final handoff and review */
+function dooxShowHandoffAndWhatsApp(message){
+  const overlay = document.getElementById('hoccoHandoff');
+  if (overlay) {
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+  }
+  sessionStorage.setItem('doox_last_order', JSON.stringify({
+    savedAt: new Date().toISOString(),
+    message: message
+  }));
+  setTimeout(() => {
+    window.location.href = 'https://wa.me/5514981150675?text=' + encodeURIComponent(message);
+  }, 1300);
+}

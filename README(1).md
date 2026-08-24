@@ -1,4 +1,4 @@
-# DOOX Studios — Site comercial da HOCCO.
+# DOOX Studios — Site comercial da 
 
 MVP estático, sem banco de dados e sem gateway de pagamento.
 

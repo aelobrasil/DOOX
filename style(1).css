@@ -353,7 +353,7 @@ button{cursor:pointer}
 .home-inline-social:hover{transform:translateY(-2px);background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.28)}
 .home-inline-social svg{display:block}
 
-/* HOCCO. cinematic opening */
+/*  cinematic opening */
 .intro-screen{position:fixed;inset:0;z-index:9999;background:#111;display:grid;place-items:center;overflow:hidden;color:#fff;pointer-events:none}
 .intro-screen::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,106,0,.10),transparent 42%);animation:introGlow 3.6s ease-in-out both}
 .intro-stack{position:relative;z-index:1;width:min(90vw,760px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:0}
@@ -501,3 +501,6 @@ button{cursor:pointer}
 .modal-close{position:absolute;right:15px;top:12px;border:0;background:transparent;font-size:27px;color:#777}
 @keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:650px){.modal-card{padding:25px 20px}.slot-card{padding:15px}.slot-card .price{font-size:14px}}
+.slot-card em{display:block;font-style:normal;color:#666;font-size:11px;line-height:1.35;margin-top:6px;max-width:620px}
+.slot-card span:first-child{min-width:0}
+@media(max-width:650px){.slot-card em{font-size:10.5px}.slot-card{gap:10px}.slot-card .price{align-self:flex-start}}
