@@ -1,105 +1,907 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="DOOX Studios — Inserções comerciais da " />
-  <meta name="theme-color" content="#111111" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="" />
-  <link rel="icon" href="./favicon.ico" sizes="any" />
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <link rel="manifest" href="./site.webmanifest" />
-  <title>Doox</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ff6900">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HOCCO">
+<title>Doox</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2309090a'/%3E%3Ctext x='12' y='45' font-family='Arial' font-size='37' font-weight='900' fill='white'%3ED%3C/text%3E%3Ccircle cx='47' cy='17' r='5' fill='%23ff6a00'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#0a0a0b;--paper:#f5f4f1;--white:#fff;--line:#e6e3dd;--muted:#696969;--orange:#ff6900;--orange2:#ff8a34;--dark:#111113;--soft:#f0ede7;--shadow:0 24px 80px #00000012}
+*{box-sizing:border-box}html,body{min-height:100%}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}.wrap{width:min(1200px,calc(100% - 32px));margin:auto}.top{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:80;width:min(1200px,calc(100% - 24px));margin:0;height:74px;padding:0 14px 0 20px;border:1px solid #ffffffc9;background:#fffffff0;backdrop-filter:blur(18px);border-radius:25px;box-shadow:0 18px 60px #00000010;display:flex;align-items:center;justify-content:space-between}.brand{font-size:29px;font-weight:950;letter-spacing:-2.5px;cursor:pointer}.brand i{color:var(--orange);font-style:normal}.tabs{display:flex;gap:3px;align-items:center}.tab{appearance:none;border:0;background:transparent;color:#6b6b6b;padding:11px 13px;border-radius:13px;font-size:13px;font-weight:800;cursor:pointer;transition:.25s}.tab:hover,.tab.active{background:#111;color:#fff}.top .ctaSmall{border:0;background:var(--orange);color:#111;border-radius:15px;padding:13px 17px;font-weight:950;cursor:pointer}.mobileMenu{display:none;border:0;background:#111;color:#fff;border-radius:13px;padding:11px 13px}.views{position:relative;min-height:calc(100vh - 100px)}.view{display:none;animation:pageOut .35s ease both}.view.active{display:block;animation:pageIn .58s cubic-bezier(.2,.8,.2,1) both}@keyframes pageIn{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:none}}@keyframes pageOut{to{opacity:0;transform:translateY(-8px)}}
+.hero{min-height:800px;position:relative;overflow:hidden;margin-top:-86px;padding-top:180px;color:#fff;background:#080808}.heroBg{position:absolute;inset:0;background:radial-gradient(circle at 78% 28%,#ff690033,transparent 28%),radial-gradient(circle at 22% 78%,#ff9b2d22,transparent 28%),linear-gradient(120deg,#050505,#11100e 48%,#050505);filter:saturate(.8)}.heroGrid{position:absolute;inset:0;opacity:.22;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:54px 54px}.orb{position:absolute;border-radius:50%;filter:blur(4px);background:radial-gradient(circle at 35% 35%,#ffc486,#ff6900 42%,#180a00 68%)}.orb.a{width:460px;height:460px;right:-100px;top:140px;opacity:.4}.orb.b{width:260px;height:260px;left:10%;bottom:-90px;opacity:.25}.hero .content{position:relative;z-index:2}.eyebrow{display:inline-flex;align-items:center;gap:9px;border:1px solid #ffffff25;background:#ffffff0e;padding:9px 12px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:1.6px}.dot{width:7px;height:7px;border-radius:50%;background:var(--orange);box-shadow:0 0 18px var(--orange)}h1{font-size:clamp(50px,8.2vw,108px);line-height:.98;letter-spacing:-5px;margin:28px 0 22px;max-width:930px;overflow-wrap:anywhere}.accent{color:var(--orange)}.lead{max-width:710px;color:#d0d0d0;font-size:19px;line-height:1.65}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}.btn{border:0;border-radius:17px;padding:15px 20px;font-weight:950;cursor:pointer;transition:.25s}.btn:hover{transform:translateY(-2px)}.btn.orange{background:var(--orange);color:#111}.btn.ghost{background:#ffffff10;border:1px solid #ffffff1c;color:#fff}.heroSocials{position:relative;z-index:3;margin-top:28px;display:flex;align-items:center;gap:10px;color:#bbb}.heroSocials span{width:34px;height:34px;display:grid;place-items:center;border:1px solid #ffffff22;border-radius:10px;background:#ffffff0d;font-weight:950}.heroSocials span:nth-child(2){font-size:11px}.heroSocials small{font-size:11px;letter-spacing:.8px;color:#999}.statline{position:relative;z-index:2;margin:72px auto 38px;width:min(1200px,calc(100% - 32px));display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{border:1px solid #ffffff15;background:#ffffff0a;backdrop-filter:blur(12px);padding:17px 18px;border-radius:20px}.stat b{display:block;font-size:18px}.stat span{display:block;font-size:12px;color:#bdbdbd;margin-top:4px}
+.section{padding:82px 0}.section.dark{background:#101011;color:#fff}.kicker{color:var(--orange);font-size:11px;letter-spacing:2px;font-weight:950}.title{font-size:clamp(40px,6vw,74px);line-height:.95;letter-spacing:-5px;margin:14px 0 16px}.desc{max-width:760px;color:var(--muted);font-size:17px;line-height:1.7}.dark .desc{color:#aaa}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid var(--line);border-radius:30px;padding:28px;box-shadow:0 8px 30px #00000006}.card.darkCard{background:#171718;border-color:#262628;color:#fff}.card h3{font-size:29px;letter-spacing:-2px;margin:15px 0 10px}.card p{color:#6b6b6b;line-height:1.6}.card.darkCard p{color:#b5b5b5}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}.product{min-height:340px;display:flex;flex-direction:column;position:relative;overflow:hidden}.product:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-40px;top:-40px;background:radial-gradient(circle,#ff690026,transparent 68%)}.num{font-size:11px;letter-spacing:1.5px;color:var(--orange);font-weight:950}.price{margin-top:auto;font-size:30px;font-weight:950;letter-spacing:-2px}.meta{font-size:12px;color:#777;margin-top:8px}.product button{margin-top:18px;background:#111;color:#fff;border:0;border-radius:15px;padding:13px;font-weight:900;cursor:pointer}.seg{display:inline-flex;padding:5px;border-radius:17px;background:#ebe8e2;gap:4px;margin-top:24px}.seg button{border:0;background:transparent;padding:10px 13px;border-radius:12px;font-weight:850;color:#666;cursor:pointer}.seg button.active{background:#fff;color:#111;box-shadow:0 6px 18px #0000000c}
+.previewShell{margin-top:30px;background:#111;border-radius:38px;padding:16px;color:#fff;box-shadow:var(--shadow)}.previewTop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px}.previewTitle small{display:block;color:var(--orange);font-weight:950;letter-spacing:1.4px}.previewTitle b{display:block;margin-top:5px}.switch{display:flex;gap:5px;background:#202021;padding:5px;border-radius:14px}.switch button{border:0;background:transparent;color:#aaa;padding:9px 11px;border-radius:10px;font-weight:800;cursor:pointer}.switch button.active{background:#fff;color:#111}.screen{position:relative;aspect-ratio:16/9;border-radius:27px;overflow:hidden;background:#19191a;transition:.45s}.screen.phone{max-width:390px;aspect-ratio:9/16;margin:auto}.scene{position:absolute;inset:0;background:transparent;transition:.5s;pointer-events:none}.scene:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 25% 28%,#ffffff25 0 5%,transparent 22%),linear-gradient(90deg,#0004,#0000 45%,#0005)}.scene:after{content:"";position:absolute;left:12%;bottom:0;width:40%;height:65%;background:linear-gradient(160deg,#161616,#3a3a3a);clip-path:polygon(20% 0,70% 0,100% 100%,0 100%);opacity:.55}.screen[data-moment="regular"] .scene{background:linear-gradient(145deg,#25465a,#806348 55%,#272122)}.screen[data-moment="valued"] .scene{background:linear-gradient(145deg,#2d1720,#80521e 52%,#17191f)}.screen[data-moment="premium"] .scene{background:linear-gradient(145deg,#191923,#5d1f18 50%,#08090a)}.screen[data-moment="special"] .scene{background:linear-gradient(145deg,#17110c,#8a5a19 48%,#090a0b)}.playerMark{position:absolute;left:16px;top:14px;font-size:10px;font-weight:900;letter-spacing:1px;background:#0008;padding:8px 10px;border-radius:999px}.sceneLabel{position:absolute;left:18px;bottom:43px;font-size:11px;color:#ddd}.progress{position:absolute;left:18px;right:18px;bottom:18px;height:4px;border-radius:99px;background:#ffffff3a}.progress i{display:block;height:100%;width:42%;border-radius:inherit;background:var(--orange);transition:width .5s ease}.timeBadge{position:absolute;right:18px;bottom:28px;background:#fff;color:#111;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:950;box-shadow:0 8px 20px #0005}.timeBadge span{color:var(--orange);margin-left:4px}.creditClock{position:absolute;right:18px;top:16px;color:#aaa;font-size:10px;letter-spacing:1px}.overlay{position:absolute;opacity:0;pointer-events:none;transition:.45s}.overlay.show{opacity:1;transform:none}.visualOverlay{right:4%;top:15%;bottom:auto;width:min(42%,360px);padding:15px 16px;border:1px solid var(--orange);border-radius:20px;background:#111e;transform:translateY(18px)}.visualOverlay.show{animation:demoIn 5.2s ease both}.footerPresence.show{animation:demoIn 5.2s ease both}.creditsOverlay.show{animation:creditsRise 5.8s ease both}.masterOverlay.show{animation:sponsorReveal 6.2s ease both}.episodeSponsor.show{animation:sponsorReveal 6.2s ease both}.visualOverlay .handle{font-size:10px;color:var(--orange);font-weight:950}.visualOverlay .companyName{font-size:clamp(16px,2.1vw,26px);font-weight:950;margin-top:4px}.visualOverlay .tiny{font-size:10px;color:#aaa;margin-top:4px}.audioBadge{display:none;margin-top:9px;background:var(--orange);color:#111;width:max-content;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:950}.footerPresence{left:0;right:0;bottom:0;padding:13px 20px;background:#0a0a0ae8;border-top:1px solid #ffffff24;display:flex;justify-content:space-between;align-items:center;transform:translateY(100%)}.footerPresence .fpName{font-weight:950}.footerPresence .fpHandle{color:var(--orange);font-size:12px}.creditsOverlay{left:8%;right:8%;top:18%;bottom:16%;padding:30px;background:linear-gradient(#0b0b0be6,#0b0b0bc7);border:1px solid #ffffff16;border-radius:25px;text-align:center;transform:scale(.95)}.creditsOverlay small{color:var(--orange);letter-spacing:1.8px;font-weight:950}.creditsOverlay h3{font-size:clamp(30px,5vw,62px);margin:18px 0 8px;letter-spacing:-3px}.creditsOverlay p{color:#aaa}.masterOverlay{left:8%;right:8%;top:15%;bottom:13%;padding:35px;background:radial-gradient(circle at 50% 25%,#ff690028,transparent 30%),#0b0b0bea;border:1px solid #ff690066;border-radius:25px;text-align:center;transform:scale(.95)}.masterOverlay small{color:var(--orange);font-weight:950;letter-spacing:2px}.masterOverlay h3{font-size:clamp(34px,6vw,70px);letter-spacing:-4px;margin:25px 0 6px}.sponsorTopBrand{display:flex;align-items:center;gap:12px}.sponsorTopBrand h3{margin:3px 0;font-size:clamp(20px,3vw,34px)}.episodeSponsor{left:5%;right:auto;top:5%;bottom:auto;min-width:min(78%,520px);top:20%;bottom:20%;background:#101010e8;border:1px solid #ffffff19;border-radius:26px;padding:25px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transform:scale(.95)}.episodeSponsor small{color:#aaa}.episodeSponsor h3{font-size:clamp(28px,5vw,60px);letter-spacing:-3px;margin:12px 0}.episodeSponsor b{color:var(--orange)}.controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:12px}.control{background:#1c1c1e;border:1px solid #2c2c2f;border-radius:17px;padding:12px}.control label{display:block;color:#9a9a9a;font-size:10px;font-weight:900;letter-spacing:1px;margin-bottom:7px}.control input,.control select{width:100%;border:0;background:transparent;color:#fff;outline:0;font-weight:850}.control option{color:#111}.playDemo{width:100%;margin-top:12px;background:#1a1a1c;border:1px solid #343438;border-radius:17px;padding:14px;font-weight:900;cursor:pointer;color:#fff;transition:.2s}.playDemo:hover{border-color:var(--orange);color:#fff}
+.posterPage{padding:58px 0 80px}.posterGrid{display:grid;grid-template-columns:.8fr 1.2fr;gap:42px;align-items:center}.posterImg{width:100%;max-width:520px;margin:auto;border-radius:28px;box-shadow:0 30px 90px #00000025;display:block}.posterInfo{padding:18px}.posterInfo h1{color:#111;font-size:clamp(50px,8vw,100px);margin-top:12px}.posterInfo .lead{color:#666}.how{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:32px}.step{border:1px solid var(--line);background:#fff;border-radius:24px;padding:20px;min-height:175px}.step b{color:var(--orange);font-size:13px}.step h3{font-size:21px;letter-spacing:-1px}.step p{color:#777;font-size:13px;line-height:1.5}.formBox{background:#111;color:#fff;border-radius:38px;padding:42px}.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:25px}.field{background:#1c1c1e;border:1px solid #303033;border-radius:17px;padding:13px}.field label{display:block;color:#999;font-size:10px;font-weight:900;letter-spacing:1px;margin-bottom:7px}.field input,.field select,.field textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-weight:800;resize:vertical}.field option{color:#111}.wide{grid-column:1/-1}.summary{grid-column:1/-1;border:1px solid #2e2e31;background:#1a1a1c;border-radius:18px;padding:16px;color:#bbb}.summary strong{float:right;color:var(--orange);font-size:24px}.fine{color:#999;font-size:12px;line-height:1.6}.footer{border-top:1px solid var(--line);padding:26px 0 36px;background:#f7f6f3}.footerRow{display:flex;align-items:center;justify-content:space-between;gap:16px}.footerLinks{display:flex;gap:18px;align-items:center}.footerLinks button,.footerLinks a{border:0;background:none;color:#555;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer;padding:0}.socials{display:flex;gap:9px}.social{width:38px;height:38px;border:1px solid #ddd;border-radius:12px;display:grid;place-items:center;color:#111;text-decoration:none;transition:.2s}.social:hover{background:#111;color:#fff}.social svg{width:19px;height:19px;fill:currentColor}.legal{position:fixed;z-index:100;inset:0;display:none;place-items:center;padding:20px;background:#0008;backdrop-filter:blur(8px)}.legal.open{display:grid}.legalBox{width:min(800px,100%);max-height:86vh;overflow:auto;background:#fff;border-radius:30px;padding:30px;box-shadow:0 30px 100px #00000040}.legalBox h2{font-size:38px;letter-spacing:-3px}.legalBox p,.legalBox li{color:#666;line-height:1.7}.close{float:right;width:40px;height:40px;border:0;border-radius:50%;background:#111;color:#fff;font-size:20px;cursor:pointer}.notice{margin-top:18px;padding:16px 18px;border-radius:17px;background:#fff2e9;border:1px solid #ffd8bf;color:#6b3510;font-size:13px;line-height:1.55}
 
-</head>
+.backGlobal{position:fixed;left:22px;top:98px;z-index:79;display:none;align-items:center;gap:8px;border:1px solid #dedbd5;background:#fffffff0;backdrop-filter:blur(14px);color:#111;border-radius:15px;padding:11px 16px;font-weight:900;box-shadow:0 12px 35px #00000012;cursor:pointer}.backGlobal.show{display:flex}.backGlobal:hover,.backGlobal:focus-visible{background:var(--orange);border-color:var(--orange);color:#111;outline:none}.backGlobal.show{display:flex}.hero .content{padding-bottom:18px}.hero h1{word-break:normal}.hero .lead{position:relative;z-index:3}.statline{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important}.visualOverlay{left:3.2%;right:auto;top:5.5%;bottom:auto;width:min(48%,430px);padding:10px 13px;border:1px solid #ffffff28;background:#090909eF;border-radius:18px;transform:translateY(-14px);display:flex;align-items:center;gap:10px}.hoccoMark{width:42px;height:42px;border-radius:12px;object-fit:cover;border:1px solid #ffffff25;flex:0 0 auto}.companyLogoWrap{width:42px;height:42px;border-radius:12px;background:#fff;display:grid;place-items:center;overflow:hidden;flex:0 0 auto;border:1px solid #ffffff20}.companyLogoWrap img{width:100%;height:100%;object-fit:contain}.companyLogoFallback{font-size:12px;font-weight:950;color:#111}.sponsorCopy{min-width:0;line-height:1.15}.visualOverlay .handle{margin:0;color:#ff8a34;font-size:13px}.visualOverlay .companyName{font-size:clamp(18px,2.4vw,30px);margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.visualOverlay .tiny{margin:4px 0 0}.audioBadge{margin-top:6px}.proceedWrap{margin-top:18px;display:flex;justify-content:center}.proceedWrap .btn{min-width:min(100%,520px);font-size:15px}.legalBox{max-width:920px}.legalBox h3{margin:26px 0 8px;font-size:18px}.legalBox p,.legalBox li{line-height:1.7;color:#555}.legalBox ul{padding-left:20px}.legalBox .updated{font-size:12px;color:#999;margin-bottom:20px}
+@media(max-width:980px){.tabs{display:none}.mobileMenu{display:block}.top{height:68px}.cards{grid-template-columns:1fr 1fr}.grid2,.posterGrid{grid-template-columns:1fr}.controls{grid-template-columns:1fr 1fr}.how{grid-template-columns:1fr 1fr}.statline{grid-template-columns:1fr}.hero{min-height:850px}.statline{position:relative;bottom:auto;left:auto;transform:none;margin-top:45px}.hero .content{padding-bottom:30px}.posterImg{max-width:440px}}
+@media(max-width:650px){.wrap{width:min(100% - 22px,1200px)}.top{width:calc(100% - 16px);top:8px;left:50%;transform:translateX(-50%);padding-left:16px}.ctaSmall{display:none}.mobileMenu{font-size:0}.mobileMenu:after{content:'☰';font-size:18px}.title{letter-spacing:-3px}.cards,.controls,.formGrid,.how{grid-template-columns:1fr}.hero{padding-top:145px;min-height:780px}h1{letter-spacing:-4px}.lead{font-size:16px}.section{padding:62px 0}.previewShell{border-radius:28px;padding:10px}.screen{border-radius:22px}.visualOverlay{width:65%}.footerRow{align-items:flex-start;flex-direction:column}.footerLinks{flex-wrap:wrap}.footerLinks{gap:13px}.formBox{padding:26px 18px;border-radius:28px}.summary strong{display:block;float:none;margin-top:6px}.posterPage{padding-top:35px}}
+
+#openingSplash{position:fixed;inset:0;z-index:999;background:#fff;display:grid;place-items:center;overflow:hidden;transition:opacity .8s ease,visibility .8s ease}.opening-hidden{opacity:0;visibility:hidden}.splashWord{position:relative;font-size:clamp(42px,8vw,92px);font-weight:950;letter-spacing:-5px;color:#0a0a0b;z-index:2}.splashDot{color:var(--orange)}.splashLines{position:absolute;inset:12%;border:1px solid #ff69004d;border-radius:42px;box-shadow:inset 0 0 0 1px #ff690018}.splashLines:before,.splashLines:after{content:"";position:absolute;background:var(--orange)}.splashLines:before{height:1px;left:0;right:18%;top:22%}.splashLines:after{width:1px;top:0;bottom:24%;right:22%}.splashCorner{position:absolute;width:110px;height:110px;border-color:var(--orange);opacity:.65}.splashCorner.c1{left:9%;top:12%;border-left:2px solid;border-top:2px solid;border-radius:20px 0 0 0}.splashCorner.c2{right:9%;bottom:12%;border-right:2px solid;border-bottom:2px solid;border-radius:0 0 20px 0}.backGlobal:hover,.backGlobal:focus{background:var(--orange);color:#111;border-color:var(--orange)}.backGlobal{transition:transform .35s ease,opacity .3s ease}.top,.backGlobal{transition:transform .38s ease,opacity .28s ease}.top.ui-hidden{transform:translate(-50%,-120%);opacity:0;pointer-events:none}.backGlobal.ui-hidden{transform:translateY(-140%);opacity:0;pointer-events:none}.rangeBox{}.simMeta{margin-top:16px;padding:17px 18px;border:1px solid #2d2d30;background:#19191b;border-radius:18px;display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.simMeta small{display:block;color:#8f8f8f;font-size:10px;letter-spacing:1px;text-transform:uppercase}.simMeta strong{display:block;margin-top:5px;color:#fff;font-size:15px}.simMeta p{grid-column:1/-1;margin:0;color:#bdbdbd;font-size:13px;line-height:1.55}.priceInfo{color:#bdbdbd;font-size:12px;margin-top:10px}.creditHint{color:#9e9e9e;font-size:11px;margin-top:12px} @media(max-width:650px){.simMeta{grid-template-columns:1fr}.simMeta p{grid-column:auto}}.footerLinks{flex-wrap:wrap}.footerLinks button,.footerLinks a{white-space:nowrap}.price-essential .visualOverlay{border-color:#ddd}.price-regular .visualOverlay{border-color:#ffb05c}.price-valued .visualOverlay{border-color:#ff8a1e}.price-premium .visualOverlay,.price-special .visualOverlay{border-color:#ff6900;box-shadow:0 0 22px #ff690044}.price-essential .visualOverlay .companyName{font-size:16px}.price-regular .visualOverlay .companyName{font-size:18px}.price-valued .visualOverlay .companyName{font-size:20px}.price-premium .visualOverlay .companyName{font-size:23px}.price-special .visualOverlay .companyName{font-size:26px}.requestCatalog{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0}.requestChoice{border:1px solid #303033;background:#18181a;color:#fff;border-radius:18px;padding:14px;text-align:left;cursor:pointer;transition:.25s}.requestChoice:hover,.requestChoice.active{border-color:var(--orange);box-shadow:0 0 0 2px #ff690020}.requestChoice small{display:block;color:#999;font-size:10px;letter-spacing:1px;text-transform:uppercase}.requestChoice strong{display:block;margin-top:6px;font-size:15px}.requestChoice span{display:block;margin-top:4px;color:var(--orange);font-weight:950}.dooxGrid,.dooxCards{margin-top:26px}.dooxStatement{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:32px;padding:32px}.dooxStatement h3{font-size:34px;letter-spacing:-2px;margin:10px 0}.dooxStatement p{color:#666;line-height:1.7;max-width:850px}.timelineMini{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px;font-size:11px;font-weight:900}.timelineMini i{width:36px;height:1px;background:var(--orange)}.rangeBox{margin:18px 0 0;padding:18px;border:1px dashed #ff690066;border-radius:20px;background:#ff69000a}.rangeRow{display:flex;gap:10px;flex-wrap:wrap}.pillPrice{border:1px solid #ddd;border-radius:14px;padding:10px 12px;background:#fff;font-weight:900}.pillPrice b{color:var(--orange)}50%{box-shadow:0 0 0 6px #ff690022,0 8px 25px #0006}}.simImage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.7;transition:.4s}.screen.phone .visualOverlay{width:72%;padding:10px;}.screen.phone .visualOverlay .companyName{font-size:14px}.screen.phone.price-regular .visualOverlay .companyName{font-size:15px}.screen.phone.price-premium .visualOverlay .companyName{font-size:17px}.screen.price-essential .footerPresence{border-top-color:#ffffff22}.screen.price-essential .footerPresence .fpName{color:#e7e7e7}.screen.price-essential .footerPresence .fpHandle{color:#aaa}.screen.price-regular .footerPresence{border-top-color:#ffb05c66}.screen.price-regular .footerPresence .fpName{color:#ffd0a8}.screen.price-regular .footerPresence .fpHandle{color:#ffb05c}.screen.price-premium .footerPresence,.screen.price-special .footerPresence{border-top-color:#ff6900aa;box-shadow:0 -8px 28px #ff690022}.screen.price-premium .footerPresence .fpName,.screen.price-special .footerPresence .fpName{color:#fff}.screen.price-premium .footerPresence .fpHandle,.screen.price-special .footerPresence .fpHandle{color:#ff8a34}.screen.phone .hoccoMark,.screen.phone .companyLogoWrap{width:34px;height:34px}.screen.phone .creditsOverlay h3,.screen.phone .masterOverlay h3,.screen.phone .episodeSponsor h3{font-size:32px;letter-spacing:-2px}.screen.phone.price-premium .creditsOverlay h3,.screen.phone.price-premium .masterOverlay h3,.screen.phone.price-premium .episodeSponsor h3{font-size:37px}.screen.phone .creditsOverlay,.screen.phone .masterOverlay,.screen.phone .episodeSponsor{left:6%;right:6%;padding:18px}.social{display:grid;place-items:center}.social svg{width:18px;height:18px;fill:#111}
+.screen.isCredits{background:#050505!important}.screen.isCredits .scene,.screen.isCredits .simImage{display:none}.screen.isCredits .playerMark,.screen.isCredits .sceneLabel{display:none}.screen.isCredits .progress{display:none}.screen.phone.isCredits .creditPanel,.screen.phone.isCredits .masterPanel,.screen.phone.isCredits .episodePanel{left:5%;right:5%}.creditPanel,.masterPanel,.episodePanel{position:absolute;z-index:4;left:9%;right:9%;top:10%;bottom:8%;border-radius:26px;background:#050505eF;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:26px;opacity:0;transform:translateY(18px) scale(.98);transition:.45s}.creditPanel.show,.masterPanel.show,.episodePanel.show{opacity:1;transform:none}.creditTitle{color:var(--orange);font-size:11px;font-weight:950;letter-spacing:2px;text-transform:uppercase}.creditNames{display:grid;grid-template-columns:1fr 1fr;gap:7px 26px;margin-top:18px;color:#d8d8d8;font-size:11px;line-height:1.4}.creditNames .current{color:#fff;font-weight:950;text-shadow:0 0 18px #ff690066}.masterPhoto{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--orange);background:#1a1a1a;margin:14px auto 10px}.masterPanel h3{font-size:clamp(28px,5vw,58px);letter-spacing:-3px;margin:5px 0}.masterPanel p{color:#aaa;margin:0}.episodeTop{display:flex;align-items:center;justify-content:center;gap:12px}.episodeTop .hoccoMark{width:52px;height:52px;border-radius:14px;object-fit:cover}.episodeTop h3{font-size:clamp(24px,4vw,52px);letter-spacing:-3px;margin:0}.episodeTop b{color:var(--orange)}.episodePanel small{color:#999;margin-top:17px}
+.legal.open{display:grid}
+@media(max-width:900px){.requestCatalog{grid-template-columns:1fr 1fr}.dooxStatement h3{font-size:28px}}@media(max-width:600px){.requestCatalog{grid-template-columns:1fr}.top{height:68px}.top .ctaSmall{padding:10px 12px;font-size:11px}.nav{max-width:calc(100% - 16px)}}
+
+/* Master readability pass */
+.previewTop .previewTitle b{font-size:18px;letter-spacing:-.4px}.control label{font-size:11px!important;letter-spacing:1.1px}.control input,.control select{font-size:16px!important}.simMeta small{font-size:11px!important}.simMeta strong{font-size:18px!important}.simMeta p{font-size:15px!important}.priceInfo{font-size:14px!important}.creditHint{font-size:12px!important;line-height:1.5}.timeBadge{font-size:11px!important;padding:8px 11px!important}.playerMark{font-size:11px!important}.sceneLabel{font-size:12px!important}.visualOverlay{animation-duration:5.6s}.visualOverlay .companyName{font-size:clamp(18px,2.4vw,30px)!important}.visualOverlay .handle{font-size:13px!important}.visualOverlay .tiny{font-size:11px!important}.episodePanel small{font-size:12px!important}.creditNames{font-size:13px!important}.creditTitle{font-size:12px!important}.masterPanel h3{font-size:clamp(32px,5vw,64px)!important}.masterPanel p{font-size:14px!important}
+@media(max-width:650px){.previewTop{align-items:flex-start;flex-direction:column}.previewTitle b{font-size:20px}.control input,.control select{font-size:17px!important}.simMeta strong{font-size:17px!important}.simMeta p{font-size:14px!important}.visualOverlay{width:74%;left:4%!important;right:auto!important}.visualOverlay .companyName{font-size:18px!important}.timeBadge{font-size:10px!important}.footerPresence{font-size:14px!important}.creditNames{font-size:12px!important;gap:8px 16px}.masterPanel h3{font-size:34px!important}.episodePanel h3{font-size:30px!important}}
+.hoccoBadge{width:48px;display:flex;flex-direction:column;align-items:center;gap:3px;flex:0 0 auto}.hoccoBadge span{font-size:8px;letter-spacing:1px;font-weight:950;color:#fff}.hoccoMark{width:48px;height:48px;border-radius:12px;object-fit:cover;border:1px solid #ffffff25}@media(max-width:650px){.hoccoBadge{width:38px}.hoccoMark{width:38px;height:38px}} 
+.simulationFocus{position:absolute;inset:auto;pointer-events:none;opacity:0;border:1px solid rgba(255,106,0,.55);border-radius:24px;box-shadow:0 0 0 0 rgba(255,106,0,.18);}.simulationFocus.show{opacity:1;animation:focusPulse 5.6s ease both}@keyframes focusPulse{0%{box-shadow:0 0 0 0 rgba(255,106,0,.0);opacity:0}18%{opacity:1;box-shadow:0 0 0 0 rgba(255,106,0,.0)}48%{box-shadow:0 0 0 10px rgba(255,106,0,.11)}82%{opacity:1;box-shadow:0 0 0 4px rgba(255,106,0,.04)}100%{opacity:0;box-shadow:0 0 0 16px rgba(255,106,0,0)}}
+
+/* UX polish */
+.top, #backGlobal { transition: opacity .28s ease, transform .28s ease, visibility .28s ease; }
+.top.ui-hidden { opacity:0; visibility:hidden; transform:translateY(-14px); pointer-events:none; }
+#backGlobal.ui-hidden { opacity:0; visibility:hidden; transform:translateY(10px); pointer-events:none; }
+#backGlobal { background:#fff; color:#111; border:1px solid #ddd; box-shadow:0 10px 30px rgba(0,0,0,.07); }
+#backGlobal:hover,#backGlobal:focus-visible { background:#ff6a00 !important;color:#111 !important;border-color:#ff6a00 !important; }
+.simMeta { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0 4px; }
+.simMeta .pill { background:#171718; border:1px solid #2b2b2d; border-radius:16px; padding:12px 13px; }
+.simMeta small { display:block;color:#929292;font-size:10px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:5px; }
+.simMeta strong { font-size:14px; }
+.sponsorLegend { max-width:820px;margin:18px auto 0;color:#aaa;font-size:12px;line-height:1.5;text-align:center; }
+.simFocus { position:absolute; z-index:6; border:1.5px solid rgba(255,106,0,.85); border-radius:18px; opacity:0; pointer-events:none; }
+.simFocus.pulse { animation:simPulse 2.6s ease both; }
+@keyframes simPulse {0%{opacity:0;transform:scale(.96)}20%{opacity:1;transform:scale(1)}78%{opacity:1}100%{opacity:0;transform:scale(1.015)}}
+@media(max-width:760px){.simMeta{grid-template-columns:1fr 1fr}}
+
+/* Footer demo: do not let the playback/progress bar visually compete with the insertion. */
+.screen.footer-demo .progress{display:none}
+.screen.footer-demo .timeBadge{bottom:23%;right:18px}
+.screen.footer-demo .sceneLabel{bottom:24%}
+.footerPresence{z-index:8}
+.timeBadge{z-index:10}
+.footerPresence.show{z-index:9}
+
+.priceLogic{margin:16px 0 0;color:#a9a9a9;font-size:12px;line-height:1.5;text-align:left}
+.priceLogic strong{color:#fff}
+
+/* Robust final visual fixes */
+.previewShell{overflow:visible}.screen{isolation:isolate}.visualOverlay{z-index:10;max-width:42%;min-width:230px}.hoccoBadge{display:flex;align-items:center;gap:9px}.hoccoBadge span{font-weight:900;font-size:11px;letter-spacing:1px;color:#fff}.hoccoMark{width:42px;height:42px;border-radius:10px;object-fit:cover;border:1px solid #ffffff25}.companyLogoWrap{width:54px;height:54px;border-radius:14px;overflow:hidden;border:1px solid #ffffff24;background:#222;display:grid;place-items:center}.companyLogoFallback{font-size:10px;color:#aaa;letter-spacing:1px}.sponsorCopy{min-width:0}.visualOverlay{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}.footerPresence{z-index:11;min-height:60px}.footerPresence .fpName{font-size:15px;font-weight:900}.footerPresence .fpHandle{font-size:11px}.simulationFocus{z-index:9;pointer-events:none}.simulationFocus.show{animation:focusPulse 2.8s ease both}.episodePanel{z-index:12;background:#050505f4}.episodePanel h3{margin:3px 0;font-size:clamp(24px,4vw,48px);letter-spacing:-2px}.episodePanel b{color:var(--orange);font-size:13px}.episodePanel p{max-width:680px;color:#aaa;line-height:1.55}.creditPanel{z-index:12}.ui-hidden{pointer-events:none}.requestChoice{min-height:116px}.requestChoice small{line-height:1.35}.view .section{min-height:calc(100vh - 100px)}
+@media(max-width:760px){.visualOverlay{left:4%!important;right:4%!important;top:12%!important;width:auto;max-width:none;min-width:0}.visualOverlay .hoccoMark{width:34px;height:34px}.visualOverlay .companyLogoWrap{width:42px;height:42px}.visualOverlay .companyName{font-size:17px!important}.footerPresence{min-height:54px;padding:10px 14px}.screen.phone .visualOverlay{grid-template-columns:auto 1fr auto}.requestChoice{min-height:100px}}
+
+/* ===== V8: commercial simulation refinements ===== */
+.footerDemoFrame{position:absolute;left:0;right:0;bottom:4%;padding:9px 10px 12px;opacity:0;transform:translateY(40px);pointer-events:none;z-index:10}
+.footerDemoFrame.show{animation:footerRise 5s cubic-bezier(.2,.8,.2,1) both}
+.footerDemoLabel{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#d5d5d5;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.footerCompanyRow{position:relative;display:grid;grid-template-columns:repeat(10,minmax(64px,1fr));gap:6px;padding:7px;border-radius:15px;background:rgba(8,8,8,.88);overflow:hidden}
+.footerCompanyRow:before{content:"";position:absolute;left:-10%;right:-10%;top:50%;height:2px;background:linear-gradient(90deg,transparent,#ff6900aa,transparent);transform:rotate(40deg);transform-origin:center;z-index:2;pointer-events:none}
+.footerCompany{position:relative;min-height:67px;border:1px solid #ffffff18;border-radius:11px;overflow:hidden;padding:7px 6px;background:linear-gradient(145deg,#161616,#242424);display:flex;flex-direction:column;justify-content:flex-end;z-index:1}
+.footerCompany .logoMock{position:absolute;inset:0;display:grid;place-items:center;font-size:24px;font-weight:950;color:#fff;opacity:.13;letter-spacing:-.08em}
+.footerCompany .fn{position:relative;font-size:10px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.footerCompany .fh{position:relative;font-size:8px;color:#ff8a34;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.footerCompany .fs{position:relative;font-size:7px;color:#a5a5a5;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.footerWaveTwo{display:none}
+.footerWaveTwo.show{display:block;animation:footerRise 5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes footerRise{0%{opacity:0;transform:translateY(40px)}12%{opacity:1;transform:translateY(0)}78%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-26px)}}
+@media(max-width:900px){
+  .footerCompanyRow{grid-template-columns:repeat(10,minmax(54px,1fr));overflow-x:auto;scrollbar-width:none}
+  .footerCompanyRow::-webkit-scrollbar{display:none}
+  .footerCompany{min-width:54px}
+}
+.simChoicePanel{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px;border:1px solid #2a2a2d;background:#171718;border-radius:22px}
+.simChoicePanel .choiceBlock{background:#1d1d1f;border:1px solid #303035;border-radius:17px;padding:14px}
+.simChoicePanel small{display:block;color:#999;text-transform:uppercase;letter-spacing:.09em;font-size:10px;margin-bottom:7px}
+.simChoicePanel strong{font-size:18px}
+.simChoicePanel .priceStrong{color:#ff6900}
+@media(max-width:700px){.simChoicePanel{grid-template-columns:1fr}}
+/* ===== Chat assistant ===== */
+.chatLauncher{position:fixed;right:22px;bottom:22px;z-index:90;width:58px;height:58px;border:0;border-radius:20px;background:#111;color:#fff;box-shadow:0 18px 45px #0003;cursor:pointer;font-weight:950;font-size:22px}
+.chatLauncher:hover{background:#ff6900;color:#111}
+.chatPanel{position:fixed;right:22px;bottom:92px;z-index:89;width:min(390px,calc(100vw - 30px));background:#fff;border:1px solid #dedbd5;border-radius:28px;box-shadow:0 35px 90px #0004;overflow:hidden;display:none}
+.chatPanel.open{display:block;animation:pageIn .35s ease both}
+.chatHead{background:#111;color:#fff;padding:17px 18px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.chatHead b{font-size:16px}.chatHead small{color:#aaa;display:block;margin-top:3px}
+.chatClose{border:0;background:#fff2;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer}
+.chatBody{padding:16px;max-height:55vh;overflow:auto}
+.chatBubble{padding:12px 14px;border-radius:17px;background:#f2f1ee;color:#333;line-height:1.5;font-size:13px;margin-bottom:11px}
+.chatCard{border:1px solid #e4e1dc;border-radius:18px;padding:14px;margin-bottom:12px}
+.chatCard strong{display:block;font-size:16px}.chatMeta{color:#666;font-size:12px;line-height:1.6;margin-top:6px}
+.chatActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.chatBtn{border:0;border-radius:13px;padding:11px 12px;font-weight:900;cursor:pointer}.chatBtn.primary{background:#ff6900;color:#111}.chatBtn.secondary{background:#111;color:#fff}
+.chatSaved{font-size:10px;color:#888;margin-top:6px}
+
+.simExplain{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 0}
+.simExplain div{background:#181819;border:1px solid #29292c;border-radius:14px;padding:10px 11px;color:#aaa;font-size:11px;line-height:1.45}
+.simExplain b{color:#ff6900;margin-right:4px}.playDemo{font-size:14px;letter-spacing:.02em}
+@media(max-width:760px){.simExplain{grid-template-columns:1fr 1fr}}
+
+/* ===== V9 MASTER UX ===== */
+.footerDemoFrame{display:block!important;opacity:0;pointer-events:none;position:absolute;left:2.5%;right:2.5%;bottom:5.5%;z-index:20;transform:translateY(34px)}
+.footerDemoFrame.show{animation:footerBatchIn 5s cubic-bezier(.22,.8,.22,1) both}
+.footerDemoLabel{font-size:11px!important;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:#ddd;display:flex;justify-content:space-between;gap:16px;padding:0 5px 7px}
+.footerCompanyRow{position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;padding:7px;border-radius:16px;background:rgba(7,7,8,.94);border:1px solid rgba(255,255,255,.14);box-shadow:0 14px 32px rgba(0,0,0,.36);overflow:hidden}
+.footerCompanyRow:after{content:"";position:absolute;width:140%;height:2px;left:-20%;top:50%;background:linear-gradient(90deg,transparent,rgba(255,105,0,.75),transparent);transform:rotate(40deg);pointer-events:none;z-index:5}
+.footerCompany{min-width:0;min-height:78px;position:relative;border:1px solid rgba(255,255,255,.12);border-radius:12px;overflow:hidden;padding:8px 7px 7px;background:linear-gradient(145deg,#111113,#232326);display:flex;flex-direction:column;justify-content:flex-end}
+.footerCompany .logoMock{position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:950;opacity:.15;letter-spacing:-.08em;color:#fff}
+.footerCompany .fn,.footerCompany .fh,.footerCompany .fs{position:relative;z-index:6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.footerCompany .fn{font-size:11px;font-weight:950;color:#fff}
+.footerCompany .fh{font-size:9px;font-weight:850;color:#ff8a34;margin-top:2px}
+.footerCompany .fs{font-size:8px;color:#aaa;margin-top:1px}
+@keyframes footerBatchIn{0%{opacity:0;transform:translateY(38px)}15%{opacity:1;transform:translateY(0)}80%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-22px)}}
+@media(max-width:850px){.footerCompanyRow{grid-template-columns:repeat(10,96px);overflow-x:auto}.footerCompany{min-height:72px}.footerCompanyRow::-webkit-scrollbar{display:none}}
+.v9SimNote{margin-top:14px;border:1px solid #2c2c2f;background:#161618;border-radius:18px;padding:13px 15px;color:#aaa;font-size:12px;line-height:1.55}
+.v9SimNote strong{color:#fff}.v9SimNote .orangeTxt{color:#ff6900}
+.v9Steps{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}.v9Steps div{background:#19191b;border:1px solid #2d2d31;border-radius:14px;padding:11px;color:#a9a9a9;font-size:11px}.v9Steps b{display:block;color:#ff6900;font-size:10px;margin-bottom:5px;letter-spacing:1px}
+@media(max-width:700px){.v9Steps{grid-template-columns:1fr 1fr}}
+/* Floating chat, only activated after second confirmed WhatsApp submission */
+#chatLauncher.v9Hidden{display:none!important}
+#chatLauncher.v9Pulse{animation:v9Pulse 1.2s ease-in-out infinite}
+@keyframes v9Pulse{0%,100%{transform:scale(1);box-shadow:0 18px 45px #0003}50%{transform:scale(1.08);box-shadow:0 0 0 9px rgba(255,105,0,.14),0 20px 52px #0004}}
+.v9ChatMinimized{position:fixed;right:20px;bottom:20px;z-index:91;border:0;border-radius:15px;background:#111;color:#fff;padding:10px 13px;font-weight:900;display:none;box-shadow:0 16px 42px #0003;cursor:pointer}.v9ChatMinimized.on{display:block}.v9ChatMinimized:hover{background:#ff6900;color:#111}
+.chatPanel{z-index:92!important}
+.chatPanel .chatHead{min-height:64px}
+.chatPanel .chatClose{font-size:20px}
+.chatPanel .chatMin{border:0;background:#fff1;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;margin-right:6px}
+.chatHeadActions{display:flex;align-items:center}
+@media(max-width:620px){.chatPanel{right:10px!important;bottom:78px!important;width:calc(100vw - 20px)!important}}
+/* Avoid controls covering content */
+#request .formBox{scroll-margin-top:22px}
+#request{padding-top:1px}
+
+.installAppBtn{display:none;border:0;border-radius:15px;padding:12px 15px;background:#ff6900;color:#111;font-weight:950;cursor:pointer}
+.installAppBtn.visible{display:inline-flex;align-items:center;gap:7px}
+@media(max-width:980px){.installAppBtn.visible{display:flex}}
+.installToast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:98;background:#111;color:#fff;border:1px solid #333;border-radius:17px;padding:13px 16px;box-shadow:0 15px 45px #0005;font-size:13px;display:none}
+.installToast.show{display:block;animation:pageIn .3s ease both}
+</style>
+<style id="final-ux-fixes">
+.top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
+</style></head>
 <body>
-  <div id="intro" class="intro-screen" aria-label="Bem-vindo ao universo ">
-    <div class="intro-stack">
-      </div>
-      <div class="intro-word intro-camera">CÂMERA.</div>
-      <div class="intro-word intro-recording">GRAVANDO.</div>
-      <div class="intro-word intro-action">AÇÃO!</div>
+<div id="openingSplash" aria-label="Doox Studios">
+  <div class="splashLines"></div><div class="splashCorner c1"></div><div class="splashCorner c2"></div>
+  <div class="splashWord">Doox Studios<span class="splashDot">.</span></div>
+</div>
+<header class="top">
+  <nav class="tabs" aria-label="Navegação principal">
+    <button class="tab active" data-go="home">Início</button>
+    <button class="tab" data-go="companies">Empresas</button>
+    <button class="tab" data-go="people">Pessoas</button>
+    <button class="tab" data-go="preview">Simulação</button>
+    <button class="tab" data-go="poster">Poster</button>
+    <button class="tab" data-go="how">Como funciona</button><button class="tab" data-go="doox">DOOX</button>
+  </nav>
+  <button class="ctaSmall" data-go="request">Solicitar participação</button>
+  <button id="installAppBtn" class="installAppBtn" type="button">↥ Instalar HOCCO</button>
+<button class="mobileMenu" id="mobileMenu" aria-label="Abrir menu"></button>
+</header>
+<button class="backGlobal" id="backGlobal" type="button">Voltar</button>
+<main class="views">
+
+<section class="view active" id="home">
+  <div class="hero"><div class="heroBg"></div><div class="heroGrid"></div><div class="orb a"></div><div class="orb b"></div>
+    <div class="wrap content">
+      <span class="eyebrow"><span class="dot"></span> HOCCO · UNIVERSO EM MOVIMENTO</span>
+      <h1>SUA PRESENÇA<br>EM UMA <span class="accent">HISTÓRIA</span><br>EM MOVIMENTO.</h1>
+      <p class="lead">Escolha uma modalidade de participação, veja como ela pode aparecer na tela e envie sua solicitação. Cada presença é analisada e organizada para existir sem quebrar a experiência da história.</p>
+      <div class="actions"><button class="btn orange" data-go="preview">Ver todas as simulações</button><button class="btn ghost" data-go="companies">Explorar empresas</button></div>
+      <div class="heroSocials" aria-label="Presença nas redes sociais"><span>f</span><span>▶</span><span>♪</span><small>facebook · YouTube · TikTok</small></div><div class="statline"><div class="stat"><b>EMPRESAS</b><span>Presenças comerciais integradas ao formato.</span></div><div class="stat"><b>PESSOAS</b><span>Participações e reconhecimentos institucionais.</span></div><div class="stat"><b>SIMULAÇÃO</b><span>Visualização antes da solicitação.</span></div></div>
     </div>
   </div>
+  <div class="section"><div class="wrap grid2"><div class="card"><div class="kicker">UMA EXPERIÊNCIA ANTES DA COMPRA</div><h2 class="title">Veja. Escolha. Solicite.</h2><p class="desc">O site agora é dividido por áreas. Empresas e pessoas têm caminhos próprios, enquanto a aba de simulação reúne todas as formas de presença disponíveis.</p></div><div class="card darkCard"><div class="kicker">SEM EXCESSO</div><h3>Uma presença deve parecer parte de uma produção.</h3><p>O objetivo é tornar cada formato compreensível para quem compra e confortável para quem assiste.</p></div></div></div>
+</section>
 
-  <header class="topbar">
-    <a class="brand" href="#/" data-route>
-      <span class="brand-main">DOOX Studios</span>
-    </a>
+<section class="view" id="companies"><div class="section"><div class="wrap"><div class="kicker">PARA EMPRESAS</div><h2 class="title">Presenças comerciais.</h2><p class="desc">Formatos destinados a empresas, marcas e negócios. A simulação permite visualizar cada modelo antes da solicitação.</p>
+<div class="rule" style="background:#fff;color:#444;border:1px solid #e7e7e7;margin-top:28px"><b style="color:#111">COMO VOCÊ DECIDE</b><span><b style="color:#ff6a00">1. Escolha</b> uma modalidade → <b style="color:#ff6a00">2. Simule</b> → <b style="color:#ff6a00">3. Entenda onde aparece</b> → <b style="color:#ff6a00">4. Prossiga</b> para a solicitação.</span></div><div class="cards">
+<div class="card product"><span class="num">01 · EMPRESAS</span><h3>Presença no Rodapé</h3><p>Identificação visual discreta na parte inferior do vídeo, usada em momentos compatíveis com a edição.</p><div class="price">R$ 49,90</div><div class="meta">Estrutura: até 50 vagas</div><button data-preview="footer" onclick="window.goPreview('footer')">Ver na simulação</button></div>
+<div class="card product"><span class="num">02 · EMPRESAS</span><h3>Sponsor Overlay</h3><p>Inserção visual de aproximadamente 5 segundos integrada à imagem. Você escolhe uma categoria e pode indicar o contexto desejado; o encaixe exato é definido pela produção.</p><div class="price">A partir de R$ 39,90</div><div class="meta">Estrutura: 5 vagas sem áudio · 10 vagas totais de Overlay</div><button data-preview="overlay" onclick="window.goPreview('overlay')">Ver na simulação</button></div>
+<div class="card product"><span class="num">03 · EMPRESAS</span><h3>Overlay + Áudio</h3><p>Presença visual com áudio curto aprovado antes da produção, respeitando o contexto do vídeo.</p><div class="price">A partir de R$ 49,90</div><div class="meta">Estrutura: 5 vagas com áudio</div><button data-preview="audio" onclick="window.goPreview('audio')">Ver na simulação</button></div>
+<div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: até 5 vagas</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
+</div><div class="notice"><b>Importante:</b> quando a modalidade permitir escolha de momento, a escolha funciona como preferência de programação. A disponibilidade e o encaixe final dependem da análise da produção e do planejamento do episódio.</div></div></div></section>
 
-    <nav class="nav" aria-label="Navegação principal">
-      <a href="#/hocco" data-route></a>
-      <a href="#/insercoes" data-route>Inserções</a>
-      <a href="#/como-funciona" data-route>Como funciona</a>
-      <a id="headerHomeBack" class="header-home-back" href="#/" data-route hidden aria-label="Voltar ao início">← Voltar ao início</a>
-    </nav>
-  </header>
+<section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">Formatos separados das modalidades empresariais, pensados para reconhecimento e participação nos espaços institucionais da HOCCO.</p>
+<div class="cards" style="grid-template-columns:repeat(2,1fr);max-width:800px">
+<div class="card product"><span class="num">01 · PESSOAS</span><h3>Apoiador Individual</h3><p>Reconhecimento nos créditos e espaços institucionais destinados a quem participa do projeto.</p><div class="price">R$ 9,90</div><div class="meta">Estrutura: até 50 participações</div><button data-preview="individual" onclick="window.goPreview('individual')">Ver na simulação</button></div>
+</div></div></section>
 
-  <main id="app" class="app" aria-live="polite"></main>
+<section class="view" id="preview"><div class="section dark"><div class="wrap"><div class="kicker">SIMULAÇÃO COMPLETA</div><h2 class="title">Todas as presenças em tela.</h2><p class="desc">As imagens abaixo são referências reais de POV, gravação e produção audiovisual, usadas apenas para demonstrar a experiência. Elas não são cenas da HOCCO. Escolha a modalidade e veja como sua participação muda na tela.</p>
+<div class="previewShell"><div class="previewTop"><div class="previewTitle"><small>DOOX PREVIEW</small><b id="previewName">SPONSOR OVERLAY</b></div><div class="switch"><button class="device active" data-device="desktop">Computador</button><button class="device" data-device="phone">Celular</button></div></div>
+<div class="screen" id="screen" data-moment="essential"><img id="simImage" class="simImage" src="simulacao-cinematica.jpg" alt="Cenário demonstrativo de produção audiovisual"><div class="scene"></div><div class="playerMark">▶ VÍDEO DEMONSTRATIVO</div><div class="sceneLabel" id="sceneLabel">MOMENTO ESSENCIAL · CENA DE MENOR ATENÇÃO</div><div class="timeBadge" id="timeBadge">DURAÇÃO <span>≈ 5s</span></div><div class="creditClock" id="creditClock" style="display:none">SIMULAÇÃO DE CRÉDITOS</div>
+<div class="overlay visualOverlay" id="ovVisual"><div class="hoccoBadge"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><span>HOCCO</span></div><div class="sponsorCopy"><div class="companyName" id="pName">SUA EMPRESA</div><div class="handle" id="pHandle">@suaempresa</div><div class="tiny">PRESENÇA DE SPONSOR</div><div class="audioBadge" id="audioBadge">🔊 ÁUDIO CURTO INTEGRADO</div></div><div class="companyLogoWrap"><img id="companyLogo" alt="Logo da empresa" style="display:none"><span class="companyLogoFallback" id="companyLogoFallback">LOGO</span></div></div>
 
-  <footer class="footer">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-logo">DOOX Studios</div><p class="mvp-footer-note">Produção audiovisual, projetos e histórias em movimento.</p>
-        <div class="mvp-footer-note"><strong>AVISO — MVP DOOX STUDIOS</strong><br>Este site representa um MVP da DOOX Studios e está sujeito a alterações, atualizações e melhorias futuras. Valores, formatos, disponibilidade e condições comerciais poderão ser atualizados conforme a evolução do projeto. Pedidos já confirmados serão tratados conforme as condições apresentadas no momento da contratação.</div>
-      </div>
-      <div>
-        <div class="footer-label">Universo</div>
-        <a href="#/hocco" data-route></a>
-
-      </div>
-      <div>
-        <div class="footer-label">Legal</div>
-        <a href="#/termos" data-route>Termos de Uso</a>
-        <a href="#/privacidade" data-route>Política de Privacidade</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>DOOX Studios</span>
-      <span> — Você chegou no meio da história.</span>
-      <span class="footer-flags" aria-label="Brasil e Estado de São Paulo">
-        <span class="footer-flag"><svg class="mini-flag sp" viewBox="0 0 100 70" aria-label="Bandeira do Estado de São Paulo" role="img"><g><rect x="0" y="0.00" width="100" height="5.63" fill="#fff"/><rect x="0" y="5.38" width="100" height="5.63" fill="#111"/><rect x="0" y="10.77" width="100" height="5.63" fill="#fff"/><rect x="0" y="16.15" width="100" height="5.63" fill="#111"/><rect x="0" y="21.54" width="100" height="5.63" fill="#fff"/><rect x="0" y="26.92" width="100" height="5.63" fill="#111"/><rect x="0" y="32.31" width="100" height="5.63" fill="#fff"/><rect x="0" y="37.69" width="100" height="5.63" fill="#111"/><rect x="0" y="43.08" width="100" height="5.63" fill="#fff"/><rect x="0" y="48.46" width="100" height="5.63" fill="#111"/><rect x="0" y="53.85" width="100" height="5.63" fill="#fff"/><rect x="0" y="59.23" width="100" height="5.63" fill="#111"/><rect x="0" y="64.62" width="100" height="5.63" fill="#fff"/></g><rect x="0" y="0" width="34" height="35" fill="#d71920"/><circle cx="17" cy="17.5" r="8.5" fill="#fff"/><path d="M12.2 17.7c1.7-1.2 3.5-2 4.8-2.6 1.3.6 3.1 1.5 4.8 2.6-1.7 1.4-3.2 2.4-4.8 4-1.6-1.6-3.1-2.6-4.8-4Z" fill="#111"/></svg></span>
-        <span class="footer-flag"><svg class="mini-flag br" viewBox="0 0 100 70" aria-label="Bandeira do Brasil" role="img"><rect width="100" height="70" rx="3" fill="#009c3b"/><path d="M50 7 91 35 50 63 9 35 50 7Z" fill="#ffdf00"/><circle cx="50" cy="35" r="14" fill="#002776"/><path d="M37.7 31.5c7.8-3 17.7-2.5 25.3 1.6" fill="none" stroke="#fff" stroke-width="3.2"/></svg></span>
-      </span>
-    </div>
-  </footer>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script src="./app.js" defer></script>
-  <script>window.addEventListener("load",()=>setTimeout(()=>document.body.classList.add("intro-done"),3600));</script>
-<script>if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));</script>
-
-<div class="central-rule-modal" id="centralRuleModal" aria-hidden="true">
-  <div class="central-rule-card" role="dialog" aria-modal="true" aria-labelledby="centralRuleTitle">
-    <button type="button" class="modal-close" id="centralRuleClose" aria-label="Fechar">×</button>
-    
-    <h2 id="centralRuleTitle"><br></h2>
-    <p></p>
-    <p> </p>
-    <p></p>
-    <p></p>
-    <button type="button" class="modal-ok" id="centralRuleOk"></button>
+<div class="footerDemoFrame" id="footerWave1">
+  <div class="footerDemoLabel"><span>Rodapé comercial · exibição 1/2</span><span>≈ 5s</span></div>
+  <div class="footerCompanyRow">
+    <div class="footerCompany"><span class="logoMock">VA</span><span class="fn">Vértice Auto</span><span class="fh">@verticeauto</span><span class="fs">Automotivo</span></div>
+    <div class="footerCompany"><span class="logoMock">CA</span><span class="fn">Casa Arco</span><span class="fh">@casaarco</span><span class="fs">Casa & decoração</span></div>
+    <div class="footerCompany"><span class="logoMock">NO</span><span class="fn">NorteFit</span><span class="fh">@nortefit</span><span class="fs">Fitness</span></div>
+    <div class="footerCompany"><span class="logoMock">GR</span><span class="fn">Grão Real</span><span class="fh">@graoreal</span><span class="fs">Alimentação</span></div>
+    <div class="footerCompany"><span class="logoMock">PA</span><span class="fn">Ponto Alto</span><span class="fh">@pontoalto</span><span class="fs">Serviços</span></div>
+    <div class="footerCompany"><span class="logoMock">LU</span><span class="fn">Lume Studio</span><span class="fh">@lumestudio</span><span class="fs">Criativo</span></div>
+    <div class="footerCompany"><span class="logoMock">VE</span><span class="fn">Viva Verde</span><span class="fh">@vivaverde</span><span class="fs">Bem-estar</span></div>
+    <div class="footerCompany"><span class="logoMock">TE</span><span class="fn">Tecno Base</span><span class="fh">@tecnobase</span><span class="fs">Tecnologia</span></div>
+    <div class="footerCompany"><span class="logoMock">AL</span><span class="fn">Alma Local</span><span class="fh">@almalocal</span><span class="fs">Comércio</span></div>
+    <div class="footerCompany"><span class="logoMock">MO</span><span class="fn">Movi Oficina</span><span class="fh">@movi.oficina</span><span class="fs">Manutenção</span></div>
+  </div>
+</div>
+<div class="footerDemoFrame" id="footerWave2">
+  <div class="footerDemoLabel"><span>Rodapé comercial · exibição 2/2</span><span>≈ 5s</span></div>
+  <div class="footerCompanyRow">
+    <div class="footerCompany"><span class="logoMock">VA</span><span class="fn">Vértice Auto</span><span class="fh">@verticeauto</span><span class="fs">Automotivo</span></div>
+    <div class="footerCompany"><span class="logoMock">CA</span><span class="fn">Casa Arco</span><span class="fh">@casaarco</span><span class="fs">Casa & decoração</span></div>
+    <div class="footerCompany"><span class="logoMock">NO</span><span class="fn">NorteFit</span><span class="fh">@nortefit</span><span class="fs">Fitness</span></div>
+    <div class="footerCompany"><span class="logoMock">GR</span><span class="fn">Grão Real</span><span class="fh">@graoreal</span><span class="fs">Alimentação</span></div>
+    <div class="footerCompany"><span class="logoMock">PA</span><span class="fn">Ponto Alto</span><span class="fh">@pontoalto</span><span class="fs">Serviços</span></div>
+    <div class="footerCompany"><span class="logoMock">LU</span><span class="fn">Lume Studio</span><span class="fh">@lumestudio</span><span class="fs">Criativo</span></div>
+    <div class="footerCompany"><span class="logoMock">VE</span><span class="fn">Viva Verde</span><span class="fh">@vivaverde</span><span class="fs">Bem-estar</span></div>
+    <div class="footerCompany"><span class="logoMock">TE</span><span class="fn">Tecno Base</span><span class="fh">@tecnobase</span><span class="fs">Tecnologia</span></div>
+    <div class="footerCompany"><span class="logoMock">AL</span><span class="fn">Alma Local</span><span class="fh">@almalocal</span><span class="fs">Comércio</span></div>
+    <div class="footerCompany"><span class="logoMock">MO</span><span class="fn">Movi Oficina</span><span class="fh">@movi.oficina</span><span class="fs">Manutenção</span></div>
   </div>
 </div>
 
-<div class="hocco-handoff" id="hoccoHandoff" aria-hidden="true">
-  <div class="handoff-inner">
-    
-    <div class="handoff-title"></div>
-    <div class="handoff-sub"></div>
-  </div>
+<div class="creditPanel" id="ovIndividual"><div class="creditTitle">APOIADORES HOCCO</div><div class="creditNames"><span>@ana</span><span>@bruno</span><span>@carla</span><span>@diego</span><span>@elisa</span><span>@fabio</span><span>@gabriela</span><span class="current" id="indName">@seuperfil</span><span>@igor</span><span>@juliana</span></div><p id="indHandle" style="margin-top:18px;color:#888;font-size:10px">Exemplo ilustrativo · sua identificação pode ocupar uma posição na rotação de créditos.</p></div><div class="episodePanel" id="ovSponsor"><div class="episodeTop"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><div><div class="creditTitle">EMPRESAS QUE APOIAM ESTE EPISÓDIO</div><h3 id="sponsorName">SUA EMPRESA</h3><b id="sponsorHandle">@suaempresa</b></div></div><p>Apresentação institucional em tela preta, após a história e os créditos principais.</p><small>Imagem e informações são demonstrativas.</small></div>
 </div>
+<div class="simulationFocus" id="simFocus"></div><div class="progress"><i></i></div></div>
+<div class="controls">
+<div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="individual">Apoiador Individual</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
+<div class="control"><label>NOME PARA TESTAR</label><input id="inputName" value="SUA EMPRESA"></div>
+<div class="control"><label>@ / PERFIL</label><input id="inputHandle" value="@suaempresa"></div><div class="control"><label>FAIXA / PREÇO</label><select id="priceTier"><option value="essential">Essencial · entrada</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div><div class="control"><label>MOMENTO DESEJADO</label><select id="moment"><option value="essential">00:30–02:00</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div>
+</div><button class="playDemo" id="playDemo" type="button">▶ EXECUTAR DEMONSTRAÇÃO COMPLETA</button>
+<div class="simExplain">
+  <div><b>1.</b> escolha a modalidade</div>
+  <div><b>2.</b> veja onde ela aparece</div>
+  <div><b>3.</b> veja a duração e a animação</div>
+  <div><b>4.</b> escolha sua faixa, quando houver</div>
+</div>
+<div class="priceLogic" id="priceLogic"><strong>Regra de preço:</strong> Rodapé tem valor único de R$ 49,90. Overlay e Overlay + Áudio variam conforme o momento/categoria escolhida.</div><div class="simMeta"><div><small>Onde aparece</small><strong id="simWhere">Sobre o vídeo</strong></div><div><small>Como aparece</small><strong id="simHow">Inserção visual · aproximadamente 5s</strong></div><p id="simDescription">A simulação mostra de forma ilustrativa como a modalidade pode ser percebida. A veiculação real é definida pela DOOX dentro das regras da produção.</p><div class="priceInfo" id="simPriceInfo">Faixa selecionada: Essencial · R$ 49,90</div><div class="simChoicePanel" id="simChoicePanel">
+  <div class="choiceBlock"><small>Onde aparece</small><strong id="simWhereLarge">Durante o episódio</strong></div>
+  <div class="choiceBlock"><small>Faixa / preço</small><strong class="priceStrong" id="simPriceLarge">R$ 39,90</strong></div>
+  <div class="choiceBlock"><small>Duração</small><strong id="simDurationLarge">≈ 5 segundos</strong></div>
+  <div class="choiceBlock"><small>Contexto</small><strong id="simContextLarge">Primeira faixa do episódio</strong></div>
+</div>
+<div class="creditHint" id="simDisclaimer">Demonstração ilustrativa. O ponto exato de exibição não é garantido.</div><div class="creditHint">Materiais finais, como logo e foto, são enviados pelo WhatsApp após a aprovação da participação.</div></div>
+<div class="v9SimNote">
+      <strong>Como interpretar a demonstração:</strong>
+      o Rodapé é uma presença coletiva. Até <span class="orangeTxt">10 empresas</span> aparecem juntas por aproximadamente <strong>5 segundos</strong>; depois o bloco desaparece e pode voltar mais adiante em uma segunda exibição de aproximadamente <strong>5 segundos</strong>.
+      O exemplo é ilustrativo e serve para visualizar formato, ritmo, identificação e organização dos 10 participantes.
+    </div>
+    <div class="v9Steps">
+      <div><b>01 · ENTRA</b>os 10 quadros sobem de forma suave</div>
+      <div><b>02 · FICA</b>logo + nome + @ + segmento permanecem visíveis</div>
+      <div><b>03 · SAI</b>o bloco desaparece sem interromper a história</div>
+      <div><b>04 · VOLTA</b>uma segunda exibição pode acontecer mais tarde</div>
+    </div>
+<div class="proceedWrap"><button class="btn orange" id="proceedFromPreview">PROSSEGUIR COM PARTICIPAÇÃO NO REALITY BIOGRÁFICO</button><p id="simulationRule" class="creditHint">Escolha uma modalidade, veja a demonstração e só depois prossiga. A solicitação será analisada antes da confirmação.</p></div></div></div></section>
+
+<section class="view" id="poster"><div class="wrap posterPage"><div class="posterGrid"><div><img class="posterImg" src="hocco-poster-oficial.png" alt="Poster oficial da temporada HOCCO"></div><div class="posterInfo"><div class="kicker">POSTER OFICIAL</div><h1>HOCCO</h1><p class="lead">Você chegou no meio da história.</p><p class="desc">O poster apresenta a temporada da HOCCO, um reality de negócios em primeira pessoa centrado em Alex Hocc. Alex é o eixo da narrativa: ele trabalha, decide, negocia, cria, erra, aprende e constrói projetos enquanto a audiência acompanha sua evolução. Empresas, pessoas e lugares entram na história quando passam a fazer parte desse caminho.</p><p class="desc">A temporada acompanha o crescimento de Alex e da própria operação — do começo simples às primeiras oportunidades, eventos, comunidade e negócios reais. Nem tudo é explicado; parte da história acontece nos detalhes, nos silêncios, nas escolhas e nas consequências.</p><div class="actions"><button class="btn orange" data-go="request">Participar do universo</button><button class="btn" style="background:#111;color:#fff" data-go="preview">Ver simulações</button></div></div></div></div></section>
+
+<section class="view" id="how"><div class="section"><div class="wrap"><div class="kicker">COMO FUNCIONA</div><h2 class="title">Um processo simples.</h2><p class="desc">O site reúne a solicitação. Depois, a participação segue para análise e organização.</p><div class="how"><div class="step"><b>01</b><h3>Escolha</h3><p>Selecione a modalidade adequada para empresa ou pessoa.</p></div><div class="step"><b>02</b><h3>Simule</h3><p>Veja a demonstração e indique sua preferência de momento.</p></div><div class="step"><b>03</b><h3>Solicite</h3><p>Preencha os dados e o resumo é enviado ao WhatsApp.</p></div><div class="step"><b>04</b><h3>Análise</h3><p>O material e a solicitação são avaliados antes da confirmação.</p></div><div class="step"><b>05</b><h3>Organização</h3><p>A participação aprovada entra no fluxo e na fila operacional.</p></div></div></div></div></section>
+
+<section class="view" id="doox"><div class="section"><div class="wrap"><div class="kicker">DOOX STUDIOS</div><h2 class="title">Onde as ideias viram propriedades.</h2><p class="desc">A DOOX é a estrutura por trás das propriedades que cria, desenvolve e administra. HOCCO é um seriado dentro desse catálogo. O mesmo núcleo pode desenvolver novas séries, novos canais, novos personagens e apoiar novos criadores.</p><div class="grid2 dooxGrid"><div class="card"><span class="num">MISSÃO</span><h3>Criar mídia que continue crescendo.</h3><p>A DOOX desenvolve propriedades audiovisuais, experiências e projetos que podem evoluir ao longo do tempo, sempre com identidade própria e operação responsável.</p></div><div class="card darkCard"><span class="num">VISÃO</span><h3>Construir um catálogo vivo.</h3><p>Uma propriedade pode gerar outras histórias, comunidades, formatos e oportunidades sem depender de uma única plataforma.</p></div></div><div class="cards dooxCards"><div class="card product"><span class="num">01 · DOOX ORIGINALS</span><h3>Propriedades</h3><p>Séries, realities, documentários e formatos originais desenvolvidos e geridos pela DOOX.</p></div><div class="card product"><span class="num">02 · DOOX CREATOR</span><h3>Novos criadores</h3><p>Desenvolvimento de criadores, personagens e canais com identidade e estratégia próprias.</p></div><div class="card product"><span class="num">03 · DOOX LABS</span><h3>Novos projetos</h3><p>Pesquisa, testes e criação de formatos, experiências e ideias que podem se tornar novas propriedades.</p></div></div><div class="panel dooxStatement"><div class="kicker">HOCCO DENTRO DA DOOX</div><h3>HOCCO tem uma identidade própria. A estrutura ao redor pode crescer.</h3><p>Na HOCCO, Alex é o centro narrativo. A DOOX cuida da estrutura, produção, distribuição, operação comercial e evolução do projeto. O público conhece a propriedade pelo que acontece na história, enquanto a empresa mantém a capacidade de desenvolver novas frentes sem misturar identidades.</p><div class="timelineMini"><span>IDEIA</span><i></i><span>PRODUÇÃO</span><i></i><span>AUDIÊNCIA</span><i></i><span>COMUNIDADE</span><i></i><span>NOVOS PROJETOS</span></div></div><div class="grid2"><div class="card"><span class="num">VALORES</span><h3>Clareza, responsabilidade, continuidade.</h3><p>Decisões comerciais não devem destruir a experiência editorial. Parceiros participam dentro de regras. Criadores mantêm identidade. Projetos são avaliados por realidade, consistência e capacidade de execução.</p></div><div class="card"><span class="num">GESTÃO</span><h3>Estrutura central, propriedades independentes.</h3><p>Cada projeto pode ter linguagem, público e personagens próprios. A DOOX administra a operação sem obrigar todos os projetos a parecerem iguais.</p></div></div></div></div></section><section class="view" id="request"><div class="section"><div class="wrap"><div class="formBox"><div class="kicker">SOLICITAÇÃO</div><h2 class="title">Enviar participação.</h2><p class="desc" style="color:#aaa">Todas as modalidades disponíveis ficam visíveis aqui. Você pode trocar de opção sem sair desta aba; ao finalizar, o resumo completo segue para o WhatsApp da DOOX.</p><div id="requestCatalog" class="requestCatalog"></div><div class="requestIntro"><b>Escolha a participação acima.</b> A modalidade, a faixa/preço e o momento selecionados serão usados no resumo. <span class="orange">A logo, foto e demais materiais não são enviados pelo site.</span> Depois da aprovação, você os envia diretamente pelo canal informado pela DOOX.</div>
+<div class="formGrid">
+<div class="field"><label>NOME / EMPRESA</label><input id="reqName" placeholder="Como deseja ser identificado"></div>
+<div class="field"><label>SEU WHATSAPP</label><input id="reqPhone" placeholder="(00) 00000-0000"></div><div class="field"><label>SEU E-MAIL</label><input id="reqEmail" type="email" placeholder="voce@empresa.com"></div>
+<div class="field"><label>TIPO</label><select id="reqType"><option value="empresa">Empresa</option><option value="pessoa">Pessoa</option></select></div>
+<div class="field"><label>MODALIDADE</label><select id="reqMode"></select></div>
+<div class="field"><label>FAIXA / PREÇO ESCOLHIDO</label><input id="reqPriceTier" readonly value="Essencial · entrada"></div><div class="field"><label>MOMENTO DESEJADO</label><select id="reqMoment"><option>00:30–02:00</option><option>02:00–04:00</option><option>04:00–06:30</option><option>06:30–09:00</option><option>09:00–11:00</option></select></div>
+<div class="field"><label>QUANTIDADE</label><input id="reqQty" type="number" min="1" value="1"></div>
+<div class="field wide"><label>@ / PERFIL / SITE</label><input id="reqHandle" placeholder="@seuperfil ou identificação"></div>
+<div class="field wide"><label>ACEITE</label><label style="display:flex;gap:10px;align-items:flex-start;color:#666;font-size:13px;text-transform:none;letter-spacing:0;line-height:1.45"><input id="acceptTerms" type="checkbox" style="width:17px;height:17px;margin-top:2px;accent-color:#ff6a00"><span>Li e aceito os <button type="button" data-legal="terms" style="border:0;background:none;color:#ff6a00;text-decoration:underline;font-weight:900;padding:0;cursor:pointer">Termos de Uso</button> e a <button type="button" data-legal="policy" style="border:0;background:none;color:#ff6a00;text-decoration:underline;font-weight:900;padding:0;cursor:pointer">Política DOOX para HOCCO</button>.</span></label></div><div class="field wide"><label>DESCRIÇÃO / OBSERVAÇÃO</label><textarea id="reqObs" rows="3" placeholder="Conte brevemente o que deseja solicitar."></textarea></div><input id="websiteTrap" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0;height:1px;width:1px">
+<div class="summary"><b id="sumText">1 × Presença no Rodapé</b><strong id="sumPrice">R$ 49,90</strong></div>
+</div><button class="btn orange" style="margin-top:16px" id="sendWhatsapp">FINALIZAR E IR PARA O WHATSAPP ↗</button><p class="fine">A solicitação não representa aprovação automática nem garante um ponto específico no episódio. O resumo é enviado para análise.</p></div></div></div></section>
+</main>
+
+<footer class="footer"><div class="wrap footerRow"><div class="brand" style="font-size:24px">D<i>.</i></div><div class="footerLinks"><button data-legal="terms">Termos de Uso</button><button data-legal="rules">Regras de Participação</button><button data-go="doox">DOOX Studios e projetos</button><button data-legal="policy">Política DOOX para HOCCO</button><span style="font-size:12px;color:#999">© DOOX</span></div><div class="socials"><a class="social" href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noopener" aria-label="TikTok HOCCO"><svg viewBox="0 0 24 24"><path d="M19.6 6.2a5.8 5.8 0 0 1-3.6-2.1A5.8 5.8 0 0 1 14.7 1h-3.2v13.1a2.7 2.7 0 1 1-2.7-2.7c.3 0 .6.1.9.2V8.3a6 6 0 1 0 5 5.9V7.6a9 9 0 0 0 5.3 1.7V6.2h-.4z"/></svg></a><a class="social" href="https://www.youtube.com/@Hoccpov" target="_blank" rel="noopener" aria-label="YouTube HOCCO"><svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg></a></div></div></footer>
+
+<div class="legal" id="legal"><div class="legalBox"><button class="close" id="closeLegal">×</button><div class="kicker" id="legalKicker">DOCUMENTO</div><h2 id="legalTitle"></h2><div id="legalContent"></div></div></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s, root=document) => root.querySelector(s);
+  const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+
+  // Opening splash
+  const splash = $('#openingSplash');
+  setTimeout(() => splash?.classList.add('opening-hidden'), 1700);
+
+  // SPA navigation
+  const views = $$('.view');
+  const tabs = $$('.tab[data-go]');
+  const back = $('#backGlobal');
+  const navHistory = [];
+  let suppressHistory = false;
+  let lastScrollY = window.scrollY;
+  let chromeTimer = null;
+  let chromeVisible = true;
+
+  function activeView(){ return $('.view.active'); }
+  function setChrome(show){
+    chromeVisible = show;
+    $('.top')?.classList.toggle('ui-hidden', !show);
+    back?.classList.toggle('ui-hidden', !show);
+  }
+  function scheduleChromeHide(){
+    clearTimeout(chromeTimer);
+    chromeTimer=setTimeout(()=>setChrome(false),5000);
+  }
+  function revealChrome(){ setChrome(true); scheduleChromeHide(); }
+  function go(id, push=true){
+    if(!$('#'+id)) return false;
+    const current=activeView();
+    if(current?.id===id){ window.scrollTo({top:0,behavior:'smooth'}); revealChrome(); return true; }
+    if(push && current && !suppressHistory) navHistory.push(current.id);
+    views.forEach(v=>v.classList.toggle('active',v.id===id));
+    tabs.forEach(t=>t.classList.toggle('active',t.dataset.go===id));
+    window.scrollTo({top:0,behavior:'smooth'});
+    back?.classList.toggle('show',id!=='home');
+    revealChrome();
+    return true;
+  }
+  function closeMobileMenu(){
+    const menu=$('#mobileMenu'), list=$('.tabs');
+    if(window.innerWidth<981 && menu && list) list.style.display='none';
+  }
+  tabs.forEach(b=>b.addEventListener('click',()=>{go(b.dataset.go);closeMobileMenu()}));
+  $$('[data-go]:not(.tab)').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+  back?.addEventListener('click',()=>{ const prev=navHistory.pop()||'home'; suppressHistory=true; go(prev,false); suppressHistory=false; });
+  $('#mobileMenu')?.addEventListener('click',()=>{
+    const list=$('.tabs'); if(!list) return;
+    list.style.display=list.style.display==='flex'?'none':'flex';
+    if(list.style.display==='flex') Object.assign(list.style,{position:'absolute',top:'74px',left:'0',right:'0',padding:'10px',background:'#fff',border:'1px solid #eee',borderRadius:'20px',boxShadow:'0 20px 50px #0002',flexWrap:'wrap'});
+  });
+
+  // Chrome hides after 5s and returns only after an upward scroll / user scroll gesture.
+  revealChrome();
+  window.addEventListener('scroll',()=>{
+    const y=window.scrollY, delta=y-lastScrollY;
+    if(delta>6){ setChrome(false); clearTimeout(chromeTimer); }
+    else if(delta<-6){ revealChrome(); }
+    else if(y<20){ revealChrome(); }
+    lastScrollY=y;
+  },{passive:true});
+
+  // Simulator
+  const screen=$('#screen'), mode=$('#mode'), moment=$('#moment'), priceTier=$('#priceTier');
+  const inputName=$('#inputName'), inputHandle=$('#inputHandle');
+  const previewName=$('#previewName'), simImage=$('#simImage'), simFocus=$('#simFocus');
+  const ovFooter=$('#ovFooter'), ovVisual=$('#ovVisual'), ovIndividual=$('#ovIndividual'), ovSponsor=$('#ovSponsor');
+  const timeBadge=$('#timeBadge'), creditClock=$('#creditClock'), audioBadge=$('#audioBadge');
+  const simWhere=$('#simWhere'), simHow=$('#simHow'), simDescription=$('#simDescription'), simPriceInfo=$('#simPriceInfo'), simDisclaimer=$('#simDisclaimer');
+  const simMetaMode=$('#simMode');
+
+  const priceOptions={
+    footer:[['fixed','R$ 49,90']],
+    overlay:[['essential','00:30–02:00 · R$ 39,90'],['regular','02:00–04:00 · R$ 49,90'],['valued','04:00–06:30 · R$ 59,90'],['premium','06:30–09:00 · R$ 69,90'],['special','09:00–11:00 · R$ 79,90']],
+    audio:[['essential','00:30–02:00 · R$ 49,90'],['regular','02:00–04:00 · R$ 59,90'],['valued','04:00–06:30 · R$ 69,90'],['premium','06:30–09:00 · R$ 79,90'],['special','09:00–11:00 · R$ 89,90']]
+  };
+  const momentLabels={
+    essential:'00:30–02:00 · menor atenção', regular:'02:00–04:00 · atenção normal', valued:'04:00–06:30 · maior interesse', premium:'06:30–09:00 · alta atenção', special:'09:00–11:00 · atenção excepcional'
+  };
+  const modes={
+    footer:{title:'PRESENÇA NO RODAPÉ',where:'Durante o episódio',how:'Grupo visual · aproximadamente 5s',desc:'Até 10 empresas podem ser apresentadas em um mesmo bloco. Logo em fundo, nome e @ ficam integrados à faixa inferior.',disclaimer:'Valor fixo de R$ 49,90. A produção organiza os grupos e busca evitar concorrentes diretos no mesmo bloco.'},
+    overlay:{title:'SPONSOR OVERLAY',where:'Durante o episódio',how:'Inserção visual · aproximadamente 5s',desc:'A marca aparece individualmente sobre a imagem. A faixa escolhida representa um intervalo aproximado do episódio, não um minuto garantido.',disclaimer:'A posição exata pode variar conforme a edição e a construção narrativa.'},
+    audio:{title:'OVERLAY + ÁUDIO',where:'Durante o episódio',how:'Visual + chamada sonora · aproximadamente 5s',desc:'A marca entra individualmente acompanhada de uma chamada sonora curta, usada como gatilho de atenção e aprovada pela produção.',disclaimer:'O áudio só é utilizado quando o contexto sonoro comporta a modalidade.'},
+    individual:{title:'APOIADOR INDIVIDUAL',where:'Créditos',how:'Lista de nomes / @',desc:'A tela fica preta e apresenta a relação de apoiadores. O nome ou @ entra em uma rotação coletiva.',disclaimer:'Apresentação ilustrativa; posição e ordem podem variar.'},
+    sponsor:{title:'EMPRESA PATROCINADORA DO EPISÓDIO',where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'A tela fica preta e apresenta a empresa como participante da sustentação comercial do episódio.',disclaimer:'Imagem, posição e composição são demonstrativas.'}
+  };
+  const simImages=['pov-demo-01.jpg','pov-demo-02.jpg','simulacao-cinematica.jpg','overlay-cinematic.png'];
+  let simImageIndex=0;
+
+  function resetOverlays(){
+    [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
+  }
+  function refreshPriceOptions(){
+    const opts=priceOptions[mode.value];
+    if(opts){
+      priceTier.innerHTML=opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+      priceTier.disabled=false;
+      priceTier.value=opts[0][0];
+    } else { priceTier.innerHTML='<option value="fixed">Modalidade fixa</option>'; priceTier.value='fixed'; priceTier.disabled=true; }
+  }
+  function parsePrice(text){
+    const m=(text||'').match(/R\$\s*([0-9]+),([0-9]{2})/); return m?Number(`${m[1]}.${m[2]}`):null;
+  }
+  function updatePreview(){
+    if(!mode||!screen) return;
+    const m=mode.value, cfg=modes[m];
+    resetOverlays();
+    screen.classList.remove('isCredits','footer-demo','phone','price-essential','price-regular','price-valued','price-premium','price-special');
+    const n=(inputName?.value||'').trim()||'SUA EMPRESA', h=(inputHandle?.value||'').trim()||'@suaempresa';
+    $('#pName')&&( $('#pName').textContent=n ); $('#pHandle')&&( $('#pHandle').textContent=h ); $('#fpName')&&( $('#fpName').textContent=n ); $('#fpHandle')&&( $('#fpHandle').textContent=h ); $('#indName')&&( $('#indName').textContent=h ); $('#sponsorName')&&( $('#sponsorName').textContent=n ); $('#sponsorHandle')&&( $('#sponsorHandle').textContent=h );
+    previewName.textContent=cfg.title;
+    simWhere&&(simWhere.textContent=cfg.where); simHow&&(simHow.textContent=cfg.how); simDescription&&(simDescription.textContent=cfg.desc); simDisclaimer&&(simDisclaimer.textContent=cfg.disclaimer);
+    const tierText=priceTier?.options[priceTier.selectedIndex]?.text||'';
+    const tier=parsePrice(tierText);
+    simPriceInfo&&(simPriceInfo.textContent=m==='footer'?'Valor fixo: R$ 49,90':(['overlay','audio'].includes(m)?`Faixa selecionada: ${tierText}`:`Valor: ${tierText||cfg.disclaimer}`));
+    if(simMetaMode) simMetaMode.textContent=cfg.title;
+    simImageIndex=(simImageIndex+1)%simImages.length; if(simImage){simImage.style.display='block';simImage.src=simImages[simImageIndex]||'hocco-universe.png';}
+    const isTimed=['footer','overlay','audio'].includes(m);
+    if(timeBadge){timeBadge.style.display=isTimed?'block':'none';timeBadge.innerHTML=isTimed?'DURAÇÃO <span>≈ 5s</span>':'';}
+    if(creditClock) creditClock.style.display=isTimed?'none':'block';
+    if(audioBadge) audioBadge.style.display=m==='audio'?'block':'none';
+    const disabledCredits=['individual','sponsor'].includes(m);
+    if(moment){moment.disabled=disabledCredits; if(!disabledCredits && !moment.value) moment.value='essential';}
+    if(m==='footer'){
+      screen.classList.add('footer-demo','price-fixed');
+      $('#sceneLabel').textContent='RODAPÉ · '+(momentLabels[moment.value]||'distribuição editorial');
+      simFocus.style.left='2%';simFocus.style.right='2%';simFocus.style.bottom='2%';simFocus.style.top='auto';simFocus.style.height='14%';
+      ovFooter.classList.add('show');
+    } else if(m==='overlay' || m==='audio'){
+      screen.dataset.moment=priceTier.value;
+      screen.classList.add('price-'+priceTier.value);
+      $('#sceneLabel').textContent=momentLabels[priceTier.value]||'FAIXA APROXIMADA';
+      simFocus.style.left='2%';simFocus.style.top='3%';simFocus.style.width='58%';simFocus.style.height='22%';simFocus.style.right='auto';simFocus.style.bottom='auto';
+      ovVisual.classList.add('show');
+    } else if(m==='individual'){
+      screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · CRÉDITOS';simFocus.style.left='18%';simFocus.style.right='18%';simFocus.style.top='12%';simFocus.style.bottom='12%';simFocus.style.height='auto';ovIndividual.classList.add('show');
+    } else {
+      screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · PÓS-CRÉDITOS';simFocus.style.left='16%';simFocus.style.right='16%';simFocus.style.top='10%';simFocus.style.bottom='14%';simFocus.style.height='auto';ovSponsor.classList.add('show');
+    }
+  }
+  mode?.addEventListener('change',()=>{refreshPriceOptions();updatePreview();});
+  moment?.addEventListener('change',updatePreview);
+  priceTier?.addEventListener('change',updatePreview);
+  [inputName,inputHandle].forEach(x=>x?.addEventListener('input',updatePreview));
+  $$('.device').forEach(b=>b.addEventListener('click',()=>{$$('.device').forEach(x=>x.classList.remove('active'));b.classList.add('active');screen.classList.toggle('phone',b.dataset.device==='phone');}));
+  $('#playDemo')?.addEventListener('click',()=>{
+    updatePreview();
+    [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
+    requestAnimationFrame(()=>{
+      const target=({footer:ovFooter,overlay:ovVisual,audio:ovVisual,individual:ovIndividual,sponsor:ovSponsor})[mode.value];
+      simFocus?.classList.add('show'); target?.classList.add('show');
+    });
+    setTimeout(()=>{targetForMode()?.classList.remove('show');},6000);
+  });
+  function targetForMode(){return ({footer:ovFooter,overlay:ovVisual,audio:ovVisual,individual:ovIndividual,sponsor:ovSponsor})[mode.value];}
+
+  window.goPreview=(key)=>{ if(mode && modes[key]){ mode.value=key; refreshPriceOptions(); updatePreview(); go('preview'); } };
+
+  // Buttons "Ver na simulação"
+  $$('[data-preview]').forEach(b=>b.addEventListener('click',()=>{
+    const key=b.dataset.preview;
+    if(mode && modes[key]){ mode.value=key; refreshPriceOptions(); updatePreview(); go('preview'); }
+  }));
+  $('#proceedFromPreview')?.addEventListener('click',()=>{
+    const map={footer:'Presença no Rodapé',overlay:'Sponsor Overlay',audio:'Overlay + Áudio',individual:'Apoiador Individual',sponsor:'Empresa Patrocinadora do Episódio'};
+    const key=mode.value, target=map[key];
+    const isPerson=key==='individual';
+    const rt=$('#reqType'), rm=$('#reqMode'), rp=$('#reqPriceTier'), rmm=$('#reqMoment'), rn=$('#reqName'), rh=$('#reqHandle');
+    if(rt){rt.value=isPerson?'pessoa':'empresa';rt.dispatchEvent(new Event('change'));}
+    setTimeout(()=>{
+      if(rm&&target){rm.value=target;rm.dispatchEvent(new Event('change'));}
+      if(rn)rn.value=inputName.value; if(rh)rh.value=inputHandle.value;
+      if(rp) rp.value=key==='footer'||key==='individual'||key==='sponsor'?'Modalidade fixa':(priceTier?.options[priceTier.selectedIndex]?.text||'');
+      const mapMoment={essential:'00:30–02:00',regular:'02:00–04:00',valued:'04:00–06:30',premium:'06:30–09:00',special:'09:00–11:00'};
+      if(rmm && !rmm.disabled)rmm.value=mapMoment[priceTier.value]||mapMoment[moment.value]||mapMoment.essential;
+      updateRequestSummary();
+      go('request');
+    },30);
+  });
+  refreshPriceOptions();updatePreview();
+
+  // Request catalog/form
+  const prices={'Presença no Rodapé':49.9,'Sponsor Overlay':39.9,'Overlay + Áudio':49.9,'Apoiador Individual':9.9,'Empresa Patrocinadora do Episódio':89.9};
+  const requestOptions={empresa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio'],pessoa:['Apoiador Individual']};
+  const requestRanges={
+    'Sponsor Overlay':['00:30–02:00 · R$ 39,90','02:00–04:00 · R$ 49,90','04:00–06:30 · R$ 59,90','06:30–09:00 · R$ 69,90','09:00–11:00 · R$ 79,90'],
+    'Overlay + Áudio':['00:30–02:00 · R$ 49,90','02:00–04:00 · R$ 59,90','04:00–06:30 · R$ 69,90','06:30–09:00 · R$ 79,90','09:00–11:00 · R$ 89,90']
+  };
+  const reqType=$('#reqType'),reqMode=$('#reqMode'),reqMoment=$('#reqMoment'),reqQty=$('#reqQty'),reqPriceTier=$('#reqPriceTier'),reqCatalog=$('#requestCatalog');
+  const reqName=$('#reqName'),reqPhone=$('#reqPhone'),reqEmail=$('#reqEmail'),reqHandle=$('#reqHandle'),reqObs=$('#reqObs'),acceptTerms=$('#acceptTerms'),sumText=$('#sumText'),sumPrice=$('#sumPrice');
+  function money(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+  function fillRequestModes(){
+    const arr=requestOptions[reqType?.value]||requestOptions.empresa;
+    if(reqMode){reqMode.innerHTML=arr.map(x=>`<option>${x}</option>`).join('');}
+    renderCatalog();updateSummaryAndFields();
+  }
+  function tierSelectFor(m){
+    if(!reqPriceTier)return;
+    if(requestRanges[m]){reqPriceTier.outerHTML='<select id="reqPriceTier" class="controlInput">'+requestRanges[m].map(x=>`<option>${x}</option>`).join('')+'</select>';}
+    const el=$('#reqPriceTier');
+    if(m==='Presença no Rodapé' || m==='Apoiador Individual' || m==='Empresa Patrocinadora do Episódio'){
+      if(el){el.outerHTML='<input id="reqPriceTier" value="Modalidade fixa" readonly>'}
+    }
+  }
+  function currentPrice(){
+    const m=reqMode?.value||'';
+    const tier=$('#reqPriceTier');
+    if(requestRanges[m]) return parsePrice(tier?.value||'')||prices[m];
+    return prices[m]??null;
+  }
+  function renderCatalog(){
+    if(!reqCatalog)return;
+    const arr=requestOptions[reqType?.value]||[];
+    reqCatalog.innerHTML=arr.map(x=>{
+      const p=x==='Sponsor Overlay'?'A partir de R$ 39,90':x==='Overlay + Áudio'?'A partir de R$ 49,90':money(prices[x]);
+      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco':x==='Sponsor Overlay'?'5 faixas · 10 vagas totais de Overlay':x==='Overlay + Áudio'?'5 faixas · 5 vagas com áudio':'Créditos · até 50 participações';
+      return `<button type="button" class="requestChoice ${reqMode?.value===x?'active':''}" data-choice="${x}"><small>${reqType?.value==='empresa'?'EMPRESA':'PESSOA'}</small><strong>${x}</strong><span>${p}</span><small>${sub}</small></button>`
+    }).join('');
+    $$('[data-choice]',reqCatalog).forEach(b=>b.addEventListener('click',()=>{reqMode.value=b.dataset.choice;updateSummaryAndFields();renderCatalog();}));
+  }
+  function updateSummaryAndFields(){
+    if(!reqMode?.value)return;
+    const m=reqMode.value;
+    const person=m==='Apoiador Individual';
+    if(reqMoment){reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio'; if(reqMoment.disabled)reqMoment.value='Após a história / definido pela produção';}
+    // Reset price tier field cleanly.
+    const old=$('#reqPriceTier');
+    if(old){
+      if(requestRanges[m]){
+        const sel=document.createElement('select');sel.id='reqPriceTier';sel.className=old.className||'';sel.innerHTML=requestRanges[m].map(x=>`<option>${x}</option>`).join('');old.replaceWith(sel);sel.addEventListener('change',updateSummary); if(window.__selectedTierText) sel.value=window.__selectedTierText; window.__selectedTierText='';
+      } else if(old.tagName!=='INPUT' || old.value!=='Modalidade fixa'){
+        const inp=document.createElement('input');inp.id='reqPriceTier';inp.readOnly=true;inp.value='Modalidade fixa';inp.className=old.className||'';old.replaceWith(inp);
+      }
+    }
+    renderCatalog();updateSummary();
+  }
+  function updateSummary(){
+    const m=reqMode?.value||''; const q=Math.max(1,Number(reqQty?.value)||1); const p=currentPrice();
+    if(sumText)sumText.textContent=`${q} × ${m}`;
+    if(sumPrice)sumPrice.textContent=p==null?'A definir após análise':money(p*q);
+  }
+  function updateRequestSummary(){updateSummary();}
+  reqType?.addEventListener('change',fillRequestModes);reqMode?.addEventListener('change',updateSummaryAndFields);reqQty?.addEventListener('input',updateSummary);fillRequestModes();
+
+  // WhatsApp finalization, exact data, no file uploads.
+  const lastSubmitKey='doox_submit_at_v6';
+  function validBR(v){const d=(v||'').replace(/\D/g,'');return /^(?:55)?(?:1[1-9]|2[12478]|3[1-8]|4[1-9]|5[1-9]|6[1-9]|7[1-9]|8[1-9]|9[1-9])9\d{8}$/.test(d) || /^(?:55)?(?:1[1-9]|2[12478]|3[1-8]|4[1-9]|5[1-9]|6[1-9]|7[1-9]|8[1-9]|9[1-9])\d{8}$/.test(d)}
+  $('#sendWhatsapp')?.addEventListener('click',()=>{
+    const now=Date.now(), last=Number(localStorage.getItem(lastSubmitKey)||0);
+    if(now-last<15000){alert('Aguarde alguns segundos antes de enviar outra solicitação.');return;}
+    if($('#websiteTrap')?.value)return;
+    if(!reqName?.value.trim()){alert('Informe seu nome ou empresa.');return;}
+    if(!reqEmail?.value.trim() || !/^\S+@\S+\.\S+$/.test(reqEmail.value.trim())){alert('Informe um e-mail válido.');return;}
+    if(!validBR(reqPhone?.value)){alert('Informe um telefone válido do Brasil com DDD.');return;}
+    if(!acceptTerms?.checked){alert('Aceite os Termos de Uso e a Política DOOX para HOCCO.');return;}
+    const m=reqMode.value,q=Math.max(1,Number(reqQty.value)||1),tier=$('#reqPriceTier'),p=currentPrice();
+    const total=p==null?'A definir após análise':money(p*q);
+    const momentText=reqMoment?.disabled?'Após a história / definido pela produção':reqMoment.value;
+    const msg=`🔶 DOOX STUDIOS • SOLICITAÇÃO HOCCO\n━━━━━━━━━━━━━━━━━━━━\n🎬 PARTICIPAÇÃO NO REALITY DE NEGÓCIOS\n━━━━━━━━━━━━━━━━━━━━\n👤 Nome / Empresa: ${reqName.value.trim()}\n📧 E-mail: ${reqEmail.value.trim()}\n📱 WhatsApp: ${reqPhone.value.trim()}\n🏷️ Tipo: ${reqType.value==='empresa'?'Empresa':'Pessoa'}\n\n📌 MODALIDADE\n${m}\n\n💰 FAIXA / PREÇO ESCOLHIDO\n${tier?.value||'Modalidade fixa'}\n\n🕒 MOMENTO DESEJADO\n${momentText}\n\n🔢 QUANTIDADE\n${q}\n\n💵 VALOR ESTIMADO\n${total}\n\n🔗 @ / PERFIL / SITE\n${reqHandle.value.trim()||'Não informado'}\n\n📝 DESCRIÇÃO / OBSERVAÇÃO\n${reqObs.value.trim()||'Sem observações'}\n\n━━━━━━━━━━━━━━━━━━━━\n📎 MATERIAIS\nApós a aprovação da participação, a DOOX orientará o envio da logo, foto e demais materiais pelo canal oficial indicado.\n\n✅ Termos de Uso aceitos\n✅ Política DOOX para HOCCO aceita\n\n⚠️ Esta mensagem é uma solicitação para análise. Não representa aprovação automática, reserva definitiva, confirmação de pagamento ou garantia de minuto específico.\n━━━━━━━━━━━━━━━━━━━━\nDOOX STUDIOS • HOCCO`;
+    if(!confirm(`Revise sua solicitação:\n\n${m}\n${tier?.value||'Modalidade fixa'}\n${momentText}\n${total}\n\nContinuar para o WhatsApp?`)) return;
+    localStorage.setItem(lastSubmitKey,String(now));
+    window.open('https://wa.me/5514981150675?text='+encodeURIComponent(msg),'_blank','noopener');
+  });
+
+  // Legal modal
+const legalData={
+terms:{title:'Termos de Uso',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. Objeto do site</h3><p>Este site apresenta modalidades de participação relacionadas ao universo audiovisual HOCCO e permite o envio de solicitações para atendimento pelo WhatsApp informado no próprio site. O site tem finalidade informativa e de solicitação inicial.</p><h3>2. Solicitação não é contratação automática</h3><p>O envio do formulário ou da mensagem pelo WhatsApp não constitui, por si só, aprovação, contratação concluída, reserva definitiva, confirmação de pagamento, garantia de publicação ou garantia de exibição em episódio específico. Cada solicitação pode ser analisada antes de qualquer confirmação.</p><h3>3. Momentos desejados e encaixe final</h3><p>Quando o participante escolhe uma faixa aproximada, essa escolha representa uma preferência de posicionamento dentro de um episódio médio de cerca de 12 minutos. A demonstração é ilustrativa. O encaixe efetivo pode depender de disponibilidade, planejamento, edição, duração, narrativa, segurança operacional, materiais aprovados e demais necessidades da produção.</p><h3>4. Materiais e responsabilidade do solicitante</h3><p>Quem envia nome, marca, logotipo, imagem, áudio, texto, endereço de perfil ou outro material declara possuir os direitos e autorizações necessários para seu uso. O solicitante permanece responsável pela veracidade das informações e pela licitude do material enviado.</p><h3>5. Análise e recusa</h3><p>Solicitações ou materiais podem não ser aceitos quando forem incompatíveis com a proposta do projeto, tecnicamente inadequados, potencialmente ilegais, ofensivos, enganosos, violadores de direitos de terceiros ou inadequados ao contexto audiovisual. A ausência de aprovação não gera obrigação de publicação.</p><h3>6. Valores, disponibilidade e vagas</h3><p>Os valores apresentados no site são referências comerciais das modalidades indicadas e podem estar sujeitos a análise conforme modalidade, quantidade, disponibilidade e condições específicas. A indicação de vagas representa a estrutura operacional planejada e não cria, isoladamente, uma reserva em favor de quem apenas acessa a página.</p><h3>7. Pagamento e confirmação</h3><p>Quando houver pagamento, as condições aplicáveis, forma de pagamento e confirmação deverão seguir a orientação comunicada durante o atendimento. Nenhuma participação deve ser considerada confirmada apenas porque o usuário enviou um comprovante; a confirmação depende da verificação aplicável ao processo.</p><h3>8. Alterações, cancelamentos e impossibilidade de execução</h3><p>Pedidos, materiais ou programações podem exigir ajustes por motivos técnicos, editoriais, de calendário ou de produção. Situações de cancelamento, reembolso, crédito ou remanejamento deverão ser tratadas conforme as circunstâncias concretas e as condições comunicadas no atendimento, observada a legislação aplicável.</p><h3>9. Propriedade intelectual</h3><p>HOCCO, DOOX, identidade visual, layout, textos próprios, marcas, elementos audiovisuais e demais conteúdos protegidos não podem ser reproduzidos, explorados ou utilizados fora das permissões aplicáveis. A participação de uma empresa ou pessoa não transfere propriedade sobre o projeto audiovisual.</p><h3>10. Limitação da simulação</h3><p>As telas de simulação demonstram possibilidades visuais. Elas não constituem prova de posicionamento definitivo, frame definitivo, tempo exato, audiência garantida, alcance mínimo, resultado comercial ou promessa de desempenho.</p><h3>11. Conduta no uso do site</h3><p>É proibido tentar comprometer a segurança ou o funcionamento do site, inserir códigos maliciosos, realizar uso automatizado abusivo, fornecer dados fraudulentos ou utilizar o site para finalidades ilícitas.</p><h3>12. Alterações destes termos</h3><p>Estes Termos podem ser atualizados quando necessário. A versão exibida no site é a referência para o uso realizado após sua publicação, sem prejuízo de condições específicas já confirmadas em atendimentos anteriores.</p><h3>13. Legislação aplicável</h3><p>As relações decorrentes do uso do site e das solicitações deverão observar a legislação brasileira aplicável. Eventuais questões serão tratadas pelos canais de atendimento e, quando necessário, pelos meios legalmente competentes.</p><h3>14. Atendimento</h3><p>O canal de atendimento utilizado para as solicitações é o WhatsApp oficial informado no site. O envio de mensagem representa início do atendimento, não confirmação automática.</p><h3>15. Acessibilidade e disponibilidade</h3><p>A DOOX busca manter o site acessível e funcional. Instabilidades temporárias, manutenção, indisponibilidade de serviços de terceiros ou limitações de rede podem ocorrer.</p><h3>16. Aceite</h3><p>Ao continuar utilizando o site, o usuário declara ter lido e compreendido estes Termos e concordado com as regras aplicáveis.</p>`},
+rules:{title:'Regras de Participação',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. O que é contratado</h3><p>O participante solicita uma modalidade de presença. A participação não compra roteiro, edição, controle narrativo, minuto exato ou poder de decisão sobre o episódio.</p><h3>2. Faixas aproximadas</h3><p>Para Sponsor Overlay e Overlay + Áudio, as faixas representam posições aproximadas em um episódio médio de cerca de 12 minutos. A posição final pode variar conforme a edição.</p><h3>3. Presença no Rodapé</h3><p>Valor único de R$ 49,90. As marcas são organizadas em grupos de até 10 empresas por bloco. A duração atual é aproximada de 5 segundos por bloco e pode ser atualizada no formato. Logo/imagem, nome e @ são integrados após análise e confirmação.</p><h3>4. Concorrência direta</h3><p>A produção buscará evitar empresas concorrentes diretas no mesmo bloco de Rodapé. Isso não representa exclusividade de segmento e a composição final dos grupos permanece sob organização da produção.</p><h3>5. Overlay + Áudio</h3><p>A chamada sonora curta é integrada à entrada da marca como gatilho de atenção. Não concede ao participante controle sobre a narrativa ou liberdade para inserir qualquer fala, música ou mensagem sem análise.</p><h3>6. Materiais</h3><p>Logo, imagem e demais materiais não são enviados pelo site. Após a análise e confirmação da solicitação, a equipe orientará o envio pelo canal oficial indicado.</p><h3>7. Aprovação</h3><p>O envio ao WhatsApp representa solicitação para análise. A participação somente é confirmada após a validação aplicável.</p>`},policy:{title:'Política DOOX para HOCCO',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. Finalidade</h3><p>Esta política descreve os princípios utilizados para organizar participações de empresas e pessoas no universo HOCCO, buscando preservar a compreensão do público e a coerência audiovisual das presenças aprovadas.</p><h3>2. Participação não é controle narrativo</h3><p>A presença de uma empresa ou pessoa não representa compra de roteiro, compra de opinião, controle sobre acontecimentos, obrigação de fala do protagonista ou garantia de que a narrativa será adaptada para promover um participante.</p><h3>3. Separação entre formatos</h3><p>As modalidades empresariais e pessoais possuem finalidades distintas. Empresas podem utilizar formatos de presença comercial e institucional. Pessoas podem participar nos formatos pessoais disponibilizados. A organização pode atualizar a estrutura de modalidades conforme a evolução do projeto.</p><h3>4. Preferência de momento</h3><p>O participante pode indicar o tipo de momento que prefere. Essa preferência é registrada como referência operacional. O uso final depende do contexto real do episódio e da disponibilidade da estrutura correspondente.</p><h3>5. Integridade da experiência</h3><p>Uma participação não deve ser posicionada de forma a ocultar informações essenciais, prejudicar diálogos relevantes, induzir o público a erro ou comprometer de maneira desnecessária a compreensão da história. Quando necessário, o posicionamento pode ser ajustado.</p><h3>6. Materiais permitidos</h3><p>Podem ser solicitados nome, logotipo, imagem, texto, perfil, site ou áudio, conforme a modalidade. Todo material pode passar por avaliação técnica e contextual. A aprovação de um pedido não implica autorização para qualquer material futuro.</p><h3>7. Conteúdo incompatível</h3><p>Não serão aceitos, entre outros, materiais ilícitos, fraudulentos, discriminatórios, sexualmente inadequados ao contexto, violentos de forma indevida, enganosos ou que violem direitos de terceiros. Também podem ser recusados materiais que criem risco jurídico, reputacional ou técnico para o projeto.</p><h3>8. Transparência comercial</h3><p>Quando a natureza da presença exigir identificação ou comunicação específica, a apresentação deverá observar a legislação e as práticas aplicáveis. A forma visual utilizada no episódio pode variar de acordo com a modalidade e a produção.</p><h3>9. Privacidade e dados enviados</h3><p>Os dados fornecidos na solicitação são utilizados para identificar o interessado, responder ao pedido, organizar a participação e manter registros operacionais relacionados ao atendimento. Podem incluir nome, telefone, modalidade, perfil, observações e materiais enviados.</p><h3>10. Compartilhamento e retenção</h3><p>Os dados não são destinados à venda como produto de terceiros. Informações podem ser acessadas por pessoas envolvidas no atendimento e na operação quando necessário para processar a solicitação. Registros podem ser mantidos pelo período necessário para atendimento, organização, segurança e cumprimento de obrigações aplicáveis.</p><h3>11. Segurança</h3><p>São adotadas medidas razoáveis para reduzir acessos indevidos e uso inadequado dos dados. Nenhum ambiente digital pode garantir risco zero; por isso, o usuário também deve evitar o envio de informações desnecessariamente sensíveis pelos campos públicos ou pelo WhatsApp.</p><h3>12. Direitos do titular</h3><p>O titular pode solicitar informações sobre os dados pessoais tratados no contexto do atendimento e, quando aplicável, pedir correção, atualização ou outras medidas previstas na legislação brasileira. Solicitações devem ser encaminhadas pelos canais oficiais de contato utilizados no atendimento.</p><h3>13. Dados de navegação e armazenamento local</h3><p>O site pode utilizar armazenamento local do navegador para preferências e fluxo de navegação. O usuário pode limpar esses dados nas configurações do navegador. O site evita armazenar dados pessoais desnecessários no lado do cliente.</p><h3>14. Segurança e prevenção de abuso</h3><p>Podem ser usados mecanismos como validação de formato de telefone, campo de controle antirobô, limites temporais e verificação de origem no ambiente de hospedagem. Essas medidas reduzem abuso, mas não representam garantia absoluta contra ataques.</p><h3>15. Acesso geográfico</h3><p>A operação comercial da DOOX neste site é destinada ao Brasil. O ambiente hospedado na Vercel pode restringir acessos internacionais por mecanismos de infraestrutura. A classificação geográfica é técnica e pode apresentar exceções.</p><h3>16. Contato e solicitações de dados</h3><p>Dúvidas, correções ou solicitações relacionadas a dados pessoais podem ser encaminhadas pelo canal oficial de atendimento informado no site.</p><h3>17. Atualizações da política</h3><p>Esta política pode ser revisada para refletir mudanças operacionais, técnicas ou legais. A data de atualização exibida identifica a versão publicada nesta página.</p>`}
+};
+  const legal=$('#legal'),legalTitle=$('#legalTitle'),legalContent=$('#legalContent');
+  $$('[data-legal]').forEach(b=>b.addEventListener('click',()=>{const d=legalData[b.dataset.legal];if(!d)return;legalTitle.textContent=d.title;legalContent.innerHTML=d.content;legal.classList.add('open')}));
+  $('#closeLegal')?.addEventListener('click',()=>legal.classList.remove('open'));
+  legal?.addEventListener('click',e=>{if(e.target===legal)legal.classList.remove('open')});
+
+  // Initial page + deep-link support
+  const initial=(location.hash||'').replace('#',''); if(initial && $('#'+initial)?.classList.contains('view')) go(initial,false); else go('home',false);
+})();
+</script>
+
+<button class="chatLauncher" id="chatLauncher" type="button" aria-label="Abrir assistente de pré-solicitação">✦</button>
+<button class="v9ChatMinimized" id="v9ChatMinimized" type="button">Abrir Alex Hocc</button><section class="chatPanel" id="chatPanel" aria-label="Assistente de pré-solicitação">
+  <div class="chatHead"><div><b>Alex Hocc</b><small>Assistente de pré-solicitação</small></div><div class="chatHeadActions"><button class="chatMin" id="chatMin" type="button" aria-label="Minimizar">—</button><button class="chatClose" id="chatClose" type="button" aria-label="Fechar">×</button></div></div>
+  <div class="chatBody" id="chatBody"></div>
+</section>
+
+<script>
+/* V9 — final interaction controller */
+(function(){
+  'use strict';
+  const $=(s,c=document)=>c.querySelector(s);
+  const $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+  const stateKey='doox_hocco_state_v9';
+  const sendCountKey='doox_hocco_whatsapp_count_v9';
+  const draftKey='doox_hocco_pre_solicitacao_v8';
+
+  function readState(){try{return JSON.parse(localStorage.getItem(stateKey)||'{}')}catch(e){return {}}}
+  function writeState(v){localStorage.setItem(stateKey,JSON.stringify(v))}
+  function readDraft(){try{return JSON.parse(localStorage.getItem(draftKey)||'null')}catch(e){return null}}
+
+  // ----- Navigation: direct, reliable, and mutually synchronized -----
+  const viewIds=['home','companies','people','preview','poster','how','doox','request'];
+  function showView(id){
+    if(!viewIds.includes(id) || !$('#'+id)) id='home';
+    $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+    $$('.tab[data-go]').forEach(t=>t.classList.toggle('active',t.dataset.go===id));
+    history.replaceState(null,'','#'+id);
+    window.scrollTo({top:0,behavior:'smooth'});
+    // Keep request fields and simulation state synchronized.
+    syncDraftToRequest();
+    return id;
+  }
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-go]');
+    if(btn){
+      const id=btn.dataset.go;
+      if(id && viewIds.includes(id)){e.preventDefault();e.stopImmediatePropagation();showView(id);return;}
+    }
+    const previewBtn=e.target.closest('[data-preview]');
+    if(previewBtn){
+      e.preventDefault();e.stopImmediatePropagation();
+      const key=previewBtn.dataset.preview;
+      const mode=$('#mode');
+      if(mode && mode.querySelector(`option[value="${key}"]`)){mode.value=key;mode.dispatchEvent(new Event('change',{bubbles:true}))}
+      showView('preview');
+      setTimeout(()=>runSimulation(),300);
+    }
+  },true);
+
+  // ----- Simulator: actual visual sequences -----
+  const mode=$('#mode'), tier=$('#priceTier'), moment=$('#moment'), screen=$('#screen');
+  const play=$('#playDemo'), simImage=$('#simImage'), inputName=$('#inputName'), inputHandle=$('#inputHandle');
+  const pName=$('#pName'),pHandle=$('#pHandle'),sponsorName=$('#sponsorName'),sponsorHandle=$('#sponsorHandle');
+  const focus=$('#simFocus'), visual=$('#ovVisual'), individual=$('#ovIndividual'), sponsor=$('#ovSponsor');
+  const wave1=$('#footerWave1'),wave2=$('#footerWave2');
+  const timeBadge=$('#timeBadge'),creditClock=$('#creditClock'),audioBadge=$('#audioBadge');
+
+  const momentInfo={
+    essential:{range:'00:30–02:00',label:'Primeira faixa · menor atenção'},
+    regular:{range:'02:00–04:00',label:'Segunda faixa · atenção normal'},
+    valued:{range:'04:00–06:30',label:'Terceira faixa · maior interesse'},
+    premium:{range:'06:30–09:00',label:'Quarta faixa · alta atenção'},
+    special:{range:'09:00–11:00',label:'Quinta faixa · atenção excepcional'}
+  };
+  const tierText={essential:'00:30–02:00 · R$ 39,90',regular:'02:00–04:00 · R$ 49,90',valued:'04:00–06:30 · R$ 59,90',premium:'06:30–09:00 · R$ 69,90',special:'09:00–11:00 · R$ 79,90'};
+  const audioText={essential:'00:30–02:00 · R$ 49,90',regular:'02:00–04:00 · R$ 59,90',valued:'04:00–06:30 · R$ 69,90',premium:'06:30–09:00 · R$ 79,90',special:'09:00–11:00 · R$ 89,90'};
+
+  function clearSimulation(){
+    [wave1,wave2,visual,individual,sponsor,focus].forEach(x=>{if(x){x.classList.remove('show');}});
+    if(screen)screen.classList.remove('isCredits','phone','price-essential','price-regular','price-valued','price-premium','price-special');
+    if(audioBadge)audioBadge.style.display='none';
+  }
+  function updateSimLabels(){
+    if(!mode)return;
+    const m=mode.value;
+    const info={
+      footer:{where:'Durante o episódio',how:'10 empresas por bloco · ~5s por exibição',desc:'Rodapé coletivo com logo/identidade, nome fantasia, @ e segmento. Um segundo bloco pode reaparecer mais adiante.',price:'R$ 49,90',ctx:'2 exibições separadas'},
+      overlay:{where:'Durante o episódio',how:'Visual individual · ~5s',desc:'A marca aparece individualmente sobre a imagem. A faixa representa um intervalo aproximado do episódio.',price:tierText[tier?.value]||'R$ 39,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
+      audio:{where:'Durante o episódio',how:'Visual + chamada sonora · ~5s',desc:'A marca aparece individualmente acompanhada de uma chamada sonora curta que atua como gatilho de atenção.',price:audioText[tier?.value]||'R$ 49,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
+      individual:{where:'Créditos',how:'Lista de nomes e @',desc:'Tela preta com nomes/@ em composição coletiva de créditos.',price:'R$ 9,90',ctx:'Após a história'},
+      sponsor:{where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'Tela preta com apresentação institucional da empresa participante do episódio.',price:'R$ 89,90',ctx:'Após a história e créditos'}
+    }[m];
+    if(!info)return;
+    $('#simWhere')&&( $('#simWhere').textContent=info.where );
+    $('#simHow')&&( $('#simHow').textContent=info.how );
+    $('#simDescription')&&( $('#simDescription').textContent=info.desc );
+    $('#simPriceInfo')&&( $('#simPriceInfo').textContent=info.price );
+    $('#simWhereLarge')&&( $('#simWhereLarge').textContent=info.where );
+    $('#simPriceLarge')&&( $('#simPriceLarge').textContent=info.price );
+    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='individual'||m==='sponsor')?'Apresentação de créditos':'≈ 5 segundos' );
+    $('#simContextLarge')&&( $('#simContextLarge').textContent=info.ctx );
+    $('#priceLogic')&&( $('#priceLogic').innerHTML = m==='footer' ? '<strong>Regra de preço:</strong> valor único de <strong>R$ 49,90</strong>.' : '<strong>Regra de preço:</strong> o valor acompanha a faixa/momento escolhido.' );
+    return info;
+  }
+
+  function setBrand(){
+    const n=(inputName?.value||'').trim()||'SUA EMPRESA',h=(inputHandle?.value||'').trim()||'@suaempresa';
+    if(pName)pName.textContent=n;if(pHandle)pHandle.textContent=h;
+    if(sponsorName)sponsorName.textContent=n;if(sponsorHandle)sponsorHandle.textContent=h;
+    $('#fpName')&&($('#fpName').textContent=n);$('#fpHandle')&&($('#fpHandle').textContent=h);
+    $('#indName')&&($('#indName').textContent=h);
+  }
+
+  function runSimulation(){
+    if(!mode || !screen)return;
+    setBrand();updateSimLabels();clearSimulation();
+    const m=mode.value;
+    if(m==='footer'){
+      screen.classList.add('footer-demo');
+      if(timeBadge){timeBadge.style.display='block';timeBadge.innerHTML='EXIBIÇÃO <span>≈ 5s</span>'}
+      if(creditClock)creditClock.style.display='none';
+      if(wave1){void wave1.offsetWidth;wave1.classList.add('show')}
+      if(wave2){
+        setTimeout(()=>{wave1?.classList.remove('show');void wave2.offsetWidth;wave2.classList.add('show')},5900)
+        setTimeout(()=>wave2?.classList.remove('show'),11100)
+      }
+      if(focus){focus.style.left='2.5%';focus.style.right='2.5%';focus.style.bottom='3%';focus.style.top='auto';focus.style.height='18%';focus.classList.add('show')}
+    }else if(m==='overlay'||m==='audio'){
+      const t=tier?.value||'essential';
+      screen.classList.add('price-'+t);
+      screen.dataset.moment=t;
+      if(timeBadge){timeBadge.style.display='block';timeBadge.innerHTML='INSERÇÃO <span>≈ 5s</span>'}
+      if(creditClock)creditClock.style.display='none';
+      if(audioBadge)audioBadge.style.display=m==='audio'?'block':'none';
+      visual?.classList.add('show');
+      if(focus){focus.style.left='3%';focus.style.top='3%';focus.style.width='57%';focus.style.height='20%';focus.style.right='auto';focus.style.bottom='auto';focus.classList.add('show')}
+      setTimeout(()=>visual?.classList.remove('show'),5700);
+      setTimeout(()=>focus?.classList.remove('show'),5700);
+    }else if(m==='individual'){
+      screen.classList.add('isCredits');
+      if(timeBadge)timeBadge.style.display='none';
+      if(creditClock)creditClock.style.display='block';
+      individual?.classList.add('show');
+      setTimeout(()=>individual?.classList.remove('show'),6500);
+    }else{
+      screen.classList.add('isCredits');
+      if(timeBadge)timeBadge.style.display='none';
+      if(creditClock)creditClock.style.display='block';
+      sponsor?.classList.add('show');
+      setTimeout(()=>sponsor?.classList.remove('show'),6500);
+    }
+  }
+
+  // Capture phase prevents stale/duplicate simulation handlers from fighting with V9.
+  if(play)play.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();runSimulation()},true);
+  [mode,tier,moment].forEach(el=>el?.addEventListener('change',e=>{e.stopImmediatePropagation();updateSimLabels()},true));
+  [inputName,inputHandle].forEach(el=>el?.addEventListener('input',setBrand));
+  $$('.device').forEach(b=>b.addEventListener('click',e=>{
+    e.preventDefault();e.stopImmediatePropagation();
+    $$('.device').forEach(x=>x.classList.remove('active'));b.classList.add('active');screen?.classList.toggle('phone',b.dataset.device==='phone');
+  },true));
+  updateSimLabels();
+
+  // ----- Request form and cross-tab synchronization -----
+  const req={
+    type:$('#reqType'), mode:$('#reqMode'), tier:$('#reqPriceTier'), moment:$('#reqMoment'),
+    qty:$('#reqQty'), name:$('#reqName'), phone:$('#reqPhone'), email:$('#reqEmail'),
+    handle:$('#reqHandle'), obs:$('#reqObs'), terms:$('#acceptTerms')
+  };
+
+  function syncDraftToRequest(){
+    const d=readDraft(); if(!d)return;
+    if(req.type && d.type)req.type.value=d.type;
+    if(req.mode && d.mode){req.mode.value=d.mode;req.mode.dispatchEvent(new Event('change',{bubbles:true}))}
+    setTimeout(()=>{
+      const tierEl=$('#reqPriceTier');
+      if(tierEl && d.tier && tierEl.tagName==='SELECT'){
+        [...tierEl.options].some(o=>{if(o.textContent===d.tier){tierEl.value=o.value;return true}return false});
+      } else if(tierEl && d.tier){tierEl.value=d.tier}
+      if(req.moment && d.moment)req.moment.value=d.moment;
+      if(req.qty && d.qty)req.qty.value=d.qty;
+      if(req.name && d.name)req.name.value=d.name;
+      if(req.phone && d.phone)req.phone.value=d.phone;
+      if(req.email && d.email)req.email.value=d.email;
+      if(req.handle && d.handle)req.handle.value=d.handle;
+      if(req.obs && d.obs)req.obs.value=d.obs;
+      if(req.terms && d.terms)req.terms.checked=true;
+      if(typeof window.updateSummary==='function')window.updateSummary();
+      if(typeof window.updateSummaryAndFields==='function')window.updateSummaryAndFields();
+    },20);
+  }
+
+  function saveCurrentDraft(){
+    const m=req.mode?.value||'', q=Math.max(1,Number(req.qty?.value)||1);
+    const data={type:req.type?.value||'empresa',mode:m,tier:$('#reqPriceTier')?.value||'',moment:req.moment?.value||'',qty:q,name:req.name?.value||'',phone:req.phone?.value||'',email:req.email?.value||'',handle:req.handle?.value||'',obs:req.obs?.value||'',terms:Boolean(req.terms?.checked),savedAt:new Date().toISOString()};
+    localStorage.setItem(draftKey,JSON.stringify(data));
+  }
+  Object.values(req).forEach(el=>el?.addEventListener('input',saveCurrentDraft));
+  Object.values(req).forEach(el=>el?.addEventListener('change',saveCurrentDraft));
+
+  // Exact WhatsApp submission message, with second-submission trigger.
+  const send=$('#sendWhatsapp');
+  function markWhatsAppSubmission(){
+    let count=Number(localStorage.getItem(sendCountKey)||'0')+1;
+    localStorage.setItem(sendCountKey,String(count));
+    const s=readState();s.lastSubmissionCount=count;s.lastSubmissionAt=new Date().toISOString();writeState(s);
+    if(count>=2){
+      $('#chatLauncher')?.classList.remove('v9Hidden');
+      $('#chatLauncher')?.classList.add('v9Pulse');
+    }
+    return count;
+  }
+  if(send)send.addEventListener('click',e=>{
+    e.preventDefault();e.stopImmediatePropagation();
+    const n=req.name?.value.trim()||'';
+    const email=req.email?.value.trim()||'';
+    const phone=(req.phone?.value||'').replace(/\D/g,'');
+    if(!n){alert('Informe seu nome ou empresa.');return}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Informe um e-mail válido.');return}
+    if(!/^(?:55)?(?:\d{10,11})$/.test(phone)){alert('Informe um telefone brasileiro válido com DDD.');return}
+    if(!req.terms?.checked){alert('Aceite os Termos de Uso e as Regras de Participação para continuar.');return}
+    saveCurrentDraft();
+    const d=readDraft()||{};
+    const modeText=req.mode?.value||'Não selecionada';
+    const tierTextMsg=$('#reqPriceTier')?.value||'Modalidade fixa';
+    const momentMsg=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
+    const total=$('#sumPrice')?.textContent||'A definir após análise';
+    const msg=`🔶━━━━━━━━━━━━━━━━━━━━🔶
+        DOOX STUDIOS • HOCCO
+🔶━━━━━━━━━━━━━━━━━━━━🔶
+
+🎬 SOLICITAÇÃO DE PARTICIPAÇÃO
+NO REALITY DE NEGÓCIOS
+
+━━━━━━━━━━━━━━━━━━━━
+👤 DADOS DO SOLICITANTE
+━━━━━━━━━━━━━━━━━━━━
+🏷️ Nome / Empresa: ${n}
+📧 E-mail: ${email}
+📱 WhatsApp: ${req.phone.value}
+👥 Tipo: ${(req.type?.value||'empresa')==='empresa'?'EMPRESA':'PESSOA'}
+🔗 @ / Perfil / Site: ${(req.handle?.value||'Não informado').trim()}
+
+━━━━━━━━━━━━━━━━━━━━
+🎥 PARTICIPAÇÃO SELECIONADA
+━━━━━━━━━━━━━━━━━━━━
+📌 Modalidade: ${modeText}
+🔢 Quantidade: ${Math.max(1,Number(req.qty?.value)||1)}
+💰 Faixa / preço: ${tierTextMsg}
+🕒 Momento / faixa desejada: ${momentMsg}
+💵 Valor estimado: ${total}
+
+━━━━━━━━━━━━━━━━━━━━
+📝 DESCRIÇÃO / OBSERVAÇÕES
+━━━━━━━━━━━━━━━━━━━━
+${(req.obs?.value||'Sem observações').trim()}
+
+━━━━━━━━━━━━━━━━━━━━
+📎 MATERIAIS
+━━━━━━━━━━━━━━━━━━━━
+Após a aprovação, logo, foto, identidade visual, áudio ou demais materiais serão enviados pelo canal indicado pela DOOX.
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ CIÊNCIA
+━━━━━━━━━━━━━━━━━━━━
+✅ Termos de Uso aceitos
+✅ Regras de Participação aceitas
+✅ Ciente de que a solicitação será analisada antes da confirmação
+✅ Ciente de que a faixa/momento é aproximado quando aplicável
+✅ Ciente de que a participação não concede controle editorial
+
+━━━━━━━━━━━━━━━━━━━━
+📲 PRÓXIMA ETAPA
+━━━━━━━━━━━━━━━━━━━━
+Aguardando análise da equipe DOOX.
+
+🔶━━━━━━━━━━━━━━━━━━━━🔶`;
+    const win=window.open(`https://wa.me/5514981150675?text=${encodeURIComponent(msg)}`,'_blank','noopener');
+    if(win){
+      markWhatsAppSubmission();
+      // After a successful send, gently invite another participation only from the 2nd submission onward.
+      if(Number(localStorage.getItem(sendCountKey)||0)>=2) setTimeout(()=>$('#chatLauncher')?.classList.remove('v9Pulse'),9000);
+    }
+  },true);
+
+  // ----- Chat assistant: appears only after the second WhatsApp submission -----
+  const launcher=$('#chatLauncher'),panel=$('#chatPanel'),close=$('#chatClose'),min=$('#chatMin'),minimized=$('#v9ChatMinimized'),body=$('#chatBody');
+  function renderChat(){
+    const d=readDraft();
+    if(!body)return;
+    if(!d){
+      body.innerHTML='<div class="chatBubble">Ainda não há uma pré-solicitação salva. Abra a participação para começar.</div><div class="chatActions"><button class="chatBtn primary" id="chatStart" type="button">Começar</button><button class="chatBtn secondary" id="chatClose2" type="button">Fechar</button></div>';
+      $('#chatStart')?.addEventListener('click',()=>{showView('request');panel?.classList.remove('open')});
+      $('#chatClose2')?.addEventListener('click',()=>panel?.classList.remove('open'));
+      return;
+    }
+    body.innerHTML=`<div class="chatBubble">Olá. Eu sou <b>Alex Hocc</b>. Encontrei uma pré-solicitação salva neste navegador.</div>
+<div class="chatCard"><strong>${d.mode||'Participação'}</strong><div class="chatMeta">Tipo: ${d.type==='pessoa'?'Pessoa':'Empresa'}<br>Faixa/preço: ${d.tier||'Modalidade fixa'}<br>Momento: ${d.moment||'Definido pela produção'}<br>Quantidade: ${d.qty||1}<br>Nome/Empresa: ${d.name||'Não informado'}<br>E-mail: ${d.email||'Não informado'}<br>WhatsApp: ${d.phone||'Não informado'}<br>@/Perfil: ${d.handle||'Não informado'}</div><div class="chatSaved">Salvo neste navegador. Sem banco de dados.</div></div>
+<div class="chatBubble">Você pode confirmar esta participação ou editar os dados antes de eu preparar um novo envio.</div>
+<div class="chatActions"><button class="chatBtn secondary" id="chatEdit" type="button">Editar participação</button><button class="chatBtn primary" id="chatConfirm" type="button">Confirmar e enviar</button></div>`;
+    $('#chatEdit')?.addEventListener('click',()=>{syncDraftToRequest();showView('request');panel?.classList.remove('open')});
+    $('#chatConfirm')?.addEventListener('click',()=>{syncDraftToRequest();showView('request');setTimeout(()=>send?.click(),250)});
+  }
+  function openChat(){renderChat();panel?.classList.add('open');launcher?.classList.remove('v9Pulse')}
+  launcher?.classList.toggle('v9Hidden',Number(localStorage.getItem(sendCountKey)||0)<2);
+  launcher?.addEventListener('click',openChat);
+  close?.addEventListener('click',()=>panel?.classList.remove('open'));
+  min?.addEventListener('click',()=>{panel?.classList.remove('open');minimized?.classList.add('on')});
+  minimized?.addEventListener('click',()=>{minimized.classList.remove('on');openChat()});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'){panel?.classList.remove('open');minimized?.classList.remove('on')}});
+
+  // Cross-tab/browser-sync: if the user opens another tab, selection and submission count are reused locally.
+  window.addEventListener('storage',e=>{
+    if(e.key===draftKey){syncDraftToRequest()}
+    if(e.key===sendCountKey){
+      const c=Number(e.newValue||0);
+      launcher?.classList.toggle('v9Hidden',c<2);
+      if(c>=2)launcher?.classList.add('v9Pulse');
+    }
+  });
+
+  // Start in the correct view and synchronize any prior draft.
+  const initial=(location.hash||'').slice(1);
+  showView(viewIds.includes(initial)?initial:'home');
+  syncDraftToRequest();
+})();
+</script>
 
 
-</body>
-</html>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  });
+}
+</script>
+
+<div class="installToast" id="installToast">No Chrome/Android/iOS compatível com instalação automática foi detectado. Em navegadores suportados, use o menu "Instalar app".</div>
+</body></html>

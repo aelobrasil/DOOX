@@ -1,39 +1,29 @@
-# DOOX Studios — Site comercial da 
+# DOOX / HOCCO — Site Final PWA
 
-MVP estático, sem banco de dados e sem gateway de pagamento.
+## Identidade
+- Aba do navegador/site: **Doox**
+- App instalado: **HOCCO**
+- Ícone/favicons: **D.** com ponto laranja
 
-## Como publicar na Vercel
+## PWA
+O projeto contém:
+- `manifest.webmanifest`
+- `sw.js`
+- `icon-192.png`
+- `icon-512.png`
+- `apple-touch-icon.png`
 
-1. Edite `app.js`.
-2. Troque `SEU_NUMERO_WHATSAPP_AQUI` pelo número oficial da DOOX, no formato internacional:
-   `5514999999999`
-3. Suba os arquivos para um repositório Git ou arraste a pasta/projeto para a Vercel.
-4. A Vercel publica `index.html` como site estático.
+O Service Worker registra e armazena o app shell e os assets locais. Em produção, a Vercel fornece HTTPS, necessário para o funcionamento normal do Service Worker e instalação.
 
-## PIX
+O botão **Instalar HOCCO** aparece quando o navegador oferece o fluxo de instalação. Em navegadores que não oferecem `beforeinstallprompt`, o usuário deve usar a opção de instalação do próprio navegador.
 
-A chave PIX NÃO está no código. O fluxo foi desenhado para:
-Site -> pedido -> WhatsApp -> instruções de pagamento -> comprovante no WhatsApp.
+## Fluxo comercial
+Escolher → Simular → Revisar → aceitar Termos/Regras → Finalizar → WhatsApp.
 
-## Observações de segurança
+A pré-solicitação é local (`localStorage`) e não é banco de dados.
 
-- Não coloque senha, token, chave privada ou credencial bancária no frontend.
-- O site não tem banco de dados.
-- O número do pedido é local à sessão do navegador.
-- A confirmação do pagamento é manual.
-- Os Termos e a Política são modelos para o MVP e precisam de revisão jurídica antes do uso definitivo.
+## WhatsApp
++55 14 98115-0675.
 
-## Conteúdo e marcas
-
-Os links do YouTube e TikTok já apontam para:
-- YouTube: @HOCCPOV
-- TikTok: @HOCCOBRASIL
-
-
-## Atualização comercial do MVP
-
-- Apoiador Individual: R$ 9,90.
-- Sponsor Overlay: preço individual por posição, variando conforme a importância editorial do momento.
-- Sponsor Overlay + Áudio: mesmo preço da posição + R$ 50,00 pelo áudio integrado.
-- O minuto/segundo exato não é vendido como garantia; a DOOX Studios mantém o controle editorial.
-- O rodapé informa que o site é um MVP da DOOX Studios e está sujeito a alterações e atualizações.
+## Deploy
+Abra a pasta no VS Code e publique na Vercel. O site é estático; Node.js/Vercel CLI é apenas para o processo de deploy.

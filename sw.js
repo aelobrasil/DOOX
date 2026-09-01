@@ -1,17 +1,12 @@
-const CACHE="hocco-v10-final";
+const CACHE_NAME='hocco-doox-v2';
 const ASSETS=[
-  "./","./index.html","./style.css","./app.js","./site.webmanifest",
-  "./favicon.ico","./favicon-16x16.png","./favicon-32x32.png",
-  "./apple-touch-icon.png","./icon-192.png","./icon-512.png","./icon-512-maskable.png"
+'/','/index.html','/manifest.webmanifest','/icon-192.png','/icon-512.png','/apple-touch-icon.png',
+'/hocco-poster-oficial.png','/hocco-story-1.png','/hocco-story-2.png','/hocco-universe.png',
+'/insertion-guide.png','/overlay-cinematic.png','/pov-demo-01.jpg','/pov-demo-02.jpg','/pov-demo-03.jpg','/simulacao-cinematica.jpg'
 ];
-self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
-self.addEventListener("activate",e=>e.waitUntil(
-  caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
-  .then(()=>self.clients.claim())
-));
-self.addEventListener("fetch",e=>{
-  if(e.request.method!=="GET")return;
-  e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{
-    const copy=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,copy)); return r;
-  }).catch(()=>caches.match("./index.html"))));
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{
+ if(e.request.method!=='GET')return;
+ e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{const clone=r.clone();caches.open(CACHE_NAME).then(c=>c.put(e.request,clone)).catch(()=>{});return r;}).catch(()=>caches.match('/index.html'))));
 });
