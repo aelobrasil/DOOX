@@ -150,6 +150,37 @@
 @media(max-width:980px){.installAppBtn.visible{display:flex}}
 .installToast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:98;background:#111;color:#fff;border:1px solid #333;border-radius:17px;padding:13px 16px;box-shadow:0 15px 45px #0005;font-size:13px;display:none}
 .installToast.show{display:block;animation:pageIn .3s ease both}
+
+/* V11 final responsive */
+html{font-size:16px}
+body{overflow-x:hidden}
+@media(max-width:520px){
+  .w{width:calc(100% - 28px)!important}
+  h1{font-size:clamp(40px,11vw,64px)!important;line-height:.94!important;letter-spacing:-3px!important}
+  .title{font-size:clamp(34px,9vw,52px)!important;line-height:.98!important;letter-spacing:-3px!important}
+  .lead,.copy{font-size:16px!important;line-height:1.55!important}
+  .top{max-width:calc(100% - 20px);width:calc(100% - 20px)!important}
+  .top .tab{font-size:11px!important;padding:8px 8px!important}
+  #backGlobal{left:10px!important;bottom:10px!important;font-size:13px!important;padding:9px 12px!important}
+  .preview{border-radius:24px!important;padding:11px!important}
+  .previewTop strong{font-size:13px!important}
+  .screen{border-radius:19px!important}
+  .simMeta,.simChoicePanel,.priceLogic,.simExplain,.v9SimNote,.v9Steps,.sponsorLegend{display:none!important}
+  .previewDescription,.desc{font-size:15px!important;line-height:1.45!important}
+  .control label{font-size:9px!important}
+  .control input,.control select{font-size:14px!important}
+  .card h3{font-size:25px!important}
+  .card p{font-size:14px!important}
+  .price{font-size:28px!important}
+  .cta{padding:28px 18px!important;border-radius:28px!important}
+  .field input,.field select,.field textarea{font-size:15px!important}
+  .summary{font-size:13px!important}
+}
+@media(min-width:521px) and (max-width:900px){
+  h1{font-size:clamp(54px,8vw,84px)!important}
+  .title{font-size:clamp(42px,6vw,62px)!important}
+  .copy{font-size:17px!important}
+}
 </style>
 <style id="final-ux-fixes">
 .top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
@@ -191,10 +222,10 @@
 <section class="view" id="companies"><div class="section"><div class="wrap"><div class="kicker">PARA EMPRESAS</div><h2 class="title">Presenças comerciais.</h2><p class="desc">Formatos destinados a empresas, marcas e negócios. A simulação permite visualizar cada modelo antes da solicitação.</p>
 <div class="rule" style="background:#fff;color:#444;border:1px solid #e7e7e7;margin-top:28px"><b style="color:#111">COMO VOCÊ DECIDE</b><span><b style="color:#ff6a00">1. Escolha</b> uma modalidade → <b style="color:#ff6a00">2. Simule</b> → <b style="color:#ff6a00">3. Entenda onde aparece</b> → <b style="color:#ff6a00">4. Prossiga</b> para a solicitação.</span></div><div class="cards">
 <div class="card product"><span class="num">01 · EMPRESAS</span><h3>Presença no Rodapé</h3><p>Identificação visual discreta na parte inferior do vídeo, usada em momentos compatíveis com a edição.</p><div class="price">R$ 49,90</div><div class="meta">Estrutura: até 50 vagas</div><button data-preview="footer" onclick="window.goPreview('footer')">Ver na simulação</button></div>
-<div class="card product"><span class="num">02 · EMPRESAS</span><h3>Sponsor Overlay</h3><p>Inserção visual de aproximadamente 5 segundos integrada à imagem. Você escolhe uma categoria e pode indicar o contexto desejado; o encaixe exato é definido pela produção.</p><div class="price">A partir de R$ 39,90</div><div class="meta">Estrutura: 5 vagas sem áudio · 10 vagas totais de Overlay</div><button data-preview="overlay" onclick="window.goPreview('overlay')">Ver na simulação</button></div>
-<div class="card product"><span class="num">03 · EMPRESAS</span><h3>Overlay + Áudio</h3><p>Presença visual com áudio curto aprovado antes da produção, respeitando o contexto do vídeo.</p><div class="price">A partir de R$ 49,90</div><div class="meta">Estrutura: 5 vagas com áudio</div><button data-preview="audio" onclick="window.goPreview('audio')">Ver na simulação</button></div>
-<div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: até 5 vagas</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
-</div><div class="notice"><b>Importante:</b> quando a modalidade permitir escolha de momento, a escolha funciona como preferência de programação. A disponibilidade e o encaixe final dependem da análise da produção e do planejamento do episódio.</div></div></div></section>
+<div class="card product"><span class="num">02 · EMPRESAS</span><h3>Sponsor Overlay</h3><p>Inserção visual de aproximadamente 5 segundos integrada à imagem. Você escolhe o momento/faixa comercial; o valor muda automaticamente conforme essa escolha. O minuto exato dentro da faixa é definido pela produção.</p><div class="price">A partir de R$ 39,90</div><div class="meta">Estrutura: 10 vagas sem áudio · 10 vagas totais de Overlay</div><button data-preview="overlay" onclick="window.goPreview('overlay')">Ver na simulação</button></div>
+<div class="card product"><span class="num">03 · EMPRESAS</span><h3>Overlay + Áudio</h3><p>Presença visual com áudio curto aprovado antes da produção, respeitando o contexto do vídeo.</p><div class="price">A partir de R$ 49,90</div><div class="meta">Estrutura: 10 vagas com áudio</div><button data-preview="audio" onclick="window.goPreview('audio')">Ver na simulação</button></div>
+<div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: exatamente 10 vagas disponíveis por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
+</div><div class="notice"><b>Importante:</b> quando a modalidade permitir escolha de momento, o momento/faixa escolhido determina automaticamente o preço correspondente. O minuto exato dentro da faixa depende da análise da produção e do planejamento do episódio.</div></div></div></section>
 
 <section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">Formatos separados das modalidades empresariais, pensados para reconhecimento e participação nos espaços institucionais da HOCCO.</p>
 <div class="cards" style="grid-template-columns:repeat(2,1fr);max-width:800px">
@@ -243,7 +274,7 @@
 <div class="controls">
 <div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="individual">Apoiador Individual</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
 <div class="control"><label>NOME PARA TESTAR</label><input id="inputName" value="SUA EMPRESA"></div>
-<div class="control"><label>@ / PERFIL</label><input id="inputHandle" value="@suaempresa"></div><div class="control"><label>FAIXA / PREÇO</label><select id="priceTier"><option value="essential">Essencial · entrada</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div><div class="control"><label>MOMENTO DESEJADO</label><select id="moment"><option value="essential">00:30–02:00</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div>
+<div class="control"><label>@ / PERFIL</label><input id="inputHandle" value="@suaempresa"></div><div class="control"><label>FAIXA / PREÇO (AUTOMÁTICO)</label><select id="priceTier" aria-label="Faixa e preço calculados automaticamente pelo momento escolhido"><option value="essential">Essencial · entrada</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div><div class="control"><label>MOMENTO DESEJADO / FAIXA</label><select id="moment"><option value="essential">00:30–02:00</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div>
 </div><button class="playDemo" id="playDemo" type="button">▶ EXECUTAR DEMONSTRAÇÃO COMPLETA</button>
 <div class="simExplain">
   <div><b>1.</b> escolha a modalidade</div>
@@ -269,7 +300,7 @@
       <div><b>03 · SAI</b>o bloco desaparece sem interromper a história</div>
       <div><b>04 · VOLTA</b>uma segunda exibição pode acontecer mais tarde</div>
     </div>
-<div class="proceedWrap"><button class="btn orange" id="proceedFromPreview">PROSSEGUIR COM PARTICIPAÇÃO NO REALITY BIOGRÁFICO</button><p id="simulationRule" class="creditHint">Escolha uma modalidade, veja a demonstração e só depois prossiga. A solicitação será analisada antes da confirmação.</p></div></div></div></section>
+<div class="proceedWrap"><button class="btn orange" id="proceedFromPreview">PROSSEGUIR COM PARTICIPAÇÃO NO REALITY BIOGRÁFICO</button><p id="simulationRule" class="creditHint"></p></div></div></div></section>
 
 <section class="view" id="poster"><div class="wrap posterPage"><div class="posterGrid"><div><img class="posterImg" src="hocco-poster-oficial.png" alt="Poster oficial da temporada HOCCO"></div><div class="posterInfo"><div class="kicker">POSTER OFICIAL</div><h1>HOCCO</h1><p class="lead">Você chegou no meio da história.</p><p class="desc">O poster apresenta a temporada da HOCCO, um reality de negócios em primeira pessoa centrado em Alex Hocc. Alex é o eixo da narrativa: ele trabalha, decide, negocia, cria, erra, aprende e constrói projetos enquanto a audiência acompanha sua evolução. Empresas, pessoas e lugares entram na história quando passam a fazer parte desse caminho.</p><p class="desc">A temporada acompanha o crescimento de Alex e da própria operação — do começo simples às primeiras oportunidades, eventos, comunidade e negócios reais. Nem tudo é explicado; parte da história acontece nos detalhes, nos silêncios, nas escolhas e nas consequências.</p><div class="actions"><button class="btn orange" data-go="request">Participar do universo</button><button class="btn" style="background:#111;color:#fff" data-go="preview">Ver simulações</button></div></div></div></div></section>
 
@@ -281,10 +312,10 @@
 <div class="field"><label>SEU WHATSAPP</label><input id="reqPhone" placeholder="(00) 00000-0000"></div><div class="field"><label>SEU E-MAIL</label><input id="reqEmail" type="email" placeholder="voce@empresa.com"></div>
 <div class="field"><label>TIPO</label><select id="reqType"><option value="empresa">Empresa</option><option value="pessoa">Pessoa</option></select></div>
 <div class="field"><label>MODALIDADE</label><select id="reqMode"></select></div>
-<div class="field"><label>FAIXA / PREÇO ESCOLHIDO</label><input id="reqPriceTier" readonly value="Essencial · entrada"></div><div class="field"><label>MOMENTO DESEJADO</label><select id="reqMoment"><option>00:30–02:00</option><option>02:00–04:00</option><option>04:00–06:30</option><option>06:30–09:00</option><option>09:00–11:00</option></select></div>
+<div class="field"><label>FAIXA / PREÇO (AUTOMÁTICO)</label><input id="reqPriceTier" readonly value="00:30–02:00 · R$ 39,90"></div><div class="field"><label>MOMENTO DESEJADO</label><select id="reqMoment"><option>00:30–02:00</option><option>02:00–04:00</option><option>04:00–06:30</option><option>06:30–09:00</option><option>09:00–11:00</option></select></div>
 <div class="field"><label>QUANTIDADE</label><input id="reqQty" type="number" min="1" value="1"></div>
 <div class="field wide"><label>@ / PERFIL / SITE</label><input id="reqHandle" placeholder="@seuperfil ou identificação"></div>
-<div class="field wide"><label>ACEITE</label><label style="display:flex;gap:10px;align-items:flex-start;color:#666;font-size:13px;text-transform:none;letter-spacing:0;line-height:1.45"><input id="acceptTerms" type="checkbox" style="width:17px;height:17px;margin-top:2px;accent-color:#ff6a00"><span>Li e aceito os <button type="button" data-legal="terms" style="border:0;background:none;color:#ff6a00;text-decoration:underline;font-weight:900;padding:0;cursor:pointer">Termos de Uso</button> e a <button type="button" data-legal="policy" style="border:0;background:none;color:#ff6a00;text-decoration:underline;font-weight:900;padding:0;cursor:pointer">Política DOOX para HOCCO</button>.</span></label></div><div class="field wide"><label>DESCRIÇÃO / OBSERVAÇÃO</label><textarea id="reqObs" rows="3" placeholder="Conte brevemente o que deseja solicitar."></textarea></div><input id="websiteTrap" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0;height:1px;width:1px">
+<div class="field wide"><label>ACEITE</label><label style="display:flex;gap:10px;align-items:flex-start;color:#666;font-size:13px;text-transform:none;letter-spacing:0;line-height:1.45"><input id="acceptTerms" type="checkbox" style="width:17px;height:17px;margin-top:2px;accent-color:#ff6a00"><span>Li e aceito os <button type="button" data-legal="terms" style="border:0;background:none;color:#ff6a00;text-decoration:underline;font-weight:900;padding:0;cursor:pointer">Termos de Uso</button> e as <button type="button" data-legal="rules" style="border:0;background:none;color:#ff6a00;text-decoration:underline;font-weight:900;padding:0;cursor:pointer">Regras de Participação</button>.</span></label></div><div class="field wide"><label>DESCRIÇÃO / OBSERVAÇÃO</label><textarea id="reqObs" rows="3" placeholder="Conte brevemente o que deseja solicitar."></textarea></div><input id="websiteTrap" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0;height:1px;width:1px">
 <div class="summary"><b id="sumText">1 × Presença no Rodapé</b><strong id="sumPrice">R$ 49,90</strong></div>
 </div><button class="btn orange" style="margin-top:16px" id="sendWhatsapp">FINALIZAR E IR PARA O WHATSAPP ↗</button><p class="fine">A solicitação não representa aprovação automática nem garante um ponto específico no episódio. O resumo é enviado para análise.</p></div></div></div></section>
 </main>
@@ -393,9 +424,22 @@
     const opts=priceOptions[mode.value];
     if(opts){
       priceTier.innerHTML=opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
-      priceTier.disabled=false;
-      priceTier.value=opts[0][0];
-    } else { priceTier.innerHTML='<option value="fixed">Modalidade fixa</option>'; priceTier.value='fixed'; priceTier.disabled=true; }
+      priceTier.disabled=true;
+      const desired=moment?.value||opts[0][0];
+      priceTier.value=opts.some(([v])=>v===desired)?desired:opts[0][0];
+    } else {
+      priceTier.innerHTML='<option value="fixed">Modalidade fixa</option>';
+      priceTier.value='fixed';
+      priceTier.disabled=true;
+    }
+  }
+  function syncTierToMoment(){
+    if(!priceTier || !moment) return;
+    const opts=priceOptions[mode?.value];
+    if(opts){
+      const key=moment.value||opts[0][0];
+      priceTier.value=opts.some(([v])=>v===key)?key:opts[0][0];
+    }
   }
   function parsePrice(text){
     const m=(text||'').match(/R\$\s*([0-9]+),([0-9]{2})/); return m?Number(`${m[1]}.${m[2]}`):null;
@@ -409,9 +453,10 @@
     $('#pName')&&( $('#pName').textContent=n ); $('#pHandle')&&( $('#pHandle').textContent=h ); $('#fpName')&&( $('#fpName').textContent=n ); $('#fpHandle')&&( $('#fpHandle').textContent=h ); $('#indName')&&( $('#indName').textContent=h ); $('#sponsorName')&&( $('#sponsorName').textContent=n ); $('#sponsorHandle')&&( $('#sponsorHandle').textContent=h );
     previewName.textContent=cfg.title;
     simWhere&&(simWhere.textContent=cfg.where); simHow&&(simHow.textContent=cfg.how); simDescription&&(simDescription.textContent=cfg.desc); simDisclaimer&&(simDisclaimer.textContent=cfg.disclaimer);
+    syncTierToMoment();
     const tierText=priceTier?.options[priceTier.selectedIndex]?.text||'';
     const tier=parsePrice(tierText);
-    simPriceInfo&&(simPriceInfo.textContent=m==='footer'?'Valor fixo: R$ 49,90':(['overlay','audio'].includes(m)?`Faixa selecionada: ${tierText}`:`Valor: ${tierText||cfg.disclaimer}`));
+    simPriceInfo&&(simPriceInfo.textContent=m==='footer'?'Valor fixo: R$ 49,90':(['overlay','audio'].includes(m)?`Faixa/preço automático: ${tierText}`:`Valor: ${tierText||cfg.disclaimer}`));
     if(simMetaMode) simMetaMode.textContent=cfg.title;
     simImageIndex=(simImageIndex+1)%simImages.length; if(simImage){simImage.style.display='block';simImage.src=simImages[simImageIndex]||'hocco-universe.png';}
     const isTimed=['footer','overlay','audio'].includes(m);
@@ -438,8 +483,8 @@
     }
   }
   mode?.addEventListener('change',()=>{refreshPriceOptions();updatePreview();});
-  moment?.addEventListener('change',updatePreview);
-  priceTier?.addEventListener('change',updatePreview);
+  moment?.addEventListener('change',()=>{syncTierToMoment();updatePreview();});
+  priceTier?.addEventListener('change',e=>{e.preventDefault();syncTierToMoment();updatePreview();});
   [inputName,inputHandle].forEach(x=>x?.addEventListener('input',updatePreview));
   $$('.device').forEach(b=>b.addEventListener('click',()=>{$$('.device').forEach(x=>x.classList.remove('active'));b.classList.add('active');screen.classList.toggle('phone',b.dataset.device==='phone');}));
   $('#playDemo')?.addEventListener('click',()=>{
@@ -471,7 +516,7 @@
       if(rn)rn.value=inputName.value; if(rh)rh.value=inputHandle.value;
       if(rp) rp.value=key==='footer'||key==='individual'||key==='sponsor'?'Modalidade fixa':(priceTier?.options[priceTier.selectedIndex]?.text||'');
       const mapMoment={essential:'00:30–02:00',regular:'02:00–04:00',valued:'04:00–06:30',premium:'06:30–09:00',special:'09:00–11:00'};
-      if(rmm && !rmm.disabled)rmm.value=mapMoment[priceTier.value]||mapMoment[moment.value]||mapMoment.essential;
+      if(rmm && !rmm.disabled)rmm.value=mapMoment[moment.value]||mapMoment.essential;
       updateRequestSummary();
       go('request');
     },30);
@@ -485,6 +530,11 @@
     'Sponsor Overlay':['00:30–02:00 · R$ 39,90','02:00–04:00 · R$ 49,90','04:00–06:30 · R$ 59,90','06:30–09:00 · R$ 69,90','09:00–11:00 · R$ 79,90'],
     'Overlay + Áudio':['00:30–02:00 · R$ 49,90','02:00–04:00 · R$ 59,90','04:00–06:30 · R$ 69,90','06:30–09:00 · R$ 79,90','09:00–11:00 · R$ 89,90']
   };
+  const rangeKeyByText={'00:30–02:00':'essential','02:00–04:00':'regular','04:00–06:30':'valued','06:30–09:00':'premium','09:00–11:00':'special'};
+  function requestRangePriceLabel(m, rangeText){
+    const labels=requestRanges[m]||[];
+    return labels.find(x=>x.startsWith(rangeText+' · ')) || labels[0] || '';
+  }
   const reqType=$('#reqType'),reqMode=$('#reqMode'),reqMoment=$('#reqMoment'),reqQty=$('#reqQty'),reqPriceTier=$('#reqPriceTier'),reqCatalog=$('#requestCatalog');
   const reqName=$('#reqName'),reqPhone=$('#reqPhone'),reqEmail=$('#reqEmail'),reqHandle=$('#reqHandle'),reqObs=$('#reqObs'),acceptTerms=$('#acceptTerms'),sumText=$('#sumText'),sumPrice=$('#sumPrice');
   function money(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
@@ -493,18 +543,12 @@
     if(reqMode){reqMode.innerHTML=arr.map(x=>`<option>${x}</option>`).join('');}
     renderCatalog();updateSummaryAndFields();
   }
-  function tierSelectFor(m){
-    if(!reqPriceTier)return;
-    if(requestRanges[m]){reqPriceTier.outerHTML='<select id="reqPriceTier" class="controlInput">'+requestRanges[m].map(x=>`<option>${x}</option>`).join('')+'</select>';}
-    const el=$('#reqPriceTier');
-    if(m==='Presença no Rodapé' || m==='Apoiador Individual' || m==='Empresa Patrocinadora do Episódio'){
-      if(el){el.outerHTML='<input id="reqPriceTier" value="Modalidade fixa" readonly>'}
-    }
-  }
   function currentPrice(){
     const m=reqMode?.value||'';
-    const tier=$('#reqPriceTier');
-    if(requestRanges[m]) return parsePrice(tier?.value||'')||prices[m];
+    if(requestRanges[m]){
+      const label=requestRangePriceLabel(m, reqMoment?.value||'00:30–02:00');
+      return parsePrice(label)||null;
+    }
     return prices[m]??null;
   }
   function renderCatalog(){
@@ -512,7 +556,7 @@
     const arr=requestOptions[reqType?.value]||[];
     reqCatalog.innerHTML=arr.map(x=>{
       const p=x==='Sponsor Overlay'?'A partir de R$ 39,90':x==='Overlay + Áudio'?'A partir de R$ 49,90':money(prices[x]);
-      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco':x==='Sponsor Overlay'?'5 faixas · 10 vagas totais de Overlay':x==='Overlay + Áudio'?'5 faixas · 5 vagas com áudio':'Créditos · até 50 participações';
+      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'Créditos · até 50 participações';
       return `<button type="button" class="requestChoice ${reqMode?.value===x?'active':''}" data-choice="${x}"><small>${reqType?.value==='empresa'?'EMPRESA':'PESSOA'}</small><strong>${x}</strong><span>${p}</span><small>${sub}</small></button>`
     }).join('');
     $$('[data-choice]',reqCatalog).forEach(b=>b.addEventListener('click',()=>{reqMode.value=b.dataset.choice;updateSummaryAndFields();renderCatalog();}));
@@ -521,15 +565,32 @@
     if(!reqMode?.value)return;
     const m=reqMode.value;
     const person=m==='Apoiador Individual';
-    if(reqMoment){reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio'; if(reqMoment.disabled)reqMoment.value='Após a história / definido pela produção';}
-    // Reset price tier field cleanly.
+    const timed=Boolean(requestRanges[m]);
+    if(reqMoment){
+      reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio';
+      if(reqMoment.disabled) reqMoment.value='Após a história / definido pela produção';
+      if(timed && !rangeKeyByText[reqMoment.value]) reqMoment.value='00:30–02:00';
+    }
     const old=$('#reqPriceTier');
     if(old){
-      if(requestRanges[m]){
-        const sel=document.createElement('select');sel.id='reqPriceTier';sel.className=old.className||'';sel.innerHTML=requestRanges[m].map(x=>`<option>${x}</option>`).join('');old.replaceWith(sel);sel.addEventListener('change',updateSummary); if(window.__selectedTierText) sel.value=window.__selectedTierText; window.__selectedTierText='';
+      if(timed){
+        const sel=document.createElement('select');
+        sel.id='reqPriceTier'; sel.className=old.className||''; sel.disabled=true;
+        sel.innerHTML=(requestRanges[m]||[]).map(x=>`<option value="${x}">${x}</option>`).join('');
+        old.replaceWith(sel);
       } else if(old.tagName!=='INPUT' || old.value!=='Modalidade fixa'){
-        const inp=document.createElement('input');inp.id='reqPriceTier';inp.readOnly=true;inp.value='Modalidade fixa';inp.className=old.className||'';old.replaceWith(inp);
+        const inp=document.createElement('input');
+        inp.id='reqPriceTier'; inp.readOnly=true; inp.value='Modalidade fixa'; inp.className=old.className||''; old.replaceWith(inp);
       }
+    }
+    if(reqQty){
+      reqQty.max=(m==='Empresa Patrocinadora do Episódio')?'10':'';
+      if(m==='Empresa Patrocinadora do Episódio' && Number(reqQty.value)>10) reqQty.value='10';
+    }
+    if(timed){
+      const sel=$('#reqPriceTier');
+      const label=requestRangePriceLabel(m, reqMoment?.value||'00:30–02:00');
+      if(sel && label) sel.value=label;
     }
     renderCatalog();updateSummary();
   }
@@ -539,32 +600,16 @@
     if(sumPrice)sumPrice.textContent=p==null?'A definir após análise':money(p*q);
   }
   function updateRequestSummary(){updateSummary();}
-  reqType?.addEventListener('change',fillRequestModes);reqMode?.addEventListener('change',updateSummaryAndFields);reqQty?.addEventListener('input',updateSummary);fillRequestModes();
+  window.updateSummary=updateSummary;
+  window.updateSummaryAndFields=updateSummaryAndFields;
+  reqType?.addEventListener('change',fillRequestModes);reqMode?.addEventListener('change',updateSummaryAndFields);reqMoment?.addEventListener('change',()=>{updateSummaryAndFields();});reqQty?.addEventListener('input',updateSummary);fillRequestModes();
 
-  // WhatsApp finalization, exact data, no file uploads.
-  const lastSubmitKey='doox_submit_at_v6';
-  function validBR(v){const d=(v||'').replace(/\D/g,'');return /^(?:55)?(?:1[1-9]|2[12478]|3[1-8]|4[1-9]|5[1-9]|6[1-9]|7[1-9]|8[1-9]|9[1-9])9\d{8}$/.test(d) || /^(?:55)?(?:1[1-9]|2[12478]|3[1-8]|4[1-9]|5[1-9]|6[1-9]|7[1-9]|8[1-9]|9[1-9])\d{8}$/.test(d)}
-  $('#sendWhatsapp')?.addEventListener('click',()=>{
-    const now=Date.now(), last=Number(localStorage.getItem(lastSubmitKey)||0);
-    if(now-last<15000){alert('Aguarde alguns segundos antes de enviar outra solicitação.');return;}
-    if($('#websiteTrap')?.value)return;
-    if(!reqName?.value.trim()){alert('Informe seu nome ou empresa.');return;}
-    if(!reqEmail?.value.trim() || !/^\S+@\S+\.\S+$/.test(reqEmail.value.trim())){alert('Informe um e-mail válido.');return;}
-    if(!validBR(reqPhone?.value)){alert('Informe um telefone válido do Brasil com DDD.');return;}
-    if(!acceptTerms?.checked){alert('Aceite os Termos de Uso e a Política DOOX para HOCCO.');return;}
-    const m=reqMode.value,q=Math.max(1,Number(reqQty.value)||1),tier=$('#reqPriceTier'),p=currentPrice();
-    const total=p==null?'A definir após análise':money(p*q);
-    const momentText=reqMoment?.disabled?'Após a história / definido pela produção':reqMoment.value;
-    const msg=`🔶 DOOX STUDIOS • SOLICITAÇÃO HOCCO\n━━━━━━━━━━━━━━━━━━━━\n🎬 PARTICIPAÇÃO NO REALITY DE NEGÓCIOS\n━━━━━━━━━━━━━━━━━━━━\n👤 Nome / Empresa: ${reqName.value.trim()}\n📧 E-mail: ${reqEmail.value.trim()}\n📱 WhatsApp: ${reqPhone.value.trim()}\n🏷️ Tipo: ${reqType.value==='empresa'?'Empresa':'Pessoa'}\n\n📌 MODALIDADE\n${m}\n\n💰 FAIXA / PREÇO ESCOLHIDO\n${tier?.value||'Modalidade fixa'}\n\n🕒 MOMENTO DESEJADO\n${momentText}\n\n🔢 QUANTIDADE\n${q}\n\n💵 VALOR ESTIMADO\n${total}\n\n🔗 @ / PERFIL / SITE\n${reqHandle.value.trim()||'Não informado'}\n\n📝 DESCRIÇÃO / OBSERVAÇÃO\n${reqObs.value.trim()||'Sem observações'}\n\n━━━━━━━━━━━━━━━━━━━━\n📎 MATERIAIS\nApós a aprovação da participação, a DOOX orientará o envio da logo, foto e demais materiais pelo canal oficial indicado.\n\n✅ Termos de Uso aceitos\n✅ Política DOOX para HOCCO aceita\n\n⚠️ Esta mensagem é uma solicitação para análise. Não representa aprovação automática, reserva definitiva, confirmação de pagamento ou garantia de minuto específico.\n━━━━━━━━━━━━━━━━━━━━\nDOOX STUDIOS • HOCCO`;
-    if(!confirm(`Revise sua solicitação:\n\n${m}\n${tier?.value||'Modalidade fixa'}\n${momentText}\n${total}\n\nContinuar para o WhatsApp?`)) return;
-    localStorage.setItem(lastSubmitKey,String(now));
-    window.open('https://wa.me/5514981150675?text='+encodeURIComponent(msg),'_blank','noopener');
-  });
+  // WhatsApp finalization is handled by the consolidated controller below.
 
   // Legal modal
 const legalData={
 terms:{title:'Termos de Uso',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. Objeto do site</h3><p>Este site apresenta modalidades de participação relacionadas ao universo audiovisual HOCCO e permite o envio de solicitações para atendimento pelo WhatsApp informado no próprio site. O site tem finalidade informativa e de solicitação inicial.</p><h3>2. Solicitação não é contratação automática</h3><p>O envio do formulário ou da mensagem pelo WhatsApp não constitui, por si só, aprovação, contratação concluída, reserva definitiva, confirmação de pagamento, garantia de publicação ou garantia de exibição em episódio específico. Cada solicitação pode ser analisada antes de qualquer confirmação.</p><h3>3. Momentos desejados e encaixe final</h3><p>Quando o participante escolhe uma faixa aproximada, essa escolha representa uma preferência de posicionamento dentro de um episódio médio de cerca de 12 minutos. A demonstração é ilustrativa. O encaixe efetivo pode depender de disponibilidade, planejamento, edição, duração, narrativa, segurança operacional, materiais aprovados e demais necessidades da produção.</p><h3>4. Materiais e responsabilidade do solicitante</h3><p>Quem envia nome, marca, logotipo, imagem, áudio, texto, endereço de perfil ou outro material declara possuir os direitos e autorizações necessários para seu uso. O solicitante permanece responsável pela veracidade das informações e pela licitude do material enviado.</p><h3>5. Análise e recusa</h3><p>Solicitações ou materiais podem não ser aceitos quando forem incompatíveis com a proposta do projeto, tecnicamente inadequados, potencialmente ilegais, ofensivos, enganosos, violadores de direitos de terceiros ou inadequados ao contexto audiovisual. A ausência de aprovação não gera obrigação de publicação.</p><h3>6. Valores, disponibilidade e vagas</h3><p>Os valores apresentados no site são referências comerciais das modalidades indicadas e podem estar sujeitos a análise conforme modalidade, quantidade, disponibilidade e condições específicas. A indicação de vagas representa a estrutura operacional planejada e não cria, isoladamente, uma reserva em favor de quem apenas acessa a página.</p><h3>7. Pagamento e confirmação</h3><p>Quando houver pagamento, as condições aplicáveis, forma de pagamento e confirmação deverão seguir a orientação comunicada durante o atendimento. Nenhuma participação deve ser considerada confirmada apenas porque o usuário enviou um comprovante; a confirmação depende da verificação aplicável ao processo.</p><h3>8. Alterações, cancelamentos e impossibilidade de execução</h3><p>Pedidos, materiais ou programações podem exigir ajustes por motivos técnicos, editoriais, de calendário ou de produção. Situações de cancelamento, reembolso, crédito ou remanejamento deverão ser tratadas conforme as circunstâncias concretas e as condições comunicadas no atendimento, observada a legislação aplicável.</p><h3>9. Propriedade intelectual</h3><p>HOCCO, DOOX, identidade visual, layout, textos próprios, marcas, elementos audiovisuais e demais conteúdos protegidos não podem ser reproduzidos, explorados ou utilizados fora das permissões aplicáveis. A participação de uma empresa ou pessoa não transfere propriedade sobre o projeto audiovisual.</p><h3>10. Limitação da simulação</h3><p>As telas de simulação demonstram possibilidades visuais. Elas não constituem prova de posicionamento definitivo, frame definitivo, tempo exato, audiência garantida, alcance mínimo, resultado comercial ou promessa de desempenho.</p><h3>11. Conduta no uso do site</h3><p>É proibido tentar comprometer a segurança ou o funcionamento do site, inserir códigos maliciosos, realizar uso automatizado abusivo, fornecer dados fraudulentos ou utilizar o site para finalidades ilícitas.</p><h3>12. Alterações destes termos</h3><p>Estes Termos podem ser atualizados quando necessário. A versão exibida no site é a referência para o uso realizado após sua publicação, sem prejuízo de condições específicas já confirmadas em atendimentos anteriores.</p><h3>13. Legislação aplicável</h3><p>As relações decorrentes do uso do site e das solicitações deverão observar a legislação brasileira aplicável. Eventuais questões serão tratadas pelos canais de atendimento e, quando necessário, pelos meios legalmente competentes.</p><h3>14. Atendimento</h3><p>O canal de atendimento utilizado para as solicitações é o WhatsApp oficial informado no site. O envio de mensagem representa início do atendimento, não confirmação automática.</p><h3>15. Acessibilidade e disponibilidade</h3><p>A DOOX busca manter o site acessível e funcional. Instabilidades temporárias, manutenção, indisponibilidade de serviços de terceiros ou limitações de rede podem ocorrer.</p><h3>16. Aceite</h3><p>Ao continuar utilizando o site, o usuário declara ter lido e compreendido estes Termos e concordado com as regras aplicáveis.</p>`},
-rules:{title:'Regras de Participação',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. O que é contratado</h3><p>O participante solicita uma modalidade de presença. A participação não compra roteiro, edição, controle narrativo, minuto exato ou poder de decisão sobre o episódio.</p><h3>2. Faixas aproximadas</h3><p>Para Sponsor Overlay e Overlay + Áudio, as faixas representam posições aproximadas em um episódio médio de cerca de 12 minutos. A posição final pode variar conforme a edição.</p><h3>3. Presença no Rodapé</h3><p>Valor único de R$ 49,90. As marcas são organizadas em grupos de até 10 empresas por bloco. A duração atual é aproximada de 5 segundos por bloco e pode ser atualizada no formato. Logo/imagem, nome e @ são integrados após análise e confirmação.</p><h3>4. Concorrência direta</h3><p>A produção buscará evitar empresas concorrentes diretas no mesmo bloco de Rodapé. Isso não representa exclusividade de segmento e a composição final dos grupos permanece sob organização da produção.</p><h3>5. Overlay + Áudio</h3><p>A chamada sonora curta é integrada à entrada da marca como gatilho de atenção. Não concede ao participante controle sobre a narrativa ou liberdade para inserir qualquer fala, música ou mensagem sem análise.</p><h3>6. Materiais</h3><p>Logo, imagem e demais materiais não são enviados pelo site. Após a análise e confirmação da solicitação, a equipe orientará o envio pelo canal oficial indicado.</p><h3>7. Aprovação</h3><p>O envio ao WhatsApp representa solicitação para análise. A participação somente é confirmada após a validação aplicável.</p>`},policy:{title:'Política DOOX para HOCCO',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. Finalidade</h3><p>Esta política descreve os princípios utilizados para organizar participações de empresas e pessoas no universo HOCCO, buscando preservar a compreensão do público e a coerência audiovisual das presenças aprovadas.</p><h3>2. Participação não é controle narrativo</h3><p>A presença de uma empresa ou pessoa não representa compra de roteiro, compra de opinião, controle sobre acontecimentos, obrigação de fala do protagonista ou garantia de que a narrativa será adaptada para promover um participante.</p><h3>3. Separação entre formatos</h3><p>As modalidades empresariais e pessoais possuem finalidades distintas. Empresas podem utilizar formatos de presença comercial e institucional. Pessoas podem participar nos formatos pessoais disponibilizados. A organização pode atualizar a estrutura de modalidades conforme a evolução do projeto.</p><h3>4. Preferência de momento</h3><p>O participante pode indicar o tipo de momento que prefere. Essa preferência é registrada como referência operacional. O uso final depende do contexto real do episódio e da disponibilidade da estrutura correspondente.</p><h3>5. Integridade da experiência</h3><p>Uma participação não deve ser posicionada de forma a ocultar informações essenciais, prejudicar diálogos relevantes, induzir o público a erro ou comprometer de maneira desnecessária a compreensão da história. Quando necessário, o posicionamento pode ser ajustado.</p><h3>6. Materiais permitidos</h3><p>Podem ser solicitados nome, logotipo, imagem, texto, perfil, site ou áudio, conforme a modalidade. Todo material pode passar por avaliação técnica e contextual. A aprovação de um pedido não implica autorização para qualquer material futuro.</p><h3>7. Conteúdo incompatível</h3><p>Não serão aceitos, entre outros, materiais ilícitos, fraudulentos, discriminatórios, sexualmente inadequados ao contexto, violentos de forma indevida, enganosos ou que violem direitos de terceiros. Também podem ser recusados materiais que criem risco jurídico, reputacional ou técnico para o projeto.</p><h3>8. Transparência comercial</h3><p>Quando a natureza da presença exigir identificação ou comunicação específica, a apresentação deverá observar a legislação e as práticas aplicáveis. A forma visual utilizada no episódio pode variar de acordo com a modalidade e a produção.</p><h3>9. Privacidade e dados enviados</h3><p>Os dados fornecidos na solicitação são utilizados para identificar o interessado, responder ao pedido, organizar a participação e manter registros operacionais relacionados ao atendimento. Podem incluir nome, telefone, modalidade, perfil, observações e materiais enviados.</p><h3>10. Compartilhamento e retenção</h3><p>Os dados não são destinados à venda como produto de terceiros. Informações podem ser acessadas por pessoas envolvidas no atendimento e na operação quando necessário para processar a solicitação. Registros podem ser mantidos pelo período necessário para atendimento, organização, segurança e cumprimento de obrigações aplicáveis.</p><h3>11. Segurança</h3><p>São adotadas medidas razoáveis para reduzir acessos indevidos e uso inadequado dos dados. Nenhum ambiente digital pode garantir risco zero; por isso, o usuário também deve evitar o envio de informações desnecessariamente sensíveis pelos campos públicos ou pelo WhatsApp.</p><h3>12. Direitos do titular</h3><p>O titular pode solicitar informações sobre os dados pessoais tratados no contexto do atendimento e, quando aplicável, pedir correção, atualização ou outras medidas previstas na legislação brasileira. Solicitações devem ser encaminhadas pelos canais oficiais de contato utilizados no atendimento.</p><h3>13. Dados de navegação e armazenamento local</h3><p>O site pode utilizar armazenamento local do navegador para preferências e fluxo de navegação. O usuário pode limpar esses dados nas configurações do navegador. O site evita armazenar dados pessoais desnecessários no lado do cliente.</p><h3>14. Segurança e prevenção de abuso</h3><p>Podem ser usados mecanismos como validação de formato de telefone, campo de controle antirobô, limites temporais e verificação de origem no ambiente de hospedagem. Essas medidas reduzem abuso, mas não representam garantia absoluta contra ataques.</p><h3>15. Acesso geográfico</h3><p>A operação comercial da DOOX neste site é destinada ao Brasil. O ambiente hospedado na Vercel pode restringir acessos internacionais por mecanismos de infraestrutura. A classificação geográfica é técnica e pode apresentar exceções.</p><h3>16. Contato e solicitações de dados</h3><p>Dúvidas, correções ou solicitações relacionadas a dados pessoais podem ser encaminhadas pelo canal oficial de atendimento informado no site.</p><h3>17. Atualizações da política</h3><p>Esta política pode ser revisada para refletir mudanças operacionais, técnicas ou legais. A data de atualização exibida identifica a versão publicada nesta página.</p>`}
+rules:{title:'Regras de Participação',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. O que é contratado</h3><p>O participante solicita uma modalidade de presença. A participação não compra roteiro, edição, controle narrativo, minuto exato ou poder de decisão sobre o episódio.</p><h3>2. Faixas aproximadas e preço</h3><p>Para Sponsor Overlay e Overlay + Áudio, o participante escolhe uma faixa/momento comercial. Essa escolha determina automaticamente o preço da modalidade: 00:30–02:00, 02:00–04:00, 04:00–06:30, 06:30–09:00 ou 09:00–11:00. A posição final e o minuto exato dentro da faixa podem variar conforme a edição, a narrativa e a disponibilidade do episódio.</p><h3>3. Presença no Rodapé</h3><p>Valor único de R$ 49,90. As marcas são organizadas em grupos de até 10 empresas por bloco. A duração atual é aproximada de 5 segundos por bloco e pode ser atualizada no formato. Logo/imagem, nome e @ são integrados após análise e confirmação.</p><h3>4. Concorrência direta</h3><p>A produção buscará evitar empresas concorrentes diretas no mesmo bloco de Rodapé. Isso não representa exclusividade de segmento e a composição final dos grupos permanece sob organização da produção.</p><h3>5. Overlay + Áudio</h3><p>A chamada sonora curta é integrada à entrada da marca como gatilho de atenção. Não concede ao participante controle sobre a narrativa ou liberdade para inserir qualquer fala, música ou mensagem sem análise.</p><h3>6. Materiais</h3><p>Logo, imagem e demais materiais não são enviados pelo site. Após a análise e confirmação da solicitação, a equipe orientará o envio pelo canal oficial indicado.</p><h3>7. Aprovação</h3><p>O envio ao WhatsApp representa solicitação para análise. A participação somente é confirmada após a validação aplicável.</p>`},policy:{title:'Política DOOX para HOCCO',content:`<p class="updated">Última atualização: 1 de setembro de 2026.</p><h3>1. Finalidade</h3><p>Esta política descreve os princípios utilizados para organizar participações de empresas e pessoas no universo HOCCO, buscando preservar a compreensão do público e a coerência audiovisual das presenças aprovadas.</p><h3>2. Participação não é controle narrativo</h3><p>A presença de uma empresa ou pessoa não representa compra de roteiro, compra de opinião, controle sobre acontecimentos, obrigação de fala do protagonista ou garantia de que a narrativa será adaptada para promover um participante.</p><h3>3. Separação entre formatos</h3><p>As modalidades empresariais e pessoais possuem finalidades distintas. Empresas podem utilizar formatos de presença comercial e institucional. Pessoas podem participar nos formatos pessoais disponibilizados. A organização pode atualizar a estrutura de modalidades conforme a evolução do projeto.</p><h3>4. Momento, faixa e preço</h3><p>Para as modalidades com faixas comerciais, o participante escolhe a faixa/momento apresentado no site e essa escolha determina o preço correspondente. A DOOX não garante um minuto exato: o posicionamento dentro da faixa é definido conforme o contexto real do episódio, disponibilidade, edição e narrativa.</p><h3>5. Integridade da experiência</h3><p>Uma participação não deve ser posicionada de forma a ocultar informações essenciais, prejudicar diálogos relevantes, induzir o público a erro ou comprometer de maneira desnecessária a compreensão da história. Quando necessário, o posicionamento pode ser ajustado.</p><h3>6. Materiais permitidos</h3><p>Podem ser solicitados nome, logotipo, imagem, texto, perfil, site ou áudio, conforme a modalidade. Todo material pode passar por avaliação técnica e contextual. A aprovação de um pedido não implica autorização para qualquer material futuro.</p><h3>7. Conteúdo incompatível</h3><p>Não serão aceitos, entre outros, materiais ilícitos, fraudulentos, discriminatórios, sexualmente inadequados ao contexto, violentos de forma indevida, enganosos ou que violem direitos de terceiros. Também podem ser recusados materiais que criem risco jurídico, reputacional ou técnico para o projeto.</p><h3>8. Transparência comercial</h3><p>Quando a natureza da presença exigir identificação ou comunicação específica, a apresentação deverá observar a legislação e as práticas aplicáveis. A forma visual utilizada no episódio pode variar de acordo com a modalidade e a produção.</p><h3>9. Privacidade e dados enviados</h3><p>Os dados fornecidos na solicitação são utilizados para identificar o interessado, responder ao pedido, organizar a participação e manter registros operacionais relacionados ao atendimento. Podem incluir nome, telefone, modalidade, perfil, observações e materiais enviados.</p><h3>10. Compartilhamento e retenção</h3><p>Os dados não são destinados à venda como produto de terceiros. Informações podem ser acessadas por pessoas envolvidas no atendimento e na operação quando necessário para processar a solicitação. Registros podem ser mantidos pelo período necessário para atendimento, organização, segurança e cumprimento de obrigações aplicáveis.</p><h3>11. Segurança</h3><p>São adotadas medidas razoáveis para reduzir acessos indevidos e uso inadequado dos dados. Nenhum ambiente digital pode garantir risco zero; por isso, o usuário também deve evitar o envio de informações desnecessariamente sensíveis pelos campos públicos ou pelo WhatsApp.</p><h3>12. Direitos do titular</h3><p>O titular pode solicitar informações sobre os dados pessoais tratados no contexto do atendimento e, quando aplicável, pedir correção, atualização ou outras medidas previstas na legislação brasileira. Solicitações devem ser encaminhadas pelos canais oficiais de contato utilizados no atendimento.</p><h3>13. Dados de navegação e armazenamento local</h3><p>O site pode utilizar armazenamento local do navegador para preferências e fluxo de navegação. O usuário pode limpar esses dados nas configurações do navegador. O site evita armazenar dados pessoais desnecessários no lado do cliente.</p><h3>14. Segurança e prevenção de abuso</h3><p>Podem ser usados mecanismos como validação de formato de telefone, campo de controle antirobô, limites temporais e verificação de origem no ambiente de hospedagem. Essas medidas reduzem abuso, mas não representam garantia absoluta contra ataques.</p><h3>15. Acesso geográfico</h3><p>A operação comercial da DOOX neste site é destinada ao Brasil. O ambiente hospedado na Vercel pode restringir acessos internacionais por mecanismos de infraestrutura. A classificação geográfica é técnica e pode apresentar exceções.</p><h3>16. Contato e solicitações de dados</h3><p>Dúvidas, correções ou solicitações relacionadas a dados pessoais podem ser encaminhadas pelo canal oficial de atendimento informado no site.</p><h3>17. Atualizações da política</h3><p>Esta política pode ser revisada para refletir mudanças operacionais, técnicas ou legais. A data de atualização exibida identifica a versão publicada nesta página.</p>`}
 };
   const legal=$('#legal'),legalTitle=$('#legalTitle'),legalContent=$('#legalContent');
   $$('[data-legal]').forEach(b=>b.addEventListener('click',()=>{const d=legalData[b.dataset.legal];if(!d)return;legalTitle.textContent=d.title;legalContent.innerHTML=d.content;legal.classList.add('open')}));
@@ -760,7 +805,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
   function saveCurrentDraft(){
     const m=req.mode?.value||'', q=Math.max(1,Number(req.qty?.value)||1);
-    const data={type:req.type?.value||'empresa',mode:m,tier:$('#reqPriceTier')?.value||'',moment:req.moment?.value||'',qty:q,name:req.name?.value||'',phone:req.phone?.value||'',email:req.email?.value||'',handle:req.handle?.value||'',obs:req.obs?.value||'',terms:Boolean(req.terms?.checked),savedAt:new Date().toISOString()};
+    const tierLabel=requestRanges[m]?requestRangePriceLabel(m,req.moment?.value||'00:30–02:00'):($('#reqPriceTier')?.value||'Modalidade fixa'); const data={type:req.type?.value||'empresa',mode:m,tier:tierLabel,moment:req.moment?.value||'',qty:q,name:req.name?.value||'',phone:req.phone?.value||'',email:req.email?.value||'',handle:req.handle?.value||'',obs:req.obs?.value||'',terms:Boolean(req.terms?.checked),savedAt:new Date().toISOString()};
     localStorage.setItem(draftKey,JSON.stringify(data));
   }
   Object.values(req).forEach(el=>el?.addEventListener('input',saveCurrentDraft));
@@ -790,9 +835,11 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     saveCurrentDraft();
     const d=readDraft()||{};
     const modeText=req.mode?.value||'Não selecionada';
-    const tierTextMsg=$('#reqPriceTier')?.value||'Modalidade fixa';
     const momentMsg=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
-    const total=$('#sumPrice')?.textContent||'A definir após análise';
+    const derivedLabel=requestRanges[m] ? requestRangePriceLabel(m, momentMsg) : ($('#reqPriceTier')?.value||'Modalidade fixa');
+    const tierTextMsg=derivedLabel||'Modalidade fixa';
+    const p=currentPrice();
+    const total=p==null?'A definir após análise':money(p*q);
     const msg=`🔶━━━━━━━━━━━━━━━━━━━━🔶
         DOOX STUDIOS • HOCCO
 🔶━━━━━━━━━━━━━━━━━━━━🔶
@@ -904,4 +951,6 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <div class="installToast" id="installToast">No Chrome/Android/iOS compatível com instalação automática foi detectado. Em navegadores suportados, use o menu "Instalar app".</div>
+
+
 </body></html>

@@ -27,3 +27,10 @@ A pré-solicitação é local (`localStorage`) e não é banco de dados.
 
 ## Deploy
 Abra a pasta no VS Code e publique na Vercel. O site é estático; Node.js/Vercel CLI é apenas para o processo de deploy.
+
+
+## V12 — regra comercial definitiva
+- Sponsor Overlay e Overlay + Áudio calculam o preço automaticamente a partir da faixa/momento selecionado.
+- O campo de faixa/preço é apenas informativo e não pode ser selecionado independentemente do momento.
+- Empresa Patrocinadora do Episódio: exatamente 10 vagas por episódio; o formulário limita a quantidade a 10.
+- Solicitações e mensagem de WhatsApp usam a mesma regra momento → faixa → preço.
