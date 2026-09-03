@@ -778,7 +778,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   updateSimLabels();
 
   const DOOX_API_ENDPOINT='https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec';
-  const currentEpisode='EP01';
+  // Episódio NÃO é definido no site. A produção atribui o episódio internamente depois.
 
   // ----- Request form and cross-tab synchronization -----
   const req={
@@ -859,8 +859,19 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       observation:req.obs?.value.trim()||'',
       termsAccepted:Boolean(req.terms?.checked),
       rulesAccepted:Boolean(req.terms?.checked),
-      episode:currentEpisode
     };
+  }
+
+  function getCurrentRequestUnitPrice(){
+    const mode=String(req.mode?.value||'').trim();
+    const tier=String($('#reqPriceTier')?.value||'').trim();
+    if(mode==='Presença no Rodapé')return 49.90;
+    if(mode==='Apoiador Individual')return 9.90;
+    if(mode==='Empresa Patrocinadora do Episódio')return 89.90;
+    const overlay={'00:30–02:00':39.90,'02:00–04:00':49.90,'04:00–06:30':59.90,'06:30–09:00':69.90,'09:00–11:00':79.90};
+    const audio={'00:30–02:00':49.90,'02:00–04:00':59.90,'04:00–06:30':69.90,'06:30–09:00':79.90,'09:00–11:00':89.90};
+    const map=mode==='Sponsor Overlay'?overlay:(mode==='Sponsor Overlay + Áudio'?audio:{});
+    return Number(map[tier]||0);
   }
 
   async function registerInSheets(payload){
@@ -932,7 +943,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
     let registered;
     try{
-      setSubmissionStatus('2/4','Confirmando participação','Verificando modalidade, faixa e disponibilidade.');
+      setSubmissionStatus('2/4','Confirmando participação','Verificando modalidade e faixa comercial.');
       await new Promise(r=>setTimeout(r,250));
       setSubmissionStatus('3/4','Registrando sua solicitação','Os dados estão sendo enviados para o sistema DOOX.');
       registered=await registerInSheets(apiPayload);
@@ -947,9 +958,15 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
     const modeText=registered.modality||req.mode?.value||'Não selecionada';
     const momentMsg=registered.moment||req.moment?.value||'Definido pela produção';
-    const rangeText=registered.rangeLabel||'Modalidade fixa';
-    const total=Number.isFinite(Number(registered.total))?money(Number(registered.total)):'A definir após análise';
-    const unit=Number.isFinite(Number(registered.unitPrice))?money(Number(registered.unitPrice)):'A definir';
+    const rangeText=registered.rangeLabel||$('#reqPriceTier')?.value||'Modalidade fixa';
+    const qtyForMessage=Number(registered.quantity)||Math.max(1,Number(req.qty?.value)||1);
+    const unitForMessage=Number(registered.unitPrice);
+    const fallbackUnit=(typeof getCurrentRequestUnitPrice==='function'?Number(getCurrentRequestUnitPrice()):0);
+    const unitValue=Number.isFinite(unitForMessage)&&unitForMessage>0?unitForMessage:fallbackUnit;
+    const totalValue=Number(registered.total);
+    const totalForMessage=Number.isFinite(totalValue)&&totalValue>0?totalValue:(unitValue>0?unitValue*qtyForMessage:0);
+    const total=totalForMessage>0?money(totalForMessage):'A definir após análise';
+    const unit=unitValue>0?money(unitValue):'A definir';
     const code=registered.code||'Aguardando código';
 
     const msg=`🔶━━━━━━━━━━━━━━━━━━━━🔶
@@ -975,7 +992,7 @@ ${code}
 🎥 PARTICIPAÇÃO SELECIONADA
 ━━━━━━━━━━━━━━━━━━━━
 📌 Modalidade: ${modeText}
-🔢 Quantidade: ${registered.quantity||Math.max(1,Number(req.qty?.value)||1)}
+🔢 Quantidade: ${qtyForMessage}
 💰 Faixa comercial: ${rangeText}
 🕒 Momento / faixa desejada: ${momentMsg}
 💵 Valor unitário confirmado: ${unit}
