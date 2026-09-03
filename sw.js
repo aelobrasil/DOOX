@@ -1,4 +1,4 @@
-const CACHE_NAME='hocco-doox-v15';
+const CACHE_NAME='hocco-doox-v17';
 const ASSETS=[
 '/','/index.html','/manifest.webmanifest','/icon-192.png','/icon-512.png','/apple-touch-icon.png',
 '/hocco-poster-oficial.png','/hocco-story-1.png','/hocco-story-2.png','/hocco-universe.png',
