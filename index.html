@@ -185,6 +185,20 @@ body{overflow-x:hidden}
 
 .submissionStatus{position:fixed;inset:0;background:#080808a8;backdrop-filter:blur(8px);z-index:9999;display:none;place-items:center;padding:20px}.submissionStatus.show{display:grid}.submissionCard{width:min(430px,100%);background:#fff;border-radius:28px;padding:32px 28px;text-align:center;box-shadow:0 30px 90px #0008;color:#111}.submissionPulse{width:46px;height:46px;border-radius:50%;margin:0 auto 18px;border:4px solid #ffe0c6;border-top-color:#ff6a00;animation:dooxSpin .9s linear infinite}@keyframes dooxSpin{to{transform:rotate(360deg)}}.submissionStep{display:inline-block;background:#fff0e6;color:#e85e00;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:950;letter-spacing:.8px;margin-bottom:14px}.submissionCard strong{display:block;font-size:23px;letter-spacing:-.7px}.submissionCard p{margin:10px 0 0;color:#666;line-height:1.5;font-size:14px}
 </style>
+<style id="doox-wa-fallback-style">
+#dooxWhatsAppFallback{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px)}
+#dooxWhatsAppFallback.show{display:flex}
+#dooxWhatsAppFallback .waFallbackCard{width:min(520px,100%);background:#fff;color:#111;border-radius:24px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.35);text-align:center}
+#dooxWhatsAppFallback .waFallbackKicker{font-size:11px;letter-spacing:.18em;font-weight:800;opacity:.55;margin-bottom:10px}
+#dooxWhatsAppFallback h3{margin:0 0 10px;font-size:24px}
+#dooxWhatsAppFallback p{margin:0 0 18px;color:#555;line-height:1.55}
+#dooxWhatsAppFallback .waFallbackCode{font-weight:800;margin:0 0 18px}
+#dooxWhatsAppFallback .waFallbackActions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#dooxWhatsAppFallback a,#dooxWhatsAppFallback button{border:0;border-radius:14px;padding:14px 18px;font:inherit;font-weight:800;cursor:pointer;text-decoration:none}
+#dooxWhatsAppFallback a{background:#111;color:#fff}
+#dooxWhatsAppFallback button{background:#eee;color:#111}
+</style>
+
 <style id="final-ux-fixes">
 .top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
 </style></head>
@@ -1034,12 +1048,30 @@ Aguardando análise da equipe DOOX.
     send.dataset.busy='0';
     setSendBusy(false);
 
-    // No Android, window.open após operações assíncronas pode retornar uma janela sem efetivar
-    // a navegação visível. Para garantir a saída da tela de solicitação, a aba atual é redirecionada.
+    // A navegação automática é tentada primeiro. Como ela ocorre depois de uma operação
+    // assíncrona, alguns navegadores móveis podem bloqueá-la. Nesse caso, o botão abaixo
+    // continua disponível e usa uma ação direta do usuário, que é mais confiável.
+    const waFallback=document.getElementById('dooxWhatsAppFallback');
+    const waFallbackLink=document.getElementById('dooxWaFallbackLink');
+    const waFallbackText=document.getElementById('dooxWaFallbackText');
+    const waFallbackCode=document.getElementById('dooxWaFallbackCode');
+    const waFallbackClose=document.getElementById('dooxWaFallbackClose');
+    if(waFallbackLink)waFallbackLink.href=waUrl;
+    if(waFallbackCode)waFallbackCode.textContent='Código '+code;
+    if(waFallbackText)waFallbackText.textContent='Se o WhatsApp não abrir automaticamente, toque em “ABRIR WHATSAPP”. Sua solicitação já foi registrada no sistema DOOX.';
+    waFallbackClose?.addEventListener('click',()=>{waFallback?.classList.remove('show');waFallback?.setAttribute('aria-hidden','true');}, {once:true});
     setSubmissionStatus('✓','Solicitação registrada','Abrindo WhatsApp para continuar o atendimento...');
     setTimeout(()=>{
-      window.location.assign(waUrl);
-    },650);
+      try { window.location.href=waUrl; } catch (_) {}
+    },300);
+    // Se o navegador impedir a navegação, o fallback aparece sem apagar o registro já feito.
+    setTimeout(()=>{
+      if(document.visibilityState==='visible'){
+        waFallback?.classList.add('show');
+        waFallback?.setAttribute('aria-hidden','false');
+        setSubmissionStatus('✓','Solicitação registrada','O atendimento está pronto. Abra o WhatsApp pelo botão abaixo.');
+      }
+    },1400);
   },true);
 
   // ----- Chat assistant: appears only after the second WhatsApp submission -----
