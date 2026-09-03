@@ -185,20 +185,6 @@ body{overflow-x:hidden}
 
 .submissionStatus{position:fixed;inset:0;background:#080808a8;backdrop-filter:blur(8px);z-index:9999;display:none;place-items:center;padding:20px}.submissionStatus.show{display:grid}.submissionCard{width:min(430px,100%);background:#fff;border-radius:28px;padding:32px 28px;text-align:center;box-shadow:0 30px 90px #0008;color:#111}.submissionPulse{width:46px;height:46px;border-radius:50%;margin:0 auto 18px;border:4px solid #ffe0c6;border-top-color:#ff6a00;animation:dooxSpin .9s linear infinite}@keyframes dooxSpin{to{transform:rotate(360deg)}}.submissionStep{display:inline-block;background:#fff0e6;color:#e85e00;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:950;letter-spacing:.8px;margin-bottom:14px}.submissionCard strong{display:block;font-size:23px;letter-spacing:-.7px}.submissionCard p{margin:10px 0 0;color:#666;line-height:1.5;font-size:14px}
 </style>
-<style id="doox-wa-fallback-style">
-#dooxWhatsAppFallback{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px)}
-#dooxWhatsAppFallback.show{display:flex}
-#dooxWhatsAppFallback .waFallbackCard{width:min(520px,100%);background:#fff;color:#111;border-radius:24px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.35);text-align:center}
-#dooxWhatsAppFallback .waFallbackKicker{font-size:11px;letter-spacing:.18em;font-weight:800;opacity:.55;margin-bottom:10px}
-#dooxWhatsAppFallback h3{margin:0 0 10px;font-size:24px}
-#dooxWhatsAppFallback p{margin:0 0 18px;color:#555;line-height:1.55}
-#dooxWhatsAppFallback .waFallbackCode{font-weight:800;margin:0 0 18px}
-#dooxWhatsAppFallback .waFallbackActions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-#dooxWhatsAppFallback a,#dooxWhatsAppFallback button{border:0;border-radius:14px;padding:14px 18px;font:inherit;font-weight:800;cursor:pointer;text-decoration:none}
-#dooxWhatsAppFallback a{background:#111;color:#fff}
-#dooxWhatsAppFallback button{background:#eee;color:#111}
-</style>
-
 <style id="final-ux-fixes">
 .top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
 </style></head>
@@ -792,7 +778,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   updateSimLabels();
 
   const DOOX_API_ENDPOINT='https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec';
-  // Episódio NÃO é definido no site. A produção atribui o episódio internamente depois.
+  const currentEpisode='EP01';
 
   // ----- Request form and cross-tab synchronization -----
   const req={
@@ -873,19 +859,8 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       observation:req.obs?.value.trim()||'',
       termsAccepted:Boolean(req.terms?.checked),
       rulesAccepted:Boolean(req.terms?.checked),
+      episode:currentEpisode
     };
-  }
-
-  function getCurrentRequestUnitPrice(){
-    const mode=String(req.mode?.value||'').trim();
-    const tier=String($('#reqPriceTier')?.value||'').trim();
-    if(mode==='Presença no Rodapé')return 49.90;
-    if(mode==='Apoiador Individual')return 9.90;
-    if(mode==='Empresa Patrocinadora do Episódio')return 89.90;
-    const overlay={'00:30–02:00':39.90,'02:00–04:00':49.90,'04:00–06:30':59.90,'06:30–09:00':69.90,'09:00–11:00':79.90};
-    const audio={'00:30–02:00':49.90,'02:00–04:00':59.90,'04:00–06:30':69.90,'06:30–09:00':79.90,'09:00–11:00':89.90};
-    const map=mode==='Sponsor Overlay'?overlay:(mode==='Sponsor Overlay + Áudio'?audio:{});
-    return Number(map[tier]||0);
   }
 
   async function registerInSheets(payload){
@@ -957,7 +932,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
     let registered;
     try{
-      setSubmissionStatus('2/4','Confirmando participação','Verificando modalidade e faixa comercial.');
+      setSubmissionStatus('2/4','Confirmando participação','Verificando modalidade, faixa e disponibilidade.');
       await new Promise(r=>setTimeout(r,250));
       setSubmissionStatus('3/4','Registrando sua solicitação','Os dados estão sendo enviados para o sistema DOOX.');
       registered=await registerInSheets(apiPayload);
@@ -970,108 +945,35 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       return;
     }
 
-    const modeText=registered.modality||req.mode?.value||'Não selecionada';
-    const momentMsg=registered.moment||req.moment?.value||'Definido pela produção';
-    const rangeText=registered.rangeLabel||$('#reqPriceTier')?.value||'Modalidade fixa';
-    const qtyForMessage=Number(registered.quantity)||Math.max(1,Number(req.qty?.value)||1);
-    const unitForMessage=Number(registered.unitPrice);
-    const fallbackUnit=(typeof getCurrentRequestUnitPrice==='function'?Number(getCurrentRequestUnitPrice()):0);
-    const unitValue=Number.isFinite(unitForMessage)&&unitForMessage>0?unitForMessage:fallbackUnit;
-    const totalValue=Number(registered.total);
-    const totalForMessage=Number.isFinite(totalValue)&&totalValue>0?totalValue:(unitValue>0?unitValue*qtyForMessage:0);
-    const total=totalForMessage>0?money(totalForMessage):'A definir após análise';
-    const unit=unitValue>0?money(unitValue):'A definir';
-    const code=registered.code||'Aguardando código';
+    // A solicitação já foi registrada no Sheets. O WhatsApp recebe somente uma saudação;
+    // nenhum dado pessoal, código, preço ou conteúdo do pedido é repetido na conversa.
+    const greeting=`Olá! Seja bem-vindo(a) à HOCCO.
 
-    const msg=`🔶━━━━━━━━━━━━━━━━━━━━🔶
-DOOX STUDIOS • HOCCO
-🔶━━━━━━━━━━━━━━━━━━━━🔶
+Sua solicitação já foi registrada no sistema DOOX. Nossa equipe dará continuidade ao atendimento por aqui.
 
-🎬 SOLICITAÇÃO DE PARTICIPAÇÃO
-NO REALITY DE NEGÓCIOS
+Obrigado por participar do universo HOCCO.`;
+    const waUrl=`https://wa.me/5514981150675?text=${encodeURIComponent(greeting)}`;
 
-🆔 CÓDIGO DOOX
-${code}
-
-━━━━━━━━━━━━━━━━━━━━
-👤 DADOS DO SOLICITANTE
-━━━━━━━━━━━━━━━━━━━━
-🏷️ Nome / Empresa: ${n}
-📧 E-mail: ${email}
-📱 WhatsApp: ${req.phone.value}
-👥 Tipo: ${(req.type?.value||'empresa')==='empresa'?'EMPRESA':'PESSOA'}
-🔗 @ / Perfil / Site: ${(req.handle?.value||'Não informado').trim()}
-
-━━━━━━━━━━━━━━━━━━━━
-🎥 PARTICIPAÇÃO SELECIONADA
-━━━━━━━━━━━━━━━━━━━━
-📌 Modalidade: ${modeText}
-🔢 Quantidade: ${qtyForMessage}
-💰 Faixa comercial: ${rangeText}
-🕒 Momento / faixa desejada: ${momentMsg}
-💵 Valor unitário confirmado: ${unit}
-💳 Valor total confirmado: ${total}
-
-━━━━━━━━━━━━━━━━━━━━
-📝 DESCRIÇÃO / OBSERVAÇÕES
-━━━━━━━━━━━━━━━━━━━━
-${(req.obs?.value||'Sem observações').trim()}
-
-━━━━━━━━━━━━━━━━━━━━
-📎 MATERIAIS
-━━━━━━━━━━━━━━━━━━━━
-Após a análise e aprovação, logo, foto, identidade visual, áudio ou demais materiais serão enviados diretamente pelo canal indicado pela DOOX.
-
-━━━━━━━━━━━━━━━━━━━━
-⚠️ CIÊNCIA
-━━━━━━━━━━━━━━━━━━━━
-✅ Termos de Uso aceitos
-✅ Regras de Participação aceitas
-✅ Solicitação registrada no sistema DOOX
-✅ Ciente de que a solicitação será analisada antes da confirmação
-✅ Ciente de que o momento/faixa é aproximado quando aplicável
-✅ Ciente de que a participação não concede controle editorial
-
-━━━━━━━━━━━━━━━━━━━━
-📲 PRÓXIMA ETAPA
-━━━━━━━━━━━━━━━━━━━━
-Aguardando análise da equipe DOOX.
-
-🔶━━━━━━━━━━━━━━━━━━━━🔶`;
-
-    setSubmissionStatus('✓','Solicitação registrada','Abrindo WhatsApp para continuar o atendimento...');
-    await new Promise(r=>setTimeout(r,550));
-
-    const waUrl=`https://wa.me/5514981150675?text=${encodeURIComponent(msg)}`;
     markWhatsAppSubmission();
     if(Number(localStorage.getItem(sendCountKey)||0)>=2) setTimeout(()=>$('#chatLauncher')?.classList.remove('v9Pulse'),9000);
     send.dataset.busy='0';
     setSendBusy(false);
 
-    // A navegação automática é tentada primeiro. Como ela ocorre depois de uma operação
-    // assíncrona, alguns navegadores móveis podem bloqueá-la. Nesse caso, o botão abaixo
-    // continua disponível e usa uma ação direta do usuário, que é mais confiável.
-    const waFallback=document.getElementById('dooxWhatsAppFallback');
-    const waFallbackLink=document.getElementById('dooxWaFallbackLink');
-    const waFallbackText=document.getElementById('dooxWaFallbackText');
-    const waFallbackCode=document.getElementById('dooxWaFallbackCode');
-    const waFallbackClose=document.getElementById('dooxWaFallbackClose');
-    if(waFallbackLink)waFallbackLink.href=waUrl;
-    if(waFallbackCode)waFallbackCode.textContent='Código '+code;
-    if(waFallbackText)waFallbackText.textContent='Se o WhatsApp não abrir automaticamente, toque em “ABRIR WHATSAPP”. Sua solicitação já foi registrada no sistema DOOX.';
-    waFallbackClose?.addEventListener('click',()=>{waFallback?.classList.remove('show');waFallback?.setAttribute('aria-hidden','true');}, {once:true});
-    setSubmissionStatus('✓','Solicitação registrada','Abrindo WhatsApp para continuar o atendimento...');
+    // Mostra SEMPRE uma saída manual. Isso evita que o cliente fique preso caso
+    // o Android/navegador bloqueie a navegação automática após o fetch assíncrono.
+    setSubmissionStatus('✓','Solicitação registrada','Sua solicitação foi registrada. Continue no WhatsApp para finalizar a participação.');
+    const finalWrap=document.getElementById('whatsappFinalizeWrap');
+    const finalBtn=document.getElementById('whatsappFinalize');
+    if(finalWrap) finalWrap.style.display='block';
+    if(finalBtn){
+      finalBtn.onclick=()=>window.location.assign(waUrl);
+      finalBtn.focus({preventScroll:true});
+    }
+
+    // Tentativa automática. Se o navegador impedir, o botão acima continua disponível.
     setTimeout(()=>{
-      try { window.location.href=waUrl; } catch (_) {}
+      try{ window.location.assign(waUrl); }catch(_){ }
     },300);
-    // Se o navegador impedir a navegação, o fallback aparece sem apagar o registro já feito.
-    setTimeout(()=>{
-      if(document.visibilityState==='visible'){
-        waFallback?.classList.add('show');
-        waFallback?.setAttribute('aria-hidden','false');
-        setSubmissionStatus('✓','Solicitação registrada','O atendimento está pronto. Abra o WhatsApp pelo botão abaixo.');
-      }
-    },1400);
   },true);
 
   // ----- Chat assistant: appears only after the second WhatsApp submission -----
@@ -1126,7 +1028,7 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p></div></div>
+<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div></div></div>
 <div class="installToast" id="installToast">No Chrome/Android/iOS compatível com instalação automática foi detectado. Em navegadores suportados, use o menu "Instalar app".</div>
 
 
