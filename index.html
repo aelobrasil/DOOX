@@ -275,7 +275,7 @@ body{overflow-x:hidden}
 </div>
 <div class="simulationFocus" id="simFocus"></div><div class="progress"><i></i></div></div>
 <div class="controls">
-<div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="individual">Apoiador Individual</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
+<div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
 <div class="control"><label>NOME PARA TESTAR</label><input id="inputName" value="SUA EMPRESA"></div>
 <div class="control"><label>@ / PERFIL</label><input id="inputHandle" value="@suaempresa"></div><div class="control"><label>FAIXA / PREÇO (AUTOMÁTICO)</label><select id="priceTier" aria-label="Faixa e preço calculados automaticamente pelo momento escolhido"><option value="essential">Essencial · entrada</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div><div class="control"><label>MOMENTO DESEJADO / FAIXA</label><select id="moment"><option value="essential">00:30–02:00</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div>
 </div><button class="playDemo" id="playDemo" type="button">▶ EXECUTAR DEMONSTRAÇÃO COMPLETA</button>
@@ -494,12 +494,12 @@ body{overflow-x:hidden}
     updatePreview();
     [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
     requestAnimationFrame(()=>{
-      const target=({footer:ovFooter,overlay:ovVisual,audio:ovVisual,individual:ovIndividual,sponsor:ovSponsor})[mode.value];
+      const target=({footer:ovFooter,overlay:ovVisual,audio:ovVisual,sponsor:ovSponsor})[mode.value];
       simFocus?.classList.add('show'); target?.classList.add('show');
     });
     setTimeout(()=>{targetForMode()?.classList.remove('show');},6000);
   });
-  function targetForMode(){return ({footer:ovFooter,overlay:ovVisual,audio:ovVisual,individual:ovIndividual,sponsor:ovSponsor})[mode.value];}
+  function targetForMode(){return ({footer:ovFooter,overlay:ovVisual,audio:ovVisual,sponsor:ovSponsor})[mode.value];}
 
   window.goPreview=(key)=>{ if(mode && modes[key]){ mode.value=key; refreshPriceOptions(); updatePreview(); go('preview'); } };
 
@@ -509,15 +509,15 @@ body{overflow-x:hidden}
     if(mode && modes[key]){ mode.value=key; refreshPriceOptions(); updatePreview(); go('preview'); }
   }));
   $('#proceedFromPreview')?.addEventListener('click',()=>{
-    const map={footer:'Presença no Rodapé',overlay:'Sponsor Overlay',audio:'Overlay + Áudio',individual:'Apoiador Individual',sponsor:'Empresa Patrocinadora do Episódio'};
+    const map={footer:'Presença no Rodapé',overlay:'Sponsor Overlay',audio:'Overlay + Áudio',sponsor:'Empresa Patrocinadora do Episódio'};
     const key=mode.value, target=map[key];
-    const isPerson=key==='individual';
+    const isPerson=false;
     const rt=$('#reqType'), rm=$('#reqMode'), rp=$('#reqPriceTier'), rmm=$('#reqMoment'), rn=$('#reqName'), rh=$('#reqHandle');
     if(rt){rt.value=isPerson?'pessoa':'empresa';rt.dispatchEvent(new Event('change'));}
     setTimeout(()=>{
       if(rm&&target){rm.value=target;rm.dispatchEvent(new Event('change'));}
       if(rn)rn.value=inputName.value; if(rh)rh.value=inputHandle.value;
-      if(rp) rp.value=key==='footer'||key==='individual'||key==='sponsor'?'Modalidade fixa':(priceTier?.options[priceTier.selectedIndex]?.text||'');
+      if(rp) rp.value=key==='footer'||key==='sponsor'?'Modalidade fixa':(priceTier?.options[priceTier.selectedIndex]?.text||'');
       const mapMoment={essential:'00:30–02:00',regular:'02:00–04:00',valued:'04:00–06:30',premium:'06:30–09:00',special:'09:00–11:00'};
       if(rmm && !rmm.disabled)rmm.value=mapMoment[moment.value]||mapMoment.essential;
       updateRequestSummary();
@@ -527,8 +527,8 @@ body{overflow-x:hidden}
   refreshPriceOptions();updatePreview();
 
   // Request catalog/form
-  const prices={'Presença no Rodapé':49.9,'Sponsor Overlay':39.9,'Overlay + Áudio':49.9,'Apoiador Individual':9.9,'Empresa Patrocinadora do Episódio':89.9};
-  const requestOptions={empresa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio'],pessoa:['Apoiador Individual']};
+  const prices={'Presença no Rodapé':49.9,'Sponsor Overlay':39.9,'Overlay + Áudio':49.9,'Empresa Patrocinadora do Episódio':89.9};
+  const requestOptions={empresa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio'],pessoa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio']};
   const requestRanges={
     'Sponsor Overlay':['00:30–02:00 · R$ 39,90','02:00–04:00 · R$ 49,90','04:00–06:30 · R$ 59,90','06:30–09:00 · R$ 69,90','09:00–11:00 · R$ 79,90'],
     'Overlay + Áudio':['00:30–02:00 · R$ 49,90','02:00–04:00 · R$ 59,90','04:00–06:30 · R$ 69,90','06:30–09:00 · R$ 79,90','09:00–11:00 · R$ 89,90']
@@ -559,7 +559,7 @@ body{overflow-x:hidden}
     const arr=requestOptions[reqType?.value]||[];
     reqCatalog.innerHTML=arr.map(x=>{
       const p=x==='Sponsor Overlay'?'A partir de R$ 39,90':x==='Overlay + Áudio'?'A partir de R$ 49,90':money(prices[x]);
-      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'Créditos · até 50 participações';
+      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'';
       return `<button type="button" class="requestChoice ${reqMode?.value===x?'active':''}" data-choice="${x}"><small>${reqType?.value==='empresa'?'EMPRESA':'PESSOA'}</small><strong>${x}</strong><span>${p}</span><small>${sub}</small></button>`
     }).join('');
     $$('[data-choice]',reqCatalog).forEach(b=>b.addEventListener('click',()=>{reqMode.value=b.dataset.choice;updateSummaryAndFields();renderCatalog();}));
@@ -567,7 +567,7 @@ body{overflow-x:hidden}
   function updateSummaryAndFields(){
     if(!reqMode?.value)return;
     const m=reqMode.value;
-    const person=m==='Apoiador Individual';
+    const person=false;
     const timed=Boolean(requestRanges[m]);
     if(reqMoment){
       reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio';
@@ -703,7 +703,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       footer:{where:'Durante o episódio',how:'10 empresas por bloco · ~5s por exibição',desc:'Rodapé coletivo com logo/identidade, nome fantasia, @ e segmento. Um segundo bloco pode reaparecer mais adiante.',price:'R$ 49,90',ctx:'2 exibições separadas'},
       overlay:{where:'Durante o episódio',how:'Visual individual · ~5s',desc:'A marca aparece individualmente sobre a imagem. A faixa representa um intervalo aproximado do episódio.',price:tierText[tier?.value]||'R$ 39,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
       audio:{where:'Durante o episódio',how:'Visual + chamada sonora · ~5s',desc:'A marca aparece individualmente acompanhada de uma chamada sonora curta que atua como gatilho de atenção.',price:audioText[tier?.value]||'R$ 49,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
-      individual:{where:'Créditos',how:'Lista de nomes e @',desc:'Tela preta com nomes/@ em composição coletiva de créditos.',price:'R$ 9,90',ctx:'Após a história'},
+      
       sponsor:{where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'Tela preta com apresentação institucional da empresa participante do episódio.',price:'R$ 89,90',ctx:'Após a história e créditos'}
     }[m];
     if(!info)return;
@@ -713,7 +713,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     $('#simPriceInfo')&&( $('#simPriceInfo').textContent=info.price );
     $('#simWhereLarge')&&( $('#simWhereLarge').textContent=info.where );
     $('#simPriceLarge')&&( $('#simPriceLarge').textContent=info.price );
-    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='individual'||m==='sponsor')?'Apresentação de créditos':'≈ 5 segundos' );
+    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='sponsor')?'Apresentação institucional pós-créditos':'≈ 5 segundos' );
     $('#simContextLarge')&&( $('#simContextLarge').textContent=info.ctx );
     $('#priceLogic')&&( $('#priceLogic').innerHTML = m==='footer' ? '<strong>Regra de preço:</strong> valor único de <strong>R$ 49,90</strong>.' : '<strong>Regra de preço:</strong> o valor acompanha a faixa/momento escolhido.' );
     return info;
@@ -828,7 +828,6 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       obs:req.obs?.value||'',
       terms:Boolean(req.terms?.checked),
       rules:Boolean(req.terms?.checked),
-      clientRequestId:(readDraft()?.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)))),
       savedAt:new Date().toISOString()
     };
     localStorage.setItem(draftKey,JSON.stringify(data));
@@ -842,12 +841,8 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     const modeValue=req.mode?.value||'';
     const quantity=Math.min(10,Math.max(1,Number(req.qty?.value)||1));
     const momentValue=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
-    const draft=readDraft()||{};
-    const id=draft.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
     return {
-      clientRequestId:id,
       name:req.name?.value.trim()||'',
-      company:(req.type?.value||'empresa')==='empresa'?(req.name?.value.trim()||''):'',
       type:req.type?.value||'empresa',
       whatsapp:req.phone?.value||'',
       email:req.email?.value.trim()||'',
