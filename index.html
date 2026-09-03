@@ -774,6 +774,9 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   },true));
   updateSimLabels();
 
+  const DOOX_API_ENDPOINT='https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec';
+  const currentEpisode='EP01';
+
   // ----- Request form and cross-tab synchronization -----
   const req={
     type:$('#reqType'), mode:$('#reqMode'), tier:$('#reqPriceTier'), moment:$('#reqMoment'),
@@ -805,7 +808,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
   function saveCurrentDraft(){
     const m=req.mode?.value||'', q=Math.max(1,Number(req.qty?.value)||1);
-    const tierLabel=requestRanges[m]?requestRangePriceLabel(m,req.moment?.value||'00:30–02:00'):($('#reqPriceTier')?.value||'Modalidade fixa'); const data={type:req.type?.value||'empresa',mode:m,tier:tierLabel,moment:req.moment?.value||'',qty:q,name:req.name?.value||'',phone:req.phone?.value||'',email:req.email?.value||'',handle:req.handle?.value||'',obs:req.obs?.value||'',terms:Boolean(req.terms?.checked),savedAt:new Date().toISOString()};
+    const tierLabel=requestRanges[m]?requestRangePriceLabel(m,req.moment?.value||'00:30–02:00'):($('#reqPriceTier')?.value||'Modalidade fixa'); const data={type:req.type?.value||'empresa',mode:m,tier:tierLabel,moment:req.moment?.value||'',qty:q,name:req.name?.value||'',phone:req.phone?.value||'',email:req.email?.value||'',handle:req.handle?.value||'',obs:req.obs?.value||'',terms:Boolean(req.terms?.checked),rules:Boolean(req.terms?.checked),clientRequestId:(readDraft()?.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)))),savedAt:new Date().toISOString()};
     localStorage.setItem(draftKey,JSON.stringify(data));
   }
   Object.values(req).forEach(el=>el?.addEventListener('input',saveCurrentDraft));
@@ -813,6 +816,30 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
   // Exact WhatsApp submission message, with second-submission trigger.
   const send=$('#sendWhatsapp');
+  function buildApiPayload(){
+    const modeValue=req.mode?.value||'';
+    const quantity=Math.min(10,Math.max(1,Number(req.qty?.value)||1));
+    const momentValue=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
+    const draft=readDraft()||{};
+    const id=draft.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
+    const payload={
+      clientRequestId:id,
+      name:req.name?.value.trim()||'', type:req.type?.value||'empresa', phone:req.phone?.value||'', email:req.email?.value.trim()||'',
+      handle:req.handle?.value.trim()||'', mode:modeValue, moment:momentValue, qty:quantity, obs:req.obs?.value.trim()||'',
+      terms:Boolean(req.terms?.checked), rules:Boolean(req.terms?.checked), episode:currentEpisode
+    };
+    return payload;
+  }
+
+  async function registerInSheets(payload){
+    try{
+      // no-cors allows a static Vercel page to submit to Apps Script without exposing Google credentials.
+      // The Apps Script recalculates the commercial value server-side.
+      await fetch(DOOX_API_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),keepalive:true});
+      return true;
+    }catch(err){ console.warn('Falha no registro remoto; a solicitação continuará para o WhatsApp.',err); return false; }
+  }
+
   function markWhatsAppSubmission(){
     let count=Number(localStorage.getItem(sendCountKey)||'0')+1;
     localStorage.setItem(sendCountKey,String(count));
@@ -836,7 +863,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     const d=readDraft()||{};
     const modeText=req.mode?.value||'Não selecionada';
     const momentMsg=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
-    const derivedLabel=requestRanges[m] ? requestRangePriceLabel(m, momentMsg) : ($('#reqPriceTier')?.value||'Modalidade fixa');
+    const derivedLabel=requestRanges[req.mode?.value] ? requestRangePriceLabel(req.mode.value, req.moment?.value||'00:30–02:00') : ($('#reqPriceTier')?.value||'Modalidade fixa');
     const tierTextMsg=derivedLabel||'Modalidade fixa';
     const p=currentPrice();
     const total=p==null?'A definir após análise':money(p*q);
@@ -890,6 +917,8 @@ Após a aprovação, logo, foto, identidade visual, áudio ou demais materiais s
 Aguardando análise da equipe DOOX.
 
 🔶━━━━━━━━━━━━━━━━━━━━🔶`;
+    const apiPayload=buildApiPayload();
+    registerInSheets(apiPayload);
     const win=window.open(`https://wa.me/5514981150675?text=${encodeURIComponent(msg)}`,'_blank','noopener');
     if(win){
       markWhatsAppSubmission();
