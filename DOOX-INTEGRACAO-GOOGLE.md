@@ -1,30 +1,25 @@
-# DOOX / HOCCO — Integração com Google Sheets
+# DOOX HOCCO — Integração Google Sheets
 
-## O que foi integrado no V13
-O site envia a solicitação para o endpoint do Google Apps Script antes de abrir o WhatsApp.
+Esta versão já está integrada ao endpoint do Google Apps Script.
 
 Fluxo:
-SITE → Google Apps Script → Google Sheets
-SITE → WhatsApp DOOX
 
-O WhatsApp continua sendo apenas o canal de atendimento.
+1. O cliente preenche a solicitação.
+2. O site envia a solicitação ao Apps Script.
+3. O Apps Script registra o pedido na aba `PEDIDOS`.
+4. O servidor calcula/prevalece sobre faixa e preço.
+5. O site consulta o registro pelo `Client Request ID`.
+6. O código DOOX retornado é incluído na mensagem do WhatsApp.
+7. O WhatsApp só é aberto depois da confirmação do registro.
 
-## URL configurada no site
-A URL `/exec` informada na configuração do projeto foi incorporada ao `index.html`.
+## Antes de publicar
 
-## Como concluir a ativação
-1. Abra a planilha Google que será usada como painel.
-2. Vá em **Extensões → Apps Script**.
-3. Apague o conteúdo do `Code.gs` e cole o conteúdo de `DOOX-APPS-SCRIPT-Code.gs`.
-4. Salve.
-5. Faça **Implantar → Nova implantação → Aplicativo da Web**.
-6. Execute como **Eu** e permita acesso a **Qualquer pessoa**.
-7. Use a URL `/exec` dessa implantação no site. Se o Google gerar uma nova URL, substitua a URL no `index.html`.
+No Google Apps Script, substitua o conteúdo por `DOOX-APPS-SCRIPT-Code.gs`, salve e faça:
 
-## Validação do servidor
-O Apps Script recalcula os preços pelo momento/faixa recebido, valida modalidade, e-mail, telefone brasileiro e aceites. O valor vindo do navegador não é tratado como autoridade.
+Implantar → Gerenciar implantações → Editar → Nova versão → Implantar.
 
-Patrocinadora do Episódio: limite de 10 por episódio.
+O endpoint configurado no site é:
 
-## Observação operacional
-O site usa `fetch` com `no-cors` para fazer o POST a partir da página estática. Isso significa que o navegador não consegue ler a resposta JSON do Apps Script, mas consegue realizar o envio. O site abre o WhatsApp em paralelo e mantém o fluxo comercial.
+https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec
+
+Depois teste uma solicitação real de ponta a ponta.

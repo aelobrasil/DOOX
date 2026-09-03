@@ -822,22 +822,77 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     const momentValue=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
     const draft=readDraft()||{};
     const id=draft.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
-    const payload={
+    return {
       clientRequestId:id,
-      name:req.name?.value.trim()||'', type:req.type?.value||'empresa', phone:req.phone?.value||'', email:req.email?.value.trim()||'',
-      handle:req.handle?.value.trim()||'', mode:modeValue, moment:momentValue, qty:quantity, obs:req.obs?.value.trim()||'',
-      terms:Boolean(req.terms?.checked), rules:Boolean(req.terms?.checked), episode:currentEpisode
+      name:req.name?.value.trim()||'',
+      company:(req.type?.value||'empresa')==='empresa'?(req.name?.value.trim()||''):'',
+      type:req.type?.value||'empresa',
+      whatsapp:req.phone?.value||'',
+      email:req.email?.value.trim()||'',
+      profile:req.handle?.value.trim()||'',
+      modality:modeValue,
+      moment:momentValue,
+      quantity:quantity,
+      observation:req.obs?.value.trim()||'',
+      termsAccepted:Boolean(req.terms?.checked),
+      rulesAccepted:Boolean(req.terms?.checked),
+      episode:currentEpisode
     };
-    return payload;
+  }
+
+  function postToAppsScript(payload){
+    return fetch(DOOX_API_ENDPOINT,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload),
+      keepalive:true
+    });
+  }
+
+  function lookupRequest(requestId, timeoutMs=10000){
+    return new Promise((resolve,reject)=>{
+      const callback='dooxLookup_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      const script=document.createElement('script');
+      let done=false;
+      const cleanup=()=>{
+        clearTimeout(timer);
+        script.remove();
+        try{delete window[callback]}catch(_){window[callback]=undefined}
+      };
+      const timer=setTimeout(()=>{
+        if(done)return;
+        done=true;cleanup();reject(new Error('A confirmação do registro demorou mais que o esperado.'));
+      },timeoutMs);
+      window[callback]=(data)=>{
+        if(done)return;
+        if(data && data.ok && data.found){done=true;cleanup();resolve(data);return}
+        // Continua aguardando o processamento do Apps Script.
+        script.remove();
+        setTimeout(load,450);
+      };
+      script.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error('Não foi possível consultar a confirmação do pedido.'))};
+      const load=()=>{
+        if(done)return;
+        script.src=DOOX_API_ENDPOINT+'?action=lookup&requestId='+encodeURIComponent(requestId)+'&callback='+encodeURIComponent(callback)+'&_='+Date.now();
+        document.head.appendChild(script);
+      };
+      load();
+    });
   }
 
   async function registerInSheets(payload){
-    try{
-      // no-cors allows a static Vercel page to submit to Apps Script without exposing Google credentials.
-      // The Apps Script recalculates the commercial value server-side.
-      await fetch(DOOX_API_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),keepalive:true});
-      return true;
-    }catch(err){ console.warn('Falha no registro remoto; a solicitação continuará para o WhatsApp.',err); return false; }
+    await postToAppsScript(payload);
+    return await lookupRequest(payload.clientRequestId);
+  }
+
+  function setSendBusy(busy){
+    if(!send)return;
+    send.disabled=busy;
+    send.dataset.originalText=send.dataset.originalText||send.textContent;
+    send.textContent=busy?'Registrando solicitação...':send.dataset.originalText;
+    send.style.opacity=busy?'0.65':'';
+    send.style.pointerEvents=busy?'none':'';
   }
 
   function markWhatsAppSubmission(){
@@ -850,8 +905,9 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     }
     return count;
   }
-  if(send)send.addEventListener('click',e=>{
+  if(send)send.addEventListener('click',async e=>{
     e.preventDefault();e.stopImmediatePropagation();
+    if(send.dataset.busy==='1')return;
     const n=req.name?.value.trim()||'';
     const email=req.email?.value.trim()||'';
     const phone=(req.phone?.value||'').replace(/\D/g,'');
@@ -859,20 +915,39 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Informe um e-mail válido.');return}
     if(!/^(?:55)?(?:\d{10,11})$/.test(phone)){alert('Informe um telefone brasileiro válido com DDD.');return}
     if(!req.terms?.checked){alert('Aceite os Termos de Uso e as Regras de Participação para continuar.');return}
+
     saveCurrentDraft();
-    const d=readDraft()||{};
-    const modeText=req.mode?.value||'Não selecionada';
-    const momentMsg=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
-    const derivedLabel=requestRanges[req.mode?.value] ? requestRangePriceLabel(req.mode.value, req.moment?.value||'00:30–02:00') : ($('#reqPriceTier')?.value||'Modalidade fixa');
-    const tierTextMsg=derivedLabel||'Modalidade fixa';
-    const p=currentPrice();
-    const total=p==null?'A definir após análise':money(p*q);
+    const apiPayload=buildApiPayload();
+    send.dataset.busy='1';
+    setSendBusy(true);
+
+    let registered;
+    try{
+      registered=await registerInSheets(apiPayload);
+    }catch(err){
+      console.error(err);
+      alert('Não foi possível confirmar o registro da solicitação agora. '+(err&&err.message?err.message:'Verifique sua conexão e tente novamente.')+' Nenhuma nova janela do WhatsApp será aberta antes da confirmação.');
+      send.dataset.busy='0';
+      setSendBusy(false);
+      return;
+    }
+
+    const modeText=registered.modality||req.mode?.value||'Não selecionada';
+    const momentMsg=registered.moment||req.moment?.value||'Definido pela produção';
+    const rangeText=registered.rangeLabel||'Modalidade fixa';
+    const total=Number.isFinite(Number(registered.total))?money(Number(registered.total)):'A definir após análise';
+    const unit=Number.isFinite(Number(registered.unitPrice))?money(Number(registered.unitPrice)):'A definir';
+    const code=registered.code||'Aguardando código';
+
     const msg=`🔶━━━━━━━━━━━━━━━━━━━━🔶
-        DOOX STUDIOS • HOCCO
+DOOX STUDIOS • HOCCO
 🔶━━━━━━━━━━━━━━━━━━━━🔶
 
 🎬 SOLICITAÇÃO DE PARTICIPAÇÃO
 NO REALITY DE NEGÓCIOS
+
+🆔 CÓDIGO DOOX
+${code}
 
 ━━━━━━━━━━━━━━━━━━━━
 👤 DADOS DO SOLICITANTE
@@ -887,10 +962,11 @@ NO REALITY DE NEGÓCIOS
 🎥 PARTICIPAÇÃO SELECIONADA
 ━━━━━━━━━━━━━━━━━━━━
 📌 Modalidade: ${modeText}
-🔢 Quantidade: ${Math.max(1,Number(req.qty?.value)||1)}
-💰 Faixa / preço: ${tierTextMsg}
+🔢 Quantidade: ${registered.quantity||Math.max(1,Number(req.qty?.value)||1)}
+💰 Faixa comercial: ${rangeText}
 🕒 Momento / faixa desejada: ${momentMsg}
-💵 Valor estimado: ${total}
+💵 Valor unitário confirmado: ${unit}
+💳 Valor total confirmado: ${total}
 
 ━━━━━━━━━━━━━━━━━━━━
 📝 DESCRIÇÃO / OBSERVAÇÕES
@@ -900,15 +976,16 @@ ${(req.obs?.value||'Sem observações').trim()}
 ━━━━━━━━━━━━━━━━━━━━
 📎 MATERIAIS
 ━━━━━━━━━━━━━━━━━━━━
-Após a aprovação, logo, foto, identidade visual, áudio ou demais materiais serão enviados pelo canal indicado pela DOOX.
+Após a análise e aprovação, logo, foto, identidade visual, áudio ou demais materiais serão enviados diretamente pelo canal indicado pela DOOX.
 
 ━━━━━━━━━━━━━━━━━━━━
 ⚠️ CIÊNCIA
 ━━━━━━━━━━━━━━━━━━━━
 ✅ Termos de Uso aceitos
 ✅ Regras de Participação aceitas
+✅ Solicitação registrada no sistema DOOX
 ✅ Ciente de que a solicitação será analisada antes da confirmação
-✅ Ciente de que a faixa/momento é aproximado quando aplicável
+✅ Ciente de que o momento/faixa é aproximado quando aplicável
 ✅ Ciente de que a participação não concede controle editorial
 
 ━━━━━━━━━━━━━━━━━━━━
@@ -917,14 +994,19 @@ Após a aprovação, logo, foto, identidade visual, áudio ou demais materiais s
 Aguardando análise da equipe DOOX.
 
 🔶━━━━━━━━━━━━━━━━━━━━🔶`;
-    const apiPayload=buildApiPayload();
-    registerInSheets(apiPayload);
-    const win=window.open(`https://wa.me/5514981150675?text=${encodeURIComponent(msg)}`,'_blank','noopener');
-    if(win){
+
+    const waUrl=`https://wa.me/5514981150675?text=${encodeURIComponent(msg)}`;
+    const win=window.open(waUrl,'_blank','noopener');
+    if(!win){
+      // Em muitos navegadores móveis, abrir em nova janela após await pode ser bloqueado.
+      // Neste caso, redireciona a própria aba para o WhatsApp.
+      window.location.href=waUrl;
+    }else{
       markWhatsAppSubmission();
-      // After a successful send, gently invite another participation only from the 2nd submission onward.
       if(Number(localStorage.getItem(sendCountKey)||0)>=2) setTimeout(()=>$('#chatLauncher')?.classList.remove('v9Pulse'),9000);
     }
+    send.dataset.busy='0';
+    setSendBusy(false);
   },true);
 
   // ----- Chat assistant: appears only after the second WhatsApp submission -----

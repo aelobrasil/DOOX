@@ -34,3 +34,6 @@ Abra a pasta no VS Code e publique na Vercel. O site é estático; Node.js/Verce
 - O campo de faixa/preço é apenas informativo e não pode ser selecionado independentemente do momento.
 - Empresa Patrocinadora do Episódio: exatamente 10 vagas por episódio; o formulário limita a quantidade a 10.
 - Solicitações e mensagem de WhatsApp usam a mesma regra momento → faixa → preço.
+
+
+V15: corrige atualização do Service Worker (cache versionado/network-first para index) e adiciona fallback de redirecionamento ao WhatsApp em navegadores móveis. Apps Script V5 normaliza Overlay + Áudio.
