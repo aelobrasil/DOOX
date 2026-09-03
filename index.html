@@ -1012,17 +1012,17 @@ Aguardando análise da equipe DOOX.
     await new Promise(r=>setTimeout(r,550));
 
     const waUrl=`https://wa.me/5514981150675?text=${encodeURIComponent(msg)}`;
-    const win=window.open(waUrl,'_blank','noopener');
-    if(!win){
-      // Em muitos navegadores móveis, abrir em nova janela após await pode ser bloqueado.
-      // Neste caso, redireciona a própria aba para o WhatsApp.
-      window.location.href=waUrl;
-    }else{
-      markWhatsAppSubmission();
-      if(Number(localStorage.getItem(sendCountKey)||0)>=2) setTimeout(()=>$('#chatLauncher')?.classList.remove('v9Pulse'),9000);
-    }
+    markWhatsAppSubmission();
+    if(Number(localStorage.getItem(sendCountKey)||0)>=2) setTimeout(()=>$('#chatLauncher')?.classList.remove('v9Pulse'),9000);
     send.dataset.busy='0';
     setSendBusy(false);
+
+    // No Android, window.open após operações assíncronas pode retornar uma janela sem efetivar
+    // a navegação visível. Para garantir a saída da tela de solicitação, a aba atual é redirecionada.
+    setSubmissionStatus('✓','Solicitação registrada','Abrindo WhatsApp para continuar o atendimento...');
+    setTimeout(()=>{
+      window.location.assign(waUrl);
+    },650);
   },true);
 
   // ----- Chat assistant: appears only after the second WhatsApp submission -----

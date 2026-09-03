@@ -1,6 +1,6 @@
 const CONFIG = {
   spreadsheetId: '1VWJKfePpzoFpH5h8Iyl58MErLGNjvgGB',
-  version: '5.0',
+  version: '6.0',
   timezone: 'America/Sao_Paulo',
   maxEpisodeSponsors: 10,
   whatsapp: '5514981150675'
@@ -100,6 +100,12 @@ function normalizeModality_(value) {
   return aliases[v] || v;
 }
 
+function getRowObject_(headers, rowValues) {
+  const out = {};
+  headers.forEach((header, index) => out[String(header)] = rowValues[index]);
+  return out;
+}
+
 function lookupRequest_(requestId) {
   const ss = openSpreadsheet_();
   ensureSheets_(ss);
@@ -107,28 +113,39 @@ function lookupRequest_(requestId) {
   const values = sheet.getDataRange().getValues();
   if (values.length < 2) return { ok: false, pending: true };
 
-  const headers = values[0];
+  const headers = values[0].map(String);
   const requestIndex = headers.indexOf('Client Request ID');
   if (requestIndex === -1) return { ok: false, error: 'Coluna Client Request ID não encontrada.' };
 
   for (let i = values.length - 1; i >= 1; i--) {
     if (String(values[i][requestIndex] || '') === String(requestId)) {
-      return {
-        ok: true,
-        found: true,
-        code: values[i][1],
-        status: values[i][13],
-        modality: values[i][7],
-        moment: values[i][8],
-        rangeLabel: values[i][9],
-        unitPrice: values[i][10],
-        quantity: values[i][11],
-        total: values[i][12],
-        episode: values[i][15]
-      };
+      const row = getRowObject_(headers, values[i]);
+      return requestResponseFromRow_(row, true);
     }
   }
   return { ok: false, pending: true };
+}
+
+function requestResponseFromRow_(row, found) {
+  return {
+    ok: true,
+    found: !!found,
+    code: row['Código DOOX'] || '',
+    status: row['Status'] || '',
+    modality: row['Modalidade'] || '',
+    moment: row['Momento Desejado'] || '',
+    rangeLabel: row['Faixa Comercial'] || '',
+    unitPrice: row['Valor Unitário'] || '',
+    quantity: row['Quantidade'] || '',
+    total: row['Valor Total'] || '',
+    episode: row['Episódio'] || ''
+  };
+}
+
+function appendPedidoByHeaders_(sheet, valuesByHeader) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+  const row = headers.map(header => Object.prototype.hasOwnProperty.call(valuesByHeader, header) ? valuesByHeader[header] : '');
+  sheet.appendRow(row);
 }
 
 /**
@@ -139,46 +156,38 @@ function lookupRequest_(requestId) {
 function testSpreadsheet() {
   const ss = openSpreadsheet_();
   ensureSheets_(ss);
-
   const sheet = ss.getSheetByName(SHEETS.PEDIDOS);
   const code = 'TESTE-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+  const now = new Date();
 
-  const row = [
-    new Date(),
-    code,
-    'TESTE DE INTEGRAÇÃO',
-    'DOOX',
-    'teste@doox.local',
-    '00000000000',
-    'Empresa',
-    'Sponsor Overlay',
-    '03:00',
-    '02:00–04:00',
-    49.90,
-    1,
-    49.90,
-    'TESTE',
-    'NÃO CONSUMIR VAGA',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    'Criado pela função testSpreadsheet'
-  ];
-
-  sheet.appendRow(row);
+  appendPedidoByHeaders_(sheet, {
+    'Data/Hora': now,
+    'Código DOOX': code,
+    'Nome': 'TESTE DE INTEGRAÇÃO',
+    'Empresa': 'DOOX',
+    'E-mail': 'teste@doox.local',
+    'WhatsApp': '00000000000',
+    'Tipo': 'Empresa',
+    'Modalidade': 'Sponsor Overlay',
+    'Momento Desejado': '03:00',
+    'Faixa Comercial': '02:00–04:00',
+    'Valor Unitário': 49.90,
+    'Quantidade': 1,
+    'Valor Total': 49.90,
+    'Status': 'TESTE',
+    'Reserva/Vaga': 'NÃO CONSUMIR VAGA',
+    'Episódio': 'EP01',
+    '@ / Perfil / Site': '@teste',
+    'Observação': 'Criado pela função testSpreadsheet',
+    'Termos Aceitos': 'SIM',
+    'Regras Aceitas': 'SIM',
+    'Data de Registro': now,
+    'Observações Internas': '',
+    'Client Request ID': 'TEST-' + Utilities.getUuid()
+  });
 
   SpreadsheetApp.flush();
-
-  return {
-    ok: true,
-    test: true,
-    code: code,
-    sheet: SHEETS.PEDIDOS,
-    row: sheet.getLastRow()
-  };
+  return { ok: true, test: true, code: code, sheet: SHEETS.PEDIDOS, row: sheet.getLastRow() };
 }
 
 /**
@@ -192,94 +201,69 @@ function registerRequest_(data) {
   if (!commercial.ok) return commercial;
 
   const qty = Math.max(1, Number(data.quantity || 1));
-  const episode = String(data.episode || 'EP08').trim();
+  const episode = String(data.episode || 'EP01').trim();
 
   if (data.modality === 'Empresa Patrocinadora do Episódio') {
     const available = getEpisodeSponsorAvailability_(episode);
-    if (qty > available) {
-      return {
-        ok: false,
-        error: `Não há vagas suficientes. Disponíveis: ${available}.`
-      };
-    }
+    if (qty > available) return { ok: false, error: `Não há vagas suficientes. Disponíveis: ${available}.` };
   }
 
   const ss = openSpreadsheet_();
   ensureSheets_(ss);
-
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
 
   try {
     const sheet = ss.getSheetByName(SHEETS.PEDIDOS);
-
-    // Idempotência: o mesmo navegador não cria dois pedidos ao reenviar.
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
     const requestIdIndex = headers.indexOf('Client Request ID');
     const requestId = String(data.clientRequestId || '').trim();
+
     if (requestId && requestIdIndex >= 0 && sheet.getLastRow() > 1) {
       const ids = sheet.getRange(2, requestIdIndex + 1, sheet.getLastRow() - 1, 1).getValues().flat();
       const foundAt = ids.findIndex(v => String(v || '') === requestId);
       if (foundAt >= 0) {
         const rowNumber = foundAt + 2;
         const rowValues = sheet.getRange(rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
-        return {
-          ok: true, duplicate: true, code: rowValues[1], status: rowValues[13],
-          modality: rowValues[7], moment: rowValues[8], rangeLabel: rowValues[9],
-          unitPrice: rowValues[10], quantity: rowValues[11], total: rowValues[12], episode: rowValues[15]
-        };
+        return requestResponseFromRow_(getRowObject_(headers, rowValues), false);
       }
     }
 
-    // Recalcula novamente dentro do lock para manter a operação consistente.
     const finalCommercial = calculateCommercial_(data.modality, data.moment);
     const unitPrice = finalCommercial.unitPrice;
     const total = unitPrice * qty;
-
     const code = makeDooxCode_(episode, sheet);
     const now = new Date();
 
-    const row = [
-      now,
-      code,
-      safe_(data.name || ''),
-      safe_(data.company || ''),
-      safe_(data.email || ''),
-      safe_(data.whatsapp || ''),
-      safe_(data.type || ''),
-      safe_(data.modality || ''),
-      safe_(data.moment || ''),
-      finalCommercial.rangeLabel,
-      unitPrice,
-      qty,
-      total,
-      'SOLICITADO',
-      'RESERVA PENDENTE',
-      episode,
-      safe_(data.profile || ''),
-      safe_(data.observation || ''),
-      data.termsAccepted === true ? 'SIM' : 'NÃO',
-      data.rulesAccepted === true ? 'SIM' : 'NÃO',
-      now,
-      '',
-      String(data.clientRequestId || '')
-    ];
+    appendPedidoByHeaders_(sheet, {
+      'Data/Hora': now,
+      'Código DOOX': code,
+      'Nome': safe_(data.name || ''),
+      'Empresa': safe_(data.company || ''),
+      'E-mail': safe_(data.email || ''),
+      'WhatsApp': safe_(data.whatsapp || ''),
+      'Tipo': safe_(data.type || ''),
+      'Modalidade': safe_(data.modality || ''),
+      'Momento Desejado': safe_(data.moment || ''),
+      'Faixa Comercial': finalCommercial.rangeLabel,
+      'Valor Unitário': unitPrice,
+      'Quantidade': qty,
+      'Valor Total': total,
+      'Status': 'SOLICITADO',
+      'Reserva/Vaga': 'RESERVA PENDENTE',
+      'Episódio': episode,
+      '@ / Perfil / Site': safe_(data.profile || ''),
+      'Observação': safe_(data.observation || ''),
+      'Termos Aceitos': data.termsAccepted === true ? 'SIM' : 'NÃO',
+      'Regras Aceitas': data.rulesAccepted === true ? 'SIM' : 'NÃO',
+      'Data de Registro': now,
+      'Observações Internas': '',
+      'Client Request ID': requestId
+    });
 
-    sheet.appendRow(row);
     SpreadsheetApp.flush();
-
-    return {
-      ok: true,
-      code: code,
-      status: 'SOLICITADO',
-      episode: episode,
-      modality: data.modality,
-      moment: data.moment,
-      rangeLabel: finalCommercial.rangeLabel,
-      unitPrice: unitPrice,
-      quantity: qty,
-      total: total
-    };
+    return { ok: true, code: code, status: 'SOLICITADO', episode: episode, modality: data.modality,
+      moment: data.moment, rangeLabel: finalCommercial.rangeLabel, unitPrice: unitPrice, quantity: qty, total: total };
   } finally {
     lock.releaseLock();
   }
