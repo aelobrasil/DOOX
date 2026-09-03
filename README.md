@@ -37,3 +37,6 @@ Abra a pasta no VS Code e publique na Vercel. O site é estático; Node.js/Verce
 
 
 V15: corrige atualização do Service Worker (cache versionado/network-first para index) e adiciona fallback de redirecionamento ao WhatsApp em navegadores móveis. Apps Script V5 normaliza Overlay + Áudio.
+
+## V16 — integração robusta
+Esta versão envia a solicitação para `/api/request` no próprio domínio Vercel. A função serverless faz a ponte servidor-a-servidor com o Google Apps Script e devolve JSON ao navegador. Isso elimina o POST `no-cors` opaco do navegador e permite confirmar o registro antes de abrir o WhatsApp.
