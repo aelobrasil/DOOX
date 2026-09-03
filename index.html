@@ -778,7 +778,6 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   updateSimLabels();
 
   const DOOX_API_ENDPOINT='https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec';
-  const currentEpisode='EP01';
 
   // ----- Request form and cross-tab synchronization -----
   const req={
@@ -825,7 +824,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       name:req.name?.value||'',
       phone:req.phone?.value||'',
       email:req.email?.value||'',
-      handle:req.handle?.value||'',
+      handle:(req.handle?.value||'').trim().toLowerCase().match(/^@?(suaempresa|seuperfil|empresaaqui|exemplo)$/)?'':(req.handle?.value||''),
       obs:req.obs?.value||'',
       terms:Boolean(req.terms?.checked),
       rules:Boolean(req.terms?.checked),
@@ -852,14 +851,13 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       type:req.type?.value||'empresa',
       whatsapp:req.phone?.value||'',
       email:req.email?.value.trim()||'',
-      profile:req.handle?.value.trim()||'',
+      profile:(()=>{const v=(req.handle?.value||'').trim(); return /^(?:@)?(?:suaempresa|seuperfil|empresaaqui|exemplo)$/i.test(v)?'':v;})(),
       modality:modeValue,
       moment:momentValue,
       quantity:quantity,
       observation:req.obs?.value.trim()||'',
       termsAccepted:Boolean(req.terms?.checked),
-      rulesAccepted:Boolean(req.terms?.checked),
-      episode:currentEpisode
+      rulesAccepted:Boolean(req.terms?.checked)
     };
   }
 
