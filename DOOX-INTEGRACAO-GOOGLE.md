@@ -1,25 +1,9 @@
-# DOOX HOCCO — Integração Google Sheets
+# DOOX / HOCCO — integração V9
 
-Esta versão já está integrada ao endpoint do Google Apps Script.
+O site público envia somente 11 campos: name, type, whatsapp, email, profile, modality, moment, quantity, observation, termsAccepted, rulesAccepted.
 
-Fluxo:
+O proxy Vercel aplica a mesma allowlist antes de chamar o Apps Script. O Apps Script aplica a allowlist novamente e recalcula preço/faixa no servidor.
 
-1. O cliente preenche a solicitação.
-2. O site envia a solicitação ao Apps Script.
-3. O Apps Script registra o pedido na aba `PEDIDOS`.
-4. O servidor calcula/prevalece sobre faixa e preço.
-5. O site consulta o registro pelo `Client Request ID`.
-6. O código DOOX retornado é incluído na mensagem do WhatsApp.
-7. O WhatsApp só é aberto depois da confirmação do registro.
+Campos internos (Código DOOX, ID Cliente, timestamps, status, episódio, pagamento, materiais, programação, publicação e comprovantes) são criados/geridos pelo backend.
 
-## Antes de publicar
-
-No Google Apps Script, substitua o conteúdo por `DOOX-APPS-SCRIPT-Code.gs`, salve e faça:
-
-Implantar → Gerenciar implantações → Editar → Nova versão → Implantar.
-
-O endpoint configurado no site é:
-
-https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec
-
-Depois teste uma solicitação real de ponta a ponta.
+Para limpar a planilha existente sem perder histórico, publicar o Apps Script V9 e executar manualmente `migrateToV9()` uma única vez. A função cria um backup do arquivo no Drive, reorganiza os cabeçalhos, preserva os campos que conseguem ser mapeados e remove abas fora da arquitetura oficial.

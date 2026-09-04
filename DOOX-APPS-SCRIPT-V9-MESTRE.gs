@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * DOOX / HOCCO — APPS SCRIPT V7.4 — CONTROLE FIEL AO SITE
+ * DOOX / HOCCO — APPS SCRIPT V9 — CONTRATO ÚNICO SITE → OPERAÇÃO
  * BACKEND OPERACIONAL
  * ============================================================
  *
@@ -72,6 +72,12 @@ const CONFIG = {
 
 };
 
+// Interface pública oficial. Nada fora desta lista entra no fluxo do site.
+const PUBLIC_KEYS = [
+  'name', 'type', 'whatsapp', 'email', 'profile', 'modality',
+  'moment', 'quantity', 'observation', 'termsAccepted', 'rulesAccepted'
+];
+
 
 /* ============================================================
    GET
@@ -106,7 +112,7 @@ function doGet(e) {
         'DOOX HOCCO',
 
       version:
-        'V7.4',
+        'V9',
 
       timestamp:
         new Date().toISOString()
@@ -137,59 +143,33 @@ function doGet(e) {
    ============================================================ */
 
 function doPost(e) {
-
   try {
-
-    const data =
-      parse_(e);
-
-    const action =
-      String(
-        data.action ||
-        'registerRequest'
-      );
-
-    if (action === 'testSpreadsheet') {
-
-      return out_(
-        testSpreadsheet()
-      );
-
-    }
-
-    if (action === 'registerRequest') {
-
-      return out_(
-        registerRequest_(data)
-      );
-
-    }
-
+    const data = parse_(e);
+    // CONTRATO ÚNICO: o endpoint público só aceita os campos reais do formulário.
+    // Ação, preço, código, cliente, episódio e demais campos são internos.
+    const publicData = pickPublicPayload_(data);
+    return out_(registerRequest_(publicData));
+  } catch (err) {
     return out_({
-
       ok: false,
-
-      error:
-        'AÇÃO NÃO RECONHECIDA'
-
+      error: err.message || String(err)
     });
-
   }
+}
 
-  catch (err) {
 
-    return out_({
+/* ============================================================
+   CONTRATO PÚBLICO — ALLOWLIST
+   ============================================================ */
 
-      ok: false,
-
-      error:
-        err.message ||
-        String(err)
-
-    });
-
-  }
-
+function pickPublicPayload_(data) {
+  const out = {};
+  PUBLIC_KEYS.forEach(function(key) {
+    if (Object.prototype.hasOwnProperty.call(data || {}, key)) {
+      out[key] = data[key];
+    }
+  });
+  return out;
 }
 
 
@@ -474,10 +454,15 @@ function normalize_(d) {
    */
   const mode = normalizeMode_(d.modality);
   const type = normalizeType_(d.type);
-  const moment = clean_(d.moment);
+  let moment = clean_(d.moment);
   const range = rangeFromMomentOrLabel_(moment);
+  if (['Presença no Rodapé','Empresa Patrocinadora do Episódio'].includes(mode)) {
+    moment = 'Definido pela produção';
+  }
   const unit = price_(mode, range);
-  const qty = Math.max(1, integer_(d.quantity) || 1);
+  let qty = Math.max(1, integer_(d.quantity) || 1);
+  const maxQty = mode === 'Presença no Rodapé' ? 50 : 10;
+  qty = Math.min(maxQty, qty);
 
   return {
     name: clean_(d.name),
@@ -513,6 +498,10 @@ function rangeFromMomentOrLabel_(moment) {
    ============================================================ */
 
 function validate_(r) {
+
+  if (!['Empresa','Pessoa'].includes(r.type)) {
+    throw new Error('Tipo inválido. Use Empresa ou Pessoa.');
+  }
 
   if (!r.name) {
 
@@ -559,7 +548,7 @@ function validate_(r) {
   const allowed = [
     'Presença no Rodapé',
     'Sponsor Overlay',
-    'Sponsor Overlay + Áudio',
+    'Overlay + Áudio',
     'Empresa Patrocinadora do Episódio'
   ];
 
@@ -698,7 +687,7 @@ function price_(
 
   if (
     mode ===
-    'Sponsor Overlay + Áudio'
+    'Overlay + Áudio'
   ) {
 
     return (
@@ -745,16 +734,16 @@ function normalizeMode_(v) {
 
 
     'sponsor overlay + audio':
-      'Sponsor Overlay + Áudio',
+      'Overlay + Áudio',
 
     'sponsor overlay + áudio':
-      'Sponsor Overlay + Áudio',
+      'Overlay + Áudio',
 
     'overlay + audio':
-      'Sponsor Overlay + Áudio',
+      'Overlay + Áudio',
 
     'overlay + áudio':
-      'Sponsor Overlay + Áudio',
+      'Overlay + Áudio',
 
 
 
@@ -1529,152 +1518,54 @@ function upsertPayment_(
    ============================================================ */
 
 function ensureStructure_(ss) {
-
   const s = {};
 
-  /*
-   * PEDIDOS = espelho do formulário público + campos criados pelo sistema.
-   * Nenhum campo de outras etapas é exigido aqui.
-   */
   s[CONFIG.SHEETS.PEDIDOS] = [
-    'Código DOOX',
-    'ID Cliente',
-    'Data/Hora',
-    'Nome / Empresa',
-    'WhatsApp',
-    'E-mail',
-    'Tipo',
-    'Modalidade',
-    'Faixa / Preço',
-    'Momento Desejado',
-    'Quantidade',
-    '@ / Perfil / Site',
-    'Termos',
-    'Regras',
-    'Descrição / Observação',
-    'Valor Unitário',
-    'Valor Total',
-    'Status',
-    'Episódio',
-    'Criado em',
+    'Código DOOX','ID Cliente','Data/Hora','Nome / Empresa','WhatsApp','E-mail',
+    'Tipo','Modalidade','Faixa / Preço','Momento Desejado','Quantidade',
+    '@ / Perfil / Site','Termos','Regras','Descrição / Observação',
+    'Valor Unitário','Valor Total','Status','Episódio','Criado em',
     'Comprovante Solicitação'
   ];
-
-  /* CLIENTES = cadastro derivado exclusivamente dos dados públicos. */
   s[CONFIG.SHEETS.CLIENTES] = [
-    'ID Cliente',
-    'Nome / Empresa',
-    'Tipo',
-    'WhatsApp',
-    'E-mail',
-    '@ / Perfil / Site',
-    'Primeiro Pedido',
-    'Último Pedido',
-    'Status',
-    'Última Atualização'
+    'ID Cliente','Nome / Empresa','Tipo','WhatsApp','E-mail','@ / Perfil / Site',
+    'Primeiro Pedido','Último Pedido','Status','Última Atualização'
   ];
-
-  /* PAGAMENTOS = etapa financeira derivada do pedido; não recebe formulário duplicado. */
   s[CONFIG.SHEETS.PAGAMENTOS] = [
-    'Código DOOX',
-    'ID Cliente',
-    'Nome / Empresa',
-    'Modalidade',
-    'Quantidade',
-    'Valor Unitário',
-    'Valor Total',
-    'Status',
-    'Data da Solicitação',
-    'Data do Pagamento',
-    'Comprovante',
-    'Observações'
+    'Código DOOX','ID Cliente','Nome / Empresa','Modalidade','Quantidade',
+    'Valor Unitário','Valor Total','Status','Data da Solicitação',
+    'Data do Pagamento','Comprovante','Observações'
   ];
-
-  /* MATERIAIS só nasce na etapa operacional posterior. */
   s[CONFIG.SHEETS.MATERIAIS] = [
-    'Código DOOX',
-    'ID Cliente',
-    'Modalidade',
-    'Tipo de Material',
-    'Status',
-    'Canal de Recebimento',
-    'Data de Solicitação',
-    'Data de Recebimento',
-    'Arquivo / Referência',
-    'Observações'
+    'Código DOOX','ID Cliente','Modalidade','Tipo de Material','Status',
+    'Canal de Recebimento','Data de Solicitação','Data de Recebimento',
+    'Arquivo / Referência','Observações'
   ];
-
   s[CONFIG.SHEETS.EPISODIOS] = [
-    'Episódio',
-    'Título',
-    'Status',
-    'Data Prevista',
-    'Data de Publicação',
-    'Capacidade Rodapé',
-    'Capacidade Patrocinador',
-    'Observações'
+    'Episódio','Título','Status','Data Prevista','Data de Publicação',
+    'Capacidade Rodapé','Capacidade Patrocinador','Observações'
   ];
-
   s[CONFIG.SHEETS.PROGRAMACAO] = [
-    'Código DOOX',
-    'ID Cliente',
-    'Episódio',
-    'Modalidade',
-    'Faixa Contratada',
-    'Momento Efetivo',
-    'Duração',
-    'Bloco / Ordem',
-    'Status',
-    'Observações'
+    'Código DOOX','ID Cliente','Episódio','Modalidade','Faixa Contratada',
+    'Momento Efetivo','Duração','Bloco / Ordem','Status','Observações'
   ];
-
   s[CONFIG.SHEETS.VEICULACOES] = [
-    'Código DOOX',
-    'ID Cliente',
-    'Episódio',
-    'Data de Publicação',
-    'URL',
-    'Momento Efetivo',
-    'Status',
-    'Evidência',
-    'Observações'
+    'Código DOOX','ID Cliente','Episódio','Data de Publicação','URL',
+    'Momento Efetivo','Status','Evidência','Observações'
   ];
-
   s[CONFIG.SHEETS.VAGAS] = [
-    'Episódio',
-    'Modalidade',
-    'Capacidade',
-    'Reservadas',
-    'Disponíveis',
-    'Status',
-    'Última Atualização'
+    'Episódio','Modalidade','Capacidade','Reservadas','Disponíveis',
+    'Status','Última Atualização'
   ];
-
   s[CONFIG.SHEETS.COMPROVANTES] = [
-    'Código DOOX',
-    'ID Cliente',
-    'Episódio',
-    'Cliente',
-    'Modalidade',
-    'Momento Solicitado',
-    'Faixa Contratada',
-    'Quantidade',
-    'Valor Unitário',
-    'Valor Total',
-    'Data/Hora da Solicitação',
-    'Data de Publicação',
-    'URL',
-    'Arquivo do Comprovante',
-    'Enviado ao Cliente',
-    'Data de Envio',
-    'Status',
+    'Código DOOX','ID Cliente','Episódio','Cliente','Modalidade',
+    'Momento Solicitado','Faixa Contratada','Quantidade','Valor Unitário',
+    'Valor Total','Data/Hora da Solicitação','Data de Publicação','URL',
+    'Arquivo do Comprovante','Enviado ao Cliente','Data de Envio','Status',
     'Observações'
   ];
-
   s[CONFIG.SHEETS.DASHBOARD] = [
-    'Indicador',
-    'Valor',
-    'Atualizado em'
+    'Indicador','Valor','Atualizado em'
   ];
 
   Object.keys(s).forEach(function(name) {
@@ -3122,6 +3013,134 @@ function pad_(
 /* ============================================================
    PARSE DO POST
    ============================================================ */
+
+/* ============================================================
+   MIGRAÇÃO V9 — ESTRUTURA CANÔNICA SEM ABAS SOBRANDO
+   ============================================================ */
+
+function migrateToV9() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Sistema ocupado. Tente novamente.');
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    // Backup completo do estado atual no Drive, sem criar aba adicional.
+    const file = DriveApp.getFileById(ss.getId());
+    const backupFolder = getOrCreateFolder_('DOOX — BACKUPS — SISTEMA');
+    file.makeCopy('BACKUP ANTES DA MIGRAÇÃO V9 — ' + Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HHmmss'), backupFolder);
+
+    const schemas = canonicalSchemas_();
+    Object.keys(schemas).forEach(function(name) {
+      const sh = getOrCreate_(ss, name);
+      rewriteSheetCanonical_(sh, schemas[name]);
+    });
+
+    // Remove abas que não pertencem ao sistema operacional oficial.
+    const allowed = Object.values(CONFIG.SHEETS);
+    ss.getSheets().slice().forEach(function(sh) {
+      if (!allowed.includes(sh.getName()) && ss.getSheets().length > 1) {
+        ss.deleteSheet(sh);
+      }
+    });
+
+    applyOperationalFormatting_(ss);
+    SpreadsheetApp.flush();
+    return {ok:true, version:'V9', message:'Migração V9 concluída. Abas e cabeçalhos canônicos aplicados.', sheets:ss.getSheets().map(s=>s.getName())};
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function canonicalSchemas_() {
+  return {
+    PEDIDOS: ['Código DOOX','ID Cliente','Data/Hora','Nome / Empresa','WhatsApp','E-mail','Tipo','Modalidade','Faixa / Preço','Momento Desejado','Quantidade','@ / Perfil / Site','Termos','Regras','Descrição / Observação','Valor Unitário','Valor Total','Status','Episódio','Criado em','Comprovante Solicitação'],
+    CLIENTES: ['ID Cliente','Nome / Empresa','Tipo','WhatsApp','E-mail','@ / Perfil / Site','Primeiro Pedido','Último Pedido','Status','Última Atualização'],
+    PAGAMENTOS: ['Código DOOX','ID Cliente','Nome / Empresa','Modalidade','Quantidade','Valor Unitário','Valor Total','Status','Data da Solicitação','Data do Pagamento','Comprovante','Observações'],
+    MATERIAIS: ['Código DOOX','ID Cliente','Modalidade','Tipo de Material','Status','Canal de Recebimento','Data de Solicitação','Data de Recebimento','Arquivo / Referência','Observações'],
+    EPISÓDIOS: ['Episódio','Título','Status','Data Prevista','Data de Publicação','Capacidade Rodapé','Capacidade Patrocinador','Observações'],
+    PROGRAMAÇÃO: ['Código DOOX','ID Cliente','Episódio','Modalidade','Faixa Contratada','Momento Efetivo','Duração','Bloco / Ordem','Status','Observações'],
+    VEICULAÇÕES: ['Código DOOX','ID Cliente','Episódio','Data de Publicação','URL','Momento Efetivo','Status','Evidência','Observações'],
+    VAGAS: ['Episódio','Modalidade','Capacidade','Reservadas','Disponíveis','Status','Última Atualização'],
+    COMPROVANTES: ['Código DOOX','ID Cliente','Episódio','Cliente','Modalidade','Momento Solicitado','Faixa Contratada','Quantidade','Valor Unitário','Valor Total','Data/Hora da Solicitação','Data de Publicação','URL','Arquivo do Comprovante','Enviado ao Cliente','Data de Envio','Status','Observações'],
+    DASHBOARD: ['Indicador','Valor','Atualizado em']
+  };
+}
+
+function rewriteSheetCanonical_(sh, schema) {
+  const lastRow = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+  const old = (lastRow && lastCol) ? sh.getRange(1,1,lastRow,lastCol).getValues() : [];
+  const oldHeaders = old.length ? old[0].map(String) : [];
+  const rows = old.slice(1);
+  const data = rows.map(function(row) {
+    return schema.map(function(target) {
+      const idx = findHeaderIndexAliases_(oldHeaders, target);
+      return idx >= 0 ? row[idx] : '';
+    });
+  });
+  sh.clearContents();
+  if (schema.length) sh.getRange(1,1,1,schema.length).setValues([schema]);
+  if (data.length) sh.getRange(2,1,data.length,schema.length).setValues(data);
+}
+
+function findHeaderIndexAliases_(headers, target) {
+  const aliases = {
+    'Código DOOX':['Código DOOX','Código','Codigo DOOX','Codigo'],
+    'ID Cliente':['ID Cliente','Cliente ID'],
+    'Data/Hora':['Data/Hora','Data e Hora','Data/Hora da Solicitação','Solicitado em'],
+    'Nome / Empresa':['Nome / Empresa','Nome','Cliente','Empresa'],
+    'WhatsApp':['WhatsApp','Telefone','Seu WhatsApp'],
+    'E-mail':['E-mail','Email','Seu E-mail'],
+    'Tipo':['Tipo','Tipo de cliente'],
+    'Modalidade':['Modalidade'],
+    'Faixa / Preço':['Faixa / Preço','Faixa comercial','Faixa Contratada','Preço'],
+    'Momento Desejado':['Momento Desejado','Momento','Momento Solicitado'],
+    'Quantidade':['Quantidade'],
+    '@ / Perfil / Site':['@ / Perfil / Site','Perfil','Instagram','@'],
+    'Termos':['Termos','Aceite'],
+    'Regras':['Regras'],
+    'Descrição / Observação':['Descrição / Observação','Observações','Observação'],
+    'Valor Unitário':['Valor Unitário','Valor unitário'],
+    'Valor Total':['Valor Total','Valor total'],
+    'Status':['Status'],
+    'Episódio':['Episódio','Episode'],
+    'Criado em':['Criado em','Criado'],
+    'Comprovante Solicitação':['Comprovante Solicitação','Link comprovante','Arquivo do Comprovante'],
+    'Primeiro Pedido':['Primeiro Pedido','Primeiro pedido'],
+    'Último Pedido':['Último Pedido','Último pedido'],
+    'Última Atualização':['Última Atualização','Atualizado em'],
+    'Data da Solicitação':['Data da Solicitação','Solicitado em'],
+    'Data do Pagamento':['Data do Pagamento','Pago em'],
+    'Comprovante':['Comprovante'],
+    'Data de Solicitação':['Data de Solicitação'],
+    'Data de Recebimento':['Data de Recebimento','Recebido em'],
+    'Arquivo / Referência':['Arquivo / Referência','Arquivo/Referência'],
+    'Faixa Contratada':['Faixa Contratada','Faixa comercial'],
+    'Momento Efetivo':['Momento Efetivo'],
+    'Duração':['Duração'],
+    'Bloco / Ordem':['Bloco / Ordem'],
+    'Data de Publicação':['Data de Publicação'],
+    'URL':['URL'],
+    'Evidência':['Evidência'],
+    'Capacidade Rodapé':['Capacidade Rodapé'],
+    'Capacidade Patrocinador':['Capacidade Patrocinador'],
+    'Capacidade':['Capacidade'],
+    'Reservadas':['Reservadas'],
+    'Disponíveis':['Disponíveis'],
+    'Data/Hora da Solicitação':['Data/Hora da Solicitação','Data/Hora'],
+    'Arquivo do Comprovante':['Arquivo do Comprovante','Comprovante','Link comprovante'],
+    'Enviado ao Cliente':['Enviado ao Cliente'],
+    'Data de Envio':['Data de Envio'],
+    'Atualizado em':['Atualizado em','Última Atualização'],
+    'Indicador':['Indicador'],
+    'Valor':['Valor']
+  };
+  const set = aliases[target] || [target];
+  for (let i=0;i<headers.length;i++) {
+    if (set.some(a => norm_(headers[i]) === norm_(a))) return i;
+  }
+  return -1;
+}
+
 
 function parse_(
   e

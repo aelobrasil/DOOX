@@ -232,7 +232,7 @@ body{overflow-x:hidden}
 
 <section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">Formatos separados das modalidades empresariais, pensados para reconhecimento e participação nos espaços institucionais da HOCCO.</p>
 <div class="cards" style="grid-template-columns:repeat(2,1fr);max-width:800px">
-<div class="card product"><span class="num">01 · PESSOAS</span><h3>Apoiador Individual</h3><p>Reconhecimento nos créditos e espaços institucionais destinados a quem participa do projeto.</p><div class="price">R$ 9,90</div><div class="meta">Estrutura: até 50 participações</div><button data-preview="individual" onclick="window.goPreview('individual')">Ver na simulação</button></div>
+<div class="meta">Estrutura: até 50 participações</div><button data-preview="individual" onclick="window.goPreview('individual')">Ver na simulação</button></div>
 </div></div></section>
 
 <section class="view" id="preview"><div class="section dark"><div class="wrap"><div class="kicker">SIMULAÇÃO COMPLETA</div><h2 class="title">Todas as presenças em tela.</h2><p class="desc">As imagens abaixo são referências reais de POV, gravação e produção audiovisual, usadas apenas para demonstrar a experiência. Elas não são cenas da HOCCO. Escolha a modalidade e veja como sua participação muda na tela.</p>
@@ -414,7 +414,6 @@ body{overflow-x:hidden}
     footer:{title:'PRESENÇA NO RODAPÉ',where:'Durante o episódio',how:'Grupo visual · aproximadamente 5s',desc:'Até 10 empresas podem ser apresentadas em um mesmo bloco. Logo em fundo, nome e @ ficam integrados à faixa inferior.',disclaimer:'Valor fixo de R$ 49,90. A produção organiza os grupos e busca evitar concorrentes diretos no mesmo bloco.'},
     overlay:{title:'SPONSOR OVERLAY',where:'Durante o episódio',how:'Inserção visual · aproximadamente 5s',desc:'A marca aparece individualmente sobre a imagem. A faixa escolhida representa um intervalo aproximado do episódio, não um minuto garantido.',disclaimer:'A posição exata pode variar conforme a edição e a construção narrativa.'},
     audio:{title:'OVERLAY + ÁUDIO',where:'Durante o episódio',how:'Visual + chamada sonora · aproximadamente 5s',desc:'A marca entra individualmente acompanhada de uma chamada sonora curta, usada como gatilho de atenção e aprovada pela produção.',disclaimer:'O áudio só é utilizado quando o contexto sonoro comporta a modalidade.'},
-    individual:{title:'APOIADOR INDIVIDUAL',where:'Créditos',how:'Lista de nomes / @',desc:'A tela fica preta e apresenta a relação de apoiadores. O nome ou @ entra em uma rotação coletiva.',disclaimer:'Apresentação ilustrativa; posição e ordem podem variar.'},
     sponsor:{title:'EMPRESA PATROCINADORA DO EPISÓDIO',where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'A tela fica preta e apresenta a empresa como participante da sustentação comercial do episódio.',disclaimer:'Imagem, posição e composição são demonstrativas.'}
   };
   const simImages=['pov-demo-01.jpg','pov-demo-02.jpg','simulacao-cinematica.jpg','overlay-cinematic.png'];
@@ -466,7 +465,7 @@ body{overflow-x:hidden}
     if(timeBadge){timeBadge.style.display=isTimed?'block':'none';timeBadge.innerHTML=isTimed?'DURAÇÃO <span>≈ 5s</span>':'';}
     if(creditClock) creditClock.style.display=isTimed?'none':'block';
     if(audioBadge) audioBadge.style.display=m==='audio'?'block':'none';
-    const disabledCredits=['individual','sponsor'].includes(m);
+    const disabledCredits=m==='sponsor';
     if(moment){moment.disabled=disabledCredits; if(!disabledCredits && !moment.value) moment.value='essential';}
     if(m==='footer'){
       screen.classList.add('footer-demo','price-fixed');
@@ -479,7 +478,7 @@ body{overflow-x:hidden}
       $('#sceneLabel').textContent=momentLabels[priceTier.value]||'FAIXA APROXIMADA';
       simFocus.style.left='2%';simFocus.style.top='3%';simFocus.style.width='58%';simFocus.style.height='22%';simFocus.style.right='auto';simFocus.style.bottom='auto';
       ovVisual.classList.add('show');
-    } else if(m==='individual'){
+    } else if(false){
       screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · CRÉDITOS';simFocus.style.left='18%';simFocus.style.right='18%';simFocus.style.top='12%';simFocus.style.bottom='12%';simFocus.style.height='auto';ovIndividual.classList.add('show');
     } else {
       screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · PÓS-CRÉDITOS';simFocus.style.left='16%';simFocus.style.right='16%';simFocus.style.top='10%';simFocus.style.bottom='14%';simFocus.style.height='auto';ovSponsor.classList.add('show');
@@ -559,7 +558,7 @@ body{overflow-x:hidden}
     const arr=requestOptions[reqType?.value]||[];
     reqCatalog.innerHTML=arr.map(x=>{
       const p=x==='Sponsor Overlay'?'A partir de R$ 39,90':x==='Overlay + Áudio'?'A partir de R$ 49,90':money(prices[x]);
-      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'';
+      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'Participação definida pela produção';
       return `<button type="button" class="requestChoice ${reqMode?.value===x?'active':''}" data-choice="${x}"><small>${reqType?.value==='empresa'?'EMPRESA':'PESSOA'}</small><strong>${x}</strong><span>${p}</span><small>${sub}</small></button>`
     }).join('');
     $$('[data-choice]',reqCatalog).forEach(b=>b.addEventListener('click',()=>{reqMode.value=b.dataset.choice;updateSummaryAndFields();renderCatalog();}));
@@ -567,10 +566,9 @@ body{overflow-x:hidden}
   function updateSummaryAndFields(){
     if(!reqMode?.value)return;
     const m=reqMode.value;
-    const person=false;
     const timed=Boolean(requestRanges[m]);
     if(reqMoment){
-      reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio';
+      reqMoment.disabled=m==='Presença no Rodapé' || m==='Empresa Patrocinadora do Episódio';
       if(reqMoment.disabled) reqMoment.value='Após a história / definido pela produção';
       if(timed && !rangeKeyByText[reqMoment.value]) reqMoment.value='00:30–02:00';
     }
@@ -587,8 +585,8 @@ body{overflow-x:hidden}
       }
     }
     if(reqQty){
-      reqQty.max=(m==='Empresa Patrocinadora do Episódio')?'10':'';
-      if(m==='Empresa Patrocinadora do Episódio' && Number(reqQty.value)>10) reqQty.value='10';
+      reqQty.max=(m==='Presença no Rodapé')?'50':'10';
+      if(Number(reqQty.value)>Number(reqQty.max)) reqQty.value=reqQty.max;
     }
     if(timed){
       const sel=$('#reqPriceTier');
@@ -677,7 +675,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const mode=$('#mode'), tier=$('#priceTier'), moment=$('#moment'), screen=$('#screen');
   const play=$('#playDemo'), simImage=$('#simImage'), inputName=$('#inputName'), inputHandle=$('#inputHandle');
   const pName=$('#pName'),pHandle=$('#pHandle'),sponsorName=$('#sponsorName'),sponsorHandle=$('#sponsorHandle');
-  const focus=$('#simFocus'), visual=$('#ovVisual'), individual=$('#ovIndividual'), sponsor=$('#ovSponsor');
+  const focus=$('#simFocus'), visual=$('#ovVisual'), sponsor=$('#ovSponsor');
   const wave1=$('#footerWave1'),wave2=$('#footerWave2');
   const timeBadge=$('#timeBadge'),creditClock=$('#creditClock'),audioBadge=$('#audioBadge');
 
@@ -692,7 +690,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const audioText={essential:'00:30–02:00 · R$ 49,90',regular:'02:00–04:00 · R$ 59,90',valued:'04:00–06:30 · R$ 69,90',premium:'06:30–09:00 · R$ 79,90',special:'09:00–11:00 · R$ 89,90'};
 
   function clearSimulation(){
-    [wave1,wave2,visual,individual,sponsor,focus].forEach(x=>{if(x){x.classList.remove('show');}});
+    [wave1,wave2,visual,sponsor,focus].forEach(x=>{if(x){x.classList.remove('show');}});
     if(screen)screen.classList.remove('isCredits','phone','price-essential','price-regular','price-valued','price-premium','price-special');
     if(audioBadge)audioBadge.style.display='none';
   }
@@ -703,7 +701,6 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       footer:{where:'Durante o episódio',how:'10 empresas por bloco · ~5s por exibição',desc:'Rodapé coletivo com logo/identidade, nome fantasia, @ e segmento. Um segundo bloco pode reaparecer mais adiante.',price:'R$ 49,90',ctx:'2 exibições separadas'},
       overlay:{where:'Durante o episódio',how:'Visual individual · ~5s',desc:'A marca aparece individualmente sobre a imagem. A faixa representa um intervalo aproximado do episódio.',price:tierText[tier?.value]||'R$ 39,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
       audio:{where:'Durante o episódio',how:'Visual + chamada sonora · ~5s',desc:'A marca aparece individualmente acompanhada de uma chamada sonora curta que atua como gatilho de atenção.',price:audioText[tier?.value]||'R$ 49,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
-      
       sponsor:{where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'Tela preta com apresentação institucional da empresa participante do episódio.',price:'R$ 89,90',ctx:'Após a história e créditos'}
     }[m];
     if(!info)return;
@@ -713,7 +710,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     $('#simPriceInfo')&&( $('#simPriceInfo').textContent=info.price );
     $('#simWhereLarge')&&( $('#simWhereLarge').textContent=info.where );
     $('#simPriceLarge')&&( $('#simPriceLarge').textContent=info.price );
-    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='sponsor')?'Apresentação institucional pós-créditos':'≈ 5 segundos' );
+    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='sponsor')?'Apresentação de créditos':'≈ 5 segundos' );
     $('#simContextLarge')&&( $('#simContextLarge').textContent=info.ctx );
     $('#priceLogic')&&( $('#priceLogic').innerHTML = m==='footer' ? '<strong>Regra de preço:</strong> valor único de <strong>R$ 49,90</strong>.' : '<strong>Regra de preço:</strong> o valor acompanha a faixa/momento escolhido.' );
     return info;
@@ -752,12 +749,6 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       if(focus){focus.style.left='3%';focus.style.top='3%';focus.style.width='57%';focus.style.height='20%';focus.style.right='auto';focus.style.bottom='auto';focus.classList.add('show')}
       setTimeout(()=>visual?.classList.remove('show'),5700);
       setTimeout(()=>focus?.classList.remove('show'),5700);
-    }else if(m==='individual'){
-      screen.classList.add('isCredits');
-      if(timeBadge)timeBadge.style.display='none';
-      if(creditClock)creditClock.style.display='block';
-      individual?.classList.add('show');
-      setTimeout(()=>individual?.classList.remove('show'),6500);
     }else{
       screen.classList.add('isCredits');
       if(timeBadge)timeBadge.style.display='none';
@@ -839,7 +830,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const send=$('#sendWhatsapp');
   function buildApiPayload(){
     const modeValue=req.mode?.value||'';
-    const quantity=Math.min(10,Math.max(1,Number(req.qty?.value)||1));
+    const cap=modeValue==='Presença no Rodapé'?50:10; const quantity=Math.min(cap,Math.max(1,Number(req.qty?.value)||1));
     const momentValue=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
     return {
       name:req.name?.value.trim()||'',
