@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * DOOX / HOCCO — APPS SCRIPT V9 — CONTRATO ÚNICO SITE → OPERAÇÃO
+ * DOOX / HOCCO — APPS SCRIPT V7.4 — CONTROLE FIEL AO SITE
  * BACKEND OPERACIONAL
  * ============================================================
  *
@@ -35,48 +35,62 @@ const CONFIG = {
     'America/Sao_Paulo',
 
   RECEIPT_FOLDER:
-    'DOOX — COMPROVANTES HOCCO',
+    'DOOX — HOCCO — COMPROVANTES',
+
+  ARCHIVE_FOLDER:
+    'DOOX — HOCCO — ARQUIVO MENSAL',
+
+  VERSION:
+    'V9.0',
 
   SHEETS: {
+    PAINEL: 'PAINEL',
+    PEDIDOS: 'PEDIDOS',
+    CLIENTES: 'CLIENTES',
+    FINANCEIRO: 'FINANCEIRO',
+    PRODUCAO: 'PRODUÇÃO',
+    EPISODIOS: 'EPISÓDIOS',
+    COMPROVANTES: 'COMPROVANTES'
+  },
 
-    PEDIDOS:
-      'PEDIDOS',
+  PUBLIC_KEYS: [
+    'name',
+    'whatsapp',
+    'email',
+    'type',
+    'modality',
+    'moment',
+    'quantity',
+    'profile',
+    'observation',
+    'termsAccepted',
+    'rulesAccepted'
+  ],
 
-    CLIENTES:
-      'CLIENTES',
+  MODALITIES: [
+    'Presença no Rodapé',
+    'Sponsor Overlay',
+    'Overlay + Áudio',
+    'Empresa Patrocinadora do Episódio'
+  ],
 
-    PAGAMENTOS:
-      'PAGAMENTOS',
-
-    MATERIAIS:
-      'MATERIAIS',
-
-    EPISODIOS:
-      'EPISÓDIOS',
-
-    PROGRAMACAO:
-      'PROGRAMAÇÃO',
-
-    VEICULACOES:
-      'VEICULAÇÕES',
-
-    VAGAS:
-      'VAGAS',
-
-    COMPROVANTES:
-      'COMPROVANTES',
-
-    DASHBOARD:
-      'DASHBOARD'
-  }
+  STATES: [
+    'SOLICITADO',
+    'EM ANÁLISE',
+    'AGUARDANDO PAGAMENTO',
+    'PAGAMENTO RECEBIDO',
+    'MATERIAL PENDENTE',
+    'MATERIAL RECEBIDO',
+    'EM PRODUÇÃO',
+    'PROGRAMADO',
+    'PUBLICADO',
+    'FINALIZADO',
+    'REJEITADO',
+    'CANCELADO',
+    'ARQUIVADO'
+  ]
 
 };
-
-// Interface pública oficial. Nada fora desta lista entra no fluxo do site.
-const PUBLIC_KEYS = [
-  'name', 'type', 'whatsapp', 'email', 'profile', 'modality',
-  'moment', 'quantity', 'observation', 'termsAccepted', 'rulesAccepted'
-];
 
 
 /* ============================================================
@@ -84,57 +98,15 @@ const PUBLIC_KEYS = [
    ============================================================ */
 
 function doGet(e) {
-
   try {
-
-    const action =
-      String(
-        e &&
-        e.parameter &&
-        e.parameter.action
-          ? e.parameter.action
-          : 'health'
-      );
-
-    if (action === 'testSpreadsheet') {
-
-      return out_(
-        testSpreadsheet()
-      );
-
-    }
-
-    return out_({
-
-      ok: true,
-
-      service:
-        'DOOX HOCCO',
-
-      version:
-        'V9',
-
-      timestamp:
-        new Date().toISOString()
-
-    });
-
+    const action = String((e && e.parameter && e.parameter.action) || 'health');
+    if (action === 'testSpreadsheet') return out_(testSpreadsheet());
+    if (action === 'contract') return out_(getPublicFormContract());
+    if (action === 'downloadReceipt') return out_(downloadReceipt_(String((e.parameter && e.parameter.token) || '')));
+    return out_({ ok: true, service: 'DOOX HOCCO', version: CONFIG.VERSION, timestamp: new Date().toISOString() });
+  } catch (err) {
+    return out_({ ok: false, error: err && err.message ? err.message : String(err) });
   }
-
-  catch (err) {
-
-    return out_({
-
-      ok: false,
-
-      error:
-        err.message ||
-        String(err)
-
-    });
-
-  }
-
 }
 
 
@@ -144,32 +116,18 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    const data = parse_(e);
-    // CONTRATO ÚNICO: o endpoint público só aceita os campos reais do formulário.
-    // Ação, preço, código, cliente, episódio e demais campos são internos.
-    const publicData = pickPublicPayload_(data);
-    return out_(registerRequest_(publicData));
+    const raw = parse_(e) || {};
+    const action = String(raw.action || 'registerRequest');
+    if (action === 'testSpreadsheet') return out_(testSpreadsheet());
+    if (action !== 'registerRequest') return out_({ ok: false, error: 'AÇÃO NÃO RECONHECIDA' });
+
+    // Contrato estrito: somente os campos que existem no formulário público.
+    const data = {};
+    CONFIG.PUBLIC_KEYS.forEach(function(k) { data[k] = raw[k]; });
+    return out_(registerRequest_(data));
   } catch (err) {
-    return out_({
-      ok: false,
-      error: err.message || String(err)
-    });
+    return out_({ ok: false, error: err && err.message ? err.message : String(err) });
   }
-}
-
-
-/* ============================================================
-   CONTRATO PÚBLICO — ALLOWLIST
-   ============================================================ */
-
-function pickPublicPayload_(data) {
-  const out = {};
-  PUBLIC_KEYS.forEach(function(key) {
-    if (Object.prototype.hasOwnProperty.call(data || {}, key)) {
-      out[key] = data[key];
-    }
-  });
-  return out;
 }
 
 
@@ -194,14 +152,13 @@ function registerRequest_(data) {
 
   try {
 
-    const ss =
-      SpreadsheetApp.openById(
-        CONFIG.SPREADSHEET_ID
-      );
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+
+    // O ciclo mensal é controlado pelo servidor, nunca pelo site.
+    ensureMonthlyCycle_(ss);
 
     /*
-     * Garante que as abas e cabeçalhos
-     * existam antes de escrever.
+     * Garante que as abas e cabeçalhos existam antes de escrever.
      */
 
     ensureStructure_(ss);
@@ -222,14 +179,10 @@ function registerRequest_(data) {
     validate_(r);
 
 
-    /*
-     * NUNCA aceitar episódio enviado
-     * pelo site.
-     */
+    /* NUNCA aceitar episódio enviado pelo site. */
+    r.episode = '';
 
-    r.episode =
-      '';
-
+    guardDuplicateRequest_(r);
 
     /*
      * Gera código:
@@ -273,7 +226,7 @@ function registerRequest_(data) {
         'Código DOOX': r.code,
         'ID Cliente': r.clientId,
         'Data/Hora': r.createdAt,
-        'Nome / Empresa': r.name,
+        'Cliente': r.name,
         'WhatsApp': r.phone,
         'E-mail': r.email,
         'Tipo': r.type,
@@ -326,48 +279,32 @@ function registerRequest_(data) {
 
     try {
 
-      receipt =
-        createRequestReceipt_(
-          ss,
-          r
-        );
+      receipt = createRequestReceipt_(ss, r);
 
-      updateByHeaders_(
-        ss.getSheetByName(
-          CONFIG.SHEETS.PEDIDOS
-        ),
-        ss.getSheetByName(
-          CONFIG.SHEETS.PEDIDOS
-        ).getLastRow(),
-        {
-          'Comprovante Solicitação':
-            receipt.url
-        }
-      );
+      updateByHeaders_(ss.getSheetByName(CONFIG.SHEETS.PEDIDOS), ss.getSheetByName(CONFIG.SHEETS.PEDIDOS).getLastRow(), {
+        'Comprovante Solicitação': receipt.fileName
+      });
 
-      appendByHeaders_(
-        ss.getSheetByName(CONFIG.SHEETS.COMPROVANTES),
-        {
-          'Código DOOX': r.code,
-          'ID Cliente': r.clientId,
-          'Episódio': '',
-          'Cliente': r.name,
-          'Modalidade': r.mode,
-          'Momento Solicitado': r.moment,
-          'Faixa Contratada': r.range,
-          'Quantidade': r.quantity,
-          'Valor Unitário': r.unitPrice,
-          'Valor Total': r.total,
-          'Data/Hora da Solicitação': r.createdAt,
-          'Data de Publicação': '',
-          'URL': '',
-          'Arquivo do Comprovante': receipt.url,
-          'Enviado ao Cliente': 'NÃO',
-          'Data de Envio': '',
-          'Status': 'SOLICITAÇÃO REGISTRADA',
-          'Observações': 'Comprovante inicial de solicitação. Não representa pagamento ou publicação.'
-        }
-      );
+      appendByHeaders_(ss.getSheetByName(CONFIG.SHEETS.COMPROVANTES), {
+        'Código DOOX': r.code,
+        'ID Cliente': r.clientId,
+        'Tipo': 'SOLICITAÇÃO',
+        'Episódio': '',
+        'Cliente': r.name,
+        'Modalidade': r.mode,
+        'Momento Solicitado': r.moment,
+        'Faixa Contratada': r.range,
+        'Quantidade': r.quantity,
+        'Valor Unitário': r.unitPrice,
+        'Valor Total': r.total,
+        'Arquivo do Comprovante': receipt.fileName,
+        'ID Arquivo': receipt.fileId,
+        'Token': receipt.token,
+        'Enviado ao Cliente': 'NÃO',
+        'Data de Envio': '',
+        'Status': 'GERADO',
+        'Observações': 'Comprovante inicial de solicitação. Não representa pagamento ou publicação.'
+      });
     }
     catch (receiptErr) {
 
@@ -408,11 +345,8 @@ function registerRequest_(data) {
       paymentStatus:
         'AGUARDANDO PAGAMENTO',
 
-      receiptUrl:
-        receipt.url,
-
-      receiptFile:
-        receipt.fileName,
+      receiptUrl: receipt.token ? ('/api/receipt?token=' + encodeURIComponent(receipt.token)) : '',
+      receiptFile: receipt.fileName,
 
       receiptError:
         receipt.error,
@@ -454,19 +388,13 @@ function normalize_(d) {
    */
   const mode = normalizeMode_(d.modality);
   const type = normalizeType_(d.type);
-  let moment = clean_(d.moment);
+  const moment = clean_(d.moment);
   const range = rangeFromMomentOrLabel_(moment);
-  if (['Presença no Rodapé','Empresa Patrocinadora do Episódio'].includes(mode)) {
-    moment = 'Definido pela produção';
-  }
   const unit = price_(mode, range);
-  let qty = Math.max(1, integer_(d.quantity) || 1);
-  const maxQty = mode === 'Presença no Rodapé' ? 50 : 10;
-  qty = Math.min(maxQty, qty);
+  const qty = Math.max(1, integer_(d.quantity) || 1);
 
   return {
     name: clean_(d.name),
-    company: '',
     type: type,
     email: clean_(d.email).toLowerCase(),
     phone: phone_(d.whatsapp),
@@ -481,7 +409,6 @@ function normalize_(d) {
     episode: '',
     termsAccepted: bool_(d.termsAccepted),
     rulesAccepted: bool_(d.rulesAccepted),
-    source: 'SITE',
     clientId: ''
   };
 }
@@ -498,10 +425,6 @@ function rangeFromMomentOrLabel_(moment) {
    ============================================================ */
 
 function validate_(r) {
-
-  if (!['Empresa','Pessoa'].includes(r.type)) {
-    throw new Error('Tipo inválido. Use Empresa ou Pessoa.');
-  }
 
   if (!r.name) {
 
@@ -545,14 +468,11 @@ function validate_(r) {
 
   }
 
-  const allowed = [
-    'Presença no Rodapé',
-    'Sponsor Overlay',
-    'Overlay + Áudio',
-    'Empresa Patrocinadora do Episódio'
-  ];
+  if (!['Empresa','Pessoa'].includes(r.type)) {
+    throw new Error('Tipo deve ser Empresa ou Pessoa.');
+  }
 
-  if (!allowed.includes(r.mode)) {
+  if (!CONFIG.MODALITIES.includes(r.mode)) {
     throw new Error('Modalidade não disponível no formulário público.');
   }
 
@@ -1032,102 +952,23 @@ function normalizeType_(v) {
    GERAR CÓDIGO DOOX
    ============================================================ */
 
+function guardDuplicateRequest_(r) {
+  const raw=[r.name,r.email,r.phone,r.type,r.mode,r.moment,r.quantity,r.handle,r.observation].map(x=>clean_(x)).join('|');
+  const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,raw);
+  const fp=Utilities.base64EncodeWebSafe(digest);
+  const cache=CacheService.getScriptCache();
+  const key='REQ_'+fp.slice(0,80);
+  if(cache.get(key)) throw new Error('Solicitação idêntica já recebida. Aguarde alguns minutos antes de reenviar.');
+  cache.put(key,'1',600);
+}
+
+
 function nextCode_(ss) {
-
-  const sheet =
-    ss.getSheetByName(
-      CONFIG.SHEETS.PEDIDOS
-    );
-
-
-  const h =
-    headers_(sheet);
-
-
-  const i =
-    find_(
-      h,
-      [
-        'Código DOOX',
-        'Código',
-        'Codigo DOOX',
-        'Codigo'
-      ]
-    );
-
-
-  let max =
-    0;
-
-
-  if (
-    i >= 0 &&
-    sheet.getLastRow() > 1
-  ) {
-
-    const values =
-      sheet
-        .getRange(
-          2,
-          i + 1,
-          sheet.getLastRow() - 1,
-          1
-        )
-        .getDisplayValues();
-
-
-    values.forEach(
-      row => {
-
-        const code =
-          String(
-            row[0] || ''
-          );
-
-
-        const match =
-          code.match(
-            /^DOOX-\d{2}-(\d{4,})$/i
-          );
-
-
-        if (match) {
-
-          max =
-            Math.max(
-              max,
-              parseInt(
-                match[1],
-                10
-              )
-            );
-
-        }
-
-      }
-    );
-
-  }
-
-
-  const yy =
-    Utilities.formatDate(
-      new Date(),
-      CONFIG.TIMEZONE,
-      'yy'
-    );
-
-
-  return (
-    'DOOX-' +
-    yy +
-    '-' +
-    pad_(
-      max + 1,
-      4
-    )
-  );
-
+  const props=PropertiesService.getScriptProperties();
+  const current=Number(props.getProperty('DOOX_ORDER_SEQ')||0)+1;
+  props.setProperty('DOOX_ORDER_SEQ',String(current));
+  const yy=Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yy');
+  return 'DOOX-'+yy+'-'+pad_(current,4);
 }
 
 
@@ -1277,7 +1118,7 @@ function upsertClient_(
 
   const payload = {
     'ID Cliente': clientId,
-    'Nome / Empresa': r.name,
+    'Cliente': r.name,
     'Tipo': r.type,
     'WhatsApp': r.phone,
     'E-mail': r.email,
@@ -1318,85 +1159,11 @@ function upsertClient_(
    GERAR ID PERMANENTE DO CLIENTE
    ============================================================ */
 
-function nextClientId_(
-  sh
-) {
-
-  const h =
-    headers_(
-      sh
-    );
-
-
-  const idIndex =
-    find_(
-      h,
-      [
-        'ID Cliente',
-        'Cliente ID',
-        'ID'
-      ]
-    );
-
-
-  let max =
-    0;
-
-
-  if (
-    idIndex >= 0 &&
-    sh.getLastRow() > 1
-  ) {
-
-    const values =
-      sh
-        .getRange(
-          2,
-          idIndex + 1,
-          sh.getLastRow() - 1,
-          1
-        )
-        .getDisplayValues();
-
-
-    values.forEach(
-      function(row) {
-
-        const m =
-          clean_(
-            row[0]
-          ).match(
-            /CLI-(\d+)/i
-          );
-
-
-        if (m) {
-
-          max =
-            Math.max(
-              max,
-              parseInt(
-                m[1],
-                10
-              )
-            );
-
-        }
-
-      }
-    );
-
-  }
-
-
-  return (
-    'CLI-' +
-    pad_(
-      max + 1,
-      4
-    )
-  );
-
+function nextClientId_(sh) {
+  const props=PropertiesService.getScriptProperties();
+  const current=Number(props.getProperty('DOOX_CLIENT_SEQ')||0)+1;
+  props.setProperty('DOOX_CLIENT_SEQ',String(current));
+  return 'CLI-'+pad_(current,5);
 }
 
 
@@ -1411,7 +1178,7 @@ function upsertPayment_(
 
   const sh =
     ss.getSheetByName(
-      CONFIG.SHEETS.PAGAMENTOS
+      CONFIG.SHEETS.FINANCEIRO
     );
 
 
@@ -1478,7 +1245,7 @@ function upsertPayment_(
   const payload = {
     'Código DOOX': r.code,
     'ID Cliente': r.clientId,
-    'Nome / Empresa': r.name,
+    'Cliente': r.name,
     'Modalidade': r.mode,
     'Quantidade': r.quantity,
     'Valor Unitário': r.unitPrice,
@@ -1517,62 +1284,47 @@ function upsertPayment_(
    CRIAR / GARANTIR ESTRUTURA
    ============================================================ */
 
-function ensureStructure_(ss) {
-  const s = {};
-
-  s[CONFIG.SHEETS.PEDIDOS] = [
-    'Código DOOX','ID Cliente','Data/Hora','Nome / Empresa','WhatsApp','E-mail',
-    'Tipo','Modalidade','Faixa / Preço','Momento Desejado','Quantidade',
-    '@ / Perfil / Site','Termos','Regras','Descrição / Observação',
-    'Valor Unitário','Valor Total','Status','Episódio','Criado em',
-    'Comprovante Solicitação'
+function schema_() {
+  const schema = {};
+  schema[CONFIG.SHEETS.PAINEL] = ['Indicador','Valor','Atualizado em'];
+  schema[CONFIG.SHEETS.PEDIDOS] = [
+    'Código DOOX','ID Cliente','Data/Hora','Nome / Empresa','WhatsApp','E-mail','Tipo',
+    'Modalidade','Faixa / Preço','Momento Desejado','Quantidade','@ / Perfil / Site',
+    'Aceite','Descrição / Observação','Valor Unitário','Valor Total','Status','Episódio',
+    'Criado em','Atualizado em','Comprovante Solicitação'
   ];
-  s[CONFIG.SHEETS.CLIENTES] = [
+  schema[CONFIG.SHEETS.CLIENTES] = [
     'ID Cliente','Nome / Empresa','Tipo','WhatsApp','E-mail','@ / Perfil / Site',
     'Primeiro Pedido','Último Pedido','Status','Última Atualização'
   ];
-  s[CONFIG.SHEETS.PAGAMENTOS] = [
-    'Código DOOX','ID Cliente','Nome / Empresa','Modalidade','Quantidade',
-    'Valor Unitário','Valor Total','Status','Data da Solicitação',
-    'Data do Pagamento','Comprovante','Observações'
+  schema[CONFIG.SHEETS.FINANCEIRO] = [
+    'Código DOOX','ID Cliente','Cliente','Modalidade','Quantidade','Valor Unitário','Valor Total',
+    'Status','Data da Solicitação','Data do Pagamento','Comprovante','Observações'
   ];
-  s[CONFIG.SHEETS.MATERIAIS] = [
-    'Código DOOX','ID Cliente','Modalidade','Tipo de Material','Status',
-    'Canal de Recebimento','Data de Solicitação','Data de Recebimento',
-    'Arquivo / Referência','Observações'
+  schema[CONFIG.SHEETS.PRODUCAO] = [
+    'Código DOOX','ID Cliente','Episódio','Modalidade','Etapa','Status','Faixa Contratada',
+    'Momento Efetivo','Tipo de Material','Canal','Arquivo / Referência','Data de Solicitação',
+    'Data de Recebimento','Duração','Bloco / Ordem','Data de Publicação','URL','Evidência',
+    'Observações','Atualizado em'
   ];
-  s[CONFIG.SHEETS.EPISODIOS] = [
-    'Episódio','Título','Status','Data Prevista','Data de Publicação',
-    'Capacidade Rodapé','Capacidade Patrocinador','Observações'
+  schema[CONFIG.SHEETS.EPISODIOS] = [
+    'Episódio','Título','Status','Data Prevista','Data de Publicação','Capacidade Rodapé',
+    'Capacidade Patrocinador','Observações'
   ];
-  s[CONFIG.SHEETS.PROGRAMACAO] = [
-    'Código DOOX','ID Cliente','Episódio','Modalidade','Faixa Contratada',
-    'Momento Efetivo','Duração','Bloco / Ordem','Status','Observações'
+  schema[CONFIG.SHEETS.COMPROVANTES] = [
+    'Código DOOX','ID Cliente','Tipo','Episódio','Cliente','Modalidade','Momento Solicitado',
+    'Faixa Contratada','Quantidade','Valor Unitário','Valor Total','Arquivo do Comprovante',
+    'ID Arquivo','Token','Enviado ao Cliente','Data de Envio','Status','Observações'
   ];
-  s[CONFIG.SHEETS.VEICULACOES] = [
-    'Código DOOX','ID Cliente','Episódio','Data de Publicação','URL',
-    'Momento Efetivo','Status','Evidência','Observações'
-  ];
-  s[CONFIG.SHEETS.VAGAS] = [
-    'Episódio','Modalidade','Capacidade','Reservadas','Disponíveis',
-    'Status','Última Atualização'
-  ];
-  s[CONFIG.SHEETS.COMPROVANTES] = [
-    'Código DOOX','ID Cliente','Episódio','Cliente','Modalidade',
-    'Momento Solicitado','Faixa Contratada','Quantidade','Valor Unitário',
-    'Valor Total','Data/Hora da Solicitação','Data de Publicação','URL',
-    'Arquivo do Comprovante','Enviado ao Cliente','Data de Envio','Status',
-    'Observações'
-  ];
-  s[CONFIG.SHEETS.DASHBOARD] = [
-    'Indicador','Valor','Atualizado em'
-  ];
+  return schema;
+}
 
-  Object.keys(s).forEach(function(name) {
+function ensureStructure_(ss) {
+  const schema = schema_();
+  Object.keys(schema).forEach(function(name) {
     const sh = getOrCreate_(ss, name);
-    ensureHeaders_(sh, s[name]);
+    ensureHeaders_(sh, schema[name]);
   });
-
   applyOperationalFormatting_(ss);
 }
 
@@ -1581,255 +1333,46 @@ function ensureStructure_(ss) {
    COMPROVANTE PDF DA SOLICITAÇÃO
    ============================================================ */
 
-function createRequestReceipt_(
-  ss,
-  r
-) {
-
-  const folder =
-    getOrCreateFolder_(
-      CONFIG.RECEIPT_FOLDER
-    );
-
-
-  const timestamp =
-    Utilities.formatDate(
-      r.createdAt,
-      CONFIG.TIMEZONE,
-      'dd/MM/yyyy HH:mm:ss'
-    );
-
-
-  const moment =
-    r.moment ||
-    'Não informado';
-
-
-  const range =
-    r.range ||
-    'Não informada';
-
-
-  const doc =
-    DocumentApp.create(
-      'DOOX — Solicitação ' +
-      r.code
-    );
-
-
-  const body =
-    doc.getBody();
-
-
-  body
-    .appendParagraph(
-      'DOOX STUDIOS / HOCCO'
-    )
-    .setHeading(
-      DocumentApp.ParagraphHeading.TITLE
-    );
-
-
-  body
-    .appendParagraph(
-      'COMPROVANTE DE SOLICITAÇÃO'
-    )
-    .setHeading(
-      DocumentApp.ParagraphHeading.HEADING1
-    );
-
-
-  body.appendParagraph(
-    'Este documento confirma o registro da solicitação no sistema DOOX. ' +
-    'Não representa comprovante de pagamento, aprovação, programação ou publicação.'
-  );
-
-
-  body.appendParagraph(
-    'Código DOOX: ' +
-    r.code
-  );
-
-
-  body.appendParagraph(
-    'ID Cliente: ' +
-    r.clientId
-  );
-
-
-  body.appendParagraph(
-    'Data/Hora da solicitação: ' +
-    timestamp
-  );
-
-
-  body.appendParagraph(
-    'Nome: ' +
-    r.name
-  );
-
-
-
-
-  body.appendParagraph(
-    'Tipo: ' +
-    r.type
-  );
-
-
-  body.appendParagraph(
-    'E-mail: ' +
-    r.email
-  );
-
-
-  body.appendParagraph(
-    'WhatsApp: ' +
-    r.phone
-  );
-
-
-  body.appendParagraph(
-    'Perfil / Site: ' +
-    (r.handle || '—')
-  );
-
-
-  body.appendParagraph(
-    'Modalidade: ' +
-    r.mode
-  );
-
-
-  body.appendParagraph(
-    'Momento solicitado: ' +
-    moment
-  );
-
-
-  body.appendParagraph(
-    'Faixa comercial: ' +
-    range
-  );
-
-
-  body.appendParagraph(
-    'Quantidade: ' +
-    r.quantity
-  );
-
-
-  body.appendParagraph(
-    'Valor unitário: ' +
-    formatMoneyBR_(
-      r.unitPrice
-    )
-  );
-
-
-  body.appendParagraph(
-    'Valor total: ' +
-    formatMoneyBR_(
-      r.total
-    )
-  );
-
-
-  body.appendParagraph(
-    'Termos aceitos: ' +
-    (
-      r.termsAccepted
-        ? 'SIM'
-        : 'NÃO'
-    )
-  );
-
-
-  body.appendParagraph(
-    'Regras aceitas: ' +
-    (
-      r.rulesAccepted
-        ? 'SIM'
-        : 'NÃO'
-    )
-  );
-
-
-  body.appendParagraph(
-    'Status: ' +
-    r.status
-  );
-
-
-  body.appendParagraph(
-    'Episódio: definido posteriormente pela produção.'
-  );
-
-
-  if (r.observation) {
-
-    body.appendParagraph(
-      'Observações: ' +
-      r.observation
-    );
-
-  }
-
-
-  body.appendParagraph(
-    'DOOX Studios — registro operacional HOCCO'
-  );
-
-
+function createRequestReceipt_(ss, r) {
+  const folder = getOrCreateFolder_(CONFIG.RECEIPT_FOLDER);
+  const timestamp = Utilities.formatDate(new Date(r.createdAt || new Date()), CONFIG.TIMEZONE, 'dd/MM/yyyy HH:mm:ss');
+  const doc = DocumentApp.create('DOOX — Solicitação ' + r.code);
+  const body = doc.getBody();
+  body.appendParagraph('DOOX STUDIOS / HOCCO').setHeading(DocumentApp.ParagraphHeading.TITLE);
+  body.appendParagraph('COMPROVANTE DE SOLICITAÇÃO').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  body.appendParagraph('Este documento confirma o registro da solicitação no sistema DOOX. Não representa comprovante de pagamento, aprovação, programação ou publicação.');
+  [
+    ['Código DOOX',r.code],['ID Cliente',r.clientId],['Data/Hora da solicitação',timestamp],['Nome / Empresa',r.name],
+    ['Tipo',r.type],['E-mail',r.email],['WhatsApp',r.phone],['Perfil / Site',r.handle||'—'],['Modalidade',r.mode],
+    ['Momento solicitado',r.moment||'Definido pela produção'],['Faixa comercial',r.range||'Modalidade fixa'],['Quantidade',r.quantity],
+    ['Valor unitário',formatMoneyBR_(r.unitPrice)],['Valor total',formatMoneyBR_(r.total)],['Aceite',(r.termsAccepted&&r.rulesAccepted)?'SIM':'NÃO'],['Status',r.status]
+  ].forEach(x=>body.appendParagraph(x[0]+': '+x[1]));
+  if(r.observation) body.appendParagraph('Observações: '+r.observation);
+  body.appendParagraph('DOOX Studios — registro operacional HOCCO');
   doc.saveAndClose();
-
-
-  const pdf =
-    DriveApp
-      .getFileById(
-        doc.getId()
-      )
-      .getAs(
-        MimeType.PDF
-      );
-
-
-  const fileName =
-    'DOOX-' +
-    r.code +
-    '-SOLICITACAO.pdf';
-
-
-  const file =
-    folder.createFile(
-      pdf
-        .setName(
-          fileName
-        )
-    );
-
-
-  DriveApp
-    .getFileById(
-      doc.getId()
-    )
-    .setTrashed(
-      true
-    );
-
-
-  return {
-
-    url:
-      file.getUrl(),
-
-    fileName:
-      fileName
-
-  };
-
+  const temp=DriveApp.getFileById(doc.getId());
+  const token=Utilities.getUuid().replace(/-/g,'')+Utilities.getUuid().replace(/-/g,'');
+  const storedName='DOOX-'+r.code+'-SOLICITACAO-'+token+'.pdf';
+  const pdf=temp.getAs(MimeType.PDF).setName(storedName);
+  const file=folder.createFile(pdf);
+  temp.setTrashed(true);
+  return {url:file.getUrl(),fileName:'DOOX-'+r.code+'-SOLICITACAO.pdf',storedName:storedName,fileId:file.getId(),token:token};
 }
 
+function downloadReceipt_(token) {
+  if (!token || token.length < 32) throw new Error('Token de comprovante inválido.');
+  const folderIt=DriveApp.getFoldersByName(CONFIG.RECEIPT_FOLDER);
+  if(!folderIt.hasNext()) throw new Error('Pasta de comprovantes não encontrada.');
+  const folder=folderIt.next();
+  const prefix='DOOX-';
+  const files=folder.getFiles();
+  while(files.hasNext()){
+    const file=files.next();
+    if(file.getName().indexOf('-'+token+'.pdf')<0) continue;
+    return {ok:true,fileName:file.getName().replace('-'+token,''),mimeType:MimeType.PDF,base64:Utilities.base64Encode(file.getBlob().getBytes())};
+  }
+  throw new Error('Comprovante não encontrado.');
+}
 
 /* ============================================================
    PASTA DE COMPROVANTES
@@ -2200,74 +1743,261 @@ function applyOperationalFormatting_(
  */
 
 function testSpreadsheet() {
-
-  const ss =
-    SpreadsheetApp.openById(
-      CONFIG.SPREADSHEET_ID
-    );
-
-
-  /*
-   * Cria/verifica toda a estrutura.
-   */
-
-  ensureStructure_(
-    ss
-  );
-
-
-  /*
-   * Registra uma linha de teste
-   * apenas no Dashboard.
-   */
-
-  const sh =
-    ss.getSheetByName(
-      CONFIG.SHEETS.DASHBOARD
-    );
-
-
-  appendByHeaders_(
-    sh,
-    {
-
-      'Indicador':
-        'TESTE DE CONEXÃO',
-
-      'Valor':
-        'OK',
-
-      'Atualizado em':
-        new Date()
-
-    }
-  );
-
-
-  SpreadsheetApp.flush();
-
-
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureStructure_(ss);
   return {
-
-    ok:
-      true,
-
-    message:
-      'Google Sheets conectado e estrutura verificada.',
-
-    spreadsheetName:
-      ss.getName(),
-
-    spreadsheetId:
-      ss.getId(),
-
-    timestamp:
-      new Date().toISOString()
-
+    ok: true,
+    message: 'Google Sheets conectado e estrutura verificada sem inserir dados de teste.',
+    spreadsheetName: ss.getName(),
+    spreadsheetId: ss.getId(),
+    sheets: Object.keys(CONFIG.SHEETS).map(k => CONFIG.SHEETS[k]),
+    activeMonth: getActiveMonth_(),
+    timestamp: new Date().toISOString()
   };
-
 }
 
+
+
+/* ============================================================
+   ADMINISTRAÇÃO DO CICLO MENSAL
+   ============================================================ */
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('DOOX • HOCCO')
+    .addItem('Iniciar / sincronizar mês', 'DOOX_INICIAR_MES')
+    .addItem('Preparar novo ciclo (backup + zerar + reconstruir)', 'DOOX_PREPARAR_NOVO_CICLO')
+    .addItem('Fechar mês atual e arquivar', 'DOOX_FECHAR_MES')
+    .addSeparator()
+    .addItem('Gerar comprovante da linha selecionada', 'generateReceiptFromSelectedRow')
+    .addItem('Atualizar painel', 'atualizarPainel')
+    .addItem('Verificar estrutura e conexão', 'testSpreadsheet')
+    .addToUi();
+}
+
+function DOOX_INICIAR_MES() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    ensureStructure_(ss);
+    const current = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM');
+    const active = getActiveMonth_();
+    if (!active) PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', current);
+    else if (active !== current) rolloverMonth_(ss, active, current);
+    atualizarPainel();
+    return 'Mês iniciado: ' + current;
+  } finally { lock.releaseLock(); }
+}
+
+function DOOX_FECHAR_MES() {
+  const ui = SpreadsheetApp.getUi();
+  const active = getActiveMonth_() || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM');
+  const response = ui.alert('Fechar ciclo ' + active + '?', 'O sistema criará um arquivo de arquivo mensal, preservará os dados e zerará as abas operacionais para o próximo ciclo.', ui.ButtonSet.YES_NO);
+  if (response !== ui.Button.YES) return 'Operação cancelada.';
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const archive = archiveCurrentCycle_(ss, active);
+    clearLiveData_(ss);
+    const parts=active.split('-').map(Number); const nextDate=new Date(parts[0],(parts[1]||1),1); const next = Utilities.formatDate(nextDate, CONFIG.TIMEZONE, 'yyyy-MM');
+    PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', next);
+    PropertiesService.getScriptProperties().setProperty('DOOX_LAST_ARCHIVE', archive.getUrl());
+    atualizarPainel();
+    ui.alert('Fechamento concluído', 'Arquivo: ' + archive.getName() + '\nO ciclo ativo agora é ' + next + '.', ui.ButtonSet.OK);
+    return archive.getUrl();
+  } finally { lock.releaseLock(); }
+}
+
+function getActiveMonth_() {
+  return PropertiesService.getScriptProperties().getProperty('DOOX_ACTIVE_MONTH') || '';
+}
+
+function ensureMonthlyCycle_(ss) {
+  ensureStructure_(ss);
+  const current = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM');
+  const active = getActiveMonth_();
+  if (!active) {
+    PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', current);
+    return;
+  }
+  if (active !== current) rolloverMonth_(ss, active, current);
+}
+
+function rolloverMonth_(ss, oldMonth, newMonth) {
+  archiveCurrentCycle_(ss, oldMonth);
+  clearLiveData_(ss);
+  PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', newMonth);
+}
+
+function archiveCurrentCycle_(ss, month) {
+  const folder = getOrCreateFolder_(CONFIG.ARCHIVE_FOLDER);
+  const name = 'DOOX HOCCO — ARQUIVO ' + month;
+  const file = SpreadsheetApp.create(name);
+  const defaultSheet = file.getSheets()[0];
+  let first = true;
+
+  Object.keys(CONFIG.SHEETS).forEach(function(key) {
+    const source = ss.getSheetByName(CONFIG.SHEETS[key]);
+    if (!source) return;
+    let target;
+    if (first) {
+      target = defaultSheet;
+      target.setName(source.getName());
+      first = false;
+    } else {
+      target = file.insertSheet(source.getName());
+    }
+    const range = source.getDataRange();
+    if (range.getNumRows() && range.getNumColumns()) {
+      target.getRange(1,1,range.getNumRows(),range.getNumColumns()).setValues(range.getValues());
+    }
+    target.setFrozenRows(1);
+  });
+
+  DriveApp.getFileById(file.getId()).moveTo(folder);
+  return file;
+}
+
+function clearLiveData_(ss) {
+  Object.keys(CONFIG.SHEETS).forEach(function(key) {
+    const sh = ss.getSheetByName(CONFIG.SHEETS[key]);
+    if (!sh) return;
+    const lastRow = sh.getLastRow();
+    const lastCol = sh.getLastColumn();
+    if (lastRow > 1 && lastCol > 0) {
+      sh.getRange(2,1,lastRow-1,lastCol).clearContent();
+    }
+  });
+}
+
+
+function DOOX_PREPARAR_NOVO_CICLO() {
+  const lock=LockService.getScriptLock();
+  lock.waitLock(30000);
+  try{
+    const ss=SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const stamp=Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yyyyMMdd-HHmmss');
+    const backup=archiveWorkbookSnapshot_(ss,'DOOX HOCCO — BACKUP PRÉ-CICLO — '+stamp);
+    const schema=schema_();
+
+    // Remove abas que não fazem parte do sistema atual, depois de preservá-las.
+    const keep=Object.keys(schema);
+    ss.getSheets().slice().forEach(function(sh){
+      if(!keep.includes(sh.getName()) && ss.getSheets().length>1) ss.deleteSheet(sh);
+    });
+
+    // Reconstrói cada aba com exatamente o esquema vigente e sem linhas antigas.
+    Object.keys(schema).forEach(function(name){
+      const sh=getOrCreate_(ss,name);
+      const lastRow=sh.getLastRow(), lastCol=sh.getLastColumn();
+      if(lastRow>0 && lastCol>0) sh.clear();
+      const maxCols=sh.getMaxColumns();
+      if(maxCols>schema[name].length) sh.deleteColumns(schema[name].length+1,maxCols-schema[name].length);
+      if(sh.getMaxColumns()<schema[name].length) sh.insertColumnsAfter(sh.getMaxColumns(),schema[name].length-sh.getMaxColumns());
+      sh.getRange(1,1,1,schema[name].length).setValues([schema[name]]);
+    });
+
+    const current=Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yyyy-MM');
+    PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH',current);
+    PropertiesService.getScriptProperties().setProperty('DOOX_LAST_ARCHIVE',backup.getUrl());
+    PropertiesService.getScriptProperties().setProperty('DOOX_LAST_RESET',new Date().toISOString());
+    applyOperationalFormatting_(ss);
+    atualizarPainel();
+    SpreadsheetApp.getUi().alert('Ciclo preparado','O banco operacional foi zerado sem apagar o backup. Mês ativo: '+current+'\nBackup: '+backup.getUrl(),SpreadsheetApp.getUi().ButtonSet.OK);
+    return {ok:true,month:current,backupUrl:backup.getUrl()};
+  } finally { lock.releaseLock(); }
+}
+
+function archiveWorkbookSnapshot_(ss,name) {
+  const folder=getOrCreateFolder_(CONFIG.ARCHIVE_FOLDER);
+  const file=SpreadsheetApp.create(name);
+  const defaultSheet=file.getSheets()[0];
+  let first=true;
+  ss.getSheets().forEach(function(source){
+    let target;
+    if(first){target=defaultSheet;target.setName(source.getName().slice(0,99));first=false;}
+    else target=file.insertSheet(source.getName().slice(0,99));
+    const r=source.getDataRange();
+    if(r.getNumRows()&&r.getNumColumns()){
+      target.getRange(1,1,r.getNumRows(),r.getNumColumns()).setValues(r.getValues());
+      target.getRange(1,1,r.getNumRows(),r.getNumColumns()).setNumberFormats(r.getNumberFormats());
+    }
+    target.setFrozenRows(Math.min(1,r.getNumRows()));
+  });
+  DriveApp.getFileById(file.getId()).moveTo(folder);
+  return file;
+}
+
+function cleanupExtraSheets() {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureStructure_(ss);
+  const keep = Object.keys(CONFIG.SHEETS).map(k => CONFIG.SHEETS[k]);
+  const extras = ss.getSheets().filter(sh => !keep.includes(sh.getName()));
+  if (!extras.length) return 'Nenhuma aba extra.';
+  const backup = archiveWorkbookSnapshot_(ss,'DOOX HOCCO — BACKUP ABAS EXTRAS — '+Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yyyyMMdd-HHmmss'));
+  extras.forEach(function(source){ if (ss.getSheets().length > 1) ss.deleteSheet(source); });
+  return backup.getUrl();
+}
+
+function atualizarPainel() {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureStructure_(ss);
+  const painel = ss.getSheetByName(CONFIG.SHEETS.PAINEL);
+  const pedidos = ss.getSheetByName(CONFIG.SHEETS.PEDIDOS);
+  const financeiro = ss.getSheetByName(CONFIG.SHEETS.FINANCEIRO);
+  const now = new Date();
+  const rows = pedidos.getLastRow() > 1 ? pedidos.getRange(2,1,pedidos.getLastRow()-1,pedidos.getLastColumn()).getDisplayValues() : [];
+  const hp = headers_(pedidos);
+  const statusIdx = find_(hp,['Status']);
+  const totalIdx = find_(hp,['Valor Total']);
+  const qIdx = find_(hp,['Quantidade']);
+  const requests = rows.length;
+  const solicTotal = rows.reduce((a,r)=>a+(Number(String(r[totalIdx]||'0').replace(/[^0-9,-]/g,'').replace('.','').replace(',','.'))||0),0);
+  const aguardando = rows.filter(r => statusIdx>=0 && r[statusIdx]==='SOLICITADO').length;
+  const finRows = financeiro.getLastRow()>1 ? financeiro.getRange(2,1,financeiro.getLastRow()-1,financeiro.getLastColumn()).getDisplayValues() : [];
+  const hf=headers_(financeiro), fStatus=find_(hf,['Status']);
+  const pago=finRows.filter(r=>fStatus>=0 && r[fStatus]==='PAGAMENTO RECEBIDO').length;
+  const data=[
+    ['Ciclo ativo', getActiveMonth_() || Utilities.formatDate(now,CONFIG.TIMEZONE,'yyyy-MM'), now],
+    ['Solicitações', requests, now],
+    ['Solicitações em análise/entrada', aguardando, now],
+    ['Valor solicitado', solicTotal, now],
+    ['Pagamentos recebidos', pago, now],
+    ['Último arquivo mensal', PropertiesService.getScriptProperties().getProperty('DOOX_LAST_ARCHIVE')||'', now]
+  ];
+  const max= Math.max(painel.getLastRow(),1);
+  if (max>1) painel.getRange(2,1,max-1,3).clearContent();
+  painel.getRange(2,1,data.length,3).setValues(data);
+  painel.getRange(2,3,data.length,1).setNumberFormat('dd/mm/yyyy hh:mm:ss');
+}
+
+function generateReceiptFromSelectedRow() {
+  const ss=SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sh=ss.getActiveSheet();
+  if(sh.getName()!==CONFIG.SHEETS.PEDIDOS) throw new Error('Selecione uma linha na aba PEDIDOS.');
+  const row=sh.getActiveRange().getRow();
+  if(row<2) throw new Error('Selecione uma linha de pedido.');
+  const h=headers_(sh);
+  const v=sh.getRange(row,1,1,sh.getLastColumn()).getValues()[0];
+  const get=label=>{const i=find_(h,[label]); return i>=0?v[i]:'';};
+  const r={
+    code: get('Código DOOX'), clientId:get('ID Cliente'), createdAt:get('Data/Hora')||new Date(), name:get('Nome / Empresa'),
+    type:get('Tipo'), email:get('E-mail'), phone:get('WhatsApp'), handle:get('@ / Perfil / Site'), mode:get('Modalidade'),
+    moment:get('Momento Desejado'), range: (String(get('Faixa / Preço')||'').split(' · ')[0]||''), quantity:Number(get('Quantidade'))||1,
+    unitPrice:Number(get('Valor Unitário'))||0,total:Number(get('Valor Total'))||0,termsAccepted:get('Aceite')==='SIM',rulesAccepted:get('Aceite')==='SIM',
+    observation:get('Descrição / Observação'),status:get('Status')||'SOLICITADO'
+  };
+  const receipt=createRequestReceipt_(ss,r);
+  const token=receipt.token;
+  const comp=ss.getSheetByName(CONFIG.SHEETS.COMPROVANTES);
+  appendByHeaders_(comp,{'Código DOOX':r.code,'ID Cliente':r.clientId,'Tipo':'SOLICITAÇÃO','Cliente':r.name,'Modalidade':r.mode,'Momento Solicitado':r.moment,'Faixa Contratada':r.range,'Quantidade':r.quantity,'Valor Unitário':r.unitPrice,'Valor Total':r.total,'Arquivo do Comprovante':receipt.fileName,'ID Arquivo':receipt.fileId,'Token':token,'Enviado ao Cliente':'NÃO','Status':'GERADO','Observações':'Gerado manualmente pela produção.'});
+  updateByHeaders_(sh,row,{'Comprovante Solicitação':receipt.fileName,'Atualizado em':new Date()});
+  SpreadsheetApp.getUi().alert('Comprovante gerado: '+receipt.fileName+'\nAcesso pelo site: /api/receipt?token='+token);
+  return receipt;
+}
 
 /* ============================================================
    CONTROLE DE CONTRATO PÚBLICO
@@ -3013,134 +2743,6 @@ function pad_(
 /* ============================================================
    PARSE DO POST
    ============================================================ */
-
-/* ============================================================
-   MIGRAÇÃO V9 — ESTRUTURA CANÔNICA SEM ABAS SOBRANDO
-   ============================================================ */
-
-function migrateToV9() {
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) throw new Error('Sistema ocupado. Tente novamente.');
-  try {
-    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    // Backup completo do estado atual no Drive, sem criar aba adicional.
-    const file = DriveApp.getFileById(ss.getId());
-    const backupFolder = getOrCreateFolder_('DOOX — BACKUPS — SISTEMA');
-    file.makeCopy('BACKUP ANTES DA MIGRAÇÃO V9 — ' + Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HHmmss'), backupFolder);
-
-    const schemas = canonicalSchemas_();
-    Object.keys(schemas).forEach(function(name) {
-      const sh = getOrCreate_(ss, name);
-      rewriteSheetCanonical_(sh, schemas[name]);
-    });
-
-    // Remove abas que não pertencem ao sistema operacional oficial.
-    const allowed = Object.values(CONFIG.SHEETS);
-    ss.getSheets().slice().forEach(function(sh) {
-      if (!allowed.includes(sh.getName()) && ss.getSheets().length > 1) {
-        ss.deleteSheet(sh);
-      }
-    });
-
-    applyOperationalFormatting_(ss);
-    SpreadsheetApp.flush();
-    return {ok:true, version:'V9', message:'Migração V9 concluída. Abas e cabeçalhos canônicos aplicados.', sheets:ss.getSheets().map(s=>s.getName())};
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function canonicalSchemas_() {
-  return {
-    PEDIDOS: ['Código DOOX','ID Cliente','Data/Hora','Nome / Empresa','WhatsApp','E-mail','Tipo','Modalidade','Faixa / Preço','Momento Desejado','Quantidade','@ / Perfil / Site','Termos','Regras','Descrição / Observação','Valor Unitário','Valor Total','Status','Episódio','Criado em','Comprovante Solicitação'],
-    CLIENTES: ['ID Cliente','Nome / Empresa','Tipo','WhatsApp','E-mail','@ / Perfil / Site','Primeiro Pedido','Último Pedido','Status','Última Atualização'],
-    PAGAMENTOS: ['Código DOOX','ID Cliente','Nome / Empresa','Modalidade','Quantidade','Valor Unitário','Valor Total','Status','Data da Solicitação','Data do Pagamento','Comprovante','Observações'],
-    MATERIAIS: ['Código DOOX','ID Cliente','Modalidade','Tipo de Material','Status','Canal de Recebimento','Data de Solicitação','Data de Recebimento','Arquivo / Referência','Observações'],
-    EPISÓDIOS: ['Episódio','Título','Status','Data Prevista','Data de Publicação','Capacidade Rodapé','Capacidade Patrocinador','Observações'],
-    PROGRAMAÇÃO: ['Código DOOX','ID Cliente','Episódio','Modalidade','Faixa Contratada','Momento Efetivo','Duração','Bloco / Ordem','Status','Observações'],
-    VEICULAÇÕES: ['Código DOOX','ID Cliente','Episódio','Data de Publicação','URL','Momento Efetivo','Status','Evidência','Observações'],
-    VAGAS: ['Episódio','Modalidade','Capacidade','Reservadas','Disponíveis','Status','Última Atualização'],
-    COMPROVANTES: ['Código DOOX','ID Cliente','Episódio','Cliente','Modalidade','Momento Solicitado','Faixa Contratada','Quantidade','Valor Unitário','Valor Total','Data/Hora da Solicitação','Data de Publicação','URL','Arquivo do Comprovante','Enviado ao Cliente','Data de Envio','Status','Observações'],
-    DASHBOARD: ['Indicador','Valor','Atualizado em']
-  };
-}
-
-function rewriteSheetCanonical_(sh, schema) {
-  const lastRow = sh.getLastRow();
-  const lastCol = sh.getLastColumn();
-  const old = (lastRow && lastCol) ? sh.getRange(1,1,lastRow,lastCol).getValues() : [];
-  const oldHeaders = old.length ? old[0].map(String) : [];
-  const rows = old.slice(1);
-  const data = rows.map(function(row) {
-    return schema.map(function(target) {
-      const idx = findHeaderIndexAliases_(oldHeaders, target);
-      return idx >= 0 ? row[idx] : '';
-    });
-  });
-  sh.clearContents();
-  if (schema.length) sh.getRange(1,1,1,schema.length).setValues([schema]);
-  if (data.length) sh.getRange(2,1,data.length,schema.length).setValues(data);
-}
-
-function findHeaderIndexAliases_(headers, target) {
-  const aliases = {
-    'Código DOOX':['Código DOOX','Código','Codigo DOOX','Codigo'],
-    'ID Cliente':['ID Cliente','Cliente ID'],
-    'Data/Hora':['Data/Hora','Data e Hora','Data/Hora da Solicitação','Solicitado em'],
-    'Nome / Empresa':['Nome / Empresa','Nome','Cliente','Empresa'],
-    'WhatsApp':['WhatsApp','Telefone','Seu WhatsApp'],
-    'E-mail':['E-mail','Email','Seu E-mail'],
-    'Tipo':['Tipo','Tipo de cliente'],
-    'Modalidade':['Modalidade'],
-    'Faixa / Preço':['Faixa / Preço','Faixa comercial','Faixa Contratada','Preço'],
-    'Momento Desejado':['Momento Desejado','Momento','Momento Solicitado'],
-    'Quantidade':['Quantidade'],
-    '@ / Perfil / Site':['@ / Perfil / Site','Perfil','Instagram','@'],
-    'Termos':['Termos','Aceite'],
-    'Regras':['Regras'],
-    'Descrição / Observação':['Descrição / Observação','Observações','Observação'],
-    'Valor Unitário':['Valor Unitário','Valor unitário'],
-    'Valor Total':['Valor Total','Valor total'],
-    'Status':['Status'],
-    'Episódio':['Episódio','Episode'],
-    'Criado em':['Criado em','Criado'],
-    'Comprovante Solicitação':['Comprovante Solicitação','Link comprovante','Arquivo do Comprovante'],
-    'Primeiro Pedido':['Primeiro Pedido','Primeiro pedido'],
-    'Último Pedido':['Último Pedido','Último pedido'],
-    'Última Atualização':['Última Atualização','Atualizado em'],
-    'Data da Solicitação':['Data da Solicitação','Solicitado em'],
-    'Data do Pagamento':['Data do Pagamento','Pago em'],
-    'Comprovante':['Comprovante'],
-    'Data de Solicitação':['Data de Solicitação'],
-    'Data de Recebimento':['Data de Recebimento','Recebido em'],
-    'Arquivo / Referência':['Arquivo / Referência','Arquivo/Referência'],
-    'Faixa Contratada':['Faixa Contratada','Faixa comercial'],
-    'Momento Efetivo':['Momento Efetivo'],
-    'Duração':['Duração'],
-    'Bloco / Ordem':['Bloco / Ordem'],
-    'Data de Publicação':['Data de Publicação'],
-    'URL':['URL'],
-    'Evidência':['Evidência'],
-    'Capacidade Rodapé':['Capacidade Rodapé'],
-    'Capacidade Patrocinador':['Capacidade Patrocinador'],
-    'Capacidade':['Capacidade'],
-    'Reservadas':['Reservadas'],
-    'Disponíveis':['Disponíveis'],
-    'Data/Hora da Solicitação':['Data/Hora da Solicitação','Data/Hora'],
-    'Arquivo do Comprovante':['Arquivo do Comprovante','Comprovante','Link comprovante'],
-    'Enviado ao Cliente':['Enviado ao Cliente'],
-    'Data de Envio':['Data de Envio'],
-    'Atualizado em':['Atualizado em','Última Atualização'],
-    'Indicador':['Indicador'],
-    'Valor':['Valor']
-  };
-  const set = aliases[target] || [target];
-  for (let i=0;i<headers.length;i++) {
-    if (set.some(a => norm_(headers[i]) === norm_(a))) return i;
-  }
-  return -1;
-}
-
 
 function parse_(
   e

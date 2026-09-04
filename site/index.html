@@ -230,9 +230,12 @@ body{overflow-x:hidden}
 <div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: exatamente 10 vagas disponíveis por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
 </div><div class="notice"><b>Importante:</b> quando a modalidade permitir escolha de momento, o momento/faixa escolhido determina automaticamente o preço correspondente. O minuto exato dentro da faixa depende da análise da produção e do planejamento do episódio.</div></div></div></section>
 
-<section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">Formatos separados das modalidades empresariais, pensados para reconhecimento e participação nos espaços institucionais da HOCCO.</p>
-<div class="cards" style="grid-template-columns:repeat(2,1fr);max-width:800px">
-<div class="meta">Estrutura: até 50 participações</div><button data-preview="individual" onclick="window.goPreview('individual')">Ver na simulação</button></div>
+<section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">O mesmo ambiente de solicitação pode ser usado por pessoas físicas. A opção <b>TIPO · Pessoa</b> identifica a participação; a modalidade escolhida define o formato de presença.</p>
+<div class="cards">
+<div class="card product"><span class="num">01 · PESSOAS</span><h3>Presença no Rodapé</h3><p>Identificação visual discreta na parte inferior do vídeo, organizada pela produção.</p><div class="price">R$ 49,90</div><div class="meta">Estrutura: até 50 vagas</div><button data-preview="footer" onclick="window.goPreview('footer')">Ver na simulação</button></div>
+<div class="card product"><span class="num">02 · PESSOAS</span><h3>Sponsor Overlay</h3><p>Inserção visual de aproximadamente 5 segundos integrada à imagem. O momento exato é definido pela produção dentro da faixa escolhida.</p><div class="price">A partir de R$ 39,90</div><div class="meta">5 faixas comerciais</div><button data-preview="overlay" onclick="window.goPreview('overlay')">Ver na simulação</button></div>
+<div class="card product"><span class="num">03 · PESSOAS</span><h3>Overlay + Áudio</h3><p>Presença visual de aproximadamente 5 segundos com chamada sonora curta aprovada no processo de produção.</p><div class="price">A partir de R$ 49,90</div><div class="meta">5 faixas comerciais</div><button data-preview="audio" onclick="window.goPreview('audio')">Ver na simulação</button></div>
+<div class="card product"><span class="num">04 · PESSOAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Formato institucional destinado à sustentação do episódio e disponível conforme análise da produção.</p><div class="price">R$ 89,90</div><div class="meta">Exatamente 10 vagas por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
 </div></div></section>
 
 <section class="view" id="preview"><div class="section dark"><div class="wrap"><div class="kicker">SIMULAÇÃO COMPLETA</div><h2 class="title">Todas as presenças em tela.</h2><p class="desc">As imagens abaixo são referências reais de POV, gravação e produção audiovisual, usadas apenas para demonstrar a experiência. Elas não são cenas da HOCCO. Escolha a modalidade e veja como sua participação muda na tela.</p>
@@ -271,7 +274,7 @@ body{overflow-x:hidden}
   </div>
 </div>
 
-<div class="creditPanel" id="ovIndividual"><div class="creditTitle">APOIADORES HOCCO</div><div class="creditNames"><span>@ana</span><span>@bruno</span><span>@carla</span><span>@diego</span><span>@elisa</span><span>@fabio</span><span>@gabriela</span><span class="current" id="indName">@seuperfil</span><span>@igor</span><span>@juliana</span></div><p id="indHandle" style="margin-top:18px;color:#888;font-size:10px">Exemplo ilustrativo · sua identificação pode ocupar uma posição na rotação de créditos.</p></div><div class="episodePanel" id="ovSponsor"><div class="episodeTop"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><div><div class="creditTitle">EMPRESAS QUE APOIAM ESTE EPISÓDIO</div><h3 id="sponsorName">SUA EMPRESA</h3><b id="sponsorHandle">@suaempresa</b></div></div><p>Apresentação institucional em tela preta, após a história e os créditos principais.</p><small>Imagem e informações são demonstrativas.</small></div>
+<div class="episodePanel" id="ovSponsor"><div class="episodeTop"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><div><div class="creditTitle">EMPRESAS QUE APOIAM ESTE EPISÓDIO</div><h3 id="sponsorName">SUA EMPRESA</h3><b id="sponsorHandle">@suaempresa</b></div></div><p>Apresentação institucional em tela preta, após a história e os créditos principais.</p><small>Imagem e informações são demonstrativas.</small></div>
 </div>
 <div class="simulationFocus" id="simFocus"></div><div class="progress"><i></i></div></div>
 <div class="controls">
@@ -397,7 +400,7 @@ body{overflow-x:hidden}
   const screen=$('#screen'), mode=$('#mode'), moment=$('#moment'), priceTier=$('#priceTier');
   const inputName=$('#inputName'), inputHandle=$('#inputHandle');
   const previewName=$('#previewName'), simImage=$('#simImage'), simFocus=$('#simFocus');
-  const ovFooter=$('#ovFooter'), ovVisual=$('#ovVisual'), ovIndividual=$('#ovIndividual'), ovSponsor=$('#ovSponsor');
+  const ovFooter=$('#ovFooter'), ovVisual=$('#ovVisual'), ovSponsor=$('#ovSponsor');
   const timeBadge=$('#timeBadge'), creditClock=$('#creditClock'), audioBadge=$('#audioBadge');
   const simWhere=$('#simWhere'), simHow=$('#simHow'), simDescription=$('#simDescription'), simPriceInfo=$('#simPriceInfo'), simDisclaimer=$('#simDisclaimer');
   const simMetaMode=$('#simMode');
@@ -420,7 +423,7 @@ body{overflow-x:hidden}
   let simImageIndex=0;
 
   function resetOverlays(){
-    [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
+    [ovFooter,ovVisual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
   }
   function refreshPriceOptions(){
     const opts=priceOptions[mode.value];
@@ -452,7 +455,7 @@ body{overflow-x:hidden}
     resetOverlays();
     screen.classList.remove('isCredits','footer-demo','phone','price-essential','price-regular','price-valued','price-premium','price-special');
     const n=(inputName?.value||'').trim()||'SUA EMPRESA', h=(inputHandle?.value||'').trim()||'@suaempresa';
-    $('#pName')&&( $('#pName').textContent=n ); $('#pHandle')&&( $('#pHandle').textContent=h ); $('#fpName')&&( $('#fpName').textContent=n ); $('#fpHandle')&&( $('#fpHandle').textContent=h ); $('#indName')&&( $('#indName').textContent=h ); $('#sponsorName')&&( $('#sponsorName').textContent=n ); $('#sponsorHandle')&&( $('#sponsorHandle').textContent=h );
+    $('#pName')&&( $('#pName').textContent=n ); $('#pHandle')&&( $('#pHandle').textContent=h ); $('#fpName')&&( $('#fpName').textContent=n ); $('#fpHandle')&&( $('#fpHandle').textContent=h ); $('#sponsorName')&&( $('#sponsorName').textContent=n ); $('#sponsorHandle')&&( $('#sponsorHandle').textContent=h );
     previewName.textContent=cfg.title;
     simWhere&&(simWhere.textContent=cfg.where); simHow&&(simHow.textContent=cfg.how); simDescription&&(simDescription.textContent=cfg.desc); simDisclaimer&&(simDisclaimer.textContent=cfg.disclaimer);
     syncTierToMoment();
@@ -465,7 +468,7 @@ body{overflow-x:hidden}
     if(timeBadge){timeBadge.style.display=isTimed?'block':'none';timeBadge.innerHTML=isTimed?'DURAÇÃO <span>≈ 5s</span>':'';}
     if(creditClock) creditClock.style.display=isTimed?'none':'block';
     if(audioBadge) audioBadge.style.display=m==='audio'?'block':'none';
-    const disabledCredits=m==='sponsor';
+    const disabledCredits=['sponsor'].includes(m);
     if(moment){moment.disabled=disabledCredits; if(!disabledCredits && !moment.value) moment.value='essential';}
     if(m==='footer'){
       screen.classList.add('footer-demo','price-fixed');
@@ -478,8 +481,6 @@ body{overflow-x:hidden}
       $('#sceneLabel').textContent=momentLabels[priceTier.value]||'FAIXA APROXIMADA';
       simFocus.style.left='2%';simFocus.style.top='3%';simFocus.style.width='58%';simFocus.style.height='22%';simFocus.style.right='auto';simFocus.style.bottom='auto';
       ovVisual.classList.add('show');
-    } else if(false){
-      screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · CRÉDITOS';simFocus.style.left='18%';simFocus.style.right='18%';simFocus.style.top='12%';simFocus.style.bottom='12%';simFocus.style.height='auto';ovIndividual.classList.add('show');
     } else {
       screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · PÓS-CRÉDITOS';simFocus.style.left='16%';simFocus.style.right='16%';simFocus.style.top='10%';simFocus.style.bottom='14%';simFocus.style.height='auto';ovSponsor.classList.add('show');
     }
@@ -491,7 +492,7 @@ body{overflow-x:hidden}
   $$('.device').forEach(b=>b.addEventListener('click',()=>{$$('.device').forEach(x=>x.classList.remove('active'));b.classList.add('active');screen.classList.toggle('phone',b.dataset.device==='phone');}));
   $('#playDemo')?.addEventListener('click',()=>{
     updatePreview();
-    [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
+    [ovFooter,ovVisual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
     requestAnimationFrame(()=>{
       const target=({footer:ovFooter,overlay:ovVisual,audio:ovVisual,sponsor:ovSponsor})[mode.value];
       simFocus?.classList.add('show'); target?.classList.add('show');
@@ -558,7 +559,7 @@ body{overflow-x:hidden}
     const arr=requestOptions[reqType?.value]||[];
     reqCatalog.innerHTML=arr.map(x=>{
       const p=x==='Sponsor Overlay'?'A partir de R$ 39,90':x==='Overlay + Áudio'?'A partir de R$ 49,90':money(prices[x]);
-      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'Participação definida pela produção';
+      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'Créditos · até 50 participações';
       return `<button type="button" class="requestChoice ${reqMode?.value===x?'active':''}" data-choice="${x}"><small>${reqType?.value==='empresa'?'EMPRESA':'PESSOA'}</small><strong>${x}</strong><span>${p}</span><small>${sub}</small></button>`
     }).join('');
     $$('[data-choice]',reqCatalog).forEach(b=>b.addEventListener('click',()=>{reqMode.value=b.dataset.choice;updateSummaryAndFields();renderCatalog();}));
@@ -566,9 +567,10 @@ body{overflow-x:hidden}
   function updateSummaryAndFields(){
     if(!reqMode?.value)return;
     const m=reqMode.value;
+    const person=false;
     const timed=Boolean(requestRanges[m]);
     if(reqMoment){
-      reqMoment.disabled=m==='Presença no Rodapé' || m==='Empresa Patrocinadora do Episódio';
+      reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio';
       if(reqMoment.disabled) reqMoment.value='Após a história / definido pela produção';
       if(timed && !rangeKeyByText[reqMoment.value]) reqMoment.value='00:30–02:00';
     }
@@ -585,8 +587,8 @@ body{overflow-x:hidden}
       }
     }
     if(reqQty){
-      reqQty.max=(m==='Presença no Rodapé')?'50':'10';
-      if(Number(reqQty.value)>Number(reqQty.max)) reqQty.value=reqQty.max;
+      reqQty.max=(m==='Empresa Patrocinadora do Episódio')?'10':'';
+      if(m==='Empresa Patrocinadora do Episódio' && Number(reqQty.value)>10) reqQty.value='10';
     }
     if(timed){
       const sel=$('#reqPriceTier');
@@ -710,7 +712,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     $('#simPriceInfo')&&( $('#simPriceInfo').textContent=info.price );
     $('#simWhereLarge')&&( $('#simWhereLarge').textContent=info.where );
     $('#simPriceLarge')&&( $('#simPriceLarge').textContent=info.price );
-    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='sponsor')?'Apresentação de créditos':'≈ 5 segundos' );
+    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=m==='sponsor'?'Apresentação de pós-créditos':'≈ 5 segundos' );
     $('#simContextLarge')&&( $('#simContextLarge').textContent=info.ctx );
     $('#priceLogic')&&( $('#priceLogic').innerHTML = m==='footer' ? '<strong>Regra de preço:</strong> valor único de <strong>R$ 49,90</strong>.' : '<strong>Regra de preço:</strong> o valor acompanha a faixa/momento escolhido.' );
     return info;
@@ -807,19 +809,9 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     const tierEl=$('#reqPriceTier');
     const tierLabel=tierEl?.value || 'Modalidade fixa';
     const data={
-      type:req.type?.value||'empresa',
-      mode:m,
-      tier:tierLabel,
-      moment:req.moment?.value||'',
-      qty:q,
-      name:req.name?.value||'',
-      phone:req.phone?.value||'',
-      email:req.email?.value||'',
-      handle:(req.handle?.value||'').trim().toLowerCase().match(/^@?(suaempresa|seuperfil|empresaaqui|exemplo)$/)?'':(req.handle?.value||''),
-      obs:req.obs?.value||'',
-      terms:Boolean(req.terms?.checked),
-      rules:Boolean(req.terms?.checked),
-      savedAt:new Date().toISOString()
+      type:req.type?.value||'empresa', mode:m, tier:tierLabel, moment:req.moment?.value||'', qty:q,
+      name:req.name?.value||'', phone:req.phone?.value||'', email:req.email?.value||'', handle:req.handle?.value||'',
+      obs:req.obs?.value||'', terms:Boolean(req.terms?.checked), rules:Boolean(req.terms?.checked), savedAt:new Date().toISOString()
     };
     localStorage.setItem(draftKey,JSON.stringify(data));
   }
@@ -830,17 +822,17 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const send=$('#sendWhatsapp');
   function buildApiPayload(){
     const modeValue=req.mode?.value||'';
-    const cap=modeValue==='Presença no Rodapé'?50:10; const quantity=Math.min(cap,Math.max(1,Number(req.qty?.value)||1));
+    const quantity=Math.min(10,Math.max(1,Number(req.qty?.value)||1));
     const momentValue=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
     return {
       name:req.name?.value.trim()||'',
-      type:req.type?.value||'empresa',
       whatsapp:req.phone?.value||'',
       email:req.email?.value.trim()||'',
-      profile:(()=>{const v=(req.handle?.value||'').trim(); return /^(?:@)?(?:suaempresa|seuperfil|empresaaqui|exemplo)$/i.test(v)?'':v;})(),
+      type:req.type?.value||'empresa',
       modality:modeValue,
       moment:momentValue,
       quantity:quantity,
+      profile:(()=>{const v=(req.handle?.value||'').trim(); return /^(?:@)?(?:suaempresa|seuperfil|empresaaqui|exemplo)$/i.test(v)?'':v;})(),
       observation:req.obs?.value.trim()||'',
       termsAccepted:Boolean(req.terms?.checked),
       rulesAccepted:Boolean(req.terms?.checked)
@@ -920,7 +912,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       await new Promise(r=>setTimeout(r,250));
       setSubmissionStatus('3/4','Registrando sua solicitação','Os dados estão sendo enviados para o sistema DOOX.');
       registered=await registerInSheets(apiPayload);
-      setSubmissionStatus('4/4','Solicitação registrada ✓','Código '+(registered.code||'DOOX')+' confirmado. Preparando o atendimento.');
+      setSubmissionStatus('4/4','Solicitação registrada ✓','Código '+(registered.code||'DOOX')+' confirmado. Valor oficial: '+(registered.valueFormatted||'calculado pelo DOOX')+'. Comprovante disponível abaixo.');
     }catch(err){
       console.error(err);
       setSubmissionStatus('ERRO','Não foi possível registrar a solicitação',err&&err.message?err.message:'Verifique sua conexão e tente novamente. Nenhum atendimento foi iniciado.');
@@ -945,7 +937,10 @@ Obrigado por participar do universo HOCCO.`;
 
     // Mostra SEMPRE uma saída manual. Isso evita que o cliente fique preso caso
     // o Android/navegador bloqueie a navegação automática após o fetch assíncrono.
-    setSubmissionStatus('✓','Solicitação registrada','Sua solicitação foi registrada. Continue no WhatsApp para finalizar a participação.');
+    setSubmissionStatus('✓','Solicitação registrada','Sua solicitação foi registrada. Abra o comprovante ou continue no WhatsApp para finalizar a participação.');
+    const receiptWrap=document.getElementById('receiptWrap');
+    const receiptBtn=document.getElementById('receiptBtn');
+    if(receiptBtn && registered.receiptUrl){ receiptBtn.href=registered.receiptUrl; if(receiptWrap)receiptWrap.style.display='block'; }
     const finalWrap=document.getElementById('whatsappFinalizeWrap');
     const finalBtn=document.getElementById('whatsappFinalize');
     if(finalWrap) finalWrap.style.display='block';
@@ -954,10 +949,6 @@ Obrigado por participar do universo HOCCO.`;
       finalBtn.focus({preventScroll:true});
     }
 
-    // Tentativa automática. Se o navegador impedir, o botão acima continua disponível.
-    setTimeout(()=>{
-      try{ window.location.assign(waUrl); }catch(_){ }
-    },300);
   },true);
 
   // ----- Chat assistant: appears only after the second WhatsApp submission -----
@@ -972,7 +963,7 @@ Obrigado por participar do universo HOCCO.`;
       return;
     }
     body.innerHTML=`<div class="chatBubble">Olá. Eu sou <b>Alex Hocc</b>. Encontrei uma pré-solicitação salva neste navegador.</div>
-<div class="chatCard"><strong>${d.mode||'Participação'}</strong><div class="chatMeta">Tipo: ${d.type==='pessoa'?'Pessoa':'Empresa'}<br>Faixa/preço: ${d.tier||'Modalidade fixa'}<br>Momento: ${d.moment||'Definido pela produção'}<br>Quantidade: ${d.qty||1}<br>Nome/Empresa: ${d.name||'Não informado'}<br>E-mail: ${d.email||'Não informado'}<br>WhatsApp: ${d.phone||'Não informado'}<br>@/Perfil: ${d.handle||'Não informado'}</div><div class="chatSaved">Salvo neste navegador. Sem banco de dados.</div></div>
+<div class="chatCard"><strong>${d.mode||'Participação'}</strong><div class="chatMeta">Tipo: ${d.type==='pessoa'?'Pessoa':'Empresa'}<br>Faixa/preço: ${d.tier||'Modalidade fixa'}<br>Momento: ${d.moment||'Definido pela produção'}<br>Quantidade: ${d.qty||1}<br>Nome/Empresa: ${d.name||'Não informado'}<br>E-mail: ${d.email||'Não informado'}<br>WhatsApp: ${d.phone||'Não informado'}<br>@/Perfil: ${d.handle||'Não informado'}</div><div class="chatSaved">Pré-solicitação local. O registro oficial acontece somente após o envio ao sistema DOOX.</div></div>
 <div class="chatBubble">Você pode confirmar esta participação ou editar os dados antes de eu preparar um novo envio.</div>
 <div class="chatActions"><button class="chatBtn secondary" id="chatEdit" type="button">Editar participação</button><button class="chatBtn primary" id="chatConfirm" type="button">Confirmar e enviar</button></div>`;
     $('#chatEdit')?.addEventListener('click',()=>{syncDraftToRequest();showView('request');panel?.classList.remove('open')});
@@ -1004,15 +995,8 @@ Obrigado por participar do universo HOCCO.`;
 </script>
 
 
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try { const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); } catch (_) {}
-  });
-}
-</script>
 
-<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div></div></div>
+<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div><div id="receiptWrap" style="display:none;margin-top:12px"><a id="receiptBtn" class="btn" style="width:100%;max-width:420px;text-align:center;display:block" target="_blank" rel="noopener">ABRIR COMPROVANTE DA SOLICITAÇÃO ↗</a><p style="margin:10px 0 0;font-size:12px;color:#777">Comprovante de registro. Não é comprovante de pagamento nem garantia de publicação.</p></div></div></div>
 <div class="installToast" id="installToast">No Chrome/Android/iOS compatível com instalação automática foi detectado. Em navegadores suportados, use o menu "Instalar app".</div>
 
 
