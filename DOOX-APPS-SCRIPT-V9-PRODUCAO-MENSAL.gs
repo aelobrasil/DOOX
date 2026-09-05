@@ -1,363 +1,365 @@
-/**
- * ============================================================
- * DOOX / HOCCO — APPS SCRIPT V7.4 — CONTROLE FIEL AO SITE
- * BACKEND OPERACIONAL
- * ============================================================
+﻿/*****
+ * DOOX / HOCCO — Apps Script — MVP OPERACIONAL
  *
- * REGRAS:
+ * OBJETIVO
+ * - Usar a planilha EXISTENTE.
+ * - Manter o contrato do Web App usado pelo site V20.
+ * - Substituir a estrutura operacional antiga por 5 abas simples.
+ * - Receber pedidos do site via doPost().
+ * - Guardar Observações corretamente.
+ * - Calcular preço no servidor.
+ * - Gerar Código DOOX.
+ * - Controlar pedidos, pagamentos, clientes, episódios e veiculações.
+ * - Permitir arquivamento mensal antes do reset.
  *
- * 1. Pedido público NÃO recebe episódio.
- * 2. Código público: DOOX-YY-####.
- * 3. Episódio será definido posteriormente pela produção.
- * 4. PEDIDOS é a entrada principal.
- * 5. CLIENTES é atualizado automaticamente.
- * 6. PAGAMENTOS começa como AGUARDANDO PAGAMENTO.
- * 7. Preço é calculado pelo servidor.
- * 8. O servidor consegue transformar um momento
- *    como 03:15 na faixa comercial correta.
- * 9. Os dados são gravados pelo NOME DO CABEÇALHO,
- *    evitando deslocamento de colunas.
- *
- * ============================================================
- */
-
-
-/* ============================================================
-   CONFIGURAÇÃO
-   ============================================================ */
+ * IMPORTANTE
+ * - O SPREADSHEET_ID abaixo é o da planilha operacional existente.
+ * - Não execute resetarEstruturaAntiga() mais de uma vez na mesma migração.
+ *****/
 
 const CONFIG = {
+  // PLANILHA EXISTENTE
+  SPREADSHEET_ID: '1VWJKfePpzoFpH5h8Iyl58MErLGNjvgGB',
 
-  SPREADSHEET_ID:
-    '1VWJKfePpzoFpH5h8Iyl58MErLGNjvgGB',
+  // PASTA PARA ARQUIVOS MENSAIS / BACKUP
+  // Deixe vazio para o sistema criar uma pasta automaticamente.
+  ARCHIVE_FOLDER_ID: '',
+  ARCHIVE_FOLDER_NAME: 'DOOX — HOCCO — ARQUIVOS',
 
-  TIMEZONE:
-    'America/Sao_Paulo',
+  // No fechamento mensal, limpa também CLIENTES.
+  // true = tudo do ciclo é arquivado e a operação começa limpa.
+  RESET_CLIENTES_MENSAL: true,
 
-  RECEIPT_FOLDER:
-    'DOOX — HOCCO — COMPROVANTES',
+  TIMEZONE: Session.getScriptTimeZone() || 'America/Sao_Paulo',
 
-  ARCHIVE_FOLDER:
-    'DOOX — HOCCO — ARQUIVO MENSAL',
+  // Limite padrão
+  MAX_QTY_DEFAULT: 50,
 
-  VERSION:
-    'V9.0',
+  // MODALIDADES + PREÇOS
+  MODALIDADES: {
 
-  SHEETS: {
-    PAINEL: 'PAINEL',
-    PEDIDOS: 'PEDIDOS',
-    CLIENTES: 'CLIENTES',
-    FINANCEIRO: 'FINANCEIRO',
-    PRODUCAO: 'PRODUÇÃO',
-    EPISODIOS: 'EPISÓDIOS',
-    COMPROVANTES: 'COMPROVANTES'
-  },
+    'Presença no Rodapé': {
+      min: 1,
+      max: 50,
+      pricing: {
+        flat: 49.90
+      }
+    },
 
-  PUBLIC_KEYS: [
-    'name',
-    'whatsapp',
-    'email',
-    'type',
-    'modality',
-    'moment',
-    'quantity',
-    'profile',
-    'observation',
-    'termsAccepted',
-    'rulesAccepted'
-  ],
+    'Sponsor Overlay': {
+      min: 1,
+      max: 50,
+      pricing: {
+        tiers: [
+          { max: 10, unit: 39.90, label: '1–10' },
+          { max: 20, unit: 49.90, label: '11–20' },
+          { max: 30, unit: 59.90, label: '21–30' },
+          { max: 40, unit: 69.90, label: '31–40' },
+          { max: 50, unit: 79.90, label: '41–50' }
+        ]
+      }
+    },
 
-  MODALITIES: [
-    'Presença no Rodapé',
-    'Sponsor Overlay',
-    'Overlay + Áudio',
-    'Empresa Patrocinadora do Episódio'
-  ],
+    'Overlay + Áudio': {
+      min: 1,
+      max: 50,
+      pricing: {
+        tiers: [
+          { max: 10, unit: 49.90, label: '1–10' },
+          { max: 20, unit: 59.90, label: '11–20' },
+          { max: 30, unit: 69.90, label: '21–30' },
+          { max: 40, unit: 79.90, label: '31–40' },
+          { max: 50, unit: 89.90, label: '41–50' }
+        ]
+      }
+    },
 
-  STATES: [
-    'SOLICITADO',
-    'EM ANÁLISE',
-    'AGUARDANDO PAGAMENTO',
-    'PAGAMENTO RECEBIDO',
-    'MATERIAL PENDENTE',
-    'MATERIAL RECEBIDO',
-    'EM PRODUÇÃO',
-    'PROGRAMADO',
-    'PUBLICADO',
-    'FINALIZADO',
-    'REJEITADO',
-    'CANCELADO',
-    'ARQUIVADO'
-  ]
+    'Apoiador Individual': {
+      min: 1,
+      max: 50,
+      pricing: {
+        flat: 9.90
+      }
+    },
 
+    'Empresa Patrocinadora do Episódio': {
+      min: 1,
+      max: 1,
+      pricing: {
+        flat: 89.90
+      }
+    }
+  }
 };
 
 
-/* ============================================================
-   GET
-   ============================================================ */
+/*************************************************
+ * ESTRUTURA DAS ABAS
+ *************************************************/
+
+const SHEETS = {
+
+  PEDIDOS: {
+    name: 'PEDIDOS',
+    headers: [
+      'Código DOOX',
+      'Data/Hora',
+      'Nome / Empresa',
+      'Tipo',
+      'WhatsApp',
+      'E-mail',
+      '@ / Perfil / Site',
+      'Modalidade',
+      'Episódio',
+      'Momento desejado',
+      'Faixa comercial',
+      'Valor unitário',
+      'Quantidade',
+      'Valor total',
+      'Status',
+      'Termos',
+      'Regras',
+      'Observações',
+      'Criado em',
+      'Atualizado em',
+      'Reserva',
+      'Client Request ID'
+    ]
+  },
+
+  PAGAMENTOS: {
+    name: 'PAGAMENTOS',
+    headers: [
+      'Código DOOX',
+      'Data/Hora',
+      'Nome / Empresa',
+      'Valor devido',
+      'Forma de pagamento',
+      'Status',
+      'Data pagamento',
+      'Observação',
+      'Atualizado em'
+    ]
+  },
+
+  CLIENTES: {
+    name: 'CLIENTES',
+    headers: [
+      'ID Cliente',
+      'Nome / Empresa',
+      'Tipo',
+      'WhatsApp',
+      'E-mail',
+      '@ / Perfil / Site',
+      'Primeiro pedido em',
+      'Último pedido em',
+      'Total de pedidos',
+      'Atualizado em'
+    ]
+  },
+
+  EPISODIOS: {
+    name: 'EPISÓDIOS',
+    headers: [
+      'Código Episódio',
+      'Número',
+      'Data prevista',
+      'Status',
+
+      'Capacidade Rodapé',
+      'Ocupado Rodapé',
+      'Vagas Rodapé',
+
+      'Capacidade Sponsor Overlay',
+      'Ocupado Sponsor Overlay',
+      'Vagas Sponsor Overlay',
+
+      'Capacidade Overlay + Áudio',
+      'Ocupado Overlay + Áudio',
+      'Vagas Overlay + Áudio',
+
+      'Capacidade Apoiador Individual',
+      'Ocupado Apoiador Individual',
+      'Vagas Apoiador Individual',
+
+      'Capacidade Empresa Patrocinadora',
+      'Ocupado Empresa Patrocinadora',
+      'Vagas Empresa Patrocinadora',
+
+      'Observação',
+      'Atualizado em'
+    ]
+  },
+
+  VEICULACOES: {
+    name: 'VEICULAÇÕES',
+    headers: [
+      'Código DOOX',
+      'Episódio',
+      'Nome / Empresa',
+      'Modalidade',
+      'Momento efetivo',
+      'Status',
+      'Data publicação',
+      'Observação',
+      'Atualizado em'
+    ]
+  }
+};
+
+
+/*************************************************
+ * WEB APP
+ * CONTRATO COMPATÍVEL COM O SITE V20
+ *************************************************/
 
 function doGet(e) {
+
   try {
-    const action = String((e && e.parameter && e.parameter.action) || 'health');
-    if (action === 'testSpreadsheet') return out_(testSpreadsheet());
-    if (action === 'contract') return out_(getPublicFormContract());
-    if (action === 'downloadReceipt') return out_(downloadReceipt_(String((e.parameter && e.parameter.token) || '')));
-    return out_({ ok: true, service: 'DOOX HOCCO', version: CONFIG.VERSION, timestamp: new Date().toISOString() });
-  } catch (err) {
-    return out_({ ok: false, error: err && err.message ? err.message : String(err) });
+
+    const params = (e && e.parameter)
+      ? e.parameter
+      : {};
+
+    const action = String(
+      params.action || 'health'
+    ).trim();
+
+
+    if (action === 'health') {
+
+      return json_({
+        ok: true,
+        service: 'DOOX HOCCO MVP',
+        version: 'MVP-2026',
+        spreadsheet: CONFIG.SPREADSHEET_ID,
+        timestamp: new Date().toISOString()
+      });
+
+    }
+
+
+    if (action === 'testSpreadsheet') {
+
+      const ss = getSpreadsheet_();
+
+      return json_({
+        ok: true,
+        spreadsheetId: ss.getId(),
+        spreadsheetName: ss.getName(),
+        sheets: ss.getSheets().map(
+          s => s.getName()
+        )
+      });
+
+    }
+
+
+    if (action === 'contract') {
+
+      return json_({
+        ok: true,
+        service: 'DOOX HOCCO MVP',
+
+        acceptedPostActions: [
+          'registerRequest',
+          'testSpreadsheet'
+        ],
+
+        fields: [
+          'clientRequestId',
+          'name',
+          'company',
+          'type',
+          'whatsapp',
+          'email',
+          'profile',
+          'modality',
+          'moment',
+          'quantity',
+          'observation',
+          'termsAccepted',
+          'rulesAccepted'
+        ]
+      });
+
+    }
+
+
+    return json_({
+      ok: true,
+      message: 'DOOX Web App ativo.'
+    });
+
+  }
+
+  catch (err) {
+
+    return jsonError_(err);
+
   }
 }
 
 
-/* ============================================================
-   POST
-   ============================================================ */
+/*************************************************
+ * POST
+ *************************************************/
 
 function doPost(e) {
-  try {
-    const raw = parse_(e) || {};
-    const action = String(raw.action || 'registerRequest');
-    if (action === 'testSpreadsheet') return out_(testSpreadsheet());
-    if (action !== 'registerRequest') return out_({ ok: false, error: 'AÇÃO NÃO RECONHECIDA' });
 
-    // Contrato estrito: somente os campos que existem no formulário público.
-    const data = {};
-    CONFIG.PUBLIC_KEYS.forEach(function(k) { data[k] = raw[k]; });
-    return out_(registerRequest_(data));
-  } catch (err) {
-    return out_({ ok: false, error: err && err.message ? err.message : String(err) });
-  }
-}
+  const lock = LockService.getScriptLock();
 
-
-/* ============================================================
-   REGISTRAR PEDIDO
-   ============================================================ */
-
-function registerRequest_(data) {
-
-  const lock =
-    LockService.getScriptLock();
-
-  if (
-    !lock.tryLock(15000)
-  ) {
-
-    throw new Error(
-      'Sistema ocupado. Tente novamente.'
-    );
-
-  }
+  lock.waitLock(30000);
 
   try {
 
-    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const body = parsePostBody_(e);
 
-    // O ciclo mensal é controlado pelo servidor, nunca pelo site.
-    ensureMonthlyCycle_(ss);
-
-    /*
-     * Garante que as abas e cabeçalhos existam antes de escrever.
-     */
-
-    ensureStructure_(ss);
+    const action = String(
+      body.action || 'registerRequest'
+    ).trim();
 
 
-    /*
-     * Normaliza os dados recebidos
-     */
+    if (action === 'testSpreadsheet') {
 
-    const r =
-      normalize_(data);
+      const ss = getSpreadsheet_();
 
+      return json_({
+        ok: true,
+        spreadsheetId: ss.getId(),
+        spreadsheetName: ss.getName(),
+        sheets: ss.getSheets().map(
+          s => s.getName()
+        )
+      });
 
-    /*
-     * Valida
-     */
-
-    validate_(r);
-
-
-    /* NUNCA aceitar episódio enviado pelo site. */
-    r.episode = '';
-
-    guardDuplicateRequest_(r);
-
-    /*
-     * Gera código:
-     *
-     * DOOX-26-0001
-     */
-
-    r.code =
-      nextCode_(ss);
+    }
 
 
-    r.createdAt =
-      new Date();
+    if (action !== 'registerRequest') {
 
-
-    r.status =
-      'SOLICITADO';
-
-
-    /* --------------------------------------------------------
-       1. CLIENTE
-       --------------------------------------------------------
-       O ID Cliente é permanente e é obtido antes de gravar
-       o pedido, para que possa ser replicado nas demais abas.
-    */
-
-    r.clientId =
-      upsertClient_(
-        ss,
-        r
+      throw new Error(
+        'Ação não reconhecida: ' + action
       );
 
-
-    /* --------------------------------------------------------
-       2. PEDIDOS
-       -------------------------------------------------------- */
-
-    appendByHeaders_(
-      ss.getSheetByName(CONFIG.SHEETS.PEDIDOS),
-      {
-        'Código DOOX': r.code,
-        'ID Cliente': r.clientId,
-        'Data/Hora': r.createdAt,
-        'Cliente': r.name,
-        'WhatsApp': r.phone,
-        'E-mail': r.email,
-        'Tipo': r.type,
-        'Modalidade': r.mode,
-        'Faixa / Preço': r.range ? (r.range + ' · ' + moneyBr_(r.unitPrice)) : ('Modalidade fixa · ' + moneyBr_(r.unitPrice)),
-        'Momento Desejado': r.moment,
-        'Quantidade': r.quantity,
-        '@ / Perfil / Site': r.handle,
-        'Termos': r.termsAccepted ? 'SIM' : 'NÃO',
-        'Regras': r.rulesAccepted ? 'SIM' : 'NÃO',
-        'Descrição / Observação': r.observation,
-        'Valor Unitário': r.unitPrice,
-        'Valor Total': r.total,
-        'Status': r.status,
-        'Episódio': '',
-        'Criado em': r.createdAt,
-        'Comprovante Solicitação': ''
-      }
-    );
-
-    /* --------------------------------------------------------
-       3. PAGAMENTOS
-       -------------------------------------------------------- */
-
-    /*
-     * Isso NÃO significa que o cliente pagou.
-     *
-     * Apenas cria o controle financeiro
-     * aguardando pagamento.
-     */
-
-    upsertPayment_(
-      ss,
-      r
-    );
-
-
-    /* --------------------------------------------------------
-       4. COMPROVANTE INICIAL DA SOLICITAÇÃO
-       --------------------------------------------------------
-       É um comprovante de registro, NÃO é comprovante de
-       pagamento nem de veiculação.
-    */
-
-    let receipt = {
-      url: '',
-      fileName: '',
-      error: ''
-    };
-
-    try {
-
-      receipt = createRequestReceipt_(ss, r);
-
-      updateByHeaders_(ss.getSheetByName(CONFIG.SHEETS.PEDIDOS), ss.getSheetByName(CONFIG.SHEETS.PEDIDOS).getLastRow(), {
-        'Comprovante Solicitação': receipt.fileName
-      });
-
-      appendByHeaders_(ss.getSheetByName(CONFIG.SHEETS.COMPROVANTES), {
-        'Código DOOX': r.code,
-        'ID Cliente': r.clientId,
-        'Tipo': 'SOLICITAÇÃO',
-        'Episódio': '',
-        'Cliente': r.name,
-        'Modalidade': r.mode,
-        'Momento Solicitado': r.moment,
-        'Faixa Contratada': r.range,
-        'Quantidade': r.quantity,
-        'Valor Unitário': r.unitPrice,
-        'Valor Total': r.total,
-        'Arquivo do Comprovante': receipt.fileName,
-        'ID Arquivo': receipt.fileId,
-        'Token': receipt.token,
-        'Enviado ao Cliente': 'NÃO',
-        'Data de Envio': '',
-        'Status': 'GERADO',
-        'Observações': 'Comprovante inicial de solicitação. Não representa pagamento ou publicação.'
-      });
-    }
-    catch (receiptErr) {
-
-      receipt.error =
-        receiptErr.message ||
-        String(receiptErr);
-
     }
 
 
-    SpreadsheetApp.flush();
+    return json_(
+      registerRequest_(body)
+    );
 
+  }
 
-    /*
-     * Resposta para o site
-     */
+  catch (err) {
 
-    return {
+    console.error(
+      err && err.stack
+        ? err.stack
+        : err
+    );
 
-      ok:
-        true,
-
-      registered:
-        true,
-
-      code:
-        r.code,
-
-      clientId:
-        r.clientId,
-
-      status:
-        r.status,
-
-      episode:
-        '',
-
-      paymentStatus:
-        'AGUARDANDO PAGAMENTO',
-
-      receiptUrl: receipt.token ? ('/api/receipt?token=' + encodeURIComponent(receipt.token)) : '',
-      receiptFile: receipt.fileName,
-
-      receiptError:
-        receipt.error,
-
-      message:
-        'Solicitação registrada com sucesso.',
-
-      timestamp:
-        new Date().toISOString()
-
-    };
+    return jsonError_(err);
 
   }
 
@@ -366,871 +368,782 @@ function registerRequest_(data) {
     lock.releaseLock();
 
   }
-
 }
 
 
-/* ============================================================
-   NORMALIZAÇÃO
-   ============================================================ */
+/*************************************************
+ * REGISTRO DE PEDIDO
+ *************************************************/
 
-function moneyBr_(v) {
-  return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
-}
+function registerRequest_(raw) {
+
+  const ss = getSpreadsheet_();
+
+  // Garante estrutura mínima sem apagar nada.
+  setupMVP_(ss);
 
 
-function normalize_(d) {
+  const r = normalizeRequest_(raw);
 
-  /*
-   * CONTRATO PÚBLICO ÚNICO.
-   * Somente os campos existentes no formulário do site entram aqui.
-   * Preço/faixa são recalculados pelo servidor; nunca confiamos em preço vindo do navegador.
-   */
-  const mode = normalizeMode_(d.modality);
-  const type = normalizeType_(d.type);
-  const moment = clean_(d.moment);
-  const range = rangeFromMomentOrLabel_(moment);
-  const unit = price_(mode, range);
-  const qty = Math.max(1, integer_(d.quantity) || 1);
+  validateRequest_(r);
+
+
+  // PREVENÇÃO DE DUPLICIDADE
+  if (r.clientRequestId) {
+
+    const existing =
+      findPedidoByClientRequestId_(
+        ss,
+        r.clientRequestId
+      );
+
+    if (existing) {
+
+      return {
+
+        ok: true,
+
+        duplicate: true,
+
+        message:
+          'Pedido já registrado anteriormente.',
+
+        code: existing.code,
+
+        order: existing
+
+      };
+
+    }
+  }
+
+
+  // PREÇO DEFINIDO PELO BACKEND
+  const price =
+    getPriceInfo_(
+      r.modality,
+      r.quantity
+    );
+
+
+  // CLIENTE
+  const clientId =
+    upsertClient_(
+      ss,
+      r
+    );
+
+
+  // CÓDIGO DOOX
+  const code =
+    nextOrderCode_();
+
+
+  const now =
+    new Date();
+
+
+  const pedidoSheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const map =
+    headerMap_(
+      pedidoSheet
+    );
+
+
+  const row =
+    new Array(
+      SHEETS.PEDIDOS.headers.length
+    ).fill('');
+
+
+  put_(
+    row,
+    map,
+    'Código DOOX',
+    code
+  );
+
+  put_(
+    row,
+    map,
+    'Data/Hora',
+    now
+  );
+
+  put_(
+    row,
+    map,
+    'Nome / Empresa',
+    r.nameOrCompany
+  );
+
+  put_(
+    row,
+    map,
+    'Tipo',
+    r.type
+  );
+
+  put_(
+    row,
+    map,
+    'WhatsApp',
+    r.whatsapp
+  );
+
+  put_(
+    row,
+    map,
+    'E-mail',
+    r.email
+  );
+
+  put_(
+    row,
+    map,
+    '@ / Perfil / Site',
+    r.profile
+  );
+
+  put_(
+    row,
+    map,
+    'Modalidade',
+    r.modality
+  );
+
+  // O episódio fica vazio até a reserva/análise.
+  put_(
+    row,
+    map,
+    'Episódio',
+    ''
+  );
+
+  put_(
+    row,
+    map,
+    'Momento desejado',
+    r.moment
+  );
+
+  put_(
+    row,
+    map,
+    'Faixa comercial',
+    price.tierLabel
+  );
+
+  put_(
+    row,
+    map,
+    'Valor unitário',
+    price.unitPrice
+  );
+
+  put_(
+    row,
+    map,
+    'Quantidade',
+    r.quantity
+  );
+
+  put_(
+    row,
+    map,
+    'Valor total',
+    price.total
+  );
+
+  put_(
+    row,
+    map,
+    'Status',
+    'SOLICITADO'
+  );
+
+  put_(
+    row,
+    map,
+    'Termos',
+    r.termsAccepted
+      ? 'ACEITO'
+      : 'NÃO ACEITO'
+  );
+
+  put_(
+    row,
+    map,
+    'Regras',
+    r.rulesAccepted
+      ? 'ACEITO'
+      : 'NÃO ACEITO'
+  );
+
+  // CORREÇÃO IMPORTANTE:
+  // o conteúdo digitado no site entra aqui.
+  put_(
+    row,
+    map,
+    'Observações',
+    r.observation
+  );
+
+  put_(
+    row,
+    map,
+    'Criado em',
+    now
+  );
+
+  put_(
+    row,
+    map,
+    'Atualizado em',
+    now
+  );
+
+  put_(
+    row,
+    map,
+    'Reserva',
+    'NÃO RESERVADO'
+  );
+
+  put_(
+    row,
+    map,
+    'Client Request ID',
+    r.clientRequestId
+  );
+
+
+  pedidoSheet.appendRow(row);
+
+  const newRow =
+    pedidoSheet.getLastRow();
+
+
+  /*************************************************
+   * PAGAMENTO
+   *
+   * O pagamento permanece manual.
+   * A planilha apenas controla o estado.
+   *************************************************/
+
+  const pagamentoSheet =
+    getSheet_(
+      ss,
+      SHEETS.PAGAMENTOS.name
+    );
+
+
+  pagamentoSheet.appendRow([
+
+    code,
+
+    now,
+
+    r.nameOrCompany,
+
+    price.total,
+
+    '',
+
+    'AGUARDANDO PAGAMENTO',
+
+    '',
+
+    '',
+
+    now
+
+  ]);
+
+
+  updateClientOrderStats_(
+    ss,
+    clientId,
+    now
+  );
+
+
+  formatDataRows_(
+    pedidoSheet
+  );
+
+  formatDataRows_(
+    pagamentoSheet
+  );
+
 
   return {
-    name: clean_(d.name),
-    type: type,
-    email: clean_(d.email).toLowerCase(),
-    phone: phone_(d.whatsapp),
-    handle: sanitizeHandle_(d.profile),
-    mode: mode,
-    moment: moment,
-    range: range,
-    quantity: qty,
-    unitPrice: unit,
-    total: round_(unit * qty),
-    observation: clean_(d.observation),
-    episode: '',
-    termsAccepted: bool_(d.termsAccepted),
-    rulesAccepted: bool_(d.rulesAccepted),
-    clientId: ''
-  };
-}
 
-function rangeFromMomentOrLabel_(moment) {
-  const normalized = normalizeRange_(moment);
-  if (isPricingRange_(normalized)) return normalized;
-  return rangeFromMoment_(moment);
-}
+    ok: true,
 
+    duplicate: false,
 
-/* ============================================================
-   VALIDAÇÃO
-   ============================================================ */
+    message:
+      'Solicitação registrada com sucesso.',
 
-function validate_(r) {
+    code: code,
 
-  if (!r.name) {
+    clientId: clientId,
 
-    throw new Error(
-      'Nome ou empresa é obrigatório.'
-    );
+    modality: r.modality,
 
-  }
+    tier: price.tierLabel,
 
+    unitPrice: price.unitPrice,
 
-  if (
-    !r.email ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-      r.email
-    )
-  ) {
+    quantity: r.quantity,
 
-    throw new Error(
-      'E-mail inválido.'
-    );
+    total: price.total,
 
-  }
+    status: 'SOLICITADO',
 
+    reservation:
+      'NÃO RESERVADO',
 
-  if (
-    digits_(r.phone).length < 12
-  ) {
+    observation:
+      r.observation,
 
-    throw new Error(
-      'WhatsApp inválido.'
-    );
-
-  }
-
-
-  if (!r.mode) {
-
-    throw new Error(
-      'Modalidade não informada.'
-    );
-
-  }
-
-  if (!['Empresa','Pessoa'].includes(r.type)) {
-    throw new Error('Tipo deve ser Empresa ou Pessoa.');
-  }
-
-  if (!CONFIG.MODALITIES.includes(r.mode)) {
-    throw new Error('Modalidade não disponível no formulário público.');
-  }
-
-
-  if (
-    !r.unitPrice ||
-    r.unitPrice <= 0
-  ) {
-
-    throw new Error(
-      'Valor não pôde ser determinado.'
-    );
-
-  }
-
-
-  if (
-    !r.termsAccepted ||
-    !r.rulesAccepted
-  ) {
-
-    throw new Error(
-      'Termos e Regras precisam ser aceitos.'
-    );
-
-  }
-
-}
-
-
-/* ============================================================
-   PREÇOS
-   ============================================================ */
-
-function price_(
-  mode,
-  range
-) {
-
-  /*
-   * PRESENÇA NO RODAPÉ
-   */
-
-  if (
-    mode ===
-    'Presença no Rodapé'
-  ) {
-
-    return 49.90;
-
-  }
-
-
-  /*
-   * APOIADOR INDIVIDUAL
-   */
-
-  /*
-   * EMPRESA PATROCINADORA
-   */
-
-  if (
-    mode ===
-    'Empresa Patrocinadora do Episódio'
-  ) {
-
-    return 89.90;
-
-  }
-
-
-  /*
-   * SPONSOR OVERLAY
-   */
-
-  const overlay = {
-
-    '00:30–02:00':
-      39.90,
-
-    '02:00–04:00':
-      49.90,
-
-    '04:00–06:30':
-      59.90,
-
-    '06:30–09:00':
-      69.90,
-
-    '09:00–11:00':
-      79.90
+    row: newRow
 
   };
 
-
-  /*
-   * SPONSOR OVERLAY + ÁUDIO
-   */
-
-  const overlayAudio = {
-
-    '00:30–02:00':
-      49.90,
-
-    '02:00–04:00':
-      59.90,
-
-    '04:00–06:30':
-      69.90,
-
-    '06:30–09:00':
-      79.90,
-
-    '09:00–11:00':
-      89.90
-
-  };
-
-
-  if (
-    mode ===
-    'Sponsor Overlay'
-  ) {
-
-    return (
-      overlay[range] ||
-      0
-    );
-
-  }
-
-
-  if (
-    mode ===
-    'Overlay + Áudio'
-  ) {
-
-    return (
-      overlayAudio[range] ||
-      0
-    );
-
-  }
-
-
-  return 0;
-
 }
 
 
-/* ============================================================
-   MODALIDADE
-   ============================================================ */
+/*************************************************
+ * NORMALIZAÇÃO
+ *************************************************/
 
-function normalizeMode_(v) {
+function normalizeRequest_(raw) {
 
-  const x =
-    clean_(v)
-      .toLowerCase();
-
-
-  const m = {
-
-    'rodape':
-      'Presença no Rodapé',
-
-    'presenca no rodape':
-      'Presença no Rodapé',
-
-    'presença no rodapé':
-      'Presença no Rodapé',
+  const body =
+    raw || {};
 
 
-    'sponsor overlay':
-      'Sponsor Overlay',
-
-    'overlay':
-      'Sponsor Overlay',
+  const name =
+    clean_(body.name);
 
 
-    'sponsor overlay + audio':
-      'Overlay + Áudio',
-
-    'sponsor overlay + áudio':
-      'Overlay + Áudio',
-
-    'overlay + audio':
-      'Overlay + Áudio',
-
-    'overlay + áudio':
-      'Overlay + Áudio',
+  const company =
+    clean_(body.company);
 
 
-
-    'empresa patrocinadora do episodio':
-      'Empresa Patrocinadora do Episódio',
-
-    'empresa patrocinadora do episódio':
-      'Empresa Patrocinadora do Episódio'
-
-  };
+  const nameOrCompany =
+    company || name;
 
 
-  return (
-    m[x] ||
-    clean_(v)
-  );
+  return {
 
-}
+    clientRequestId:
+      clean_(
+        body.clientRequestId ||
+        body.client_request_id
+      ),
 
+    nameOrCompany:
+      nameOrCompany,
 
-/* ============================================================
-   FAIXA
-   ============================================================ */
+    name:
+      name,
 
-function normalizeRange_(v) {
+    company:
+      company,
 
-  const x =
-    clean_(v)
-      .replace(
-        /[–—-]/g,
-        '–'
+    type:
+      normalizeType_(
+        body.type
+      ),
+
+    whatsapp:
+      clean_(
+        body.whatsapp ||
+        body.phone
+      ),
+
+    email:
+      clean_(
+        body.email
+      ),
+
+    profile:
+      clean_(
+        body.profile ||
+        body.handle
+      ),
+
+    modality:
+      normalizeModality_(
+        body.modality ||
+        body.mode
+      ),
+
+    moment:
+      clean_(
+        body.moment
+      ),
+
+    quantity:
+      toPositiveInt_(
+        body.quantity ||
+        body.qty
+      ),
+
+    observation:
+      clean_(
+        body.observation ||
+        body.obs ||
+        body.observacao
+      ),
+
+    termsAccepted:
+      toBool_(
+        body.termsAccepted !== undefined
+          ? body.termsAccepted
+          : body.terms
+      ),
+
+    rulesAccepted:
+      toBool_(
+        body.rulesAccepted !== undefined
+          ? body.rulesAccepted
+          : body.rules
       )
-      .replace(
-        /\s+/g,
-        ''
-      );
-
-
-  const m = {
-
-    '00:30–02:00':
-      '00:30–02:00',
-
-    '00:30–2:00':
-      '00:30–02:00',
-
-    '02:00–04:00':
-      '02:00–04:00',
-
-    '04:00–06:30':
-      '04:00–06:30',
-
-    '06:30–09:00':
-      '06:30–09:00',
-
-    '09:00–11:00':
-      '09:00–11:00'
 
   };
 
+}
 
-  return (
-    m[x] ||
-    clean_(v)
+
+/*************************************************
+ * VALIDAÇÃO
+ *************************************************/
+
+function validateRequest_(r) {
+
+  const required = [
+
+    [
+      'Nome / Empresa',
+      r.nameOrCompany
+    ],
+
+    [
+      'Tipo',
+      r.type
+    ],
+
+    [
+      'WhatsApp',
+      r.whatsapp
+    ],
+
+    [
+      'Modalidade',
+      r.modality
+    ],
+
+    [
+      'Momento desejado',
+      r.moment
+    ]
+
+  ];
+
+
+  required.forEach(
+    ([label, value]) => {
+
+      if (!value) {
+
+        throw new Error(
+          'Campo obrigatório ausente: ' +
+          label
+        );
+
+      }
+
+    }
   );
+
+
+  if (!r.quantity) {
+
+    throw new Error(
+      'Quantidade inválida. Informe uma quantidade maior que zero.'
+    );
+
+  }
+
+
+  if (!r.termsAccepted) {
+
+    throw new Error(
+      'Os Termos precisam ser aceitos.'
+    );
+
+  }
+
+
+  if (!r.rulesAccepted) {
+
+    throw new Error(
+      'As Regras precisam ser aceitas.'
+    );
+
+  }
+
+
+  const cfg =
+    CONFIG.MODALIDADES[
+      r.modality
+    ];
+
+
+  if (!cfg) {
+
+    throw new Error(
+      'Modalidade inválida: ' +
+      r.modality
+    );
+
+  }
+
+
+  if (
+    r.quantity < cfg.min ||
+    r.quantity > cfg.max
+  ) {
+
+    throw new Error(
+
+      'Quantidade inválida para "' +
+      r.modality +
+      '". Limite: ' +
+      cfg.min +
+      ' a ' +
+      cfg.max +
+      '.'
+
+    );
+
+  }
 
 }
 
 
-/* ============================================================
-   VERIFICAR FAIXA
-   ============================================================ */
+/*************************************************
+ * PREÇOS
+ *************************************************/
 
-function isPricingRange_(v) {
-
-  return [
-
-    '00:30–02:00',
-
-    '02:00–04:00',
-
-    '04:00–06:30',
-
-    '06:30–09:00',
-
-    '09:00–11:00'
-
-  ].includes(
-    clean_(v)
-  );
-
-}
-
-
-/* ============================================================
-   CONVERTER MOMENTO EM FAIXA
-   ============================================================ */
-
-function rangeFromMoment_(
-  moment
+function getPriceInfo_(
+  modality,
+  quantity
 ) {
 
-  const text =
-    clean_(moment)
-      .replace(
-        /\s+/g,
-        ''
+  const cfg =
+    CONFIG.MODALIDADES[
+      modality
+    ];
+
+
+  if (!cfg) {
+
+    throw new Error(
+      'Modalidade sem tabela de preço: ' +
+      modality
+    );
+
+  }
+
+
+  let unitPrice = null;
+
+  let tierLabel =
+    'Única';
+
+
+  if (
+    cfg.pricing.flat !== undefined
+  ) {
+
+    unitPrice =
+      Number(
+        cfg.pricing.flat
+      );
+
+  }
+
+  else if (
+    cfg.pricing.tiers
+  ) {
+
+    const tier =
+      cfg.pricing.tiers.find(
+        t =>
+          quantity <= t.max
       );
 
 
-  const parts =
-    text
-      .split(':')
-      .map(Number);
+    if (!tier) {
+
+      throw new Error(
+        'Não foi encontrada faixa de preço para a quantidade informada.'
+      );
+
+    }
 
 
-  if (
-    parts.some(
-      n =>
-        Number.isNaN(n) ||
-        n < 0
-    )
-  ) {
-
-    return '';
-
-  }
+    unitPrice =
+      Number(
+        tier.unit
+      );
 
 
-  let seconds =
-    null;
-
-
-  /*
-   * MM:SS
-   */
-
-  if (
-    parts.length === 2
-  ) {
-
-    seconds =
-      parts[0] * 60 +
-      parts[1];
+    tierLabel =
+      tier.label;
 
   }
 
 
-  /*
-   * MM
-   */
+  return {
 
-  else if (
-    parts.length === 1
-  ) {
+    unitPrice:
 
-    seconds =
-      parts[0] * 60;
+      unitPrice,
 
-  }
+    quantity:
 
+      quantity,
 
-  /*
-   * HH:MM:SS
-   */
+    total:
 
-  else if (
-    parts.length === 3
-  ) {
+      round2_(
+        unitPrice *
+        quantity
+      ),
 
-    seconds =
-      parts[0] * 3600 +
-      parts[1] * 60 +
-      parts[2];
+    tierLabel:
 
-  }
+      tierLabel
 
-
-  if (
-    seconds === null
-  ) {
-
-    return '';
-
-  }
-
-
-  if (
-    seconds >= 30 &&
-    seconds < 120
-  ) {
-
-    return '00:30–02:00';
-
-  }
-
-
-  if (
-    seconds >= 120 &&
-    seconds < 240
-  ) {
-
-    return '02:00–04:00';
-
-  }
-
-
-  if (
-    seconds >= 240 &&
-    seconds < 390
-  ) {
-
-    return '04:00–06:30';
-
-  }
-
-
-  if (
-    seconds >= 390 &&
-    seconds < 540
-  ) {
-
-    return '06:30–09:00';
-
-  }
-
-
-  if (
-    seconds >= 540 &&
-    seconds < 660
-  ) {
-
-    return '09:00–11:00';
-
-  }
-
-
-  return '';
+  };
 
 }
 
 
-/* ============================================================
-   TIPO
-   ============================================================ */
-
-function normalizeType_(v) {
-
-  const x =
-    clean_(v)
-      .toLowerCase();
-
-
-  if (
-    [
-      'empresa',
-      'company',
-      'pj'
-    ].includes(x)
-  ) {
-
-    return 'Empresa';
-
-  }
-
-
-  if (
-    [
-      'pessoa',
-      'person',
-      'pf'
-    ].includes(x)
-  ) {
-
-    return 'Pessoa';
-
-  }
-
-
-  return clean_(v);
-
-}
-
-
-/* ============================================================
-   GERAR CÓDIGO DOOX
-   ============================================================ */
-
-function guardDuplicateRequest_(r) {
-  const raw=[r.name,r.email,r.phone,r.type,r.mode,r.moment,r.quantity,r.handle,r.observation].map(x=>clean_(x)).join('|');
-  const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,raw);
-  const fp=Utilities.base64EncodeWebSafe(digest);
-  const cache=CacheService.getScriptCache();
-  const key='REQ_'+fp.slice(0,80);
-  if(cache.get(key)) throw new Error('Solicitação idêntica já recebida. Aguarde alguns minutos antes de reenviar.');
-  cache.put(key,'1',600);
-}
-
-
-function nextCode_(ss) {
-  const props=PropertiesService.getScriptProperties();
-  const current=Number(props.getProperty('DOOX_ORDER_SEQ')||0)+1;
-  props.setProperty('DOOX_ORDER_SEQ',String(current));
-  const yy=Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yy');
-  return 'DOOX-'+yy+'-'+pad_(current,4);
-}
-
-
-/* ============================================================
-   CLIENTES
-   ============================================================ */
+/*************************************************
+ * CLIENTES
+ *************************************************/
 
 function upsertClient_(
   ss,
   r
 ) {
 
-  const sh =
-    ss.getSheetByName(
-      CONFIG.SHEETS.CLIENTES
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.CLIENTES.name
     );
 
 
-  const h =
-    headers_(sh);
-
-
-  const pi =
-    find_(
-      h,
-      [
-        'WhatsApp',
-        'Telefone',
-        'Celular',
-        'Telefone / WhatsApp'
-      ]
+  const map =
+    headerMap_(
+      sheet
     );
 
 
-  const ei =
-    find_(
-      h,
-      [
-        'E-mail',
-        'Email',
-        'E-mail principal'
-      ]
-    );
+  const lastRow =
+    sheet.getLastRow();
 
 
-  const idIndex =
-    find_(
-      h,
-      [
-        'ID Cliente',
-        'Cliente ID',
-        'ID'
-      ]
-    );
+  let foundRow =
+    0;
 
 
-  let row =
-    -1;
+  if (lastRow >= 2) {
+
+    const values =
+      sheet.getRange(
+        2,
+        1,
+        lastRow - 1,
+        sheet.getLastColumn()
+      ).getValues();
 
 
-  if (
-    sh.getLastRow() > 1
-  ) {
-
-    const all =
-      sh
-        .getDataRange()
-        .getDisplayValues();
-
-
-    for (
-      let n = 1;
-      n < all.length;
-      n++
-    ) {
-
-      const p =
-        pi >= 0
-          ? digits_(
-              all[n][pi]
-            )
-          : '';
-
-
-      const e =
-        ei >= 0
-          ? clean_(
-              all[n][ei]
-            ).toLowerCase()
-          : '';
-
-
-      if (
-        (
-          p &&
-          p === digits_(r.phone)
-        ) ||
-        (
-          e &&
-          e === r.email
-        )
-      ) {
-
-        row =
-          n + 1;
-
-        break;
-
-      }
-
-    }
-
-  }
-
-
-  let clientId =
-    '';
-
-
-  if (
-    row > 0 &&
-    idIndex >= 0
-  ) {
-
-    clientId =
-      clean_(
-        sh
-          .getRange(
-            row,
-            idIndex + 1
-          )
-          .getDisplayValue()
+    const wa =
+      normalizePhone_(
+        r.whatsapp
       );
 
-  }
 
-
-  if (!clientId) {
-
-    clientId =
-      nextClientId_(
-        sh
+    const email =
+      normalizeEmail_(
+        r.email
       );
-
-  }
-
-
-  const payload = {
-    'ID Cliente': clientId,
-    'Cliente': r.name,
-    'Tipo': r.type,
-    'WhatsApp': r.phone,
-    'E-mail': r.email,
-    '@ / Perfil / Site': r.handle,
-    'Primeiro Pedido': row > 0 ? (find_(h,['Primeiro Pedido']) >= 0 ? sh.getRange(row, find_(h,['Primeiro Pedido'])+1).getValue() : r.createdAt) : r.createdAt,
-    'Último Pedido': r.createdAt,
-    'Status': 'ATIVO',
-    'Última Atualização': r.createdAt
-  };
-
-
-  if (row > 0) {
-
-    updateByHeaders_(
-      sh,
-      row,
-      payload
-    );
-
-  }
-
-  else {
-
-    appendByHeaders_(
-      sh,
-      payload
-    );
-
-  }
-
-
-  return clientId;
-
-}
-
-
-/* ============================================================
-   GERAR ID PERMANENTE DO CLIENTE
-   ============================================================ */
-
-function nextClientId_(sh) {
-  const props=PropertiesService.getScriptProperties();
-  const current=Number(props.getProperty('DOOX_CLIENT_SEQ')||0)+1;
-  props.setProperty('DOOX_CLIENT_SEQ',String(current));
-  return 'CLI-'+pad_(current,5);
-}
-
-
-/* ============================================================
-   PAGAMENTOS
-   ============================================================ */
-
-function upsertPayment_(
-  ss,
-  r
-) {
-
-  const sh =
-    ss.getSheetByName(
-      CONFIG.SHEETS.FINANCEIRO
-    );
-
-
-  const h =
-    headers_(sh);
-
-
-  const ci =
-    find_(
-      h,
-      [
-        'Código DOOX',
-        'Código',
-        'Pedido',
-        'Código do Pedido'
-      ]
-    );
-
-
-  let row =
-    -1;
-
-
-  if (
-    ci >= 0 &&
-    sh.getLastRow() > 1
-  ) {
-
-    const v =
-      sh
-        .getRange(
-          2,
-          ci + 1,
-          sh.getLastRow() - 1,
-          1
-        )
-        .getDisplayValues();
 
 
     for (
       let i = 0;
-      i < v.length;
+      i < values.length;
       i++
     ) {
 
+      const row =
+        values[i];
+
+
+      const rowWa =
+        normalizePhone_(
+          String(
+            row[
+              map['WhatsApp'] - 1
+            ] || ''
+          )
+        );
+
+
+      const rowEmail =
+        normalizeEmail_(
+          String(
+            row[
+              map['E-mail'] - 1
+            ] || ''
+          )
+        );
+
+
       if (
-        clean_(
-          v[i][0]
-        ) === r.code
+
+        (
+          wa &&
+          rowWa &&
+          wa === rowWa
+        )
+
+        ||
+
+        (
+          email &&
+          rowEmail &&
+          email === rowEmail
+        )
+
       ) {
 
-        row =
+        foundRow =
           i + 2;
 
         break;
@@ -1242,926 +1155,2348 @@ function upsertPayment_(
   }
 
 
-  const payload = {
-    'Código DOOX': r.code,
-    'ID Cliente': r.clientId,
-    'Cliente': r.name,
-    'Modalidade': r.mode,
-    'Quantidade': r.quantity,
-    'Valor Unitário': r.unitPrice,
-    'Valor Total': r.total,
-    'Status': 'AGUARDANDO PAGAMENTO',
-    'Data da Solicitação': r.createdAt,
-    'Data do Pagamento': '',
-    'Comprovante': '',
-    'Observações': ''
-  };
+  const now =
+    new Date();
 
 
-  if (row > 0) {
+  if (foundRow) {
 
-    updateByHeaders_(
-      sh,
-      row,
-      payload
+    const existing =
+      sheet.getRange(
+        foundRow,
+        1,
+        1,
+        sheet.getLastColumn()
+      ).getValues()[0];
+
+
+    if (
+      !existing[
+        map['Nome / Empresa'] - 1
+      ]
+    ) {
+
+      sheet.getRange(
+        foundRow,
+        map['Nome / Empresa']
+      ).setValue(
+        r.nameOrCompany
+      );
+
+    }
+
+
+    sheet.getRange(
+      foundRow,
+      map['Tipo']
+    ).setValue(
+      r.type
+    );
+
+
+    sheet.getRange(
+      foundRow,
+      map['WhatsApp']
+    ).setValue(
+      r.whatsapp
+    );
+
+
+    if (r.email) {
+
+      sheet.getRange(
+        foundRow,
+        map['E-mail']
+      ).setValue(
+        r.email
+      );
+
+    }
+
+
+    if (r.profile) {
+
+      sheet.getRange(
+        foundRow,
+        map['@ / Perfil / Site']
+      ).setValue(
+        r.profile
+      );
+
+    }
+
+
+    sheet.getRange(
+      foundRow,
+      map['Último pedido em']
+    ).setValue(
+      now
+    );
+
+
+    sheet.getRange(
+      foundRow,
+      map['Atualizado em']
+    ).setValue(
+      now
+    );
+
+
+    return String(
+      existing[
+        map['ID Cliente'] - 1
+      ]
     );
 
   }
 
-  else {
 
-    appendByHeaders_(
-      sh,
-      payload
-    );
+  const id =
+    nextClientCode_();
 
-  }
+
+  const row = [
+
+    id,
+
+    r.nameOrCompany,
+
+    r.type,
+
+    r.whatsapp,
+
+    r.email,
+
+    r.profile,
+
+    now,
+
+    now,
+
+    1,
+
+    now
+
+  ];
+
+
+  sheet.appendRow(
+    row
+  );
+
+
+  return id;
 
 }
 
 
-/* ============================================================
-   CRIAR / GARANTIR ESTRUTURA
-   ============================================================ */
-
-function schema_() {
-  const schema = {};
-  schema[CONFIG.SHEETS.PAINEL] = ['Indicador','Valor','Atualizado em'];
-  schema[CONFIG.SHEETS.PEDIDOS] = [
-    'Código DOOX','ID Cliente','Data/Hora','Nome / Empresa','WhatsApp','E-mail','Tipo',
-    'Modalidade','Faixa / Preço','Momento Desejado','Quantidade','@ / Perfil / Site',
-    'Aceite','Descrição / Observação','Valor Unitário','Valor Total','Status','Episódio',
-    'Criado em','Atualizado em','Comprovante Solicitação'
-  ];
-  schema[CONFIG.SHEETS.CLIENTES] = [
-    'ID Cliente','Nome / Empresa','Tipo','WhatsApp','E-mail','@ / Perfil / Site',
-    'Primeiro Pedido','Último Pedido','Status','Última Atualização'
-  ];
-  schema[CONFIG.SHEETS.FINANCEIRO] = [
-    'Código DOOX','ID Cliente','Cliente','Modalidade','Quantidade','Valor Unitário','Valor Total',
-    'Status','Data da Solicitação','Data do Pagamento','Comprovante','Observações'
-  ];
-  schema[CONFIG.SHEETS.PRODUCAO] = [
-    'Código DOOX','ID Cliente','Episódio','Modalidade','Etapa','Status','Faixa Contratada',
-    'Momento Efetivo','Tipo de Material','Canal','Arquivo / Referência','Data de Solicitação',
-    'Data de Recebimento','Duração','Bloco / Ordem','Data de Publicação','URL','Evidência',
-    'Observações','Atualizado em'
-  ];
-  schema[CONFIG.SHEETS.EPISODIOS] = [
-    'Episódio','Título','Status','Data Prevista','Data de Publicação','Capacidade Rodapé',
-    'Capacidade Patrocinador','Observações'
-  ];
-  schema[CONFIG.SHEETS.COMPROVANTES] = [
-    'Código DOOX','ID Cliente','Tipo','Episódio','Cliente','Modalidade','Momento Solicitado',
-    'Faixa Contratada','Quantidade','Valor Unitário','Valor Total','Arquivo do Comprovante',
-    'ID Arquivo','Token','Enviado ao Cliente','Data de Envio','Status','Observações'
-  ];
-  return schema;
-}
-
-function ensureStructure_(ss) {
-  const schema = schema_();
-  Object.keys(schema).forEach(function(name) {
-    const sh = getOrCreate_(ss, name);
-    ensureHeaders_(sh, schema[name]);
-  });
-  applyOperationalFormatting_(ss);
-}
-
-
-/* ============================================================
-   COMPROVANTE PDF DA SOLICITAÇÃO
-   ============================================================ */
-
-function createRequestReceipt_(ss, r) {
-  const folder = getOrCreateFolder_(CONFIG.RECEIPT_FOLDER);
-  const timestamp = Utilities.formatDate(new Date(r.createdAt || new Date()), CONFIG.TIMEZONE, 'dd/MM/yyyy HH:mm:ss');
-  const doc = DocumentApp.create('DOOX — Solicitação ' + r.code);
-  const body = doc.getBody();
-  body.appendParagraph('DOOX STUDIOS / HOCCO').setHeading(DocumentApp.ParagraphHeading.TITLE);
-  body.appendParagraph('COMPROVANTE DE SOLICITAÇÃO').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-  body.appendParagraph('Este documento confirma o registro da solicitação no sistema DOOX. Não representa comprovante de pagamento, aprovação, programação ou publicação.');
-  [
-    ['Código DOOX',r.code],['ID Cliente',r.clientId],['Data/Hora da solicitação',timestamp],['Nome / Empresa',r.name],
-    ['Tipo',r.type],['E-mail',r.email],['WhatsApp',r.phone],['Perfil / Site',r.handle||'—'],['Modalidade',r.mode],
-    ['Momento solicitado',r.moment||'Definido pela produção'],['Faixa comercial',r.range||'Modalidade fixa'],['Quantidade',r.quantity],
-    ['Valor unitário',formatMoneyBR_(r.unitPrice)],['Valor total',formatMoneyBR_(r.total)],['Aceite',(r.termsAccepted&&r.rulesAccepted)?'SIM':'NÃO'],['Status',r.status]
-  ].forEach(x=>body.appendParagraph(x[0]+': '+x[1]));
-  if(r.observation) body.appendParagraph('Observações: '+r.observation);
-  body.appendParagraph('DOOX Studios — registro operacional HOCCO');
-  doc.saveAndClose();
-  const temp=DriveApp.getFileById(doc.getId());
-  const token=Utilities.getUuid().replace(/-/g,'')+Utilities.getUuid().replace(/-/g,'');
-  const storedName='DOOX-'+r.code+'-SOLICITACAO-'+token+'.pdf';
-  const pdf=temp.getAs(MimeType.PDF).setName(storedName);
-  const file=folder.createFile(pdf);
-  temp.setTrashed(true);
-  return {url:file.getUrl(),fileName:'DOOX-'+r.code+'-SOLICITACAO.pdf',storedName:storedName,fileId:file.getId(),token:token};
-}
-
-function downloadReceipt_(token) {
-  if (!token || token.length < 32) throw new Error('Token de comprovante inválido.');
-  const folderIt=DriveApp.getFoldersByName(CONFIG.RECEIPT_FOLDER);
-  if(!folderIt.hasNext()) throw new Error('Pasta de comprovantes não encontrada.');
-  const folder=folderIt.next();
-  const prefix='DOOX-';
-  const files=folder.getFiles();
-  while(files.hasNext()){
-    const file=files.next();
-    if(file.getName().indexOf('-'+token+'.pdf')<0) continue;
-    return {ok:true,fileName:file.getName().replace('-'+token,''),mimeType:MimeType.PDF,base64:Utilities.base64Encode(file.getBlob().getBytes())};
-  }
-  throw new Error('Comprovante não encontrado.');
-}
-
-/* ============================================================
-   PASTA DE COMPROVANTES
-   ============================================================ */
-
-function getOrCreateFolder_(
-  name
+function updateClientOrderStats_(
+  ss,
+  clientId,
+  now
 ) {
 
-  const it =
-    DriveApp
-      .getFoldersByName(
-        name
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.CLIENTES.name
+    );
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (lastRow < 2) {
+    return;
+  }
+
+
+  const ids =
+    sheet.getRange(
+      2,
+      map['ID Cliente'],
+      lastRow - 1,
+      1
+    ).getValues();
+
+
+  for (
+    let i = 0;
+    i < ids.length;
+    i++
+  ) {
+
+    if (
+      String(
+        ids[i][0]
+      ) ===
+      String(clientId)
+    ) {
+
+      const row =
+        i + 2;
+
+
+      const countCell =
+        sheet.getRange(
+          row,
+          map['Total de pedidos']
+        );
+
+
+      const current =
+        Number(
+          countCell.getValue() || 0
+        );
+
+
+      countCell.setValue(
+        current + 1
       );
 
 
-  if (
-    it.hasNext()
-  ) {
+      sheet.getRange(
+        row,
+        map['Último pedido em']
+      ).setValue(
+        now
+      );
 
-    return it.next();
+
+      sheet.getRange(
+        row,
+        map['Atualizado em']
+      ).setValue(
+        now
+      );
+
+
+      return;
+
+    }
 
   }
-
-
-  return DriveApp.createFolder(
-    name
-  );
 
 }
 
 
-/* ============================================================
-   FORMATAÇÃO MONETÁRIA
-   ============================================================ */
+/*************************************************
+ * CÓDIGOS
+ *************************************************/
 
-function formatMoneyBR_(
-  n
-) {
+function nextOrderCode_() {
 
-  const value =
-    Number(n) || 0;
+  const props =
+    PropertiesService
+      .getScriptProperties();
+
+
+  let seq =
+    Number(
+      props.getProperty(
+        'DOOX_ORDER_SEQ'
+      ) || 0
+    ) + 1;
+
+
+  props.setProperty(
+    'DOOX_ORDER_SEQ',
+    String(seq)
+  );
+
+
+  const yy =
+    Utilities.formatDate(
+      new Date(),
+      CONFIG.TIMEZONE,
+      'yy'
+    );
 
 
   return (
-    'R$ ' +
-    value
-      .toFixed(2)
-      .replace(
-        '.',
-        ','
-      )
+    'DOOX-' +
+    yy +
+    '-' +
+    String(seq).padStart(
+      4,
+      '0'
+    )
   );
 
 }
 
 
-/* ============================================================
-   FORMATAÇÃO OPERACIONAL DAS ABAS
-   ============================================================ */
+function nextClientCode_() {
 
-function formatOperationalSheets_(
-  ss
-) {
-
-  Object.keys(
-    CONFIG.SHEETS
-  ).forEach(
-    function(key) {
-
-      const name =
-        CONFIG.SHEETS[key];
+  const props =
+    PropertiesService
+      .getScriptProperties();
 
 
-      const sh =
-        ss.getSheetByName(
-          name
-        );
+  let seq =
+    Number(
+      props.getProperty(
+        'DOOX_CLIENT_SEQ'
+      ) || 0
+    ) + 1;
 
 
-      if (!sh) {
-        return;
-      }
+  props.setProperty(
+    'DOOX_CLIENT_SEQ',
+    String(seq)
+  );
 
 
-      const lastColumn =
-        sh.getLastColumn();
-
-
-      if (
-        lastColumn < 1
-      ) {
-        return;
-      }
-
-
-      sh.setFrozenRows(
-        1
-      );
-
-
-      sh
-        .getRange(
-          1,
-          1,
-          1,
-          lastColumn
-        )
-        .setFontWeight(
-          'bold'
-        );
-
-
-      sh
-        .getRange(
-          1,
-          1,
-          Math.max(
-            1,
-            sh.getLastRow()
-          ),
-          lastColumn
-        )
-        .setVerticalAlignment(
-          'middle'
-        );
-
-
-      const h =
-        headers_(
-          sh
-        );
-
-
-      const dateColumns = [
-        'Data/Hora',
-        'Data',
-        'Criado em',
-        'Data da Solicitação',
-        'Data do Pagamento',
-        'Último Pedido',
-        'Última Atualização',
-        'Data de Solicitação',
-        'Data de Recebimento',
-        'Data Prevista',
-        'Data de Publicação',
-        'Data de Envio',
-        'Atualizado em'
-      ];
-
-
-      dateColumns.forEach(
-        function(label) {
-
-          const i =
-            find_(
-              h,
-              [label]
-            );
-
-
-          if (
-            i >= 0 &&
-            sh.getMaxRows() >= 2
-          ) {
-
-            sh
-              .getRange(
-                2,
-                i + 1,
-                sh.getMaxRows() - 1,
-                1
-              )
-              .setNumberFormat(
-                'dd/mm/yyyy hh:mm:ss'
-              );
-
-          }
-
-        }
-      );
-
-
-      const moneyColumns = [
-        'Valor Unitário',
-        'Valor',
-        'Valor Total'
-      ];
-
-
-      moneyColumns.forEach(
-        function(label) {
-
-          const i =
-            find_(
-              h,
-              [label]
-            );
-
-
-          if (
-            i >= 0 &&
-            sh.getMaxRows() >= 2
-          ) {
-
-            sh
-              .getRange(
-                2,
-                i + 1,
-                sh.getMaxRows() - 1,
-                1
-              )
-              .setNumberFormat(
-                'R$ #,##0.00'
-              );
-
-          }
-
-        }
-      );
-
-
-      const qtyIndex =
-        find_(
-          h,
-          [
-            'Quantidade',
-            'Capacidade',
-            'Reservadas',
-            'Disponíveis'
-          ]
-        );
-
-
-      if (
-        qtyIndex >= 0 &&
-        sh.getMaxRows() >= 2
-      ) {
-
-        sh
-          .getRange(
-            2,
-            qtyIndex + 1,
-            sh.getMaxRows() - 1,
-            1
-          )
-          .setNumberFormat(
-            '0'
-          );
-
-      }
-
-
-      /*
-       * Status que exigem ação operacional ficam destacados
-       * em vermelho claro. O texto continua legível.
-       */
-      const statusIndex =
-        find_(
-          h,
-          [
-            'Status',
-            'Status do Pagamento'
-          ]
-        );
-
-
-      if (
-        statusIndex >= 0 &&
-        sh.getMaxRows() >= 2
-      ) {
-
-        const existing =
-          sh.getConditionalFormatRules();
-
-
-        if (
-          existing.length === 0
-        ) {
-
-          const range =
-            sh.getRange(
-              2,
-              statusIndex + 1,
-              sh.getMaxRows() - 1,
-              1
-            );
-
-
-          const rule =
-            SpreadsheetApp
-              .newConditionalFormatRule()
-              .setRanges(
-                [range]
-              )
-              .whenTextContains(
-                'AGUARDANDO'
-              )
-              .setBackground(
-                '#f4cccc'
-              )
-              .setFontColor(
-                '#9c0006'
-              )
-              .build();
-
-
-          sh.setConditionalFormatRules(
-            [rule]
-          );
-
-        }
-
-      }
-
-    }
+  return (
+    'CLI-' +
+    String(seq).padStart(
+      4,
+      '0'
+    )
   );
 
 }
 
 
-/* ============================================================
-   ATUALIZAR PAINEL / ESTRUTURA
-   ============================================================ */
+function nextEpisodeCode_() {
 
-function applyOperationalFormatting_(
-  ss
+  const props =
+    PropertiesService
+      .getScriptProperties();
+
+
+  let seq =
+    Number(
+      props.getProperty(
+        'DOOX_EPISODE_SEQ'
+      ) || 0
+    ) + 1;
+
+
+  props.setProperty(
+    'DOOX_EPISODE_SEQ',
+    String(seq)
+  );
+
+
+  return (
+    'EP' +
+    String(seq).padStart(
+      2,
+      '0'
+    )
+  );
+
+}
+
+
+/*************************************************
+ * EPISÓDIOS
+ *************************************************/
+
+function createEpisode_(
+  ss,
+  dateValue
 ) {
 
-  try {
-
-    formatOperationalSheets_(
-      ss
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.EPISODIOS.name
     );
 
-  }
-  catch (err) {
 
-    /*
-     * Formatação nunca deve impedir uma solicitação
-     * comercial de ser registrada.
-     */
+  const code =
+    nextEpisodeCode_();
 
-    console.log(
-      'Aviso de formatação: ' +
-      (
-        err.message ||
-        String(err)
+
+  const number =
+    Number(
+      code.replace(
+        /^EP/i,
+        ''
       )
     );
 
-  }
 
-}
-
-
-/* ============================================================
-   TESTE DA PLANILHA
-   ============================================================ */
-
-/*
- * IMPORTANTE:
- *
- * Esta função NÃO tem "_" no final.
- *
- * Portanto ela aparecerá no seletor
- * de funções do Apps Script.
- */
-
-function testSpreadsheet() {
-  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  ensureStructure_(ss);
-  return {
-    ok: true,
-    message: 'Google Sheets conectado e estrutura verificada sem inserir dados de teste.',
-    spreadsheetName: ss.getName(),
-    spreadsheetId: ss.getId(),
-    sheets: Object.keys(CONFIG.SHEETS).map(k => CONFIG.SHEETS[k]),
-    activeMonth: getActiveMonth_(),
-    timestamp: new Date().toISOString()
-  };
-}
+  const date =
+    dateValue ||
+    new Date();
 
 
+  const row = [
 
-/* ============================================================
-   ADMINISTRAÇÃO DO CICLO MENSAL
-   ============================================================ */
+    code,
 
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('DOOX • HOCCO')
-    .addItem('Iniciar / sincronizar mês', 'DOOX_INICIAR_MES')
-    .addItem('Preparar novo ciclo (backup + zerar + reconstruir)', 'DOOX_PREPARAR_NOVO_CICLO')
-    .addItem('Fechar mês atual e arquivar', 'DOOX_FECHAR_MES')
-    .addSeparator()
-    .addItem('Gerar comprovante da linha selecionada', 'generateReceiptFromSelectedRow')
-    .addItem('Atualizar painel', 'atualizarPainel')
-    .addItem('Verificar estrutura e conexão', 'testSpreadsheet')
-    .addToUi();
-}
+    number,
 
-function DOOX_INICIAR_MES() {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    ensureStructure_(ss);
-    const current = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM');
-    const active = getActiveMonth_();
-    if (!active) PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', current);
-    else if (active !== current) rolloverMonth_(ss, active, current);
-    atualizarPainel();
-    return 'Mês iniciado: ' + current;
-  } finally { lock.releaseLock(); }
-}
+    date,
 
-function DOOX_FECHAR_MES() {
-  const ui = SpreadsheetApp.getUi();
-  const active = getActiveMonth_() || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM');
-  const response = ui.alert('Fechar ciclo ' + active + '?', 'O sistema criará um arquivo de arquivo mensal, preservará os dados e zerará as abas operacionais para o próximo ciclo.', ui.ButtonSet.YES_NO);
-  if (response !== ui.Button.YES) return 'Operação cancelada.';
+    'ABERTO',
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    const archive = archiveCurrentCycle_(ss, active);
-    clearLiveData_(ss);
-    const parts=active.split('-').map(Number); const nextDate=new Date(parts[0],(parts[1]||1),1); const next = Utilities.formatDate(nextDate, CONFIG.TIMEZONE, 'yyyy-MM');
-    PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', next);
-    PropertiesService.getScriptProperties().setProperty('DOOX_LAST_ARCHIVE', archive.getUrl());
-    atualizarPainel();
-    ui.alert('Fechamento concluído', 'Arquivo: ' + archive.getName() + '\nO ciclo ativo agora é ' + next + '.', ui.ButtonSet.OK);
-    return archive.getUrl();
-  } finally { lock.releaseLock(); }
-}
+    // RODAPÉ
+    50,
+    0,
+    50,
 
-function getActiveMonth_() {
-  return PropertiesService.getScriptProperties().getProperty('DOOX_ACTIVE_MONTH') || '';
-}
+    // SPONSOR OVERLAY
+    10,
+    0,
+    10,
 
-function ensureMonthlyCycle_(ss) {
-  ensureStructure_(ss);
-  const current = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM');
-  const active = getActiveMonth_();
-  if (!active) {
-    PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', current);
-    return;
-  }
-  if (active !== current) rolloverMonth_(ss, active, current);
-}
+    // OVERLAY + ÁUDIO
+    10,
+    0,
+    10,
 
-function rolloverMonth_(ss, oldMonth, newMonth) {
-  archiveCurrentCycle_(ss, oldMonth);
-  clearLiveData_(ss);
-  PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH', newMonth);
-}
+    // APOIADOR
+    50,
+    0,
+    50,
 
-function archiveCurrentCycle_(ss, month) {
-  const folder = getOrCreateFolder_(CONFIG.ARCHIVE_FOLDER);
-  const name = 'DOOX HOCCO — ARQUIVO ' + month;
-  const file = SpreadsheetApp.create(name);
-  const defaultSheet = file.getSheets()[0];
-  let first = true;
+    // EMPRESA PATROCINADORA
+    1,
+    0,
+    1,
 
-  Object.keys(CONFIG.SHEETS).forEach(function(key) {
-    const source = ss.getSheetByName(CONFIG.SHEETS[key]);
-    if (!source) return;
-    let target;
-    if (first) {
-      target = defaultSheet;
-      target.setName(source.getName());
-      first = false;
-    } else {
-      target = file.insertSheet(source.getName());
-    }
-    const range = source.getDataRange();
-    if (range.getNumRows() && range.getNumColumns()) {
-      target.getRange(1,1,range.getNumRows(),range.getNumColumns()).setValues(range.getValues());
-    }
-    target.setFrozenRows(1);
-  });
+    '',
 
-  DriveApp.getFileById(file.getId()).moveTo(folder);
-  return file;
-}
+    new Date()
 
-function clearLiveData_(ss) {
-  Object.keys(CONFIG.SHEETS).forEach(function(key) {
-    const sh = ss.getSheetByName(CONFIG.SHEETS[key]);
-    if (!sh) return;
-    const lastRow = sh.getLastRow();
-    const lastCol = sh.getLastColumn();
-    if (lastRow > 1 && lastCol > 0) {
-      sh.getRange(2,1,lastRow-1,lastCol).clearContent();
-    }
-  });
-}
-
-
-function DOOX_PREPARAR_NOVO_CICLO() {
-  const lock=LockService.getScriptLock();
-  lock.waitLock(30000);
-  try{
-    const ss=SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    const stamp=Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yyyyMMdd-HHmmss');
-    const backup=archiveWorkbookSnapshot_(ss,'DOOX HOCCO — BACKUP PRÉ-CICLO — '+stamp);
-    const schema=schema_();
-
-    // Remove abas que não fazem parte do sistema atual, depois de preservá-las.
-    const keep=Object.keys(schema);
-    ss.getSheets().slice().forEach(function(sh){
-      if(!keep.includes(sh.getName()) && ss.getSheets().length>1) ss.deleteSheet(sh);
-    });
-
-    // Reconstrói cada aba com exatamente o esquema vigente e sem linhas antigas.
-    Object.keys(schema).forEach(function(name){
-      const sh=getOrCreate_(ss,name);
-      const lastRow=sh.getLastRow(), lastCol=sh.getLastColumn();
-      if(lastRow>0 && lastCol>0) sh.clear();
-      const maxCols=sh.getMaxColumns();
-      if(maxCols>schema[name].length) sh.deleteColumns(schema[name].length+1,maxCols-schema[name].length);
-      if(sh.getMaxColumns()<schema[name].length) sh.insertColumnsAfter(sh.getMaxColumns(),schema[name].length-sh.getMaxColumns());
-      sh.getRange(1,1,1,schema[name].length).setValues([schema[name]]);
-    });
-
-    const current=Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yyyy-MM');
-    PropertiesService.getScriptProperties().setProperty('DOOX_ACTIVE_MONTH',current);
-    PropertiesService.getScriptProperties().setProperty('DOOX_LAST_ARCHIVE',backup.getUrl());
-    PropertiesService.getScriptProperties().setProperty('DOOX_LAST_RESET',new Date().toISOString());
-    applyOperationalFormatting_(ss);
-    atualizarPainel();
-    SpreadsheetApp.getUi().alert('Ciclo preparado','O banco operacional foi zerado sem apagar o backup. Mês ativo: '+current+'\nBackup: '+backup.getUrl(),SpreadsheetApp.getUi().ButtonSet.OK);
-    return {ok:true,month:current,backupUrl:backup.getUrl()};
-  } finally { lock.releaseLock(); }
-}
-
-function archiveWorkbookSnapshot_(ss,name) {
-  const folder=getOrCreateFolder_(CONFIG.ARCHIVE_FOLDER);
-  const file=SpreadsheetApp.create(name);
-  const defaultSheet=file.getSheets()[0];
-  let first=true;
-  ss.getSheets().forEach(function(source){
-    let target;
-    if(first){target=defaultSheet;target.setName(source.getName().slice(0,99));first=false;}
-    else target=file.insertSheet(source.getName().slice(0,99));
-    const r=source.getDataRange();
-    if(r.getNumRows()&&r.getNumColumns()){
-      target.getRange(1,1,r.getNumRows(),r.getNumColumns()).setValues(r.getValues());
-      target.getRange(1,1,r.getNumRows(),r.getNumColumns()).setNumberFormats(r.getNumberFormats());
-    }
-    target.setFrozenRows(Math.min(1,r.getNumRows()));
-  });
-  DriveApp.getFileById(file.getId()).moveTo(folder);
-  return file;
-}
-
-function cleanupExtraSheets() {
-  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  ensureStructure_(ss);
-  const keep = Object.keys(CONFIG.SHEETS).map(k => CONFIG.SHEETS[k]);
-  const extras = ss.getSheets().filter(sh => !keep.includes(sh.getName()));
-  if (!extras.length) return 'Nenhuma aba extra.';
-  const backup = archiveWorkbookSnapshot_(ss,'DOOX HOCCO — BACKUP ABAS EXTRAS — '+Utilities.formatDate(new Date(),CONFIG.TIMEZONE,'yyyyMMdd-HHmmss'));
-  extras.forEach(function(source){ if (ss.getSheets().length > 1) ss.deleteSheet(source); });
-  return backup.getUrl();
-}
-
-function atualizarPainel() {
-  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  ensureStructure_(ss);
-  const painel = ss.getSheetByName(CONFIG.SHEETS.PAINEL);
-  const pedidos = ss.getSheetByName(CONFIG.SHEETS.PEDIDOS);
-  const financeiro = ss.getSheetByName(CONFIG.SHEETS.FINANCEIRO);
-  const now = new Date();
-  const rows = pedidos.getLastRow() > 1 ? pedidos.getRange(2,1,pedidos.getLastRow()-1,pedidos.getLastColumn()).getDisplayValues() : [];
-  const hp = headers_(pedidos);
-  const statusIdx = find_(hp,['Status']);
-  const totalIdx = find_(hp,['Valor Total']);
-  const qIdx = find_(hp,['Quantidade']);
-  const requests = rows.length;
-  const solicTotal = rows.reduce((a,r)=>a+(Number(String(r[totalIdx]||'0').replace(/[^0-9,-]/g,'').replace('.','').replace(',','.'))||0),0);
-  const aguardando = rows.filter(r => statusIdx>=0 && r[statusIdx]==='SOLICITADO').length;
-  const finRows = financeiro.getLastRow()>1 ? financeiro.getRange(2,1,financeiro.getLastRow()-1,financeiro.getLastColumn()).getDisplayValues() : [];
-  const hf=headers_(financeiro), fStatus=find_(hf,['Status']);
-  const pago=finRows.filter(r=>fStatus>=0 && r[fStatus]==='PAGAMENTO RECEBIDO').length;
-  const data=[
-    ['Ciclo ativo', getActiveMonth_() || Utilities.formatDate(now,CONFIG.TIMEZONE,'yyyy-MM'), now],
-    ['Solicitações', requests, now],
-    ['Solicitações em análise/entrada', aguardando, now],
-    ['Valor solicitado', solicTotal, now],
-    ['Pagamentos recebidos', pago, now],
-    ['Último arquivo mensal', PropertiesService.getScriptProperties().getProperty('DOOX_LAST_ARCHIVE')||'', now]
   ];
-  const max= Math.max(painel.getLastRow(),1);
-  if (max>1) painel.getRange(2,1,max-1,3).clearContent();
-  painel.getRange(2,1,data.length,3).setValues(data);
-  painel.getRange(2,3,data.length,1).setNumberFormat('dd/mm/yyyy hh:mm:ss');
-}
 
-function generateReceiptFromSelectedRow() {
-  const ss=SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  const sh=ss.getActiveSheet();
-  if(sh.getName()!==CONFIG.SHEETS.PEDIDOS) throw new Error('Selecione uma linha na aba PEDIDOS.');
-  const row=sh.getActiveRange().getRow();
-  if(row<2) throw new Error('Selecione uma linha de pedido.');
-  const h=headers_(sh);
-  const v=sh.getRange(row,1,1,sh.getLastColumn()).getValues()[0];
-  const get=label=>{const i=find_(h,[label]); return i>=0?v[i]:'';};
-  const r={
-    code: get('Código DOOX'), clientId:get('ID Cliente'), createdAt:get('Data/Hora')||new Date(), name:get('Nome / Empresa'),
-    type:get('Tipo'), email:get('E-mail'), phone:get('WhatsApp'), handle:get('@ / Perfil / Site'), mode:get('Modalidade'),
-    moment:get('Momento Desejado'), range: (String(get('Faixa / Preço')||'').split(' · ')[0]||''), quantity:Number(get('Quantidade'))||1,
-    unitPrice:Number(get('Valor Unitário'))||0,total:Number(get('Valor Total'))||0,termsAccepted:get('Aceite')==='SIM',rulesAccepted:get('Aceite')==='SIM',
-    observation:get('Descrição / Observação'),status:get('Status')||'SOLICITADO'
-  };
-  const receipt=createRequestReceipt_(ss,r);
-  const token=receipt.token;
-  const comp=ss.getSheetByName(CONFIG.SHEETS.COMPROVANTES);
-  appendByHeaders_(comp,{'Código DOOX':r.code,'ID Cliente':r.clientId,'Tipo':'SOLICITAÇÃO','Cliente':r.name,'Modalidade':r.mode,'Momento Solicitado':r.moment,'Faixa Contratada':r.range,'Quantidade':r.quantity,'Valor Unitário':r.unitPrice,'Valor Total':r.total,'Arquivo do Comprovante':receipt.fileName,'ID Arquivo':receipt.fileId,'Token':token,'Enviado ao Cliente':'NÃO','Status':'GERADO','Observações':'Gerado manualmente pela produção.'});
-  updateByHeaders_(sh,row,{'Comprovante Solicitação':receipt.fileName,'Atualizado em':new Date()});
-  SpreadsheetApp.getUi().alert('Comprovante gerado: '+receipt.fileName+'\nAcesso pelo site: /api/receipt?token='+token);
-  return receipt;
-}
 
-/* ============================================================
-   CONTROLE DE CONTRATO PÚBLICO
-   ============================================================ */
-function getPublicFormContract() {
-  return {
-    fields: [
-      'Nome / Empresa',
-      'Seu WhatsApp',
-      'Seu E-mail',
-      'Tipo',
-      'Modalidade',
-      'Faixa / Preço (Automático)',
-      'Momento Desejado',
-      'Quantidade',
-      '@ / Perfil / Site',
-      'Aceite',
-      'Descrição / Observação'
-    ],
-    modalities: [
-      'Presença no Rodapé',
-      'Sponsor Overlay',
-      'Overlay + Áudio',
-      'Empresa Patrocinadora do Episódio'
-    ],
-    rule: 'Somente os campos públicos acima entram como dados de solicitação. Código, ID Cliente, data, status, valores calculados e comprovante são criados pelo sistema.'
-  };
+  sheet.appendRow(
+    row
+  );
+
+
+  formatDataRows_(
+    sheet
+  );
+
+
+  return code;
+
 }
 
 
-/* ============================================================
-   CABEÇALHOS
-   ============================================================ */
+/*************************************************
+ * PRIMEIRO EPISÓDIO
+ *************************************************/
 
-function ensureHeaders_(
-  sh,
-  required
-) {
+function setupPrimeiroEpisodio_() {
 
-  const h =
-    headers_(sh);
+  const ss =
+    getSpreadsheet_();
 
 
-  /*
-   * Aba vazia
-   */
-
-  if (!h.length) {
-
-    sh
-      .getRange(
-        1,
-        1,
-        1,
-        required.length
-      )
-      .setValues(
-        [required]
-      );
-
-    return;
-
-  }
+  setupMVP_(
+    ss
+  );
 
 
-  /*
-   * Adiciona somente os cabeçalhos
-   * que estiverem faltando.
-   */
-
-  const missing =
-    required.filter(
-      x =>
-        find_(
-          h,
-          [x]
-        ) < 0
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.EPISODIOS.name
     );
 
 
   if (
-    missing.length
+    sheet.getLastRow() < 2
   ) {
 
-    sh
-      .getRange(
-        1,
-        h.length + 1,
-        1,
-        missing.length
-      )
-      .setValues(
-        [missing]
-      );
+    return createEpisode_(
+      ss,
+      new Date()
+    );
 
   }
+
+
+  return String(
+    sheet
+      .getRange(
+        2,
+        1
+      )
+      .getValue()
+      ||
+      createEpisode_(
+        ss,
+        new Date()
+      )
+  );
 
 }
 
 
-/* ============================================================
-   INSERIR POR CABEÇALHO
-   ============================================================ */
+/*************************************************
+ * RESERVA
+ *************************************************/
 
-function appendByHeaders_(
-  sh,
-  payload
+function reserveOrder_(
+  code
 ) {
 
-  const h =
-    headers_(sh);
+  const ss =
+    getSpreadsheet_();
 
 
-  const row =
-    h.map(
-      x =>
-        value_(
-          payload,
-          x
-        )
+  setupMVP_(
+    ss
+  );
+
+
+  const pedido =
+    findPedidoByCode_(
+      ss,
+      code
     );
 
 
-  sh.appendRow(
+  if (!pedido) {
+
+    throw new Error(
+      'Pedido não encontrado: ' +
+      code
+    );
+
+  }
+
+
+  if (
+
+    pedido.reserva ===
+    'RESERVADO'
+
+    ||
+
+    pedido.reserva ===
+    'CONFIRMADO'
+
+  ) {
+
+    return {
+
+      ok: true,
+
+      code: code,
+
+      message:
+        'Pedido já possui reserva.',
+
+      episode:
+        pedido.episode
+
+    };
+
+  }
+
+
+  const episodeCode =
+    findEpisodeForReservation_(
+      ss,
+      pedido.modality,
+      pedido.quantity
+    );
+
+
+  allocateEpisode_(
+    ss,
+    episodeCode,
+    pedido.modality,
+    pedido.quantity
+  );
+
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Episódio']
+  ).setValue(
+    episodeCode
+  );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Reserva']
+  ).setValue(
+    'RESERVADO'
+  );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Status']
+  ).setValue(
+    'AGUARDANDO PAGAMENTO'
+  );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Atualizado em']
+  ).setValue(
+    new Date()
+  );
+
+
+  return {
+
+    ok: true,
+
+    code: code,
+
+    episode:
+      episodeCode,
+
+    reservation:
+      'RESERVADO'
+
+  };
+
+}
+
+
+function releaseOrderReservation_(
+  code,
+  newStatus
+) {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  setupMVP_(
+    ss
+  );
+
+
+  const pedido =
+    findPedidoByCode_(
+      ss,
+      code
+    );
+
+
+  if (!pedido) {
+
+    throw new Error(
+      'Pedido não encontrado: ' +
+      code
+    );
+
+  }
+
+
+  if (
+
+    pedido.episode
+
+    &&
+
+    (
+      pedido.reserva ===
+      'RESERVADO'
+
+      ||
+
+      pedido.reserva ===
+      'CONFIRMADO'
+    )
+
+  ) {
+
+    deallocateEpisode_(
+      ss,
+      pedido.episode,
+      pedido.modality,
+      pedido.quantity
+    );
+
+  }
+
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Episódio']
+  ).setValue(
+    ''
+  );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Reserva']
+  ).setValue(
+    'CANCELADO'
+  );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Status']
+  ).setValue(
+    newStatus ||
+    'CANCELADO'
+  );
+
+
+  sheet.getRange(
+    pedido.row,
+    map['Atualizado em']
+  ).setValue(
+    new Date()
+  );
+
+
+  return {
+
+    ok: true,
+
+    code: code,
+
+    reservation:
+      'CANCELADO'
+
+  };
+
+}
+
+
+/*************************************************
+ * CONFIRMAR RESERVA
+ *************************************************/
+
+function confirmarReserva(
+  codigo
+) {
+
+  const result =
+    reserveOrder_(
+      codigo
+    );
+
+
+  const ss =
+    getSpreadsheet_();
+
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const pedido =
+    findPedidoByCode_(
+      ss,
+      codigo
+    );
+
+
+  if (pedido) {
+
+    sheet.getRange(
+      pedido.row,
+      map['Reserva']
+    ).setValue(
+      'CONFIRMADO'
+    );
+
+
+    sheet.getRange(
+      pedido.row,
+      map['Atualizado em']
+    ).setValue(
+      new Date()
+    );
+
+  }
+
+
+  return result;
+
+}
+
+
+/*************************************************
+ * CANCELAR RESERVA
+ *************************************************/
+
+function cancelarReserva(
+  codigo
+) {
+
+  return releaseOrderReservation_(
+    codigo,
+    'CANCELADO'
+  );
+
+}
+
+
+/*************************************************
+ * LOCALIZAR EPISÓDIO COM VAGA
+ *************************************************/
+
+function findEpisodeForReservation_(
+  ss,
+  modality,
+  quantity
+) {
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.EPISODIOS.name
+    );
+
+
+  const rows =
+    getDataRows_(
+      sheet
+    );
+
+
+  for (
+    let i = 0;
+    i < rows.length;
+    i++
+  ) {
+
+    const row =
+      rows[i];
+
+
+    const status =
+      String(
+        row[3] || ''
+      ).toUpperCase();
+
+
+    if (
+      status !== 'ABERTO'
+    ) {
+      continue;
+    }
+
+
+    const available =
+      getEpisodeAvailabilityFromRow_(
+        row,
+        modality
+      );
+
+
+    if (
+      available >= quantity
+    ) {
+
+      return String(
+        row[0]
+      );
+
+    }
+
+  }
+
+
+  // Não encontrou episódio com vaga suficiente.
+  // Cria o próximo episódio.
+  return createEpisode_(
+    ss,
+    new Date()
+  );
+
+}
+
+
+/*************************************************
+ * OCUPAR VAGA
+ *************************************************/
+
+function allocateEpisode_(
+  ss,
+  episodeCode,
+  modality,
+  quantity
+) {
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.EPISODIOS.name
+    );
+
+
+  const found =
+    findRowByFirstColumn_(
+      sheet,
+      episodeCode
+    );
+
+
+  if (!found) {
+
+    throw new Error(
+      'Episódio não encontrado: ' +
+      episodeCode
+    );
+
+  }
+
+
+  const row =
+    found.row;
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const occupiedHeader =
+    occupiedHeaderForModality_(
+      modality
+    );
+
+
+  const capacityHeader =
+    capacityHeaderForModality_(
+      modality
+    );
+
+
+  const availableHeader =
+    availableHeaderForModality_(
+      modality
+    );
+
+
+  const capacity =
+    Number(
+      sheet
+        .getRange(
+          row,
+          map[capacityHeader]
+        )
+        .getValue() || 0
+    );
+
+
+  const occupied =
+    Number(
+      sheet
+        .getRange(
+          row,
+          map[occupiedHeader]
+        )
+        .getValue() || 0
+    );
+
+
+  const available =
+    capacity -
+    occupied;
+
+
+  if (
+    available < quantity
+  ) {
+
+    throw new Error(
+
+      'Não há vagas suficientes no episódio ' +
+      episodeCode +
+      ' para ' +
+      modality +
+      '.'
+
+    );
+
+  }
+
+
+  const newOccupied =
+    occupied +
+    quantity;
+
+
+  sheet
+    .getRange(
+      row,
+      map[occupiedHeader]
+    )
+    .setValue(
+      newOccupied
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map[availableHeader]
+    )
+    .setValue(
+      Math.max(
+        0,
+        capacity -
+        newOccupied
+      )
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map['Atualizado em']
+    )
+    .setValue(
+      new Date()
+    );
+
+
+  updateEpisodeStatus_(
+    sheet,
     row
   );
 
 }
 
 
-/* ============================================================
-   ATUALIZAR POR CABEÇALHO
-   ============================================================ */
+/*************************************************
+ * LIBERAR VAGA
+ *************************************************/
 
-function updateByHeaders_(
-  sh,
-  row,
-  payload
+function deallocateEpisode_(
+  ss,
+  episodeCode,
+  modality,
+  quantity
 ) {
 
-  const h =
-    headers_(sh);
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.EPISODIOS.name
+    );
 
 
-  h.forEach(
-    function(x, i) {
+  const found =
+    findRowByFirstColumn_(
+      sheet,
+      episodeCode
+    );
 
-      const v =
-        value_(
-          payload,
-          x
+
+  if (!found) {
+    return;
+  }
+
+
+  const row =
+    found.row;
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const occupiedHeader =
+    occupiedHeaderForModality_(
+      modality
+    );
+
+
+  const capacityHeader =
+    capacityHeaderForModality_(
+      modality
+    );
+
+
+  const availableHeader =
+    availableHeaderForModality_(
+      modality
+    );
+
+
+  const capacity =
+    Number(
+      sheet
+        .getRange(
+          row,
+          map[capacityHeader]
+        )
+        .getValue() || 0
+    );
+
+
+  const occupied =
+    Number(
+      sheet
+        .getRange(
+          row,
+          map[occupiedHeader]
+        )
+        .getValue() || 0
+    );
+
+
+  const newOccupied =
+    Math.max(
+      0,
+      occupied -
+      quantity
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map[occupiedHeader]
+    )
+    .setValue(
+      newOccupied
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map[availableHeader]
+    )
+    .setValue(
+      Math.max(
+        0,
+        capacity -
+        newOccupied
+      )
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map['Atualizado em']
+    )
+    .setValue(
+      new Date()
+    );
+
+
+  updateEpisodeStatus_(
+    sheet,
+    row
+  );
+
+}
+
+
+/*************************************************
+ * STATUS DO EPISÓDIO
+ *************************************************/
+
+function updateEpisodeStatus_(
+  sheet,
+  row
+) {
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const headers = [
+
+    [
+      'Capacidade Rodapé',
+      'Ocupado Rodapé'
+    ],
+
+    [
+      'Capacidade Sponsor Overlay',
+      'Ocupado Sponsor Overlay'
+    ],
+
+    [
+      'Capacidade Overlay + Áudio',
+      'Ocupado Overlay + Áudio'
+    ],
+
+    [
+      'Capacidade Apoiador Individual',
+      'Ocupado Apoiador Individual'
+    ],
+
+    [
+      'Capacidade Empresa Patrocinadora',
+      'Ocupado Empresa Patrocinadora'
+    ]
+
+  ];
+
+
+  const allFull =
+    headers.every(
+      ([cap, occ]) => {
+
+        const c =
+          Number(
+            sheet
+              .getRange(
+                row,
+                map[cap]
+              )
+              .getValue() || 0
+          );
+
+
+        const o =
+          Number(
+            sheet
+              .getRange(
+                row,
+                map[occ]
+              )
+              .getValue() || 0
+          );
+
+
+        return o >= c;
+
+      }
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map['Status']
+    )
+    .setValue(
+      allFull
+        ? 'ENCERRADO'
+        : 'ABERTO'
+    );
+
+}
+
+
+/*************************************************
+ * DISPONIBILIDADE DO EPISÓDIO
+ *************************************************/
+
+function getEpisodeAvailabilityFromRow_(
+  row,
+  modality
+) {
+
+  const indexByMod = {
+
+    'Presença no Rodapé':
+      [4, 5],
+
+    'Sponsor Overlay':
+      [7, 8],
+
+    'Overlay + Áudio':
+      [10, 11],
+
+    'Apoiador Individual':
+      [13, 14],
+
+    'Empresa Patrocinadora do Episódio':
+      [16, 17]
+
+  };
+
+
+  const pair =
+    indexByMod[
+      modality
+    ];
+
+
+  if (!pair) {
+    return 0;
+  }
+
+
+  return Math.max(
+
+    0,
+
+    Number(
+      row[pair[0]] || 0
+    ) -
+
+    Number(
+      row[pair[1]] || 0
+    )
+
+  );
+
+}
+
+
+/*************************************************
+ * CABEÇALHO — CAPACIDADE
+ *************************************************/
+
+function capacityHeaderForModality_(
+  modality
+) {
+
+  const map = {
+
+    'Presença no Rodapé':
+      'Capacidade Rodapé',
+
+    'Sponsor Overlay':
+      'Capacidade Sponsor Overlay',
+
+    'Overlay + Áudio':
+      'Capacidade Overlay + Áudio',
+
+    'Apoiador Individual':
+      'Capacidade Apoiador Individual',
+
+    'Empresa Patrocinadora do Episódio':
+      'Capacidade Empresa Patrocinadora'
+
+  };
+
+
+  return (
+    map[modality] ||
+    ''
+  );
+
+}
+
+
+/*************************************************
+ * CABEÇALHO — OCUPADO
+ *************************************************/
+
+function occupiedHeaderForModality_(
+  modality
+) {
+
+  const map = {
+
+    'Presença no Rodapé':
+      'Ocupado Rodapé',
+
+    'Sponsor Overlay':
+      'Ocupado Sponsor Overlay',
+
+    'Overlay + Áudio':
+      'Ocupado Overlay + Áudio',
+
+    'Apoiador Individual':
+      'Ocupado Apoiador Individual',
+
+    'Empresa Patrocinadora do Episódio':
+      'Ocupado Empresa Patrocinadora'
+
+  };
+
+
+  return (
+    map[modality] ||
+    ''
+  );
+
+}
+
+
+/*************************************************
+ * CABEÇALHO — VAGAS
+ *************************************************/
+
+function availableHeaderForModality_(
+  modality
+) {
+
+  const map = {
+
+    'Presença no Rodapé':
+      'Vagas Rodapé',
+
+    'Sponsor Overlay':
+      'Vagas Sponsor Overlay',
+
+    'Overlay + Áudio':
+      'Vagas Overlay + Áudio',
+
+    'Apoiador Individual':
+      'Vagas Apoiador Individual',
+
+    'Empresa Patrocinadora do Episódio':
+      'Vagas Empresa Patrocinadora'
+
+  };
+
+
+  return (
+    map[modality] ||
+    ''
+  );
+
+}
+
+
+/*************************************************
+ * PAGAMENTOS
+ *************************************************/
+
+function atualizarPagamento(
+  codigo,
+  status,
+  formaPagamento,
+  observacao
+) {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  setupMVP_(
+    ss
+  );
+
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PAGAMENTOS.name
+    );
+
+
+  const found =
+    findRowByFirstColumn_(
+      sheet,
+      codigo
+    );
+
+
+  if (!found) {
+
+    throw new Error(
+      'Pagamento não encontrado para o código: ' +
+      codigo
+    );
+
+  }
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const row =
+    found.row;
+
+
+  const normalizedStatus =
+    String(
+      status || ''
+    )
+      .trim()
+      .toUpperCase();
+
+
+  sheet
+    .getRange(
+      row,
+      map['Forma de pagamento']
+    )
+    .setValue(
+      formaPagamento ||
+      ''
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map['Status']
+    )
+    .setValue(
+      normalizedStatus ||
+      'AGUARDANDO PAGAMENTO'
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map['Observação']
+    )
+    .setValue(
+      observacao ||
+      ''
+    );
+
+
+  sheet
+    .getRange(
+      row,
+      map['Atualizado em']
+    )
+    .setValue(
+      new Date()
+    );
+
+
+  if (
+    normalizedStatus ===
+    'PAGO'
+  ) {
+
+    sheet
+      .getRange(
+        row,
+        map['Data pagamento']
+      )
+      .setValue(
+        new Date()
+      );
+
+
+    atualizarStatusPedido_(
+      ss,
+      codigo,
+      'PAGAMENTO RECEBIDO'
+    );
+
+  }
+
+
+  return {
+
+    ok: true,
+
+    code: codigo,
+
+    paymentStatus:
+      normalizedStatus
+
+  };
+
+}
+
+
+/*************************************************
+ * STATUS DO PEDIDO
+ *************************************************/
+
+function atualizarStatusPedido_(
+  ss,
+  codigo,
+  status
+) {
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const found =
+    findRowByFirstColumn_(
+      sheet,
+      codigo
+    );
+
+
+  if (!found) {
+
+    throw new Error(
+      'Pedido não encontrado: ' +
+      codigo
+    );
+
+  }
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const normalized =
+    String(
+      status || ''
+    )
+      .trim()
+      .toUpperCase();
+
+
+  sheet
+    .getRange(
+      found.row,
+      map['Status']
+    )
+    .setValue(
+      normalized
+    );
+
+
+  sheet
+    .getRange(
+      found.row,
+      map['Atualizado em']
+    )
+    .setValue(
+      new Date()
+    );
+
+
+  return {
+
+    ok: true,
+
+    code: codigo,
+
+    status: normalized
+
+  };
+
+}
+
+
+/*************************************************
+ * FUNÇÃO MANUAL — ATUALIZAR STATUS
+ *************************************************/
+
+function atualizarStatus(
+  codigo,
+  status
+) {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  setupMVP_(
+    ss
+  );
+
+
+  return atualizarStatusPedido_(
+    ss,
+    codigo,
+    status
+  );
+
+}
+
+
+/*************************************************
+ * VEICULAÇÃO
+ *************************************************/
+
+function registrarVeiculacao(
+  codigo,
+  episodio,
+  momentoEfetivo,
+  status,
+  observacao
+) {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  setupMVP_(
+    ss
+  );
+
+
+  const pedido =
+    findPedidoByCode_(
+      ss,
+      codigo
+    );
+
+
+  if (!pedido) {
+
+    throw new Error(
+      'Pedido não encontrado: ' +
+      codigo
+    );
+
+  }
+
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.VEICULACOES.name
+    );
+
+
+  const now =
+    new Date();
+
+
+  sheet.appendRow([
+
+    codigo,
+
+    episodio ||
+      pedido.episode ||
+      '',
+
+    pedido.nameOrCompany,
+
+    pedido.modality,
+
+    momentoEfetivo ||
+      pedido.moment,
+
+    status ||
+      'PROGRAMADO',
+
+    '',
+
+    observacao ||
+      '',
+
+    now
+
+  ]);
+
+
+  atualizarStatusPedido_(
+    ss,
+    codigo,
+    status === 'PUBLICADO'
+      ? 'PUBLICADO'
+      : 'PROGRAMADO'
+  );
+
+
+  if (
+    status ===
+    'PUBLICADO'
+  ) {
+
+    const map =
+      headerMap_(
+        sheet
+      );
+
+
+    const row =
+      sheet.getLastRow();
+
+
+    sheet
+      .getRange(
+        row,
+        map['Data publicação']
+      )
+      .setValue(
+        new Date()
+      );
+
+  }
+
+
+  return {
+
+    ok: true,
+
+    code: codigo,
+
+    status:
+      status ||
+      'PROGRAMADO'
+
+  };
+
+}
+
+
+/*************************************************
+ * SETUP MVP
+ *
+ * NÃO APAGA A ESTRUTURA ANTIGA.
+ *************************************************/
+
+function setupMVP() {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  const result =
+    setupMVP_(
+      ss
+    );
+
+
+  return {
+
+    ok: true,
+
+    message:
+      'DOOX MVP preparado com sucesso.',
+
+    spreadsheet:
+      ss.getName(),
+
+    spreadsheetId:
+      ss.getId(),
+
+    sheets:
+      result
+
+  };
+
+}
+
+
+function setupMVP_(
+  ss
+) {
+
+  const names =
+    [];
+
+
+  Object.keys(
+    SHEETS
+  ).forEach(
+    key => {
+
+      const def =
+        SHEETS[key];
+
+
+      let sheet =
+        ss.getSheetByName(
+          def.name
+        );
+
+
+      if (!sheet) {
+
+        sheet =
+          ss.insertSheet(
+            def.name
+          );
+
+      }
+
+
+      ensureHeaders_(
+        sheet,
+        def.headers
+      );
+
+
+      formatSheet_(
+        sheet,
+        def.headers
+      );
+
+
+      names.push(
+        def.name
+      );
+
+    }
+  );
+
+
+  // Cria episódio somente se a aba estiver vazia.
+  const episodeSheet =
+    getSheet_(
+      ss,
+      SHEETS.EPISODIOS.name
+    );
+
+
+  if (
+    episodeSheet.getLastRow() < 2
+  ) {
+
+    createEpisode_(
+      ss,
+      new Date()
+    );
+
+  }
+
+
+  return names;
+
+}
+
+
+/*************************************************
+ * MIGRAÇÃO INICIAL
+ *
+ * ATENÇÃO:
+ * - Faz backup de TODAS as abas existentes.
+ * - Depois substitui a estrutura antiga.
+ * - Execute uma única vez.
+ *************************************************/
+
+function resetarEstruturaAntiga() {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  const stamp =
+    Utilities.formatDate(
+      new Date(),
+      CONFIG.TIMEZONE,
+      'yyyyMMdd-HHmmss'
+    );
+
+
+  if (
+    !ss ||
+    !ss.getId()
+  ) {
+
+    throw new Error(
+      'Não foi possível acessar a planilha operacional.'
+    );
+
+  }
+
+
+  /*************************************************
+   * 1 — BACKUP COMPLETO
+   *************************************************/
+
+  const archive =
+    archiveWorkbook_(
+      ss,
+      'DOOX — HOCCO — BACKUP MIGRAÇÃO — ' +
+      stamp
+    );
+
+
+  /*************************************************
+   * 2 — CRIA ABAS TEMPORÁRIAS
+   *
+   * Isso evita conflito com nomes das abas antigas.
+   *************************************************/
+
+  const tempSheets =
+    [];
+
+
+  Object.keys(
+    SHEETS
+  ).forEach(
+    key => {
+
+      const def =
+        SHEETS[key];
+
+
+      const tmpName =
+        '__MVP_TMP__' +
+        key +
+        '__' +
+        stamp;
+
+
+      const sheet =
+        ss.insertSheet(
+          tmpName
+        );
+
+
+      ensureHeaders_(
+        sheet,
+        def.headers
+      );
+
+
+      formatSheet_(
+        sheet,
+        def.headers
+      );
+
+
+      tempSheets.push({
+
+        tempName:
+          tmpName,
+
+        finalName:
+          def.name
+
+      });
+
+    }
+  );
+
+
+  /*************************************************
+   * 3 — REMOVE TODAS AS ABAS ANTIGAS
+   *************************************************/
+
+  const tempNames =
+    tempSheets.map(
+      x => x.tempName
+    );
+
+
+  ss.getSheets()
+    .slice()
+    .forEach(
+      sheet => {
+
+        if (
+          tempNames.indexOf(
+            sheet.getName()
+          ) === -1
+        ) {
+
+          ss.deleteSheet(
+            sheet
+          );
+
+        }
+
+      }
+    );
+
+
+  /*************************************************
+   * 4 — RENOMEIA AS TEMPORÁRIAS
+   *************************************************/
+
+  tempSheets.forEach(
+    item => {
+
+      const sheet =
+        ss.getSheetByName(
+          item.tempName
+        );
+
+
+      if (!sheet) {
+
+        throw new Error(
+          'Aba temporária não encontrada: ' +
+          item.tempName
+        );
+
+      }
+
+
+      sheet.setName(
+        item.finalName
+      );
+
+    }
+  );
+
+
+  /*************************************************
+   * 5 — SEQUÊNCIAS
+   *
+   * Pedido continua sequencial para não duplicar
+   * códigos históricos.
+   *
+   * Clientes e episódios recomeçam a numeração.
+   *************************************************/
+
+  PropertiesService
+    .getScriptProperties()
+    .deleteProperty(
+      'DOOX_CLIENT_SEQ'
+    );
+
+
+  PropertiesService
+    .getScriptProperties()
+    .deleteProperty(
+      'DOOX_EPISODE_SEQ'
+    );
+
+
+  /*************************************************
+   * 6 — PRIMEIRO EPISÓDIO
+   *************************************************/
+
+  createEpisode_(
+    ss,
+    new Date()
+  );
+
+
+  return {
+
+    ok: true,
+
+    message:
+      'Estrutura antiga arquivada e substituída pelo MVP.',
+
+    archiveUrl:
+      archive.url,
+
+    archiveId:
+      archive.id,
+
+    sheets:
+      Object.keys(
+        SHEETS
+      ).map(
+        k => SHEETS[k].name
+      )
+
+  };
+
+}
+
+
+/*************************************************
+ * FECHAMENTO MENSAL
+ *************************************************/
+
+function fecharMesEArquivar() {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  setupMVP_(
+    ss
+  );
+
+
+  const month =
+    Utilities.formatDate(
+      new Date(),
+      CONFIG.TIMEZONE,
+      'yyyy-MM'
+    );
+
+
+  const archiveName =
+    'DOOX — HOCCO — ARQUIVO — ' +
+    month;
+
+
+  const archive =
+    archiveOperationalSheets_(
+      ss,
+      archiveName
+    );
+
+
+  /*************************************************
+   * LIMPA OS DADOS
+   *************************************************/
+
+  clearOperationalData_(
+    ss,
+    CONFIG.RESET_CLIENTES_MENSAL
+  );
+
+
+  /*************************************************
+   * NOVO EPISÓDIO
+   *************************************************/
+
+  const episode =
+    createEpisode_(
+      ss,
+      new Date()
+    );
+
+
+  /*************************************************
+   * REGISTRA CONTROLE DO FECHAMENTO
+   *************************************************/
+
+  PropertiesService
+    .getScriptProperties()
+    .setProperty(
+      'LAST_MONTH_CLOSE',
+      new Date().toISOString()
+    );
+
+
+  PropertiesService
+    .getScriptProperties()
+    .setProperty(
+      'LAST_MONTH_ARCHIVE_URL',
+      archive.url
+    );
+
+
+  return {
+
+    ok: true,
+
+    closedMonth:
+      month,
+
+    archiveName:
+      archiveName,
+
+    archiveUrl:
+      archive.url,
+
+    archiveId:
+      archive.id,
+
+    newEpisode:
+      episode,
+
+    message:
+      'Mês arquivado e operação resetada com sucesso.'
+
+  };
+
+}
+
+
+/*************************************************
+ * LIMPEZA DO OPERACIONAL
+ *************************************************/
+
+function clearOperationalData_(
+  ss,
+  resetClients
+) {
+
+  const names = [
+
+    SHEETS.PEDIDOS.name,
+
+    SHEETS.PAGAMENTOS.name,
+
+    SHEETS.EPISODIOS.name,
+
+    SHEETS.VEICULACOES.name
+
+  ];
+
+
+  if (resetClients) {
+
+    names.push(
+      SHEETS.CLIENTES.name
+    );
+
+  }
+
+
+  names.forEach(
+    name => {
+
+      const sheet =
+        getSheet_(
+          ss,
+          name
+        );
+
+
+      const lastRow =
+        sheet.getLastRow();
+
+
+      const defKey =
+        Object.keys(
+          SHEETS
+        ).find(
+          k =>
+            SHEETS[k].name === name
+        );
+
+
+      const lastCol =
+        Math.max(
+
+          sheet.getLastColumn(),
+
+          SHEETS[
+            defKey
+          ]
+            .headers.length
+
         );
 
 
       if (
-        v !== undefined
+        lastRow >= 2
       ) {
 
-        sh
+        sheet
           .getRange(
-            row,
-            i + 1
+            2,
+            1,
+            lastRow - 1,
+            lastCol
           )
-          .setValue(v);
+          .clearContent();
 
       }
 
@@ -2171,155 +3506,1103 @@ function updateByHeaders_(
 }
 
 
-/* ============================================================
-   ENCONTRAR VALOR DO PAYLOAD
-   ============================================================ */
+/*************************************************
+ * ARQUIVAMENTO COMPLETO
+ *************************************************/
 
-function value_(
-  p,
-  h
+function archiveWorkbook_(
+  sourceSs,
+  archiveName
 ) {
 
-  /*
-   * Correspondência exata
-   */
-
-  if (
-    p[h] !== undefined
-  ) {
-
-    return p[h];
-
-  }
+  const folder =
+    getArchiveFolder_();
 
 
-  /*
-   * Correspondência normalizada
-   */
-
-  const n =
-    norm_(h);
+  const archiveSs =
+    SpreadsheetApp.create(
+      archiveName
+    );
 
 
-  for (
-    const k in p
-  ) {
+  const sourceSheets =
+    sourceSs.getSheets();
 
-    if (
-      norm_(k) === n
-    ) {
 
-      return p[k];
+  const copied =
+    [];
+
+
+  sourceSheets.forEach(
+    sourceSheet => {
+
+      const copiedSheet =
+        sourceSheet.copyTo(
+          archiveSs
+        );
+
+
+      copiedSheet.setName(
+        uniqueSheetName_(
+          archiveSs,
+          sourceSheet.getName()
+        )
+      );
+
+
+      copied.push({
+
+        source:
+          sourceSheet.getName(),
+
+        target:
+          copiedSheet.getName(),
+
+        rows:
+          sourceSheet.getLastRow(),
+
+        columns:
+          sourceSheet.getLastColumn()
+
+      });
 
     }
+  );
+
+
+  /*************************************************
+   * REMOVE ABA PADRÃO VAZIA
+   *************************************************/
+
+  const sheets =
+    archiveSs.getSheets();
+
+
+  if (
+
+    sheets.length > 1 &&
+
+    /^Sheet1$|^Página1$|^Planilha1$/i
+      .test(
+        sheets[0].getName()
+      )
+
+  ) {
+
+    archiveSs.deleteSheet(
+      sheets[0]
+    );
 
   }
 
 
-  /*
-   * Aliases
-   */
+  /*************************************************
+   * MOVE PARA PASTA
+   *************************************************/
 
-  const aliases = {
-
-    codigo: [
-      'Código DOOX',
-      'Código',
-      'Pedido'
-    ],
-
-    codigodoox: [
-      'Código DOOX',
-      'Código'
-    ],
-
-    datahora: [
-      'Data/Hora',
-      'Criado em'
-    ],
-
-    email: [
-      'E-mail',
-      'Email'
-    ],
-
-    whatsapp: [
-      'WhatsApp',
-      'Telefone'
-    ],
-
-    perfilsite: [
-      '@ / Perfil / Site',
-      'Perfil / Site'
-    ],
-
-    modalidade: [
-      'Modalidade',
-      'Inserção'
-    ],
-
-    valor: [
-      'Valor Total',
-      'Valor'
-    ],
-
-    episodio: [
-      'Episódio',
-      'EP'
-    ],
-
-    status: [
-      'Status',
-      'Status do Pagamento'
-    ]
-
-  };
+  const file =
+    DriveApp.getFileById(
+      archiveSs.getId()
+    );
 
 
-  const list =
-    aliases[n];
+  folder.addFile(
+    file
+  );
 
 
-  if (list) {
+  try {
 
-    for (
-      const k of list
-    ) {
+    DriveApp
+      .getRootFolder()
+      .removeFile(
+        file
+      );
+
+  }
+
+  catch (_) {
+
+    // Não é crítico.
+
+  }
+
+
+  /*************************************************
+   * VERIFICAÇÃO
+   *************************************************/
+
+  copied.forEach(
+    item => {
+
+      const targetSheet =
+        archiveSs.getSheetByName(
+          item.target
+        );
+
+
+      if (!targetSheet) {
+
+        throw new Error(
+          'Falha ao arquivar a aba: ' +
+          item.source
+        );
+
+      }
+
 
       if (
-        p[k] !== undefined
+
+        targetSheet.getLastRow() <
+        item.rows &&
+
+        item.rows > 0
+
       ) {
 
-        return p[k];
+        throw new Error(
+          'Verificação do arquivo falhou na aba: ' +
+          item.source
+        );
 
       }
 
     }
+  );
 
-  }
 
+  return {
 
-  /*
-   * Se o campo não existir no payload,
-   * deixa a célula vazia.
-   */
+    id:
+      archiveSs.getId(),
 
-  return undefined;
+    url:
+      archiveSs.getUrl(),
+
+    name:
+      archiveSs.getName(),
+
+    sheets:
+      copied
+
+  };
 
 }
 
 
-/* ============================================================
-   CABEÇALHOS DA PLANILHA
-   ============================================================ */
+/*************************************************
+ * ARQUIVAMENTO OPERACIONAL MENSAL
+ *************************************************/
 
-function headers_(
-  sh
+function archiveOperationalSheets_(
+  sourceSs,
+  archiveName
+) {
+
+  const folder =
+    getArchiveFolder_();
+
+
+  const archiveSs =
+    SpreadsheetApp.create(
+      archiveName
+    );
+
+
+  const copied =
+    [];
+
+
+  Object.keys(
+    SHEETS
+  ).forEach(
+    key => {
+
+      const sourceSheet =
+        sourceSs.getSheetByName(
+          SHEETS[key].name
+        );
+
+
+      if (!sourceSheet) {
+        return;
+      }
+
+
+      const copiedSheet =
+        sourceSheet.copyTo(
+          archiveSs
+        );
+
+
+      copiedSheet.setName(
+        uniqueSheetName_(
+          archiveSs,
+          sourceSheet.getName()
+        )
+      );
+
+
+      copied.push({
+
+        source:
+          sourceSheet.getName(),
+
+        target:
+          copiedSheet.getName(),
+
+        rows:
+          sourceSheet.getLastRow(),
+
+        columns:
+          sourceSheet.getLastColumn()
+
+      });
+
+    }
+  );
+
+
+  const sheets =
+    archiveSs.getSheets();
+
+
+  if (
+
+    sheets.length > 1 &&
+
+    /^Sheet1$|^Página1$|^Planilha1$/i
+      .test(
+        sheets[0].getName()
+      )
+
+  ) {
+
+    archiveSs.deleteSheet(
+      sheets[0]
+    );
+
+  }
+
+
+  const file =
+    DriveApp.getFileById(
+      archiveSs.getId()
+    );
+
+
+  folder.addFile(
+    file
+  );
+
+
+  try {
+
+    DriveApp
+      .getRootFolder()
+      .removeFile(
+        file
+      );
+
+  }
+
+  catch (_) {}
+
+
+  copied.forEach(
+    item => {
+
+      const targetSheet =
+        archiveSs.getSheetByName(
+          item.target
+        );
+
+
+      if (!targetSheet) {
+
+        throw new Error(
+          'Falha ao arquivar a aba operacional: ' +
+          item.source
+        );
+
+      }
+
+    }
+  );
+
+
+  return {
+
+    id:
+      archiveSs.getId(),
+
+    url:
+      archiveSs.getUrl(),
+
+    name:
+      archiveSs.getName(),
+
+    sheets:
+      copied
+
+  };
+
+}
+
+
+/*************************************************
+ * PASTA DE ARQUIVOS
+ *************************************************/
+
+function getArchiveFolder_() {
+
+  const props =
+    PropertiesService
+      .getScriptProperties();
+
+
+  let folderId =
+    CONFIG.ARCHIVE_FOLDER_ID ||
+    props.getProperty(
+      'DOOX_ARCHIVE_FOLDER_ID'
+    );
+
+
+  if (folderId) {
+
+    try {
+
+      return DriveApp
+        .getFolderById(
+          folderId
+        );
+
+    }
+
+    catch (_) {
+
+      // Cria outra pasta.
+
+    }
+
+  }
+
+
+  const existing =
+    DriveApp
+      .getFoldersByName(
+        CONFIG.ARCHIVE_FOLDER_NAME
+      );
+
+
+  const folder =
+    existing.hasNext()
+
+      ? existing.next()
+
+      : DriveApp.createFolder(
+          CONFIG.ARCHIVE_FOLDER_NAME
+        );
+
+
+  props.setProperty(
+    'DOOX_ARCHIVE_FOLDER_ID',
+    folder.getId()
+  );
+
+
+  return folder;
+
+}
+
+
+/*************************************************
+ * TESTE DO SISTEMA
+ *************************************************/
+
+function testarSistema() {
+
+  const ss =
+    getSpreadsheet_();
+
+
+  setupMVP_(
+    ss
+  );
+
+
+  return {
+
+    ok: true,
+
+    spreadsheetId:
+      ss.getId(),
+
+    spreadsheetName:
+      ss.getName(),
+
+    sheets:
+      ss.getSheets().map(
+        s => s.getName()
+      ),
+
+    firstEpisode:
+      getSheet_(
+        ss,
+        SHEETS.EPISODIOS.name
+      )
+        .getRange(
+          2,
+          1
+        )
+        .getValue() ||
+      ''
+
+  };
+
+}
+
+
+/*************************************************
+ * TESTE DE PEDIDO
+ *************************************************/
+
+function testarPedidoMVP() {
+
+  return registerRequest_({
+
+    action:
+      'registerRequest',
+
+    clientRequestId:
+      'TESTE-' +
+      Utilities.getUuid(),
+
+    name:
+      'Cliente Teste DOOX',
+
+    company:
+      'Empresa Teste',
+
+    type:
+      'Empresa',
+
+    whatsapp:
+      '11999999999',
+
+    email:
+      'teste@doox.local',
+
+    profile:
+      '@doox_teste',
+
+    modality:
+      'Sponsor Overlay',
+
+    moment:
+      '00:30–02:00',
+
+    quantity:
+      1,
+
+    observation:
+      'TESTE — esta observação deve aparecer na coluna Observações.',
+
+    termsAccepted:
+      true,
+
+    rulesAccepted:
+      true
+
+  });
+
+}
+
+
+/*************************************************
+ * BUSCAR PEDIDO PELO CÓDIGO
+ *************************************************/
+
+function findPedidoByCode_(
+  ss,
+  code
+) {
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const found =
+    findRowByFirstColumn_(
+      sheet,
+      code
+    );
+
+
+  if (!found) {
+    return null;
+  }
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const v =
+    found.values;
+
+
+  return {
+
+    row:
+      found.row,
+
+    code:
+      String(
+        v[
+          map['Código DOOX'] - 1
+        ] || ''
+      ),
+
+    nameOrCompany:
+      String(
+        v[
+          map['Nome / Empresa'] - 1
+        ] || ''
+      ),
+
+    modality:
+      String(
+        v[
+          map['Modalidade'] - 1
+        ] || ''
+      ),
+
+    quantity:
+      Number(
+        v[
+          map['Quantidade'] - 1
+        ] || 0
+      ),
+
+    episode:
+      String(
+        v[
+          map['Episódio'] - 1
+        ] || ''
+      ),
+
+    moment:
+      String(
+        v[
+          map['Momento desejado'] - 1
+        ] || ''
+      ),
+
+    reservation:
+      String(
+        v[
+          map['Reserva'] - 1
+        ] || ''
+      ),
+
+    reserva:
+      String(
+        v[
+          map['Reserva'] - 1
+        ] || ''
+      ),
+
+    status:
+      String(
+        v[
+          map['Status'] - 1
+        ] || ''
+      )
+
+  };
+
+}
+
+
+/*************************************************
+ * BUSCAR PELO CLIENT REQUEST ID
+ *************************************************/
+
+function findPedidoByClientRequestId_(
+  ss,
+  clientRequestId
+) {
+
+  const sheet =
+    getSheet_(
+      ss,
+      SHEETS.PEDIDOS.name
+    );
+
+
+  const map =
+    headerMap_(
+      sheet
+    );
+
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (lastRow < 2) {
+    return null;
+  }
+
+
+  const values =
+    sheet.getRange(
+      2,
+      1,
+      lastRow - 1,
+      sheet.getLastColumn()
+    ).getValues();
+
+
+  for (
+    let i = 0;
+    i < values.length;
+    i++
+  ) {
+
+    const cell =
+      String(
+        values[i][
+          map['Client Request ID'] - 1
+        ] || ''
+      );
+
+
+    if (
+      cell &&
+      cell ===
+      String(clientRequestId)
+    ) {
+
+      const row =
+        i + 2;
+
+
+      return {
+
+        row:
+          row,
+
+        code:
+          String(
+            values[i][
+              map['Código DOOX'] - 1
+            ] || ''
+          ),
+
+        order:
+          values[i]
+
+      };
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/*************************************************
+ * ACESSO À PLANILHA
+ *
+ * NÃO usa getActiveSpreadsheet().
+ *************************************************/
+
+function getSpreadsheet_() {
+
+  if (
+
+    !CONFIG.SPREADSHEET_ID ||
+
+    CONFIG.SPREADSHEET_ID
+      .indexOf('COLE_') === 0
+
+  ) {
+
+    throw new Error(
+      'CONFIG.SPREADSHEET_ID não foi configurado.'
+    );
+
+  }
+
+
+  return SpreadsheetApp.openById(
+    CONFIG.SPREADSHEET_ID
+  );
+
+}
+
+
+/*************************************************
+ * ACESSO À ABA
+ *************************************************/
+
+function getSheet_(
+  ss,
+  name
+) {
+
+  const sheet =
+    ss.getSheetByName(
+      name
+    );
+
+
+  if (!sheet) {
+
+    throw new Error(
+      'Aba não encontrada: ' +
+      name
+    );
+
+  }
+
+
+  return sheet;
+
+}
+
+
+/*************************************************
+ * CABEÇALHOS
+ *************************************************/
+
+function ensureHeaders_(
+  sheet,
+  headers
 ) {
 
   if (
-    !sh ||
-    sh.getLastColumn() === 0
+    sheet.getMaxColumns() <
+    headers.length
+  ) {
+
+    sheet.insertColumnsAfter(
+
+      sheet.getMaxColumns(),
+
+      headers.length -
+      sheet.getMaxColumns()
+
+    );
+
+  }
+
+
+  const current =
+    sheet.getRange(
+      1,
+      1,
+      1,
+      headers.length
+    ).getValues()[0];
+
+
+  const mismatch =
+    headers.some(
+      (h, i) =>
+        String(
+          current[i] || ''
+        ) !== h
+    );
+
+
+  if (mismatch) {
+
+    sheet
+      .getRange(
+        1,
+        1,
+        1,
+        headers.length
+      )
+      .setValues([
+        headers
+      ]);
+
+  }
+
+}
+
+
+/*************************************************
+ * FORMATAÇÃO DA ABA
+ *************************************************/
+
+function formatSheet_(
+  sheet,
+  headers
+) {
+
+  if (
+    sheet.getFrozenRows() < 1
+  ) {
+
+    sheet.setFrozenRows(
+      1
+    );
+
+  }
+
+
+  sheet
+    .getRange(
+      1,
+      1,
+      1,
+      headers.length
+    )
+    .setFontWeight(
+      'bold'
+    );
+
+
+  sheet
+    .getRange(
+      1,
+      1,
+      1,
+      headers.length
+    )
+    .setWrap(
+      true
+    );
+
+
+  const filter =
+    sheet.getFilter();
+
+
+  if (filter) {
+
+    try {
+
+      filter.remove();
+
+    }
+
+    catch (_) {}
+
+  }
+
+
+  if (
+    sheet.getMaxRows() >= 2
+  ) {
+
+    try {
+
+      sheet
+        .getRange(
+          1,
+          1,
+          Math.max(
+            2,
+            sheet.getLastRow()
+          ),
+          headers.length
+        )
+        .createFilter();
+
+    }
+
+    catch (_) {}
+
+  }
+
+
+  try {
+
+    sheet.autoResizeColumns(
+      1,
+      headers.length
+    );
+
+  }
+
+  catch (_) {}
+
+}
+
+
+/*************************************************
+ * FORMATAÇÃO DOS DADOS
+ *************************************************/
+
+function formatDataRows_(
+  sheet
+) {
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (
+    lastRow < 2
+  ) {
+    return;
+  }
+
+
+  const headers =
+    sheet.getRange(
+      1,
+      1,
+      1,
+      sheet.getLastColumn()
+    ).getValues()[0];
+
+
+  headers.forEach(
+    (h, i) => {
+
+      if (
+        /Data|Criado em|Atualizado em/i
+          .test(
+            String(h)
+          )
+      ) {
+
+        sheet
+          .getRange(
+            2,
+            i + 1,
+            lastRow - 1,
+            1
+          )
+          .setNumberFormat(
+            'dd/mm/yyyy hh:mm:ss'
+          );
+
+      }
+
+
+      if (
+        /Valor|preço/i
+          .test(
+            String(h)
+          )
+      ) {
+
+        sheet
+          .getRange(
+            2,
+            i + 1,
+            lastRow - 1,
+            1
+          )
+          .setNumberFormat(
+            'R$ #,##0.00'
+          );
+
+      }
+
+    }
+  );
+
+}
+
+
+/*************************************************
+ * MAPA DE CABEÇALHOS
+ *************************************************/
+
+function headerMap_(
+  sheet
+) {
+
+  const headers =
+    sheet.getRange(
+      1,
+      1,
+      1,
+      sheet.getLastColumn()
+    ).getValues()[0];
+
+
+  const map =
+    {};
+
+
+  headers.forEach(
+    (h, i) => {
+
+      map[
+        String(h)
+      ] =
+        i + 1;
+
+    }
+  );
+
+
+  return map;
+
+}
+
+
+/*************************************************
+ * ESCREVER NA LINHA PELO CABEÇALHO
+ *************************************************/
+
+function put_(
+  row,
+  map,
+  header,
+  value
+) {
+
+  if (!map[header]) {
+
+    throw new Error(
+      'Cabeçalho não encontrado: ' +
+      header
+    );
+
+  }
+
+
+  row[
+    map[header] - 1
+  ] =
+    value;
+
+}
+
+
+/*************************************************
+ * DADOS
+ *************************************************/
+
+function getDataRows_(
+  sheet
+) {
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (
+    lastRow < 2
   ) {
 
     return [];
@@ -2327,382 +4610,419 @@ function headers_(
   }
 
 
-  return sh
+  return sheet
     .getRange(
+      2,
       1,
-      1,
-      1,
-      sh.getLastColumn()
+      lastRow - 1,
+      sheet.getLastColumn()
     )
-    .getDisplayValues()[0]
-    .map(
-      clean_
-    );
+    .getValues();
 
 }
 
 
-/* ============================================================
-   ENCONTRAR ÍNDICE
-   ============================================================ */
+/*************************************************
+ * BUSCA NA PRIMEIRA COLUNA
+ *************************************************/
 
-function find_(
-  h,
-  candidates
+function findRowByFirstColumn_(
+  sheet,
+  value
 ) {
 
-  const normalized =
-    h.map(
-      norm_
-    );
+  const lastRow =
+    sheet.getLastRow();
 
 
-  for (
-    const candidate of candidates
+  if (
+    lastRow < 2
   ) {
-
-    const target =
-      norm_(
-        candidate
-      );
-
-
-    const i =
-      normalized.indexOf(
-        target
-      );
-
-
-    if (
-      i >= 0
-    ) {
-
-      return i;
-
-    }
-
+    return null;
   }
 
 
-  return -1;
-
-}
-
-
-/* ============================================================
-   NORMALIZAR CABEÇALHO
-   ============================================================ */
-
-function norm_(
-  v
-) {
-
-  return clean_(v)
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(
-      /[\u0300-\u036f]/g,
-      ''
-    )
-    .replace(
-      /[^a-z0-9]/g,
-      ''
-    );
-
-}
+  const data =
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        sheet.getLastColumn()
+      )
+      .getValues();
 
 
-/* ============================================================
-   OBTER / CRIAR ABA
-   ============================================================ */
+  const needle =
+    String(
+      value || ''
+    ).trim();
 
-function getOrCreate_(
-  ss,
-  name
-) {
-
-  return (
-    ss.getSheetByName(name) ||
-    ss.insertSheet(name)
-  );
-
-}
-
-
-/* ============================================================
-   PRIMEIRO VALOR
-   ============================================================ */
-
-function first_(
-  o,
-  keys
-) {
-
-  for (
-    const k of keys
-  ) {
-
-    if (
-      o[k] !== undefined &&
-      o[k] !== null
-    ) {
-
-      return o[k];
-
-    }
-
-  }
-
-
-  return '';
-
-}
-
-
-/* ============================================================
-   LIMPAR TEXTO
-   ============================================================ */
-
-function sanitizeHandle_(
-  v
-) {
-
-  const value =
-    clean_(v);
-
-  if (!value) {
-    return '';
-  }
-
-  const n =
-    norm_(value);
-
-  const placeholders = [
-    'suaempresa',
-    'seuperfil',
-    'empresaaqui',
-    'exemplo',
-    'exemploperfil',
-    'seusite',
-    'seuinstagram'
-  ];
 
   for (
     let i = 0;
-    i < placeholders.length;
+    i < data.length;
     i++
   ) {
 
     if (
-      n.indexOf(
-        placeholders[i]
-      ) >= 0
+
+      String(
+        data[i][0] || ''
+      ).trim() ===
+      needle
+
     ) {
 
-      return '';
+      return {
+
+        row:
+          i + 2,
+
+        values:
+          data[i]
+
+      };
 
     }
 
   }
 
-  return value;
+
+  return null;
 
 }
 
 
-/* ============================================================
-   LIMPAR TEXTO
-   ============================================================ */
+/*************************************************
+ * NOME ÚNICO DE ABA
+ *************************************************/
 
-function clean_(
-  v
+function uniqueSheetName_(
+  ss,
+  desired
 ) {
 
-  if (
-    v === null ||
-    v === undefined
-  ) {
-
-    return '';
-
-  }
-
-
-  return String(v)
-    .trim();
-
-}
-
-
-/* ============================================================
-   SOMENTE DÍGITOS
-   ============================================================ */
-
-function digits_(
-  v
-) {
-
-  return clean_(v)
-    .replace(
-      /\D/g,
-      ''
-    );
-
-}
-
-
-/* ============================================================
-   TELEFONE
-   ============================================================ */
-
-function phone_(
-  v
-) {
-
-  let d =
-    digits_(v);
-
-
-  if (!d) {
-
-    return '';
-
-  }
-
-
-  /*
-   * Se veio sem DDI,
-   * adiciona 55.
-   */
-
-  if (
-    d.length === 10 ||
-    d.length === 11
-  ) {
-
-    d =
-      '55' + d;
-
-  }
-
-
-  return '+' + d;
-
-}
-
-
-/* ============================================================
-   INTEIRO
-   ============================================================ */
-
-function integer_(
-  v
-) {
-
-  const n =
-    parseInt(
-      String(v || '')
-        .replace(
-          /\D/g,
-          ''
-        ),
-      10
+  let name =
+    desired.substring(
+      0,
+      90
     );
 
 
-  return isNaN(n)
-    ? 0
-    : n;
-
-}
-
-
-/* ============================================================
-   DINHEIRO
-   ============================================================ */
-
-function money_(
-  v
-) {
-
   if (
-    typeof v === 'number'
+    !ss.getSheetByName(
+      name
+    )
   ) {
 
-    return round_(v);
+    return name;
 
   }
 
 
-  let s =
-    clean_(v)
-      .replace(
-        /[R$\s]/g,
-        ''
-      );
+  let n = 2;
 
 
-  if (
-    s.includes(',')
+  while (
+    ss.getSheetByName(
+      (
+        name +
+        ' ' +
+        n
+      ).substring(
+        0,
+        99
+      )
+    )
   ) {
 
-    s =
-      s
-        .replace(
-          /\./g,
-          ''
-        )
-        .replace(
-          ',',
-          '.'
-        );
+    n++;
 
   }
 
-
-  const n =
-    Number(s);
-
-
-  return isNaN(n)
-    ? 0
-    : round_(n);
-
-}
-
-
-/* ============================================================
-   ARREDONDAR
-   ============================================================ */
-
-function round_(
-  v
-) {
 
   return (
-    Math.round(
-      Number(v) * 100
-    ) / 100
+    name +
+    ' ' +
+    n
+  ).substring(
+    0,
+    99
   );
 
 }
 
 
-/* ============================================================
-   BOOLEAN
-   ============================================================ */
+/*************************************************
+ * NORMALIZAR MODALIDADE
+ *************************************************/
 
-function bool_(
-  v
+function normalizeModality_(
+  value
+) {
+
+  const raw =
+    clean_(
+      value
+    );
+
+
+  if (!raw) {
+    return '';
+  }
+
+
+  const aliases = {
+
+    'Presença no Rodapé':
+      'Presença no Rodapé',
+
+    'Presenca no Rodape':
+      'Presença no Rodapé',
+
+    'Rodapé':
+      'Presença no Rodapé',
+
+    'Rodape':
+      'Presença no Rodapé',
+
+    'Sponsor Overlay':
+      'Sponsor Overlay',
+
+    'Overlay':
+      'Sponsor Overlay',
+
+    'Overlay + Áudio':
+      'Overlay + Áudio',
+
+    'Overlay + Audio':
+      'Overlay + Áudio',
+
+    'Apoiador Individual':
+      'Apoiador Individual',
+
+    'Empresa Patrocinadora do Episódio':
+      'Empresa Patrocinadora do Episódio',
+
+    'Empresa Patrocinadora do Episodio':
+      'Empresa Patrocinadora do Episódio'
+
+  };
+
+
+  return (
+    aliases[raw] ||
+    raw
+  );
+
+}
+
+
+/*************************************************
+ * NORMALIZAR TIPO
+ *************************************************/
+
+function normalizeType_(
+  value
+) {
+
+  const raw =
+    clean_(
+      value
+    )
+      .toLowerCase();
+
+
+  if (
+
+    raw ===
+      'empresa' ||
+
+    raw ===
+      'pj' ||
+
+    raw ===
+      'juridica' ||
+
+    raw ===
+      'pessoa jurídica'
+
+  ) {
+
+    return 'Empresa';
+
+  }
+
+
+  if (
+
+    raw ===
+      'pessoa' ||
+
+    raw ===
+      'pessoa física' ||
+
+    raw ===
+      'pessoa fisica' ||
+
+    raw ===
+      'pf'
+
+  ) {
+
+    return 'Pessoa Física';
+
+  }
+
+
+  return clean_(
+    value
+  );
+
+}
+
+
+/*************************************************
+ * INTERPRETAR POST
+ *************************************************/
+
+function parsePostBody_(
+  e
+) {
+
+  if (!e) {
+    return {};
+  }
+
+
+  if (
+    e.postData &&
+    e.postData.contents
+  ) {
+
+    const text =
+      String(
+        e.postData.contents ||
+        ''
+      ).trim();
+
+
+    if (!text) {
+      return {};
+    }
+
+
+    try {
+
+      return JSON.parse(
+        text
+      );
+
+    }
+
+    catch (_) {
+
+      const params =
+        e.parameter ||
+        {};
+
+
+      return params;
+
+    }
+
+  }
+
+
+  return (
+    e.parameter ||
+    {}
+  );
+
+}
+
+
+/*************************************************
+ * LIMPAR TEXTO
+ *************************************************/
+
+function clean_(
+  value
 ) {
 
   if (
-    v === true
+    value === null ||
+    value === undefined
+  ) {
+
+    return '';
+
+  }
+
+
+  return String(
+    value
+  ).trim();
+
+}
+
+
+/*************************************************
+ * INTEIRO POSITIVO
+ *************************************************/
+
+function toPositiveInt_(
+  value
+) {
+
+  const n =
+    Number(
+      value
+    );
+
+
+  if (
+    !isFinite(n) ||
+    n <= 0
+  ) {
+
+    return 0;
+
+  }
+
+
+  return Math.floor(
+    n
+  );
+
+}
+
+
+/*************************************************
+ * BOOLEANO
+ *************************************************/
+
+function toBool_(
+  value
+) {
+
+  if (
+    value === true ||
+    value === 1
   ) {
 
     return true;
 
   }
+
+
+  const s =
+    String(
+      value || ''
+    )
+      .trim()
+      .toLowerCase();
 
 
   return [
@@ -2712,104 +5032,157 @@ function bool_(
     'sim',
     'yes',
     'aceito',
-    'aceita'
+    'on'
 
-  ].includes(
-    clean_(v)
-      .toLowerCase()
+  ].indexOf(
+    s
+  ) !== -1;
+
+}
+
+
+/*************************************************
+ * E-MAIL
+ *************************************************/
+
+function normalizeEmail_(
+  value
+) {
+
+  return clean_(
+    value
+  ).toLowerCase();
+
+}
+
+
+/*************************************************
+ * TELEFONE
+ *************************************************/
+
+function normalizePhone_(
+  value
+) {
+
+  return clean_(
+    value
+  ).replace(
+    /\D/g,
+    ''
   );
 
 }
 
 
-/* ============================================================
-   PREENCHER ZEROS
-   ============================================================ */
+/*************************************************
+ * ARREDONDAMENTO
+ *************************************************/
 
-function pad_(
-  n,
-  s
+function round2_(
+  n
 ) {
 
-  return String(n)
-    .padStart(
-      s,
-      '0'
+  return Math.round(
+    (
+      Number(n) +
+      Number.EPSILON
+    ) * 100
+  ) / 100;
+
+}
+
+
+/*************************************************
+ * JSON
+ *************************************************/
+
+function json_(
+  obj
+) {
+
+  return ContentService
+
+    .createTextOutput(
+      JSON.stringify(
+        obj
+      )
+    )
+
+    .setMimeType(
+      ContentService.MimeType.JSON
     );
 
 }
 
 
-/* ============================================================
-   PARSE DO POST
-   ============================================================ */
+/*************************************************
+ * JSON DE ERRO
+ *************************************************/
 
-function parse_(
-  e
+function jsonError_(
+  err
 ) {
 
-  if (
-    !e ||
-    !e.postData ||
-    !e.postData.contents
-  ) {
+  return json_({
 
-    return (
-      e &&
-      e.parameter
-        ? e.parameter
-        : {}
-    );
+    ok: false,
 
-  }
+    error:
+      err &&
+      err.message
+        ? err.message
+        : String(err)
 
+  });
 
-  const contents =
-    e.postData.contents;
+}
 
 
-  /*
-   * Tenta JSON
-   */
+/*************************************************
+ * MENU NA PLANILHA
+ *************************************************/
+
+function onOpen() {
 
   try {
 
-    return JSON.parse(
-      contents
-    );
+    SpreadsheetApp
+      .getUi()
+
+      .createMenu(
+        'DOOX MVP'
+      )
+
+      .addItem(
+        'Preparar MVP',
+        'setupMVP'
+      )
+
+      .addItem(
+        'Testar sistema',
+        'testarSistema'
+      )
+
+      .addItem(
+        'Testar pedido',
+        'testarPedidoMVP'
+      )
+
+      .addSeparator()
+
+      .addItem(
+        'Fechar mês e arquivar',
+        'fecharMesEArquivar'
+      )
+
+      .addToUi();
 
   }
 
   catch (_) {
 
-    /*
-     * Fallback para formulário
-     */
-
-    return (
-      e.parameter ||
-      {}
-    );
+    // Pode ocorrer quando executado fora da interface da planilha.
 
   }
-
-}
-
-
-/* ============================================================
-   RESPOSTA JSON
-   ============================================================ */
-
-function out_(
-  o
-) {
-
-  return ContentService
-    .createTextOutput(
-      JSON.stringify(o)
-    )
-    .setMimeType(
-      ContentService.MimeType.JSON
-    );
 
 }
