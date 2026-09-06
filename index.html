@@ -202,6 +202,33 @@ body{overflow-x:hidden}
 </style>
 <style id="final-ux-fixes">
 .top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
+
+/* V22 — Portal do cliente: acompanhamento refinado */
+.paymentCard{border-radius:28px;padding:28px}
+.paymentEyebrow{letter-spacing:.14em;font-weight:800}
+.paymentAmount{border-radius:20px}
+.paymentQr{border-radius:22px}
+.pixBox{border-radius:18px}
+.paymentActions{gap:10px}
+.paymentActions button{border-radius:14px;min-height:48px;font-weight:800;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
+.paymentActions button:hover:not(:disabled){transform:translateY(-1px)}
+.trackingCard{border:1px solid #e7e7e7;background:linear-gradient(180deg,#fafafa,#f3f3f3);border-radius:22px;padding:18px}
+.portalHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.portalHeader b{font-size:14px;letter-spacing:.02em}
+.portalCode{font-weight:800}
+.statusSteps{position:relative;gap:0!important;margin-top:20px!important}
+.statusStep{position:relative;display:grid;grid-template-columns:20px 1fr;column-gap:10px;min-height:42px;align-items:start;color:#9a9a9a}
+.statusStep i{width:11px;height:11px;border-radius:50%;background:#d5d5d5;margin-top:4px;position:relative;z-index:2;box-shadow:0 0 0 4px #f3f3f3}
+.statusStep:not(:last-child) i:after{content:"";position:absolute;left:5px;top:11px;width:1px;height:31px;background:#d9d9d9}
+.statusStep.done{color:#333}
+.statusStep.done i{background:#6b3df5}
+.statusStep.current{color:#111;font-weight:800}
+.statusStep.current i{background:#ff7a00;box-shadow:0 0 0 4px #fff1e5,0 0 0 7px #ff7a0030}
+.trackingLink{display:block;margin-top:10px;padding-top:12px;border-top:1px solid #ddd;font-weight:800}
+.portalRefresh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #ddd;font-size:11px;color:#777}
+.portalRefresh button{border:0;background:transparent;font:inherit;font-weight:800;cursor:pointer;padding:4px 0}
+.portalUpdated{font-variant-numeric:tabular-nums}
+.statusChangeNotice{margin-top:12px;padding:11px 13px;border-radius:14px;background:#fff7ef;border:1px solid #ffd9b5;font-size:12px;font-weight:700}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 </head>
 <body>
@@ -977,7 +1004,7 @@ Obrigado por participar do universo HOCCO.`;
     // Mostra SEMPRE uma saída manual. Isso evita que o cliente fique preso caso
     // o Android/navegador bloqueie a navegação automática após o fetch assíncrono.
     setSubmissionStatus('✓','Solicitação registrada','Sua solicitação foi registrada. O acompanhamento e o pagamento, quando liberado pela análise, ficam vinculados a um acesso privado.');
-    if(typeof window.DOIX_showOrderPortal==='function'){ window.DOIX_showOrderPortal(registered); }
+    if(typeof window.DOOX_showOrderPortal==='function'){ window.DOOX_showOrderPortal(registered); }
     const finalWrap=document.getElementById('whatsappFinalizeWrap');
     const finalBtn=document.getElementById('whatsappFinalize');
     if(finalWrap) finalWrap.style.display='block';
@@ -1055,7 +1082,13 @@ if ('serviceWorker' in navigator) {
     <div class="paymentQr" id="paymentQr"><span class="muted">Aguardando liberação do pagamento.</span></div>
     <div class="pixBox"><label>PIX COPIA E COLA</label><div class="pixRow"><input id="pixPayload" readonly value="" aria-label="Pix copia e cola"><button class="pixCopy" id="pixCopy" type="button">COPIAR</button></div></div>
     <div class="paymentActions"><button class="dark" id="paymentReported" type="button">JÁ REALIZEI O PAGAMENTO</button><button class="light" id="openTracking" type="button">ACOMPANHAR PEDIDO</button></div>
-    <div class="trackingCard" id="trackingCard"><div class="portalHeader"><b>Status do pedido</b><span class="portalCode" id="trackingStatus">—</span></div><div class="statusSteps" id="statusSteps"></div><a class="trackingLink" id="trackingLink" href="#"></a></div>
+    <div class="trackingCard" id="trackingCard">
+  <div class="portalHeader"><b>Status do pedido</b><span class="portalCode" id="trackingStatus">—</span></div>
+  <div class="statusSteps" id="statusSteps"></div>
+  <div class="portalRefresh"><span>Atualização automática: <span class="portalUpdated" id="portalUpdated">aguardando</span></span><button id="portalRefreshBtn" type="button">ATUALIZAR AGORA</button></div>
+  <div class="statusChangeNotice" id="statusChangeNotice" style="display:none" aria-live="polite"></div>
+  <a class="trackingLink" id="trackingLink" href="#"></a>
+</div>
   </div>
 </div>
 <div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div></div></div>
@@ -1076,10 +1109,16 @@ if ('serviceWorker' in navigator) {
   const trackingStatus=document.getElementById('trackingStatus');
   const trackingSteps=document.getElementById('statusSteps');
   const trackingLink=document.getElementById('trackingLink');
+  const portalUpdated=document.getElementById('portalUpdated');
+  const portalRefreshBtn=document.getElementById('portalRefreshBtn');
+  const statusChangeNotice=document.getElementById('statusChangeNotice');
   let currentToken='';
+  let lastStatus='';
+  let pollTimer=null;
+  let loading=false;
 
   function show(){overlay.classList.add('show');overlay.setAttribute('aria-hidden','false')}
-  function hide(){overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true')}
+  function hide(){overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');stopPolling()}
   close?.addEventListener('click',hide);
   overlay?.addEventListener('click',e=>{if(e.target===overlay)hide()});
 
@@ -1090,6 +1129,8 @@ if ('serviceWorker' in navigator) {
   function renderPayment(data){
     if(!data||!data.payment)return;
     currentToken=data.trackingToken||currentToken;
+    const newStatus=data.status||'';
+    const changed=!!lastStatus && newStatus!==lastStatus;
     code.textContent=data.code||'—';
     amount.textContent=data.payment.amountLabel||'—';
     payload.value=data.payment.pixPayload||'';
@@ -1101,15 +1142,24 @@ if ('serviceWorker' in navigator) {
     }
     reported.disabled=!data.payment.available;
     reported.style.opacity=data.payment.available?'':'0.5';
-    trackingStatus.textContent=data.statusLabel||data.status||'—';
+    trackingStatus.textContent=data.statusLabel||newStatus||'—';
     renderSteps(data.steps);
+    if(data.updatedAt){
+      try{portalUpdated.textContent=new Date(data.updatedAt).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});}catch(_){portalUpdated.textContent=data.updatedAt}
+    }else portalUpdated.textContent='agora';
     if(currentToken){trackingLink.href=trackingUrl(currentToken);trackingLink.textContent='Abrir página privada de acompanhamento ↗';}
+    if(changed){
+      statusChangeNotice.textContent='Status atualizado: '+(data.statusLabel||newStatus)+'.';
+      statusChangeNotice.style.display='block';
+      setTimeout(()=>{statusChangeNotice.style.display='none'},5000);
+    }
+    lastStatus=newStatus;
   }
   async function loadToken(token,open=true){
-    if(!token)return;
-    currentToken=token;
+    if(!token || loading)return;
+    currentToken=token; loading=true;
     try{
-      const r=await fetch('/api/request?action=pedido&token='+encodeURIComponent(token),{method:'GET',headers:{'Accept':'application/json'}});
+      const r=await fetch('/api/request?action=pedido&token='+encodeURIComponent(token),{method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});
       const data=await r.json();
       if(!data.ok)throw new Error(data.error||'Pedido não encontrado.');
       renderPayment(data);
@@ -1119,13 +1169,20 @@ if ('serviceWorker' in navigator) {
       trackingStatus.textContent='Não localizado';
       trackingSteps.innerHTML='<div class="statusStep current"><i></i><span>Não foi possível carregar este pedido.</span></div>';
       if(open)show();
-    }
+    }finally{loading=false}
   }
+  function startPolling(){
+    stopPolling();
+    if(!currentToken)return;
+    pollTimer=setInterval(()=>loadToken(currentToken,false),8000);
+  }
+  function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
   document.getElementById('pixCopy')?.addEventListener('click',async()=>{
     if(!payload.value)return;
     try{await navigator.clipboard.writeText(payload.value);document.getElementById('pixCopy').textContent='COPIADO ✓';setTimeout(()=>document.getElementById('pixCopy').textContent='COPIAR',1800)}catch(_){payload.select();document.execCommand('copy')}
   });
-  document.getElementById('openTracking')?.addEventListener('click',()=>{tracking.classList.add('show');if(currentToken)loadToken(currentToken,false)});
+  portalRefreshBtn?.addEventListener('click',()=>{if(currentToken)loadToken(currentToken,false)});
+  document.getElementById('openTracking')?.addEventListener('click',()=>{tracking.classList.add('show');if(currentToken){loadToken(currentToken,false);startPolling()}});
   reported?.addEventListener('click',async()=>{
     if(!currentToken)return;
     reported.disabled=true;
@@ -1138,24 +1195,14 @@ if ('serviceWorker' in navigator) {
       await loadToken(currentToken,false);
     }catch(e){alert(e.message||'Não foi possível informar o pagamento.');reported.disabled=false}
   });
-
-  // Após registrar, guarda o token e oferece acompanhamento. O pagamento só aparece quando o backend liberar.
-  window.DOIX_showOrderPortal=function(data){
+  window.DOOX_showOrderPortal=function(data){
     if(!data?.trackingToken)return;
     currentToken=data.trackingToken;
-    loadToken(currentToken,true);
+    lastStatus='';
+    loadToken(currentToken,true).then(startPolling);
   };
-
-  // Integração com o resultado do formulário existente.
-  const oldSetStatus=window.setSubmissionStatus;
-  if(typeof oldSetStatus==='function'){}
-
-  // URL privada de acompanhamento: ?acompanhamento=TOKEN
   const token=new URLSearchParams(location.search).get('acompanhamento');
-  if(token){setTimeout(()=>loadToken(token,true),120)}
-
-  // Captura o retorno do registro sem substituir o controlador existente.
-  const observer=new MutationObserver(()=>{});
+  if(token){currentToken=token;setTimeout(()=>loadToken(token,true).then(startPolling),120)}
 })();
 </script>
 
