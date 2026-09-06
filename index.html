@@ -184,10 +184,26 @@ body{overflow-x:hidden}
 }
 
 .submissionStatus{position:fixed;inset:0;background:#080808a8;backdrop-filter:blur(8px);z-index:9999;display:none;place-items:center;padding:20px}.submissionStatus.show{display:grid}.submissionCard{width:min(430px,100%);background:#fff;border-radius:28px;padding:32px 28px;text-align:center;box-shadow:0 30px 90px #0008;color:#111}.submissionPulse{width:46px;height:46px;border-radius:50%;margin:0 auto 18px;border:4px solid #ffe0c6;border-top-color:#ff6a00;animation:dooxSpin .9s linear infinite}@keyframes dooxSpin{to{transform:rotate(360deg)}}.submissionStep{display:inline-block;background:#fff0e6;color:#e85e00;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:950;letter-spacing:.8px;margin-bottom:14px}.submissionCard strong{display:block;font-size:23px;letter-spacing:-.7px}.submissionCard p{margin:10px 0 0;color:#666;line-height:1.5;font-size:14px}
+
+/* DOOX — pagamento e acompanhamento */
+.paymentOverlay{position:fixed;inset:0;z-index:300;display:none;place-items:center;padding:18px;background:#080808cc;backdrop-filter:blur(14px)}
+.paymentOverlay.show{display:grid}
+.paymentCard{width:min(560px,100%);max-height:min(92vh,820px);overflow:auto;background:#fff;border:1px solid #eee;border-radius:30px;padding:26px;box-shadow:0 35px 120px #0006;position:relative}
+.paymentClose{position:absolute;right:16px;top:16px;width:38px;height:38px;border:0;border-radius:13px;background:#111;color:#fff;font-size:22px;cursor:pointer}
+.paymentEyebrow{font-size:10px;font-weight:950;letter-spacing:1.8px;color:#ff6900}
+.paymentCard h3{font-size:30px;letter-spacing:-1.5px;margin:8px 42px 6px 0}
+.paymentCard .muted{color:#777;font-size:13px;line-height:1.55}
+.paymentAmount{margin:20px 0;padding:18px;border-radius:22px;background:#111;color:#fff;display:flex;align-items:end;justify-content:space-between;gap:14px}
+.paymentAmount small{color:#aaa;font-weight:800}.paymentAmount strong{font-size:31px;letter-spacing:-1px;color:#ff6900}
+.paymentQr{display:grid;place-items:center;padding:18px;border:1px solid #e8e8e8;border-radius:22px;background:#fafafa;margin-top:14px}.paymentQr canvas,.paymentQr img{max-width:100%;height:auto!important}
+.pixBox{margin-top:14px}.pixBox label{display:block;font-size:10px;font-weight:950;letter-spacing:1px;color:#777;margin:0 0 7px}.pixRow{display:flex;gap:8px}.pixRow input{min-width:0;flex:1;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:11px;background:#f7f7f7;color:#333}.pixCopy{border:0;border-radius:14px;background:#ff6900;color:#111;padding:0 16px;font-weight:950;cursor:pointer}.paymentActions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}.paymentActions button{border:0;border-radius:15px;padding:14px;font-weight:950;cursor:pointer}.paymentActions .dark{background:#111;color:#fff}.paymentActions .light{background:#eee;color:#111}.trackingCard{margin-top:14px;padding:15px;border-radius:18px;background:#f5f5f5;display:none}.trackingCard.show{display:block}.trackingCard b{display:block;font-size:13px}.trackingCard p{font-size:12px;color:#666;margin:5px 0 0}.trackingLink{display:block;margin-top:9px;word-break:break-all;font-size:11px;color:#111}.statusSteps{display:grid;gap:8px;margin-top:16px}.statusStep{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:#f6f6f6;font-size:12px}.statusStep i{width:10px;height:10px;border-radius:50%;background:#ccc;flex:0 0 auto}.statusStep.done i,.statusStep.current i{background:#ff6900}.statusStep.current{font-weight:900;border:1px solid #ff690044}.portalHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}.portalCode{font-size:12px;font-weight:950;background:#111;color:#fff;border-radius:999px;padding:8px 11px}
+@media(max-width:640px){.paymentCard{padding:20px;border-radius:24px}.paymentActions{grid-template-columns:1fr}.paymentAmount strong{font-size:27px}.pixRow{flex-direction:column}.pixCopy{padding:13px}}
+
 </style>
 <style id="final-ux-fixes">
 .top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
-</style></head>
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+</head>
 <body>
 <div id="openingSplash" aria-label="Doox Studios">
   <div class="splashLines"></div><div class="splashCorner c1"></div><div class="splashCorner c2"></div>
@@ -230,12 +246,9 @@ body{overflow-x:hidden}
 <div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: exatamente 10 vagas disponíveis por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
 </div><div class="notice"><b>Importante:</b> quando a modalidade permitir escolha de momento, o momento/faixa escolhido determina automaticamente o preço correspondente. O minuto exato dentro da faixa depende da análise da produção e do planejamento do episódio.</div></div></div></section>
 
-<section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">O mesmo ambiente de solicitação pode ser usado por pessoas físicas. A opção <b>TIPO · Pessoa</b> identifica a participação; a modalidade escolhida define o formato de presença.</p>
-<div class="cards">
-<div class="card product"><span class="num">01 · PESSOAS</span><h3>Presença no Rodapé</h3><p>Identificação visual discreta na parte inferior do vídeo, organizada pela produção.</p><div class="price">R$ 49,90</div><div class="meta">Estrutura: até 50 vagas</div><button data-preview="footer" onclick="window.goPreview('footer')">Ver na simulação</button></div>
-<div class="card product"><span class="num">02 · PESSOAS</span><h3>Sponsor Overlay</h3><p>Inserção visual de aproximadamente 5 segundos integrada à imagem. O momento exato é definido pela produção dentro da faixa escolhida.</p><div class="price">A partir de R$ 39,90</div><div class="meta">5 faixas comerciais</div><button data-preview="overlay" onclick="window.goPreview('overlay')">Ver na simulação</button></div>
-<div class="card product"><span class="num">03 · PESSOAS</span><h3>Overlay + Áudio</h3><p>Presença visual de aproximadamente 5 segundos com chamada sonora curta aprovada no processo de produção.</p><div class="price">A partir de R$ 49,90</div><div class="meta">5 faixas comerciais</div><button data-preview="audio" onclick="window.goPreview('audio')">Ver na simulação</button></div>
-<div class="card product"><span class="num">04 · PESSOAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Formato institucional destinado à sustentação do episódio e disponível conforme análise da produção.</p><div class="price">R$ 89,90</div><div class="meta">Exatamente 10 vagas por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
+<section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">Formatos separados das modalidades empresariais, pensados para reconhecimento e participação nos espaços institucionais da HOCCO.</p>
+<div class="cards" style="grid-template-columns:repeat(2,1fr);max-width:800px">
+<div class="card product"><span class="num">01 · PESSOAS</span><h3>Apoiador Individual</h3><p>Reconhecimento nos créditos e espaços institucionais destinados a quem participa do projeto.</p><div class="price">R$ 9,90</div><div class="meta">Estrutura: até 50 participações</div><button data-preview="individual" onclick="window.goPreview('individual')">Ver na simulação</button></div>
 </div></div></section>
 
 <section class="view" id="preview"><div class="section dark"><div class="wrap"><div class="kicker">SIMULAÇÃO COMPLETA</div><h2 class="title">Todas as presenças em tela.</h2><p class="desc">As imagens abaixo são referências reais de POV, gravação e produção audiovisual, usadas apenas para demonstrar a experiência. Elas não são cenas da HOCCO. Escolha a modalidade e veja como sua participação muda na tela.</p>
@@ -274,11 +287,11 @@ body{overflow-x:hidden}
   </div>
 </div>
 
-<div class="episodePanel" id="ovSponsor"><div class="episodeTop"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><div><div class="creditTitle">EMPRESAS QUE APOIAM ESTE EPISÓDIO</div><h3 id="sponsorName">SUA EMPRESA</h3><b id="sponsorHandle">@suaempresa</b></div></div><p>Apresentação institucional em tela preta, após a história e os créditos principais.</p><small>Imagem e informações são demonstrativas.</small></div>
+<div class="creditPanel" id="ovIndividual"><div class="creditTitle">APOIADORES HOCCO</div><div class="creditNames"><span>@ana</span><span>@bruno</span><span>@carla</span><span>@diego</span><span>@elisa</span><span>@fabio</span><span>@gabriela</span><span class="current" id="indName">@seuperfil</span><span>@igor</span><span>@juliana</span></div><p id="indHandle" style="margin-top:18px;color:#888;font-size:10px">Exemplo ilustrativo · sua identificação pode ocupar uma posição na rotação de créditos.</p></div><div class="episodePanel" id="ovSponsor"><div class="episodeTop"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><div><div class="creditTitle">EMPRESAS QUE APOIAM ESTE EPISÓDIO</div><h3 id="sponsorName">SUA EMPRESA</h3><b id="sponsorHandle">@suaempresa</b></div></div><p>Apresentação institucional em tela preta, após a história e os créditos principais.</p><small>Imagem e informações são demonstrativas.</small></div>
 </div>
 <div class="simulationFocus" id="simFocus"></div><div class="progress"><i></i></div></div>
 <div class="controls">
-<div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
+<div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="individual">Apoiador Individual</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
 <div class="control"><label>NOME PARA TESTAR</label><input id="inputName" value="SUA EMPRESA"></div>
 <div class="control"><label>@ / PERFIL</label><input id="inputHandle" value="@suaempresa"></div><div class="control"><label>FAIXA / PREÇO (AUTOMÁTICO)</label><select id="priceTier" aria-label="Faixa e preço calculados automaticamente pelo momento escolhido"><option value="essential">Essencial · entrada</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div><div class="control"><label>MOMENTO DESEJADO / FAIXA</label><select id="moment"><option value="essential">00:30–02:00</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div>
 </div><button class="playDemo" id="playDemo" type="button">▶ EXECUTAR DEMONSTRAÇÃO COMPLETA</button>
@@ -400,7 +413,7 @@ body{overflow-x:hidden}
   const screen=$('#screen'), mode=$('#mode'), moment=$('#moment'), priceTier=$('#priceTier');
   const inputName=$('#inputName'), inputHandle=$('#inputHandle');
   const previewName=$('#previewName'), simImage=$('#simImage'), simFocus=$('#simFocus');
-  const ovFooter=$('#ovFooter'), ovVisual=$('#ovVisual'), ovSponsor=$('#ovSponsor');
+  const ovFooter=$('#ovFooter'), ovVisual=$('#ovVisual'), ovIndividual=$('#ovIndividual'), ovSponsor=$('#ovSponsor');
   const timeBadge=$('#timeBadge'), creditClock=$('#creditClock'), audioBadge=$('#audioBadge');
   const simWhere=$('#simWhere'), simHow=$('#simHow'), simDescription=$('#simDescription'), simPriceInfo=$('#simPriceInfo'), simDisclaimer=$('#simDisclaimer');
   const simMetaMode=$('#simMode');
@@ -417,13 +430,14 @@ body{overflow-x:hidden}
     footer:{title:'PRESENÇA NO RODAPÉ',where:'Durante o episódio',how:'Grupo visual · aproximadamente 5s',desc:'Até 10 empresas podem ser apresentadas em um mesmo bloco. Logo em fundo, nome e @ ficam integrados à faixa inferior.',disclaimer:'Valor fixo de R$ 49,90. A produção organiza os grupos e busca evitar concorrentes diretos no mesmo bloco.'},
     overlay:{title:'SPONSOR OVERLAY',where:'Durante o episódio',how:'Inserção visual · aproximadamente 5s',desc:'A marca aparece individualmente sobre a imagem. A faixa escolhida representa um intervalo aproximado do episódio, não um minuto garantido.',disclaimer:'A posição exata pode variar conforme a edição e a construção narrativa.'},
     audio:{title:'OVERLAY + ÁUDIO',where:'Durante o episódio',how:'Visual + chamada sonora · aproximadamente 5s',desc:'A marca entra individualmente acompanhada de uma chamada sonora curta, usada como gatilho de atenção e aprovada pela produção.',disclaimer:'O áudio só é utilizado quando o contexto sonoro comporta a modalidade.'},
+    individual:{title:'APOIADOR INDIVIDUAL',where:'Créditos',how:'Lista de nomes / @',desc:'A tela fica preta e apresenta a relação de apoiadores. O nome ou @ entra em uma rotação coletiva.',disclaimer:'Apresentação ilustrativa; posição e ordem podem variar.'},
     sponsor:{title:'EMPRESA PATROCINADORA DO EPISÓDIO',where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'A tela fica preta e apresenta a empresa como participante da sustentação comercial do episódio.',disclaimer:'Imagem, posição e composição são demonstrativas.'}
   };
   const simImages=['pov-demo-01.jpg','pov-demo-02.jpg','simulacao-cinematica.jpg','overlay-cinematic.png'];
   let simImageIndex=0;
 
   function resetOverlays(){
-    [ovFooter,ovVisual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
+    [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
   }
   function refreshPriceOptions(){
     const opts=priceOptions[mode.value];
@@ -455,7 +469,7 @@ body{overflow-x:hidden}
     resetOverlays();
     screen.classList.remove('isCredits','footer-demo','phone','price-essential','price-regular','price-valued','price-premium','price-special');
     const n=(inputName?.value||'').trim()||'SUA EMPRESA', h=(inputHandle?.value||'').trim()||'@suaempresa';
-    $('#pName')&&( $('#pName').textContent=n ); $('#pHandle')&&( $('#pHandle').textContent=h ); $('#fpName')&&( $('#fpName').textContent=n ); $('#fpHandle')&&( $('#fpHandle').textContent=h ); $('#sponsorName')&&( $('#sponsorName').textContent=n ); $('#sponsorHandle')&&( $('#sponsorHandle').textContent=h );
+    $('#pName')&&( $('#pName').textContent=n ); $('#pHandle')&&( $('#pHandle').textContent=h ); $('#fpName')&&( $('#fpName').textContent=n ); $('#fpHandle')&&( $('#fpHandle').textContent=h ); $('#indName')&&( $('#indName').textContent=h ); $('#sponsorName')&&( $('#sponsorName').textContent=n ); $('#sponsorHandle')&&( $('#sponsorHandle').textContent=h );
     previewName.textContent=cfg.title;
     simWhere&&(simWhere.textContent=cfg.where); simHow&&(simHow.textContent=cfg.how); simDescription&&(simDescription.textContent=cfg.desc); simDisclaimer&&(simDisclaimer.textContent=cfg.disclaimer);
     syncTierToMoment();
@@ -468,7 +482,7 @@ body{overflow-x:hidden}
     if(timeBadge){timeBadge.style.display=isTimed?'block':'none';timeBadge.innerHTML=isTimed?'DURAÇÃO <span>≈ 5s</span>':'';}
     if(creditClock) creditClock.style.display=isTimed?'none':'block';
     if(audioBadge) audioBadge.style.display=m==='audio'?'block':'none';
-    const disabledCredits=['sponsor'].includes(m);
+    const disabledCredits=['individual','sponsor'].includes(m);
     if(moment){moment.disabled=disabledCredits; if(!disabledCredits && !moment.value) moment.value='essential';}
     if(m==='footer'){
       screen.classList.add('footer-demo','price-fixed');
@@ -481,6 +495,8 @@ body{overflow-x:hidden}
       $('#sceneLabel').textContent=momentLabels[priceTier.value]||'FAIXA APROXIMADA';
       simFocus.style.left='2%';simFocus.style.top='3%';simFocus.style.width='58%';simFocus.style.height='22%';simFocus.style.right='auto';simFocus.style.bottom='auto';
       ovVisual.classList.add('show');
+    } else if(m==='individual'){
+      screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · CRÉDITOS';simFocus.style.left='18%';simFocus.style.right='18%';simFocus.style.top='12%';simFocus.style.bottom='12%';simFocus.style.height='auto';ovIndividual.classList.add('show');
     } else {
       screen.classList.add('isCredits');$('#sceneLabel').textContent='TELA PRETA · PÓS-CRÉDITOS';simFocus.style.left='16%';simFocus.style.right='16%';simFocus.style.top='10%';simFocus.style.bottom='14%';simFocus.style.height='auto';ovSponsor.classList.add('show');
     }
@@ -492,14 +508,14 @@ body{overflow-x:hidden}
   $$('.device').forEach(b=>b.addEventListener('click',()=>{$$('.device').forEach(x=>x.classList.remove('active'));b.classList.add('active');screen.classList.toggle('phone',b.dataset.device==='phone');}));
   $('#playDemo')?.addEventListener('click',()=>{
     updatePreview();
-    [ovFooter,ovVisual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
+    [ovFooter,ovVisual,ovIndividual,ovSponsor,simFocus].forEach(x=>x?.classList.remove('show'));
     requestAnimationFrame(()=>{
-      const target=({footer:ovFooter,overlay:ovVisual,audio:ovVisual,sponsor:ovSponsor})[mode.value];
+      const target=({footer:ovFooter,overlay:ovVisual,audio:ovVisual,individual:ovIndividual,sponsor:ovSponsor})[mode.value];
       simFocus?.classList.add('show'); target?.classList.add('show');
     });
     setTimeout(()=>{targetForMode()?.classList.remove('show');},6000);
   });
-  function targetForMode(){return ({footer:ovFooter,overlay:ovVisual,audio:ovVisual,sponsor:ovSponsor})[mode.value];}
+  function targetForMode(){return ({footer:ovFooter,overlay:ovVisual,audio:ovVisual,individual:ovIndividual,sponsor:ovSponsor})[mode.value];}
 
   window.goPreview=(key)=>{ if(mode && modes[key]){ mode.value=key; refreshPriceOptions(); updatePreview(); go('preview'); } };
 
@@ -509,15 +525,15 @@ body{overflow-x:hidden}
     if(mode && modes[key]){ mode.value=key; refreshPriceOptions(); updatePreview(); go('preview'); }
   }));
   $('#proceedFromPreview')?.addEventListener('click',()=>{
-    const map={footer:'Presença no Rodapé',overlay:'Sponsor Overlay',audio:'Overlay + Áudio',sponsor:'Empresa Patrocinadora do Episódio'};
+    const map={footer:'Presença no Rodapé',overlay:'Sponsor Overlay',audio:'Overlay + Áudio',individual:'Apoiador Individual',sponsor:'Empresa Patrocinadora do Episódio'};
     const key=mode.value, target=map[key];
-    const isPerson=false;
+    const isPerson=key==='individual';
     const rt=$('#reqType'), rm=$('#reqMode'), rp=$('#reqPriceTier'), rmm=$('#reqMoment'), rn=$('#reqName'), rh=$('#reqHandle');
     if(rt){rt.value=isPerson?'pessoa':'empresa';rt.dispatchEvent(new Event('change'));}
     setTimeout(()=>{
       if(rm&&target){rm.value=target;rm.dispatchEvent(new Event('change'));}
       if(rn)rn.value=inputName.value; if(rh)rh.value=inputHandle.value;
-      if(rp) rp.value=key==='footer'||key==='sponsor'?'Modalidade fixa':(priceTier?.options[priceTier.selectedIndex]?.text||'');
+      if(rp) rp.value=key==='footer'||key==='individual'||key==='sponsor'?'Modalidade fixa':(priceTier?.options[priceTier.selectedIndex]?.text||'');
       const mapMoment={essential:'00:30–02:00',regular:'02:00–04:00',valued:'04:00–06:30',premium:'06:30–09:00',special:'09:00–11:00'};
       if(rmm && !rmm.disabled)rmm.value=mapMoment[moment.value]||mapMoment.essential;
       updateRequestSummary();
@@ -527,8 +543,8 @@ body{overflow-x:hidden}
   refreshPriceOptions();updatePreview();
 
   // Request catalog/form
-  const prices={'Presença no Rodapé':49.9,'Sponsor Overlay':39.9,'Overlay + Áudio':49.9,'Empresa Patrocinadora do Episódio':89.9};
-  const requestOptions={empresa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio'],pessoa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio']};
+  const prices={'Presença no Rodapé':49.9,'Sponsor Overlay':39.9,'Overlay + Áudio':49.9,'Apoiador Individual':9.9,'Empresa Patrocinadora do Episódio':89.9};
+  const requestOptions={empresa:['Presença no Rodapé','Sponsor Overlay','Overlay + Áudio','Empresa Patrocinadora do Episódio'],pessoa:['Apoiador Individual']};
   const requestRanges={
     'Sponsor Overlay':['00:30–02:00 · R$ 39,90','02:00–04:00 · R$ 49,90','04:00–06:30 · R$ 59,90','06:30–09:00 · R$ 69,90','09:00–11:00 · R$ 79,90'],
     'Overlay + Áudio':['00:30–02:00 · R$ 49,90','02:00–04:00 · R$ 59,90','04:00–06:30 · R$ 69,90','06:30–09:00 · R$ 79,90','09:00–11:00 · R$ 89,90']
@@ -567,7 +583,7 @@ body{overflow-x:hidden}
   function updateSummaryAndFields(){
     if(!reqMode?.value)return;
     const m=reqMode.value;
-    const person=false;
+    const person=m==='Apoiador Individual';
     const timed=Boolean(requestRanges[m]);
     if(reqMoment){
       reqMoment.disabled=person || m==='Empresa Patrocinadora do Episódio';
@@ -677,7 +693,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const mode=$('#mode'), tier=$('#priceTier'), moment=$('#moment'), screen=$('#screen');
   const play=$('#playDemo'), simImage=$('#simImage'), inputName=$('#inputName'), inputHandle=$('#inputHandle');
   const pName=$('#pName'),pHandle=$('#pHandle'),sponsorName=$('#sponsorName'),sponsorHandle=$('#sponsorHandle');
-  const focus=$('#simFocus'), visual=$('#ovVisual'), sponsor=$('#ovSponsor');
+  const focus=$('#simFocus'), visual=$('#ovVisual'), individual=$('#ovIndividual'), sponsor=$('#ovSponsor');
   const wave1=$('#footerWave1'),wave2=$('#footerWave2');
   const timeBadge=$('#timeBadge'),creditClock=$('#creditClock'),audioBadge=$('#audioBadge');
 
@@ -692,7 +708,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const audioText={essential:'00:30–02:00 · R$ 49,90',regular:'02:00–04:00 · R$ 59,90',valued:'04:00–06:30 · R$ 69,90',premium:'06:30–09:00 · R$ 79,90',special:'09:00–11:00 · R$ 89,90'};
 
   function clearSimulation(){
-    [wave1,wave2,visual,sponsor,focus].forEach(x=>{if(x){x.classList.remove('show');}});
+    [wave1,wave2,visual,individual,sponsor,focus].forEach(x=>{if(x){x.classList.remove('show');}});
     if(screen)screen.classList.remove('isCredits','phone','price-essential','price-regular','price-valued','price-premium','price-special');
     if(audioBadge)audioBadge.style.display='none';
   }
@@ -703,6 +719,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       footer:{where:'Durante o episódio',how:'10 empresas por bloco · ~5s por exibição',desc:'Rodapé coletivo com logo/identidade, nome fantasia, @ e segmento. Um segundo bloco pode reaparecer mais adiante.',price:'R$ 49,90',ctx:'2 exibições separadas'},
       overlay:{where:'Durante o episódio',how:'Visual individual · ~5s',desc:'A marca aparece individualmente sobre a imagem. A faixa representa um intervalo aproximado do episódio.',price:tierText[tier?.value]||'R$ 39,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
       audio:{where:'Durante o episódio',how:'Visual + chamada sonora · ~5s',desc:'A marca aparece individualmente acompanhada de uma chamada sonora curta que atua como gatilho de atenção.',price:audioText[tier?.value]||'R$ 49,90',ctx:momentInfo[moment?.value]?.label||'Faixa aproximada'},
+      individual:{where:'Créditos',how:'Lista de nomes e @',desc:'Tela preta com nomes/@ em composição coletiva de créditos.',price:'R$ 9,90',ctx:'Após a história'},
       sponsor:{where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'Tela preta com apresentação institucional da empresa participante do episódio.',price:'R$ 89,90',ctx:'Após a história e créditos'}
     }[m];
     if(!info)return;
@@ -712,7 +729,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     $('#simPriceInfo')&&( $('#simPriceInfo').textContent=info.price );
     $('#simWhereLarge')&&( $('#simWhereLarge').textContent=info.where );
     $('#simPriceLarge')&&( $('#simPriceLarge').textContent=info.price );
-    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=m==='sponsor'?'Apresentação de pós-créditos':'≈ 5 segundos' );
+    $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='individual'||m==='sponsor')?'Apresentação de créditos':'≈ 5 segundos' );
     $('#simContextLarge')&&( $('#simContextLarge').textContent=info.ctx );
     $('#priceLogic')&&( $('#priceLogic').innerHTML = m==='footer' ? '<strong>Regra de preço:</strong> valor único de <strong>R$ 49,90</strong>.' : '<strong>Regra de preço:</strong> o valor acompanha a faixa/momento escolhido.' );
     return info;
@@ -751,6 +768,12 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       if(focus){focus.style.left='3%';focus.style.top='3%';focus.style.width='57%';focus.style.height='20%';focus.style.right='auto';focus.style.bottom='auto';focus.classList.add('show')}
       setTimeout(()=>visual?.classList.remove('show'),5700);
       setTimeout(()=>focus?.classList.remove('show'),5700);
+    }else if(m==='individual'){
+      screen.classList.add('isCredits');
+      if(timeBadge)timeBadge.style.display='none';
+      if(creditClock)creditClock.style.display='block';
+      individual?.classList.add('show');
+      setTimeout(()=>individual?.classList.remove('show'),6500);
     }else{
       screen.classList.add('isCredits');
       if(timeBadge)timeBadge.style.display='none';
@@ -809,9 +832,20 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     const tierEl=$('#reqPriceTier');
     const tierLabel=tierEl?.value || 'Modalidade fixa';
     const data={
-      type:req.type?.value||'empresa', mode:m, tier:tierLabel, moment:req.moment?.value||'', qty:q,
-      name:req.name?.value||'', phone:req.phone?.value||'', email:req.email?.value||'', handle:req.handle?.value||'',
-      obs:req.obs?.value||'', terms:Boolean(req.terms?.checked), rules:Boolean(req.terms?.checked), savedAt:new Date().toISOString()
+      type:req.type?.value||'empresa',
+      mode:m,
+      tier:tierLabel,
+      moment:req.moment?.value||'',
+      qty:q,
+      name:req.name?.value||'',
+      phone:req.phone?.value||'',
+      email:req.email?.value||'',
+      handle:(req.handle?.value||'').trim().toLowerCase().match(/^@?(suaempresa|seuperfil|empresaaqui|exemplo)$/)?'':(req.handle?.value||''),
+      obs:req.obs?.value||'',
+      terms:Boolean(req.terms?.checked),
+      rules:Boolean(req.terms?.checked),
+      clientRequestId:(readDraft()?.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)))),
+      savedAt:new Date().toISOString()
     };
     localStorage.setItem(draftKey,JSON.stringify(data));
   }
@@ -822,17 +856,22 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   const send=$('#sendWhatsapp');
   function buildApiPayload(){
     const modeValue=req.mode?.value||'';
-    const quantity=Math.min(10,Math.max(1,Number(req.qty?.value)||1));
+    const modeMax=req.mode?.value==='Presença no Rodapé'||req.mode?.value==='Apoiador Individual'?50:(req.mode?.value==='Empresa Patrocinadora do Episódio'?1:10);
+    const quantity=Math.min(modeMax,Math.max(1,Number(req.qty?.value)||1));
     const momentValue=req.moment?.disabled?'Definido pela produção':(req.moment?.value||'Definido pela produção');
+    const draft=readDraft()||{};
+    const id=draft.clientRequestId || (window.crypto?.randomUUID?window.crypto.randomUUID():('req-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
     return {
+      clientRequestId:id,
       name:req.name?.value.trim()||'',
+      company:(req.type?.value||'empresa')==='empresa'?(req.name?.value.trim()||''):'',
+      type:req.type?.value||'empresa',
       whatsapp:req.phone?.value||'',
       email:req.email?.value.trim()||'',
-      type:req.type?.value||'empresa',
+      profile:(()=>{const v=(req.handle?.value||'').trim(); return /^(?:@)?(?:suaempresa|seuperfil|empresaaqui|exemplo)$/i.test(v)?'':v;})(),
       modality:modeValue,
       moment:momentValue,
       quantity:quantity,
-      profile:(()=>{const v=(req.handle?.value||'').trim(); return /^(?:@)?(?:suaempresa|seuperfil|empresaaqui|exemplo)$/i.test(v)?'':v;})(),
       observation:req.obs?.value.trim()||'',
       termsAccepted:Boolean(req.terms?.checked),
       rulesAccepted:Boolean(req.terms?.checked)
@@ -912,7 +951,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       await new Promise(r=>setTimeout(r,250));
       setSubmissionStatus('3/4','Registrando sua solicitação','Os dados estão sendo enviados para o sistema DOOX.');
       registered=await registerInSheets(apiPayload);
-      setSubmissionStatus('4/4','Solicitação registrada ✓','Código '+(registered.code||'DOOX')+' confirmado. Valor oficial: '+(registered.valueFormatted||'calculado pelo DOOX')+'. Comprovante disponível abaixo.');
+      setSubmissionStatus('4/4','Solicitação registrada ✓','Código '+(registered.code||'DOOX')+' confirmado. Preparando o atendimento.');
     }catch(err){
       console.error(err);
       setSubmissionStatus('ERRO','Não foi possível registrar a solicitação',err&&err.message?err.message:'Verifique sua conexão e tente novamente. Nenhum atendimento foi iniciado.');
@@ -937,10 +976,8 @@ Obrigado por participar do universo HOCCO.`;
 
     // Mostra SEMPRE uma saída manual. Isso evita que o cliente fique preso caso
     // o Android/navegador bloqueie a navegação automática após o fetch assíncrono.
-    setSubmissionStatus('✓','Solicitação registrada','Sua solicitação foi registrada. Abra o comprovante ou continue no WhatsApp para finalizar a participação.');
-    const receiptWrap=document.getElementById('receiptWrap');
-    const receiptBtn=document.getElementById('receiptBtn');
-    if(receiptBtn && registered.receiptUrl){ receiptBtn.href=registered.receiptUrl; if(receiptWrap)receiptWrap.style.display='block'; }
+    setSubmissionStatus('✓','Solicitação registrada','Sua solicitação foi registrada. O acompanhamento e o pagamento, quando liberado pela análise, ficam vinculados a um acesso privado.');
+    if(typeof window.DOIX_showOrderPortal==='function'){ window.DOIX_showOrderPortal(registered); }
     const finalWrap=document.getElementById('whatsappFinalizeWrap');
     const finalBtn=document.getElementById('whatsappFinalize');
     if(finalWrap) finalWrap.style.display='block';
@@ -949,6 +986,10 @@ Obrigado por participar do universo HOCCO.`;
       finalBtn.focus({preventScroll:true});
     }
 
+    // Tentativa automática. Se o navegador impedir, o botão acima continua disponível.
+    setTimeout(()=>{
+      try{ window.location.assign(waUrl); }catch(_){ }
+    },300);
   },true);
 
   // ----- Chat assistant: appears only after the second WhatsApp submission -----
@@ -963,7 +1004,7 @@ Obrigado por participar do universo HOCCO.`;
       return;
     }
     body.innerHTML=`<div class="chatBubble">Olá. Eu sou <b>Alex Hocc</b>. Encontrei uma pré-solicitação salva neste navegador.</div>
-<div class="chatCard"><strong>${d.mode||'Participação'}</strong><div class="chatMeta">Tipo: ${d.type==='pessoa'?'Pessoa':'Empresa'}<br>Faixa/preço: ${d.tier||'Modalidade fixa'}<br>Momento: ${d.moment||'Definido pela produção'}<br>Quantidade: ${d.qty||1}<br>Nome/Empresa: ${d.name||'Não informado'}<br>E-mail: ${d.email||'Não informado'}<br>WhatsApp: ${d.phone||'Não informado'}<br>@/Perfil: ${d.handle||'Não informado'}</div><div class="chatSaved">Pré-solicitação local. O registro oficial acontece somente após o envio ao sistema DOOX.</div></div>
+<div class="chatCard"><strong>${d.mode||'Participação'}</strong><div class="chatMeta">Tipo: ${d.type==='pessoa'?'Pessoa':'Empresa'}<br>Faixa/preço: ${d.tier||'Modalidade fixa'}<br>Momento: ${d.moment||'Definido pela produção'}<br>Quantidade: ${d.qty||1}<br>Nome/Empresa: ${d.name||'Não informado'}<br>E-mail: ${d.email||'Não informado'}<br>WhatsApp: ${d.phone||'Não informado'}<br>@/Perfil: ${d.handle||'Não informado'}</div><div class="chatSaved">Salvo neste navegador. Sem banco de dados.</div></div>
 <div class="chatBubble">Você pode confirmar esta participação ou editar os dados antes de eu preparar um novo envio.</div>
 <div class="chatActions"><button class="chatBtn secondary" id="chatEdit" type="button">Editar participação</button><button class="chatBtn primary" id="chatConfirm" type="button">Confirmar e enviar</button></div>`;
     $('#chatEdit')?.addEventListener('click',()=>{syncDraftToRequest();showView('request');panel?.classList.remove('open')});
@@ -995,9 +1036,127 @@ Obrigado por participar do universo HOCCO.`;
 </script>
 
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try { const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); } catch (_) {}
+  });
+}
+</script>
 
-<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div><div id="receiptWrap" style="display:none;margin-top:12px"><a id="receiptBtn" class="btn" style="width:100%;max-width:420px;text-align:center;display:block" target="_blank" rel="noopener">ABRIR COMPROVANTE DA SOLICITAÇÃO ↗</a><p style="margin:10px 0 0;font-size:12px;color:#777">Comprovante de registro. Não é comprovante de pagamento nem garantia de publicação.</p></div></div></div>
+
+<div class="paymentOverlay" id="paymentOverlay" aria-hidden="true">
+  <div class="paymentCard" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+    <button class="paymentClose" id="paymentClose" type="button" aria-label="Fechar">×</button>
+    <div class="paymentEyebrow">DOOX · PAGAMENTO</div>
+    <h3 id="paymentTitle">Pagamento da participação</h3>
+    <p class="muted" id="paymentIntro">Quando o pedido estiver aprovado, o pagamento será liberado aqui com o valor exato calculado pelo sistema DOOX.</p>
+    <div class="paymentAmount"><div><small>Pedido</small><div id="paymentCode">—</div></div><strong id="paymentAmount">R$ 0,00</strong></div>
+    <div class="paymentQr" id="paymentQr"><span class="muted">Aguardando liberação do pagamento.</span></div>
+    <div class="pixBox"><label>PIX COPIA E COLA</label><div class="pixRow"><input id="pixPayload" readonly value="" aria-label="Pix copia e cola"><button class="pixCopy" id="pixCopy" type="button">COPIAR</button></div></div>
+    <div class="paymentActions"><button class="dark" id="paymentReported" type="button">JÁ REALIZEI O PAGAMENTO</button><button class="light" id="openTracking" type="button">ACOMPANHAR PEDIDO</button></div>
+    <div class="trackingCard" id="trackingCard"><div class="portalHeader"><b>Status do pedido</b><span class="portalCode" id="trackingStatus">—</span></div><div class="statusSteps" id="statusSteps"></div><a class="trackingLink" id="trackingLink" href="#"></a></div>
+  </div>
+</div>
+<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div></div></div>
 <div class="installToast" id="installToast">No Chrome/Android/iOS compatível com instalação automática foi detectado. Em navegadores suportados, use o menu "Instalar app".</div>
 
+
+
+<script>
+(function(){
+  const overlay=document.getElementById('paymentOverlay');
+  const close=document.getElementById('paymentClose');
+  const qr=document.getElementById('paymentQr');
+  const payload=document.getElementById('pixPayload');
+  const amount=document.getElementById('paymentAmount');
+  const code=document.getElementById('paymentCode');
+  const reported=document.getElementById('paymentReported');
+  const tracking=document.getElementById('trackingCard');
+  const trackingStatus=document.getElementById('trackingStatus');
+  const trackingSteps=document.getElementById('statusSteps');
+  const trackingLink=document.getElementById('trackingLink');
+  let currentToken='';
+
+  function show(){overlay.classList.add('show');overlay.setAttribute('aria-hidden','false')}
+  function hide(){overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true')}
+  close?.addEventListener('click',hide);
+  overlay?.addEventListener('click',e=>{if(e.target===overlay)hide()});
+
+  function trackingUrl(token){return location.origin+'/?acompanhamento='+encodeURIComponent(token)}
+  function renderSteps(steps){
+    trackingSteps.innerHTML=(steps||[]).map(x=>`<div class="statusStep ${x.state==='completed'?'done':''} ${x.state==='current'?'current':''}"><i></i><span>${x.label}</span></div>`).join('');
+  }
+  function renderPayment(data){
+    if(!data||!data.payment)return;
+    currentToken=data.trackingToken||currentToken;
+    code.textContent=data.code||'—';
+    amount.textContent=data.payment.amountLabel||'—';
+    payload.value=data.payment.pixPayload||'';
+    qr.innerHTML='';
+    if(data.payment.available && data.payment.pixPayload && window.QRCode){
+      new QRCode(qr,{text:data.payment.pixPayload,width:220,height:220,colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    } else {
+      qr.innerHTML='<span class="muted">O pagamento ainda não foi liberado pela DOOX.</span>';
+    }
+    reported.disabled=!data.payment.available;
+    reported.style.opacity=data.payment.available?'':'0.5';
+    trackingStatus.textContent=data.statusLabel||data.status||'—';
+    renderSteps(data.steps);
+    if(currentToken){trackingLink.href=trackingUrl(currentToken);trackingLink.textContent='Abrir página privada de acompanhamento ↗';}
+  }
+  async function loadToken(token,open=true){
+    if(!token)return;
+    currentToken=token;
+    try{
+      const r=await fetch('/api/request?action=pedido&token='+encodeURIComponent(token),{method:'GET',headers:{'Accept':'application/json'}});
+      const data=await r.json();
+      if(!data.ok)throw new Error(data.error||'Pedido não encontrado.');
+      renderPayment(data);
+      tracking.classList.add('show');
+      if(open)show();
+    }catch(e){
+      trackingStatus.textContent='Não localizado';
+      trackingSteps.innerHTML='<div class="statusStep current"><i></i><span>Não foi possível carregar este pedido.</span></div>';
+      if(open)show();
+    }
+  }
+  document.getElementById('pixCopy')?.addEventListener('click',async()=>{
+    if(!payload.value)return;
+    try{await navigator.clipboard.writeText(payload.value);document.getElementById('pixCopy').textContent='COPIADO ✓';setTimeout(()=>document.getElementById('pixCopy').textContent='COPIAR',1800)}catch(_){payload.select();document.execCommand('copy')}
+  });
+  document.getElementById('openTracking')?.addEventListener('click',()=>{tracking.classList.add('show');if(currentToken)loadToken(currentToken,false)});
+  reported?.addEventListener('click',async()=>{
+    if(!currentToken)return;
+    reported.disabled=true;
+    try{
+      const r=await fetch('/api/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'informarPagamento',token:currentToken})});
+      const data=await r.json();
+      if(!data.ok)throw new Error(data.error||'Não foi possível informar o pagamento.');
+      reported.textContent='PAGAMENTO INFORMADO ✓';
+      alert('Pagamento informado. A DOOX fará a conferência manual.');
+      await loadToken(currentToken,false);
+    }catch(e){alert(e.message||'Não foi possível informar o pagamento.');reported.disabled=false}
+  });
+
+  // Após registrar, guarda o token e oferece acompanhamento. O pagamento só aparece quando o backend liberar.
+  window.DOIX_showOrderPortal=function(data){
+    if(!data?.trackingToken)return;
+    currentToken=data.trackingToken;
+    loadToken(currentToken,true);
+  };
+
+  // Integração com o resultado do formulário existente.
+  const oldSetStatus=window.setSubmissionStatus;
+  if(typeof oldSetStatus==='function'){}
+
+  // URL privada de acompanhamento: ?acompanhamento=TOKEN
+  const token=new URLSearchParams(location.search).get('acompanhamento');
+  if(token){setTimeout(()=>loadToken(token,true),120)}
+
+  // Captura o retorno do registro sem substituir o controlador existente.
+  const observer=new MutationObserver(()=>{});
+})();
+</script>
 
 </body></html>

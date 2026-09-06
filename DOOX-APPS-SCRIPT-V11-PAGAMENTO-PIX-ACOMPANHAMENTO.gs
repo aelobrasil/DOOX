@@ -1,4 +1,4 @@
-﻿/*****
+/*****
  * DOOX / HOCCO — Apps Script — MVP OPERACIONAL
  *
  * OBJETIVO
@@ -35,63 +35,52 @@ const CONFIG = {
   // Limite padrão
   MAX_QTY_DEFAULT: 50,
 
-  // MODALIDADES + PREÇOS
+  // MODALIDADES + PREÇOS — FONTE ÚNICA DE VERDADE
   MODALIDADES: {
 
     'Presença no Rodapé': {
-      min: 1,
-      max: 50,
-      pricing: {
-        flat: 49.90
-      }
+      min: 1, max: 50, pricing: { flat: 49.90 }
     },
 
     'Sponsor Overlay': {
-      min: 1,
-      max: 50,
-      pricing: {
-        tiers: [
-          { max: 10, unit: 39.90, label: '1–10' },
-          { max: 20, unit: 49.90, label: '11–20' },
-          { max: 30, unit: 59.90, label: '21–30' },
-          { max: 40, unit: 69.90, label: '31–40' },
-          { max: 50, unit: 79.90, label: '41–50' }
+      min: 1, max: 10, pricing: {
+        ranges: [
+          { moment: '00:30–02:00', unit: 39.90, label: '00:30–02:00 · R$ 39,90' },
+          { moment: '02:00–04:00', unit: 49.90, label: '02:00–04:00 · R$ 49,90' },
+          { moment: '04:00–06:30', unit: 59.90, label: '04:00–06:30 · R$ 59,90' },
+          { moment: '06:30–09:00', unit: 69.90, label: '06:30–09:00 · R$ 69,90' },
+          { moment: '09:00–11:00', unit: 79.90, label: '09:00–11:00 · R$ 79,90' }
         ]
       }
     },
 
     'Overlay + Áudio': {
-      min: 1,
-      max: 50,
-      pricing: {
-        tiers: [
-          { max: 10, unit: 49.90, label: '1–10' },
-          { max: 20, unit: 59.90, label: '11–20' },
-          { max: 30, unit: 69.90, label: '21–30' },
-          { max: 40, unit: 79.90, label: '31–40' },
-          { max: 50, unit: 89.90, label: '41–50' }
+      min: 1, max: 10, pricing: {
+        ranges: [
+          { moment: '00:30–02:00', unit: 49.90, label: '00:30–02:00 · R$ 49,90' },
+          { moment: '02:00–04:00', unit: 59.90, label: '02:00–04:00 · R$ 59,90' },
+          { moment: '04:00–06:30', unit: 69.90, label: '04:00–06:30 · R$ 69,90' },
+          { moment: '06:30–09:00', unit: 79.90, label: '06:30–09:00 · R$ 79,90' },
+          { moment: '09:00–11:00', unit: 89.90, label: '09:00–11:00 · R$ 89,90' }
         ]
       }
     },
 
     'Apoiador Individual': {
-      min: 1,
-      max: 50,
-      pricing: {
-        flat: 9.90
-      }
+      min: 1, max: 50, pricing: { flat: 9.90 }
     },
 
     'Empresa Patrocinadora do Episódio': {
-      min: 1,
-      max: 1,
-      pricing: {
-        flat: 89.90
-      }
+      min: 1, max: 1, pricing: { flat: 89.90 }
     }
-  }
-};
+  },
 
+  // PIX — chave aleatória informada pelo responsável da operação.
+  PIX_KEY: 'c9316176-6f92-413e-9209-63ae6f661ba9',
+  PIX_MERCHANT_NAME: 'DOOX STUDIOS',
+  PIX_MERCHANT_CITY: 'LENCOIS PAULISTA',
+  PIX_TXID: '***'
+};
 
 /*************************************************
  * ESTRUTURA DAS ABAS
@@ -123,7 +112,9 @@ const SHEETS = {
       'Criado em',
       'Atualizado em',
       'Reserva',
-      'Client Request ID'
+      'Client Request ID',
+      'Token de Acompanhamento',
+      'Última Notificação'
     ]
   },
 
@@ -255,6 +246,19 @@ function doGet(e) {
     }
 
 
+    if (action === 'pedido') {
+
+      const token = String(params.token || '').trim();
+
+      if (!token) {
+        throw new Error('Token de acompanhamento não informado.');
+      }
+
+      return json_(getPublicOrderStatus_(token));
+
+    }
+
+
     if (action === 'contract') {
 
       return json_({
@@ -263,7 +267,15 @@ function doGet(e) {
 
         acceptedPostActions: [
           'registerRequest',
-          'testSpreadsheet'
+          'testSpreadsheet',
+          'informarPagamento'
+        ],
+
+        acceptedGetActions: [
+          'health',
+          'testSpreadsheet',
+          'contract',
+          'pedido'
         ],
 
         fields: [
@@ -279,7 +291,8 @@ function doGet(e) {
           'quantity',
           'observation',
           'termsAccepted',
-          'rulesAccepted'
+          'rulesAccepted',
+          'trackingToken'
         ]
       });
 
@@ -336,12 +349,12 @@ function doPost(e) {
     }
 
 
+    if (action === 'informarPagamento') {
+      return json_(informarPagamento_(body));
+    }
+
     if (action !== 'registerRequest') {
-
-      throw new Error(
-        'Ação não reconhecida: ' + action
-      );
-
+      throw new Error('Ação não reconhecida: ' + action);
     }
 
 
@@ -374,6 +387,28 @@ function doPost(e) {
 /*************************************************
  * REGISTRO DE PEDIDO
  *************************************************/
+
+function informarPagamento_(raw) {
+  const token = String(raw.token || '').trim();
+  if (!token) throw new Error('Token de acompanhamento não informado.');
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
+  const pedido = findPedidoByTrackingToken_(ss, token);
+  if (!pedido) throw new Error('Pedido não encontrado ou token inválido.');
+  const status = String(pedido.status || '').toUpperCase();
+  if (status !== 'AGUARDANDO PAGAMENTO') {
+    return { ok: true, code: pedido.code, status: status, message: 'O pagamento ainda não está disponível para este pedido.' };
+  }
+  const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+  const found = findRowByFirstColumn_(sheet, pedido.code);
+  if (!found) throw new Error('Registro financeiro não encontrado.');
+  const map = headerMap_(sheet);
+  sheet.getRange(found.row, map['Status']).setValue('PAGAMENTO INFORMADO');
+  sheet.getRange(found.row, map['Observação']).setValue('Cliente informou pagamento pelo portal. Aguardando conferência manual.');
+  sheet.getRange(found.row, map['Atualizado em']).setValue(new Date());
+  return { ok: true, code: pedido.code, status: 'AGUARDANDO PAGAMENTO', paymentReported: true, message: 'Pagamento informado. A DOOX fará a conferência.' };
+}
+
 
 function registerRequest_(raw) {
 
@@ -422,6 +457,7 @@ function registerRequest_(raw) {
   const price =
     getPriceInfo_(
       r.modality,
+      r.moment,
       r.quantity
     );
 
@@ -441,6 +477,12 @@ function registerRequest_(raw) {
 
   const now =
     new Date();
+
+  // Token privado e aleatório usado pelo portal do cliente.
+  // O código DOOX continua sendo a identificação comercial;
+  // o token funciona como chave de acesso ao acompanhamento.
+  const trackingToken =
+    createTrackingToken_();
 
 
   const pedidoSheet =
@@ -623,6 +665,20 @@ function registerRequest_(raw) {
     r.clientRequestId
   );
 
+  put_(
+    row,
+    map,
+    'Token de Acompanhamento',
+    trackingToken
+  );
+
+  put_(
+    row,
+    map,
+    'Última Notificação',
+    ''
+  );
+
 
   pedidoSheet.appendRow(row);
 
@@ -710,6 +766,12 @@ function registerRequest_(raw) {
 
     reservation:
       'NÃO RESERVADO',
+
+    trackingToken:
+      trackingToken,
+
+    trackingAction:
+      'pedido',
 
     observation:
       r.observation,
@@ -924,19 +986,17 @@ function validateRequest_(r) {
     r.quantity < cfg.min ||
     r.quantity > cfg.max
   ) {
-
     throw new Error(
-
-      'Quantidade inválida para "' +
-      r.modality +
-      '". Limite: ' +
-      cfg.min +
-      ' a ' +
-      cfg.max +
-      '.'
-
+      'Quantidade inválida para "' + r.modality +
+      '". Limite: ' + cfg.min + ' a ' + cfg.max + '.'
     );
+  }
 
+  if (cfg.pricing && cfg.pricing.ranges) {
+    const valid = cfg.pricing.ranges.some(x => x.moment === r.moment);
+    if (!valid) {
+      throw new Error('Faixa/momento inválido para ' + r.modality + '.');
+    }
   }
 
 }
@@ -946,100 +1006,115 @@ function validateRequest_(r) {
  * PREÇOS
  *************************************************/
 
-function getPriceInfo_(
-  modality,
-  quantity
-) {
-
-  const cfg =
-    CONFIG.MODALIDADES[
-      modality
-    ];
-
-
-  if (!cfg) {
-
-    throw new Error(
-      'Modalidade sem tabela de preço: ' +
-      modality
-    );
-
-  }
-
+function getPriceInfo_(modality, moment, quantity) {
+  const cfg = CONFIG.MODALIDADES[modality];
+  if (!cfg) throw new Error('Modalidade sem tabela de preço: ' + modality);
 
   let unitPrice = null;
+  let tierLabel = 'Única';
+  let normalizedMoment = String(moment || '').trim();
 
-  let tierLabel =
-    'Única';
-
-
-  if (
-    cfg.pricing.flat !== undefined
-  ) {
-
-    unitPrice =
-      Number(
-        cfg.pricing.flat
-      );
-
+  if (cfg.pricing.flat !== undefined) {
+    unitPrice = Number(cfg.pricing.flat);
+  } else if (cfg.pricing.ranges) {
+    const range = cfg.pricing.ranges.find(x => x.moment === normalizedMoment);
+    if (!range) throw new Error('Momento/faixa não encontrado para ' + modality + '.');
+    unitPrice = Number(range.unit);
+    tierLabel = range.label;
+  } else {
+    throw new Error('Configuração de preço inválida para ' + modality + '.');
   }
-
-  else if (
-    cfg.pricing.tiers
-  ) {
-
-    const tier =
-      cfg.pricing.tiers.find(
-        t =>
-          quantity <= t.max
-      );
-
-
-    if (!tier) {
-
-      throw new Error(
-        'Não foi encontrada faixa de preço para a quantidade informada.'
-      );
-
-    }
-
-
-    unitPrice =
-      Number(
-        tier.unit
-      );
-
-
-    tierLabel =
-      tier.label;
-
-  }
-
 
   return {
-
-    unitPrice:
-
-      unitPrice,
-
-    quantity:
-
-      quantity,
-
-    total:
-
-      round2_(
-        unitPrice *
-        quantity
-      ),
-
-    tierLabel:
-
-      tierLabel
-
+    unitPrice: unitPrice,
+    quantity: quantity,
+    total: round2_(unitPrice * quantity),
+    tierLabel: tierLabel,
+    moment: normalizedMoment
   };
-
 }
+
+function normalizePixText_(value, maxLen) {
+  return String(value || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9 .\-]/g, '')
+    .trim().substring(0, maxLen);
+}
+
+function crc16Ccitt_(text) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < text.length; i++) {
+    crc ^= text.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+function pixField_(id, value) {
+  const v = String(value || '');
+  return id + String(v.length).padStart(2, '0') + v;
+}
+
+function buildPixPayload_(amount, code) {
+  const merchantName = normalizePixText_(CONFIG.PIX_MERCHANT_NAME, 25);
+  const merchantCity = normalizePixText_(CONFIG.PIX_MERCHANT_CITY, 15);
+  const key = String(CONFIG.PIX_KEY || '').trim();
+  const txid = String(CONFIG.PIX_TXID || '***').trim().substring(0, 25);
+  const amt = Number(amount).toFixed(2);
+  const accountInfo = pixField_('00', 'BR.GOV.BCB.PIX') + pixField_('01', key);
+  const payloadNoCrc =
+    pixField_('00', '01') +
+    pixField_('26', accountInfo) +
+    pixField_('52', '0000') +
+    pixField_('53', '986') +
+    pixField_('54', amt) +
+    pixField_('58', 'BR') +
+    pixField_('59', merchantName) +
+    pixField_('60', merchantCity) +
+    pixField_('62', pixField_('05', txid)) +
+    '6304';
+  return payloadNoCrc + crc16Ccitt_(payloadNoCrc);
+}
+
+function getPaymentRecord_(ss, code) {
+  const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+  const last = sheet.getLastRow();
+  if (last < 2) return null;
+  const vals = sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).getValues();
+  for (let i = vals.length - 1; i >= 0; i--) {
+    if (String(vals[i][0] || '').trim() === String(code || '').trim()) {
+      return { row: i + 2, status: String(vals[i][5] || ''), updatedAt: vals[i][8] || '' };
+    }
+  }
+  return null;
+}
+
+function buildPublicPayment_(ss, pedido) {
+  const status = String(pedido.status || '').toUpperCase();
+  const payment = getPaymentRecord_(ss, pedido.code);
+  const result = {
+    available: status === 'AGUARDANDO PAGAMENTO',
+    status: payment ? payment.status : '',
+    amount: null,
+    amountLabel: '',
+    pixKey: CONFIG.PIX_KEY,
+    pixPayload: '',
+    orderCode: pedido.code
+  };
+  if (status !== 'AGUARDANDO PAGAMENTO') return result;
+
+  const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const map = headerMap_(sheet);
+  const row = sheet.getRange(pedido.row, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const total = Number(row[map['Valor total'] - 1] || 0);
+  result.amount = round2_(total);
+  result.amountLabel = 'R$ ' + result.amount.toFixed(2).replace('.', ',');
+  result.pixPayload = buildPixPayload_(result.amount, pedido.code);
+  return result;
+}
+
 
 
 /*************************************************
@@ -2795,14 +2870,29 @@ function atualizarStatusPedido_(
     );
 
 
+  const updatedAt = new Date();
+
   sheet
     .getRange(
       found.row,
       map['Atualizado em']
     )
     .setValue(
-      new Date()
+      updatedAt
     );
+
+  // Marca a mudança para a futura camada de notificações.
+  // Não envia WhatsApp/e-mail nesta primeira etapa.
+  if (map['Última Notificação']) {
+    sheet
+      .getRange(
+        found.row,
+        map['Última Notificação']
+      )
+      .setValue(
+        updatedAt
+      );
+  }
 
 
   return {
@@ -4015,6 +4105,188 @@ function testarPedidoMVP() {
       true
 
   });
+
+}
+
+
+/*************************************************
+ * ACOMPANHAMENTO DO CLIENTE
+ *
+ * O portal consulta o pedido por um token privado.
+ * Nenhuma lista de clientes ou dado interno é exposta.
+ *************************************************/
+
+function createTrackingToken_() {
+
+  return Utilities.getUuid()
+    .replace(/-/g, '')
+    .substring(0, 32);
+
+}
+
+
+function getPublicOrderStatus_(token) {
+
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
+
+  const pedido =
+    findPedidoByTrackingToken_(
+      ss,
+      token
+    );
+
+  if (!pedido) {
+    return {
+      ok: false,
+      error: 'Pedido não encontrado ou token inválido.'
+    };
+  }
+
+  const status = String(
+    pedido.status || 'SOLICITADO'
+  ).trim().toUpperCase();
+
+  return {
+    ok: true,
+    code: pedido.code,
+    modality: pedido.modality,
+    quantity: pedido.quantity,
+    episode: pedido.episode,
+    status: status,
+    statusLabel: publicStatusLabel_(status),
+    updatedAt: pedido.updatedAt,
+    steps: publicStatusSteps_(status),
+    payment: buildPublicPayment_(ss, pedido)
+  };
+
+}
+
+
+function publicStatusSteps_(currentStatus) {
+
+  const flow = [
+    ['SOLICITADO', 'Solicitação recebida'],
+    ['EM ANÁLISE', 'Em análise'],
+    ['AGUARDANDO PAGAMENTO', 'Aguardando pagamento'],
+    ['PAGAMENTO RECEBIDO', 'Pagamento recebido'],
+    ['MATERIAL PENDENTE', 'Material pendente'],
+    ['MATERIAL RECEBIDO', 'Material recebido'],
+    ['EM PRODUÇÃO', 'Em produção'],
+    ['PROGRAMADO', 'Programado'],
+    ['PUBLICADO', 'Veiculado'],
+    ['FINALIZADO', 'Finalizado']
+  ];
+
+  const exceptional = [
+    'REJEITADO',
+    'CANCELADO',
+    'ARQUIVADO'
+  ];
+
+  const currentIndex = flow.findIndex(
+    item => item[0] === currentStatus
+  );
+
+  if (exceptional.indexOf(currentStatus) >= 0) {
+    return flow.map(item => ({
+      status: item[0],
+      label: item[1],
+      state: 'inactive'
+    })).concat([{ 
+      status: currentStatus,
+      label: publicStatusLabel_(currentStatus),
+      state: 'current'
+    }]);
+  }
+
+  return flow.map((item, index) => ({
+    status: item[0],
+    label: item[1],
+    state:
+      index < currentIndex
+        ? 'completed'
+        : index === currentIndex
+          ? 'current'
+          : 'pending'
+  }));
+
+}
+
+
+function publicStatusLabel_(status) {
+
+  const labels = {
+    'SOLICITADO': 'Solicitação recebida',
+    'EM ANÁLISE': 'Em análise',
+    'AGUARDANDO PAGAMENTO': 'Aguardando pagamento',
+    'PAGAMENTO RECEBIDO': 'Pagamento recebido',
+    'MATERIAL PENDENTE': 'Material pendente',
+    'MATERIAL RECEBIDO': 'Material recebido',
+    'EM PRODUÇÃO': 'Em produção',
+    'PROGRAMADO': 'Programado',
+    'PUBLICADO': 'Veiculado',
+    'FINALIZADO': 'Finalizado',
+    'REJEITADO': 'Solicitação não aprovada',
+    'CANCELADO': 'Solicitação cancelada',
+    'ARQUIVADO': 'Registro arquivado'
+  };
+
+  return labels[status] || status;
+
+}
+
+
+function findPedidoByTrackingToken_(ss, token) {
+
+  const sheet =
+    getSheet_(ss, SHEETS.PEDIDOS.name);
+
+  const map = headerMap_(sheet);
+  const lastRow = sheet.getLastRow();
+
+  if (
+    lastRow < 2 ||
+    !map['Token de Acompanhamento']
+  ) {
+    return null;
+  }
+
+  const values = sheet.getRange(
+    2,
+    1,
+    lastRow - 1,
+    sheet.getLastColumn()
+  ).getValues();
+
+  const wanted = String(token || '').trim();
+
+  for (let i = 0; i < values.length; i++) {
+
+    const current = String(
+      values[i][
+        map['Token de Acompanhamento'] - 1
+      ] || ''
+    ).trim();
+
+    if (current === wanted) {
+
+      const row = i + 2;
+
+      return {
+        row: row,
+        code: String(values[i][map['Código DOOX'] - 1] || ''),
+        modality: String(values[i][map['Modalidade'] - 1] || ''),
+        quantity: Number(values[i][map['Quantidade'] - 1] || 0),
+        episode: String(values[i][map['Episódio'] - 1] || ''),
+        status: String(values[i][map['Status'] - 1] || ''),
+        updatedAt: values[i][map['Atualizado em'] - 1] || ''
+      };
+
+    }
+  }
+
+  return null;
 
 }
 

@@ -1,13 +1,25 @@
-# DOOX / HOCCO — integração oficial
+# DOOX HOCCO — Integração Google Sheets
 
-Fonte de verdade do formulário público: `index.html`.
+Esta versão já está integrada ao endpoint do Google Apps Script.
 
-Proxy Vercel de solicitação: `/api/request.js`.
-Proxy Vercel de comprovante: `/api/receipt.js`.
-Backend oficial: Apps Script publicado como Web App.
+Fluxo:
 
-O navegador envia apenas os campos públicos do formulário. Código DOOX, ID Cliente, data/hora, status, faixa/preço calculados, controle mensal e arquivos são criados pelo backend.
+1. O cliente preenche a solicitação.
+2. O site envia a solicitação ao Apps Script.
+3. O Apps Script registra o pedido na aba `PEDIDOS`.
+4. O servidor calcula/prevalece sobre faixa e preço.
+5. O site consulta o registro pelo `Client Request ID`.
+6. O código DOOX retornado é incluído na mensagem do WhatsApp.
+7. O WhatsApp só é aberto depois da confirmação do registro.
 
-O site nunca envia episódio. O episódio é definido pela produção.
+## Antes de publicar
 
-O comprovante é criado pelo Apps Script e entregue ao cliente pelo endpoint `/api/receipt?token=...`, sem tornar a pasta do Drive pública.
+No Google Apps Script, substitua o conteúdo por `DOOX-APPS-SCRIPT-Code.gs`, salve e faça:
+
+Implantar → Gerenciar implantações → Editar → Nova versão → Implantar.
+
+O endpoint configurado no site é:
+
+https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec
+
+Depois teste uma solicitação real de ponta a ponta.
