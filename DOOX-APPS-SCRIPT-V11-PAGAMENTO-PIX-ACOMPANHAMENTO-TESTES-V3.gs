@@ -4057,46 +4057,48 @@ function testarSistema() {
  * TESTE DE PEDIDO
  *************************************************/
 
-function testarPedidoMVP() {
+function TESTE_PEDIDO_V11() {
 
-  return registerRequest_({
+  const clientRequestId =
+    'TESTE-V11-' + Date.now();
+
+  const result = registerRequest_({
 
     action:
       'registerRequest',
 
     clientRequestId:
-      'TESTE-' +
-      Utilities.getUuid(),
+      clientRequestId,
 
     name:
-      'Cliente Teste DOOX',
+      'TESTE DOOX V11',
 
     company:
-      'Empresa Teste',
+      'TESTE DOOX V11',
 
     type:
       'Empresa',
 
     whatsapp:
-      '11999999999',
+      '14999999999',
 
     email:
-      'teste@doox.local',
+      'teste-v11@doox.local',
 
     profile:
-      '@doox_teste',
+      '@teste.doox.v11',
 
     modality:
       'Sponsor Overlay',
 
     moment:
-      '00:30–02:00',
+      '04:00–06:30',
 
     quantity:
       1,
 
     observation:
-      'TESTE — esta observação deve aparecer na coluna Observações.',
+      'TESTE INTERNO V11 — pode ser excluído pela função LIMPAR_TESTES_V11.',
 
     termsAccepted:
       true,
@@ -4105,6 +4107,266 @@ function testarPedidoMVP() {
       true
 
   });
+
+  Logger.log('TESTE_PEDIDO_V11:');
+  Logger.log(JSON.stringify(result, null, 2));
+
+  return result;
+
+}
+
+
+/*************************************************
+ * TESTE COMPLETO DE ACOMPANHAMENTO V11
+ * Cria um pedido de teste e percorre:
+ * SOLICITADO -> AGUARDANDO PAGAMENTO
+ * -> consulta pública -> informar pagamento
+ * -> confirmação manual -> PAGAMENTO RECEBIDO.
+ * Não usa doPost(e), portanto pode ser executado
+ * diretamente pelo editor do Apps Script.
+ *************************************************/
+function TESTE_ACOMPANHAMENTO_V11() {
+
+  const clientRequestId = 'TESTE-V11-ACOMP-' + Date.now();
+
+  const pedido = registerRequest_({
+    action: 'registerRequest',
+    clientRequestId: clientRequestId,
+    name: 'TESTE ACOMPANHAMENTO DOOX V11',
+    company: 'TESTE ACOMPANHAMENTO DOOX V11',
+    type: 'Empresa',
+    whatsapp: '14999999999',
+    email: 'teste-acomp-v11@doox.local',
+    profile: '@teste.acomp.v11',
+    modality: 'Sponsor Overlay',
+    moment: '04:00–06:30',
+    quantity: 1,
+    observation: 'TESTE INTERNO V11 — acompanhamento e pagamento.',
+    termsAccepted: true,
+    rulesAccepted: true
+  });
+
+  Logger.log('1) PEDIDO CRIADO:');
+  Logger.log(JSON.stringify(pedido, null, 2));
+
+  const ss = getSpreadsheet_();
+
+  // 1. Consulta pública enquanto SOLICITADO.
+  const antes = getPublicOrderStatus_(pedido.trackingToken);
+  Logger.log('2) ACOMPANHAMENTO — antes de liberar pagamento:');
+  Logger.log(JSON.stringify(antes, null, 2));
+
+  if (!antes.ok) throw new Error('Falha na consulta inicial do acompanhamento.');
+  if (antes.status !== 'SOLICITADO') {
+    throw new Error('Status inicial inesperado: ' + antes.status);
+  }
+  if (antes.payment.available !== false) {
+    throw new Error('Pagamento não deveria estar disponível em SOLICITADO.');
+  }
+
+  // 2. Operador libera o pagamento.
+  const liberado = atualizarStatusPedido_(
+    ss,
+    pedido.code,
+    'AGUARDANDO PAGAMENTO'
+  );
+  Logger.log('3) STATUS ALTERADO PARA AGUARDANDO PAGAMENTO:');
+  Logger.log(JSON.stringify(liberado, null, 2));
+
+  // 3. Consulta pública deve trazer valor + Pix.
+  const depoisLiberacao = getPublicOrderStatus_(pedido.trackingToken);
+  Logger.log('4) ACOMPANHAMENTO — pagamento liberado:');
+  Logger.log(JSON.stringify(depoisLiberacao, null, 2));
+
+  if (!depoisLiberacao.ok) throw new Error('Falha na consulta após liberar pagamento.');
+  if (depoisLiberacao.status !== 'AGUARDANDO PAGAMENTO') {
+    throw new Error('Status após liberação inesperado: ' + depoisLiberacao.status);
+  }
+  if (depoisLiberacao.payment.available !== true) {
+    throw new Error('Pagamento deveria estar disponível.');
+  }
+  if (Number(depoisLiberacao.payment.amount) !== Number(pedido.total)) {
+    throw new Error(
+      'Valor do acompanhamento diferente do pedido: ' +
+      depoisLiberacao.payment.amount + ' x ' + pedido.total
+    );
+  }
+  if (!depoisLiberacao.payment.pixPayload) {
+    throw new Error('PIX Copia e Cola não foi gerado no acompanhamento.');
+  }
+
+  // 4. Cliente informa que pagou. Isso NÃO confirma o pagamento.
+  const informado = informarPagamento_({
+    token: pedido.trackingToken
+  });
+  Logger.log('5) CLIENTE INFORMOU PAGAMENTO:');
+  Logger.log(JSON.stringify(informado, null, 2));
+
+  if (!informado.ok || informado.paymentReported !== true) {
+    throw new Error('Falha ao registrar o aviso de pagamento.');
+  }
+  if (informado.status !== 'AGUARDANDO PAGAMENTO') {
+    throw new Error('O aviso do cliente alterou indevidamente o status do pedido.');
+  }
+
+  // 5. Confirmação manual pelo operador.
+  const confirmado = atualizarPagamento(
+    pedido.code,
+    'PAGAMENTO RECEBIDO',
+    'PIX',
+    'TESTE INTERNO V11 — pagamento confirmado manualmente.'
+  );
+  Logger.log('6) PAGAMENTO CONFIRMADO NO FINANCEIRO:');
+  Logger.log(JSON.stringify(confirmado, null, 2));
+
+  // 6. Atualiza o pedido para PAGAMENTO RECEBIDO.
+  const statusFinal = atualizarStatusPedido_(
+    ss,
+    pedido.code,
+    'PAGAMENTO RECEBIDO'
+  );
+  Logger.log('7) STATUS FINAL DO PEDIDO:');
+  Logger.log(JSON.stringify(statusFinal, null, 2));
+
+  // 7. Consulta final pública.
+  const final = getPublicOrderStatus_(pedido.trackingToken);
+  Logger.log('8) ACOMPANHAMENTO FINAL:');
+  Logger.log(JSON.stringify(final, null, 2));
+
+  if (!final.ok) throw new Error('Falha na consulta final do acompanhamento.');
+  if (final.status !== 'PAGAMENTO RECEBIDO') {
+    throw new Error('Status final inesperado: ' + final.status);
+  }
+
+  Logger.log('========================================');
+  Logger.log('TESTE_ACOMPANHAMENTO_V11: APROVADO');
+  Logger.log('Código: ' + pedido.code);
+  Logger.log('Token: ' + pedido.trackingToken);
+  Logger.log('Valor: R$ ' + Number(pedido.total).toFixed(2));
+  Logger.log('========================================');
+
+  return {
+    ok: true,
+    code: pedido.code,
+    trackingToken: pedido.trackingToken,
+    total: pedido.total,
+    finalStatus: final.status
+  };
+}
+
+
+// Compatibilidade com o nome antigo do teste.
+function testarPedidoMVP() {
+  return TESTE_PEDIDO_V11();
+}
+
+
+/*************************************************
+ * TESTE DO PIX V11
+ * Não cria pedido nem altera planilhas.
+ *************************************************/
+
+function TESTE_PIX_V11() {
+
+  const valor = 59.90;
+
+  // buildPixPayload_ usa a configuração PIX do V11 e recebe
+  // apenas o valor (e, opcionalmente, o código do pedido).
+  const payload = buildPixPayload_(valor, 'TESTE-PIX-V11');
+
+  Logger.log('TESTE_PIX_V11 — valor: R$ ' + valor.toFixed(2));
+  Logger.log('PIX COPIA E COLA:');
+  Logger.log(payload);
+
+  return {
+    ok: true,
+    amount: valor,
+    payload: payload
+  };
+
+}
+
+
+/*************************************************
+ * LIMPEZA SEGURA DOS TESTES V11
+ * Remove somente pedidos cujo Client Request ID
+ * começa com TESTE-V11-.
+ * Também remove o respectivo pagamento.
+ *************************************************/
+
+function LIMPAR_TESTES_V11() {
+
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
+
+  const pedidos = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const pagamentos = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+  const clientes = getSheet_(ss, SHEETS.CLIENTES.name);
+
+  let pedidosRemovidos = 0;
+  let pagamentosRemovidos = 0;
+  let clientesRemovidos = 0;
+  const codigos = [];
+
+  // PEDIDOS
+  const pm = headerMap_(pedidos);
+  const lastPedido = pedidos.getLastRow();
+
+  if (lastPedido >= 2) {
+    const values = pedidos.getRange(2, 1, lastPedido - 1, pedidos.getLastColumn()).getValues();
+
+    for (let i = values.length - 1; i >= 0; i--) {
+      const clientRequestId = String(values[i][pm['Client Request ID'] - 1] || '');
+
+      if (clientRequestId.indexOf('TESTE-V11-') === 0) {
+        const code = String(values[i][pm['Código DOOX'] - 1] || '');
+        if (code) codigos.push(code);
+        pedidos.deleteRow(i + 2);
+        pedidosRemovidos++;
+      }
+    }
+  }
+
+  // PAGAMENTOS correspondentes aos códigos removidos.
+  if (codigos.length && pagamentos.getLastRow() >= 2) {
+    const payValues = pagamentos.getRange(2, 1, pagamentos.getLastRow() - 1, pagamentos.getLastColumn()).getValues();
+    for (let i = payValues.length - 1; i >= 0; i--) {
+      const code = String(payValues[i][0] || '');
+      if (codigos.indexOf(code) !== -1) {
+        pagamentos.deleteRow(i + 2);
+        pagamentosRemovidos++;
+      }
+    }
+  }
+
+  // CLIENTES criados exclusivamente pelo teste.
+  if (clientes.getLastRow() >= 2) {
+    const cm = headerMap_(clientes);
+    const clientValues = clientes.getRange(2, 1, clientes.getLastRow() - 1, clientes.getLastColumn()).getValues();
+
+    for (let i = clientValues.length - 1; i >= 0; i--) {
+      const email = normalizeEmail_(clientValues[i][cm['E-mail'] - 1]);
+      const name = String(clientValues[i][cm['Nome / Empresa'] - 1] || '');
+
+      if (email === 'teste-v11@doox.local' || name === 'TESTE DOOX V11') {
+        clientes.deleteRow(i + 2);
+        clientesRemovidos++;
+      }
+    }
+  }
+
+  const result = {
+    ok: true,
+    pedidosRemovidos: pedidosRemovidos,
+    pagamentosRemovidos: pagamentosRemovidos,
+    clientesRemovidos: clientesRemovidos,
+    codigos: codigos
+  };
+
+  Logger.log('LIMPAR_TESTES_V11:');
+  Logger.log(JSON.stringify(result, null, 2));
+
+  return result;
 
 }
 
@@ -5436,8 +5698,18 @@ function onOpen() {
       )
 
       .addItem(
-        'Testar pedido',
-        'testarPedidoMVP'
+        'Testar pedido V11',
+        'TESTE_PEDIDO_V11'
+      )
+
+      .addItem(
+        'Testar PIX V11',
+        'TESTE_PIX_V11'
+      )
+
+      .addItem(
+        'Limpar testes V11',
+        'LIMPAR_TESTES_V11'
       )
 
       .addSeparator()
