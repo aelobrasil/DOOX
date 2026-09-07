@@ -165,13 +165,12 @@ function migrateOperationalSheetNames_(ss) {
     ['VEICULAÇÕES', SHEETS.VEICULACOES.name],
     ['LOG', SHEETS.LOG.name]
   ];
-  aliases.forEach(pair => {
+  aliases.forEach(function(pair) {
     const oldSheet = ss.getSheetByName(pair[0]);
     const newSheet = ss.getSheetByName(pair[1]);
     if (oldSheet && !newSheet) oldSheet.setName(pair[1]);
   });
 
-  // CLIENTE não faz mais parte da operação. Preservamos a aba antiga como técnica/legado.
   const legacy = ss.getSheetByName('CLIENTE') || ss.getSheetByName('CLIENTES');
   if (legacy && !ss.getSheetByName('_CLIENTE_LEGADO')) {
     try { legacy.setName('_CLIENTE_LEGADO'); } catch (_) {}
@@ -203,13 +202,16 @@ function applyStatusValidationToRow_(sheet, row, headerName) {
   const col = map[headerName];
   if (!col || row < 2) return;
   const current = String(sheet.getRange(row, col).getValue() || '').trim().toUpperCase();
-  const options = allowedNextStatuses_(current);
-  if (options.length) {
-    sheet.getRange(row, col).setDataValidation(SpreadsheetApp.newDataValidation()
-      .requireValueInList(options, true).setAllowInvalid(false).build());
-  } else {
-    sheet.getRange(row, col).clearDataValidations();
+  const options = allowedNextStatuses_(current).slice();
+  if (current && options.indexOf(current) === -1) options.unshift(current);
+  if (!options.length) {
+    // Mesmo em status terminal, mantemos a validação visível para não
+    // transformar a célula em um campo comum após o primeiro uso.
+    if (current) options.push(current);
+    else return;
   }
+  sheet.getRange(row, col).setDataValidation(SpreadsheetApp.newDataValidation()
+    .requireValueInList(options, true).setAllowInvalid(false).build());
 }
 
 function ensureStatusValidation_(sheet) {
@@ -339,9 +341,9 @@ function refreshStatusDropdowns_(ss, code) {
   if (!pedido) return;
   const validation = function(current) {
     const cur = String(current || '').trim().toUpperCase();
+    if (!cur) return null;
     const opts = allowedNextStatuses_(cur).slice();
-    if (cur && opts.indexOf(cur) === -1) opts.unshift(cur);
-    if (!opts.length) return null;
+    if (opts.indexOf(cur) === -1) opts.unshift(cur);
     return SpreadsheetApp.newDataValidation()
       .requireValueInList(opts, true)
       .setAllowInvalid(false)
@@ -1620,6 +1622,8 @@ function setupMVP() {
       ss
     );
 
+  removerAbasNaoUtilizadas_(ss);
+
 
   return {
 
@@ -1642,6 +1646,24 @@ function setupMVP() {
 }
 
 
+
+function removerAbasNaoUtilizadas_(ss) {
+  // Limpeza definitiva solicitada: remove abas que não fazem parte da operação
+  // nem do núcleo técnico necessário ao funcionamento. Isso é executado apenas
+  // no setupMVP(), nunca durante pedidos/status/pagamentos.
+  const keep = new Set([
+    SHEETS.PAGAMENTOS.name,
+    SHEETS.PEDIDOS.name,
+    SHEETS.EPISODIOS.name,
+    SHEETS.VEICULACOES.name,
+    SHEETS.LOG.name
+  ]);
+  ss.getSheets().slice().forEach(function(sheet) {
+    if (keep.has(sheet.getName())) return;
+    if (ss.getSheets().length <= keep.size) return;
+    try { ss.deleteSheet(sheet); } catch (_) {}
+  });
+}
 
 function ensureOperationalStructure_(ss) {
   // Rotinas de produção NÃO devem executar o setup completo.
@@ -3034,7 +3056,7 @@ function getPublicOrderStatus_(token) {
     progressPercent: publicProgressPercent_(status),
     payment: buildPublicPayment_(ss, pedido),
     receipt: {
-      eligible: ['FINALIZADO','PUBLICADO'].indexOf(status) >= 0,
+      eligible: status === 'FINALIZADO',
       nameOrCompany: pedido.nameOrCompany || '',
       modality: pedido.modality || '',
       quantity: pedido.quantity || 1,
