@@ -820,9 +820,9 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
   },true));
   updateSimLabels();
 
-  const DOOX_API_ENDPOINT='https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec';
 
   // ----- Request form and cross-tab synchronization -----
+  // A comunicação externa é centralizada em /api/request, que usa o mesmo Web App do Apps Script.
   const req={
     type:$('#reqType'), mode:$('#reqMode'), tier:$('#reqPriceTier'), moment:$('#reqMoment'),
     qty:$('#reqQty'), name:$('#reqName'), phone:$('#reqPhone'), email:$('#reqEmail'),

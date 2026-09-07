@@ -1,4 +1,4 @@
-# DOOX HOCCO — Integração Google Sheets
+# DOOX HOCCO — Integração Google Sheets — V23
 
 Esta versão já está integrada ao endpoint do Google Apps Script.
 

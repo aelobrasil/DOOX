@@ -7,7 +7,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = req.method === 'GET' ? (req.query || {}) : (typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}));
+    if (req.method === 'GET') {
+      const qs = new URLSearchParams(req.query || {}).toString();
+      const target = qs ? `${DOOX_APPS_SCRIPT_ENDPOINT}?${qs}` : `${DOOX_APPS_SCRIPT_ENDPOINT}?action=health`;
+      const upstream = await fetch(target, {
+        method: 'GET',
+        redirect: 'follow',
+        cache: 'no-store'
+      });
+
+      const raw = await upstream.text();
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (_) {
+        return res.status(502).json({
+          ok: false,
+          error: 'A API DOOX retornou uma resposta inesperada.',
+          upstreamStatus: upstream.status
+        });
+      }
+      return res.status(upstream.ok ? 200 : 502).json(data);
+    }
+
+    const payload = typeof req.body === 'string'
+      ? JSON.parse(req.body)
+      : (req.body || {});
 
     const upstream = await fetch(DOOX_APPS_SCRIPT_ENDPOINT, {
       method: 'POST',
