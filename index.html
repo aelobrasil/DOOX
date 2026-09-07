@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HOCCO">
 <title>Doox</title>
-<meta name="doox-build" content="V24-INTEGRATED-V3-PORTAL">
+<meta name="doox-build" content="V30-OPERACAO-CONSOLIDADA">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2309090a'/%3E%3Ctext x='12' y='45' font-family='Arial' font-size='37' font-weight='900' fill='white'%3ED%3C/text%3E%3Ccircle cx='47' cy='17' r='5' fill='%23ff6a00'/%3E%3C/svg%3E">
 <style>
 :root{--ink:#0a0a0b;--paper:#f5f4f1;--white:#fff;--line:#e6e3dd;--muted:#696969;--orange:#ff6900;--orange2:#ff8a34;--dark:#111113;--soft:#f0ede7;--shadow:0 24px 80px #00000012}
@@ -113,6 +113,18 @@
 .simExplain b{color:#ff6900;margin-right:4px}.playDemo{font-size:14px;letter-spacing:.02em}
 @media(max-width:760px){.simExplain{grid-template-columns:1fr 1fr}}
 
+/* ===== V31 CLIENT ORDER PORTAL ===== */
+.orderPortalPage{display:none;min-height:100vh;background:radial-gradient(circle at 15% 10%,#3a200f 0,#121212 42%,#080808 100%);padding:28px 16px;color:#111}
+.orderPortalPage.active{display:flex;align-items:center;justify-content:center}
+.orderPortalShell{width:min(820px,100%);background:#fff;border:1px solid #ffffff22;border-radius:30px;box-shadow:0 28px 90px #0008;overflow:hidden}
+.orderPortalTop{background:#111;color:#fff;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.orderPortalBrand{display:flex;align-items:center;gap:12px}.orderPortalMark{width:40px;height:40px;border-radius:14px;background:#ff6900;display:grid;place-items:center;font-weight:950;color:#111}.orderPortalBrand b{font-size:16px}.orderPortalBrand span{display:block;color:#aaa;font-size:11px;margin-top:2px}
+.orderPortalBody{padding:24px}.orderPortalCode{font-size:12px;background:#111;color:#fff;border-radius:999px;padding:9px 12px;white-space:nowrap;font-weight:900}
+.portalMainStatus{margin-top:8px;font-size:32px;line-height:1.05;letter-spacing:-1.5px;font-weight:950}
+.portalMainSub{margin-top:9px;color:#666;font-size:13px;line-height:1.5}.portalMetaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.portalMeta{border:1px solid #e5e5e5;border-radius:16px;padding:13px 14px;background:#fafafa}.portalMeta small{display:block;color:#888;font-size:9px;font-weight:900;letter-spacing:.9px;margin-bottom:5px}.portalMeta b{font-size:13px;line-height:1.3;word-break:break-word}.portalBigProgress{margin-top:18px;padding:16px 17px;border-radius:18px;background:#f6f6f6}.portalBigProgressTop{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:900;color:#555;margin-bottom:8px}.portalBigProgressBar{height:9px;background:#ddd;border-radius:999px;overflow:hidden}.portalBigProgressBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff6900,#ff9b54);border-radius:inherit;transition:width .5s ease}.portalTimeline{display:grid;gap:8px;margin-top:17px}.portalTimeline .statusStep{background:#fafafa;border:1px solid #ececec}.orderPortalMessage{display:none;margin-top:14px;padding:15px 16px;border-radius:18px;background:#fff3ed;border:1px solid #ffc39d}.orderPortalMessage.show{display:block}.orderPortalMessage b{display:block;font-size:11px;color:#d95700;letter-spacing:.7px;margin-bottom:5px}.orderPortalMessage span{font-size:13px;line-height:1.5;color:#333}.orderPortalActions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px;padding-top:17px;border-top:1px solid #e7e7e7}.orderPortalActions a,.orderPortalActions button{border:0;border-radius:15px;padding:13px 15px;font-weight:950;text-decoration:none;cursor:pointer;font-size:12px}.portalActionPrimary{background:#ff6900;color:#111}.portalActionDark{background:#111;color:#fff}.portalActionLight{background:#eee;color:#111}.portalReceipt{display:none;margin-top:15px;padding:16px;border-radius:18px;background:#111;color:#fff}.portalReceipt.show{display:block}.portalReceipt b{display:block;color:#ff8a34;font-size:11px;letter-spacing:.8px;margin-bottom:5px}.portalReceipt span{display:block;font-size:12px;line-height:1.5;color:#ddd}.portalFooterNote{margin-top:14px;font-size:10px;color:#999;text-align:center;line-height:1.45}.portalBusy{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#aaa;font-weight:900}.portalBusy i{width:10px;height:10px;border:2px solid #555;border-top-color:#ff6900;border-radius:50%;animation:dooxSpin .8s linear infinite}
+@media(max-width:640px){.orderPortalPage{padding:12px}.orderPortalShell{border-radius:22px}.orderPortalTop{padding:17px}.orderPortalBody{padding:18px}.portalMainStatus{font-size:27px}.portalMetaGrid{grid-template-columns:1fr 1fr}.orderPortalActions>*{flex:1 1 100%}}
+.portalPrint{display:none}
+@media print{body.portal-print-mode>*:not(.portalPrint){display:none!important}.portalPrint{display:block!important;font-family:Arial,sans-serif;padding:30px;color:#111}.portalPrintBox{max-width:760px;margin:auto;border:2px solid #111;padding:28px;border-radius:18px}.portalPrintTitle{font-size:28px;font-weight:900}.portalPrintTag{display:inline-block;margin-top:10px;padding:8px 11px;border-radius:999px;background:#ff6900;font-weight:900}.portalPrintGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}.portalPrintCell{border:1px solid #ddd;padding:13px;border-radius:12px}.portalPrintCell small{display:block;color:#777;text-transform:uppercase;font-size:9px;font-weight:900;margin-bottom:5px}.portalPrintCell b{font-size:13px}.portalPrintFoot{margin-top:24px;color:#666;font-size:11px;line-height:1.5}}
 /* ===== V9 MASTER UX ===== */
 .footerDemoFrame{display:block!important;opacity:0;pointer-events:none;position:absolute;left:2.5%;right:2.5%;bottom:5.5%;z-index:20;transform:translateY(34px)}
 .footerDemoFrame.show{animation:footerBatchIn 5s cubic-bezier(.22,.8,.22,1) both}
@@ -199,6 +211,11 @@ body{overflow-x:hidden}
 .pixBox{margin-top:14px}.pixBox label{display:block;font-size:10px;font-weight:950;letter-spacing:1px;color:#777;margin:0 0 7px}.pixRow{display:flex;gap:8px}.pixRow input{min-width:0;flex:1;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:11px;background:#f7f7f7;color:#333}.pixCopy{border:0;border-radius:14px;background:#ff6900;color:#111;padding:0 16px;font-weight:950;cursor:pointer}.paymentActions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}.paymentActions button{border:0;border-radius:15px;padding:14px;font-weight:950;cursor:pointer}.paymentActions .dark{background:#111;color:#fff}.paymentActions .light{background:#eee;color:#111}.trackingCard{margin-top:14px;padding:15px;border-radius:18px;background:#f5f5f5;display:none}.trackingCard.show{display:block}.trackingCard b{display:block;font-size:13px}.trackingCard p{font-size:12px;color:#666;margin:5px 0 0}.trackingLink{display:block;margin-top:9px;word-break:break-all;font-size:11px;color:#111}.statusSteps{display:grid;gap:8px;margin-top:16px}.statusStep{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:#f6f6f6;font-size:12px}.statusStep i{width:10px;height:10px;border-radius:50%;background:#ccc;flex:0 0 auto}.statusStep.done i,.statusStep.current i{background:#ff6900}.statusStep.current{font-weight:900;border:1px solid #ff690044}.portalHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}.portalCode{font-size:12px;font-weight:950;background:#111;color:#fff;border-radius:999px;padding:8px 11px}
 @media(max-width:640px){.paymentCard{padding:20px;border-radius:24px}.paymentActions{grid-template-columns:1fr}.paymentAmount strong{font-size:27px}.pixRow{flex-direction:column}.pixCopy{padding:13px}}
 
+
+/* V30 — acompanhamento enxuto, progresso e recusa */
+.portalProgress{margin:16px 0 12px}.portalProgressTop{display:flex;justify-content:space-between;gap:12px;font-size:11px;font-weight:900;color:#555;margin-bottom:7px}.portalProgressBar{height:7px;background:#eee;border-radius:999px;overflow:hidden}.portalProgressBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff6900,#ff9a4d);border-radius:inherit;transition:width .55s ease}.portalSummary{padding:13px 14px;border-radius:16px;background:#fff;border:1px solid #e8e8e8;margin-top:12px}.portalSummary b{display:block;font-size:12px;margin-bottom:4px}.portalSummary span{font-size:12px;color:#666;line-height:1.45}.portalReject{display:none;margin-top:12px;padding:14px;border-radius:16px;background:#fff3ed;border:1px solid #ffb17e}.portalReject.show{display:block}.portalReject b{display:block;color:#d95700;font-size:11px;letter-spacing:.8px;margin-bottom:5px}.portalReject span{font-size:13px;line-height:1.45;color:#333}.portalInstructions{margin-top:12px;padding:14px;border-radius:16px;background:#fff;border:1px solid #e8e8e8}.portalInstructions b{display:block;font-size:12px;margin-bottom:7px}.portalInstructions ul{margin:0;padding-left:19px;color:#666;font-size:12px;line-height:1.55}.portalInstructions li+li{margin-top:3px}
+
+.portalLoading{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:900;color:#888;letter-spacing:.7px}.portalLoading i{width:11px;height:11px;border:2px solid #ddd;border-top-color:#ff6900;border-radius:50%;animation:dooxSpin .8s linear infinite}
 </style>
 <style id="final-ux-fixes">
 .top{top:16px!important;width:calc(100% - 36px)!important;z-index:80!important}.backGlobal{top:102px!important;left:22px!important;z-index:81!important}.view{scroll-margin-top:150px!important}.view .section{padding-top:115px}.view#request .section{padding-top:170px!important}.previewShell{margin-top:36px!important}.previewTop{margin-bottom:22px!important}.screen{margin-top:20px!important}.top.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translate(-50%,-120%)!important;pointer-events:none!important}.backGlobal.ui-hidden{opacity:0!important;visibility:hidden!important;transform:translateY(-130%)!important;pointer-events:none!important}.requestIntro{margin:16px 0 20px;padding:16px 18px;border:1px solid #e4e4e4;border-radius:20px;background:#fff;color:#666;line-height:1.55}.requestIntro b{color:#111}.requestIntro .orange{color:#ff6a00}@media(max-width:760px){.top{top:9px!important;width:calc(100% - 18px)!important}.backGlobal{top:88px!important}.view#request .section{padding-top:135px!important}}
@@ -231,7 +248,36 @@ body{overflow-x:hidden}
 .statusChangeNotice{margin-top:12px;padding:11px 13px;border-radius:14px;background:#fff7ef;border:1px solid #ffd9b5;font-size:12px;font-weight:700}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 </head>
-<body>
+<body><div class="orderPortalPage" id="orderPortalPage" aria-live="polite">
+  <div class="orderPortalShell">
+    <div class="orderPortalTop">
+      <div class="orderPortalBrand"><div class="orderPortalMark">D</div><div><b>DOOX · ACOMPANHAMENTO</b><span>Área privada da sua solicitação</span></div></div>
+      <span class="orderPortalCode" id="orderPortalCode">—</span>
+    </div>
+    <div class="orderPortalBody">
+      <span class="portalBusy" id="orderPortalBusy"><i></i>ATUALIZANDO</span>
+      <div class="portalMainStatus" id="orderPortalStatus">Carregando…</div>
+      <div class="portalMainSub" id="orderPortalSub">Consultando o andamento do seu pedido.</div>
+      <div class="portalMetaGrid">
+        <div class="portalMeta"><small>MODALIDADE</small><b id="orderPortalModality">—</b></div>
+        <div class="portalMeta"><small>EPISÓDIO</small><b id="orderPortalEpisode">—</b></div>
+        <div class="portalMeta"><small>QUANTIDADE</small><b id="orderPortalQuantity">—</b></div>
+      </div>
+      <div class="portalBigProgress"><div class="portalBigProgressTop"><span>Andamento</span><span id="orderPortalPct">0%</span></div><div class="portalBigProgressBar"><i id="orderPortalBar"></i></div></div>
+      <div class="portalTimeline" id="orderPortalTimeline"></div>
+      <div class="orderPortalMessage" id="orderPortalMessage"><b id="orderPortalMessageTitle">MENSAGEM DA DOOX</b><span id="orderPortalMessageText"></span></div>
+      <div class="portalReceipt" id="orderPortalReceipt"><b>COMPROVANTE DISPONÍVEL</b><span>Sua participação foi finalizada e registrada como veiculada. Gere o comprovante para guardar o registro.</span></div>
+      <div class="orderPortalActions">
+        <a class="portalActionPrimary" id="orderPortalNew" href="/" target="_blank" rel="noopener">NOVA SOLICITAÇÃO ↗</a>
+        <button class="portalActionDark" id="orderPortalRefresh" type="button">ATUALIZAR</button>
+        <button class="portalActionLight" id="orderPortalReceiptBtn" type="button" style="display:none">BAIXAR COMPROVANTE</button>
+      </div>
+      <div class="portalFooterNote">Este acompanhamento é privado e está vinculado exclusivamente a este pedido. Uma nova solicitação gera um novo código e um novo acompanhamento.</div>
+    </div>
+  </div>
+</div>
+<div class="portalPrint" id="portalPrint"></div>
+
 <div id="openingSplash" aria-label="Doox Studios">
   <div class="splashLines"></div><div class="splashCorner c1"></div><div class="splashCorner c2"></div>
   <div class="splashWord">Doox Studios<span class="splashDot">.</span></div>
@@ -270,7 +316,7 @@ body{overflow-x:hidden}
 <div class="card product"><span class="num">01 · EMPRESAS</span><h3>Presença no Rodapé</h3><p>Identificação visual discreta na parte inferior do vídeo, usada em momentos compatíveis com a edição.</p><div class="price">R$ 49,90</div><div class="meta">Estrutura: até 50 vagas</div><button data-preview="footer" onclick="window.goPreview('footer')">Ver na simulação</button></div>
 <div class="card product"><span class="num">02 · EMPRESAS</span><h3>Sponsor Overlay</h3><p>Inserção visual de aproximadamente 5 segundos integrada à imagem. Você escolhe o momento/faixa comercial; o valor muda automaticamente conforme essa escolha. O minuto exato dentro da faixa é definido pela produção.</p><div class="price">A partir de R$ 39,90</div><div class="meta">Estrutura: 10 vagas sem áudio · 10 vagas totais de Overlay</div><button data-preview="overlay" onclick="window.goPreview('overlay')">Ver na simulação</button></div>
 <div class="card product"><span class="num">03 · EMPRESAS</span><h3>Overlay + Áudio</h3><p>Presença visual com áudio curto aprovado antes da produção, respeitando o contexto do vídeo.</p><div class="price">A partir de R$ 49,90</div><div class="meta">Estrutura: 10 vagas com áudio</div><button data-preview="audio" onclick="window.goPreview('audio')">Ver na simulação</button></div>
-<div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: exatamente 10 vagas disponíveis por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
+<div class="card product"><span class="num">04 · EMPRESAS</span><h3>Empresa Patrocinadora do Episódio</h3><p>Reconhecimento institucional exibido após os créditos para empresas que participam da sustentação do episódio.</p><div class="price">R$ 89,90</div><div class="meta">Estrutura: 1 vaga disponível por episódio</div><button data-preview="sponsor" onclick="window.goPreview('sponsor')">Ver na simulação</button></div>
 </div><div class="notice"><b>Importante:</b> quando a modalidade permitir escolha de momento, o momento/faixa escolhido determina automaticamente o preço correspondente. O minuto exato dentro da faixa depende da análise da produção e do planejamento do episódio.</div></div></div></section>
 
 <section class="view" id="people"><div class="section"><div class="wrap"><div class="kicker">PARA PESSOAS</div><h2 class="title">Participações pessoais.</h2><p class="desc">Formatos separados das modalidades empresariais, pensados para reconhecimento e participação nos espaços institucionais da HOCCO.</p>
@@ -602,7 +648,7 @@ body{overflow-x:hidden}
     const arr=requestOptions[reqType?.value]||[];
     reqCatalog.innerHTML=arr.map(x=>{
       const p=x==='Sponsor Overlay'?'A partir de R$ 39,90':x==='Overlay + Áudio'?'A partir de R$ 49,90':money(prices[x]);
-      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · apenas 10 vagas por episódio':'Créditos · até 50 participações';
+      const sub=x==='Presença no Rodapé'?'Preço único · até 10 empresas por bloco · 50 no episódio':x==='Sponsor Overlay'?'5 faixas de preço · limite operacional de 10':x==='Overlay + Áudio'?'5 faixas de preço · limite operacional de 10':x==='Empresa Patrocinadora do Episódio'?'Preço fixo · 1 vaga por episódio':'Créditos · até 50 participações';
       return `<button type="button" class="requestChoice ${reqMode?.value===x?'active':''}" data-choice="${x}"><small>${reqType?.value==='empresa'?'EMPRESA':'PESSOA'}</small><strong>${x}</strong><span>${p}</span><small>${sub}</small></button>`
     }).join('');
     $$('[data-choice]',reqCatalog).forEach(b=>b.addEventListener('click',()=>{reqMode.value=b.dataset.choice;updateSummaryAndFields();renderCatalog();}));
@@ -630,8 +676,8 @@ body{overflow-x:hidden}
       }
     }
     if(reqQty){
-      reqQty.max=(m==='Empresa Patrocinadora do Episódio')?'10':'';
-      if(m==='Empresa Patrocinadora do Episódio' && Number(reqQty.value)>10) reqQty.value='10';
+      reqQty.max=(m==='Empresa Patrocinadora do Episódio')?'1':'';
+      if(m==='Empresa Patrocinadora do Episódio' && Number(reqQty.value)>1) reqQty.value='1';
     }
     if(timed){
       const sel=$('#reqPriceTier');
@@ -997,10 +1043,12 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       try{window.history.replaceState({},'',publicTrackingUrl);}catch(_){ }
     }
 
-    // A solicitação já foi registrada no Sheets. O WhatsApp recebe somente uma saudação;
-    // nenhum dado pessoal, código, preço ou conteúdo do pedido é repetido na conversa.
+    // O WhatsApp recebe apenas as instruções comerciais necessárias ao cliente.
+    // Nenhuma referência técnica a planilhas, Script ou infraestrutura interna é exibida.
     const publicTrackingUrl=registered?.trackingToken ? trackingUrlFromToken(registered.trackingToken) : '';
-    const greeting=`Olá! Seja bem-vindo(a) à HOCCO.\n\nSua solicitação já foi registrada no sistema DOOX. Nossa equipe dará continuidade ao atendimento por aqui.\n\nAcompanhe seu pedido por este link privado:\n${publicTrackingUrl}\n\nObrigado por participar do universo HOCCO.`;
+    const instructions=registered?.instructions||{title:'Próximos passos',items:['A equipe DOOX orientará os próximos passos pelo atendimento.']};
+    const checklist=(instructions.items||[]).map((item,i)=>`${i+1}. ${item}`).join('\n');
+    const greeting=`Olá! Seja bem-vindo(a) à HOCCO.\n\nSua solicitação foi registrada. Para dar continuidade, envie pelo WhatsApp os materiais abaixo:\n\n${instructions.title}\n${checklist}\n\nAcompanhe seu pedido pelo link privado:\n${publicTrackingUrl}\n\nA equipe DOOX seguirá com a análise e informará as próximas etapas.`;
     const waUrl=`https://wa.me/5514981150675?text=${encodeURIComponent(greeting)}`;
     try{ localStorage.removeItem(draftKey); }catch(_){}
 
@@ -1089,7 +1137,11 @@ if ('serviceWorker' in navigator) {
     <div class="pixBox"><label>PIX COPIA E COLA</label><div class="pixRow"><input id="pixPayload" readonly value="" aria-label="Pix copia e cola"><button class="pixCopy" id="pixCopy" type="button">COPIAR</button></div></div>
     <div class="paymentActions"><button class="dark" id="paymentReported" type="button">JÁ REALIZEI O PAGAMENTO</button><button class="light" id="openTracking" type="button">ACOMPANHAR PEDIDO</button></div>
     <div class="trackingCard" id="trackingCard">
-  <div class="portalHeader"><b>Status do pedido</b><span class="portalCode" id="trackingStatus">—</span></div>
+  <div class="portalHeader"><b>Status do pedido</b><span class="portalLoading" id="portalLoading" style="display:none"><i></i>ATUALIZANDO</span><span class="portalCode" id="trackingStatus">—</span></div>
+  <div class="portalProgress"><div class="portalProgressTop"><span>Progresso</span><span id="portalProgressText">0%</span></div><div class="portalProgressBar"><i id="portalProgressBar"></i></div></div>
+  <div class="portalSummary"><b id="portalSummaryTitle">Acompanhamento</b><span id="portalSummaryText">Atualizando as informações do pedido.</span></div>
+  <div class="portalReject" id="portalReject"><b>PARTICIPAÇÃO RECUSADA</b><span id="portalRejectText"></span></div>
+  <div class="portalInstructions" id="portalInstructions"><b id="portalInstructionsTitle">Materiais necessários</b><ul id="portalInstructionsList"></ul></div>
   <div class="statusSteps" id="statusSteps"></div>
   <div class="portalRefresh"><span>Atualização automática: <span class="portalUpdated" id="portalUpdated">aguardando</span></span><button id="portalRefreshBtn" type="button">ATUALIZAR AGORA</button></div>
   <div class="statusChangeNotice" id="statusChangeNotice" style="display:none" aria-live="polite"></div><div id="clientObservation" style="display:none;margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid #e6e6e6"><div style="font-size:10px;font-weight:950;letter-spacing:1px;color:#777;margin-bottom:6px">MENSAGEM DA DOOX</div><div id="clientObservationText" style="font-size:13px;line-height:1.45;font-weight:700"></div></div>
@@ -1121,6 +1173,16 @@ if ('serviceWorker' in navigator) {
   const statusChangeNotice=document.getElementById('statusChangeNotice');
   const clientObservation=document.getElementById('clientObservation');
   const clientObservationText=document.getElementById('clientObservationText');
+  const portalProgressBar=document.getElementById('portalProgressBar');
+  const portalProgressText=document.getElementById('portalProgressText');
+  const portalSummaryTitle=document.getElementById('portalSummaryTitle');
+  const portalSummaryText=document.getElementById('portalSummaryText');
+  const portalReject=document.getElementById('portalReject');
+  const portalRejectText=document.getElementById('portalRejectText');
+  const portalInstructions=document.getElementById('portalInstructions');
+  const portalInstructionsTitle=document.getElementById('portalInstructionsTitle');
+  const portalInstructionsList=document.getElementById('portalInstructionsList');
+  const portalLoading=document.getElementById('portalLoading');
   let currentToken='';
   let lastStatus='';
   let pollTimer=null;
@@ -1159,6 +1221,24 @@ if ('serviceWorker' in navigator) {
       paymentState.textContent=paymentConfirmed?'Pagamento confirmado pela DOOX.':(paymentReported?'Pagamento informado. A DOOX fará a conferência.':(data.payment.available?'Pagamento disponível agora.':''));
     }
     trackingStatus.textContent=data.statusLabel||newStatus||'—';
+    const pct=Math.max(0,Math.min(100,Number(data.progressPercent)||0));
+    if(portalProgressBar)portalProgressBar.style.width=pct+'%';
+    if(portalProgressText)portalProgressText.textContent=pct+'%';
+    if(portalSummaryTitle)portalSummaryTitle.textContent=data.statusLabel||newStatus||'Acompanhamento';
+    if(portalSummaryText){
+      portalSummaryText.textContent = newStatus==='REJEITADO' ? 'A participação não foi aprovada. Consulte a justificativa abaixo.' : (newStatus==='FINALIZADO' ? 'Participação finalizada.' : 'O pedido continua sendo atualizado pela DOOX.');
+    }
+    if(portalReject){
+      const rejected=newStatus==='REJEITADO';
+      portalReject.classList.toggle('show',rejected);
+      if(portalRejectText)portalRejectText.textContent=data.rejectionReason||data.observationClient||'A DOOX não aprovou esta participação.';
+    }
+    if(portalInstructions && data.instructions){
+      portalInstructions.style.display='block';
+      if(portalInstructionsTitle)portalInstructionsTitle.textContent=data.instructions.title||'Materiais necessários';
+      if(portalInstructionsList)portalInstructionsList.innerHTML=(data.instructions.items||[]).map(item=>'<li>'+String(item).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]||m))+'</li>').join('');
+    }
+    if(newStatus==='REJEITADO' && portalInstructions)portalInstructions.style.display='none';
     if(clientObservationText){clientObservationText.textContent=data.observationClient||'';}
     if(clientObservation){clientObservation.style.display=data.observationClient?'block':'none';}
     renderSteps(data.steps);
@@ -1176,6 +1256,7 @@ if ('serviceWorker' in navigator) {
   async function loadToken(token,open=true){
     if(!token || loading)return;
     currentToken=token; loading=true;
+    if(portalLoading)portalLoading.style.display='inline-flex';
     try{
       const r=await fetch('/api/request?action=pedido&token='+encodeURIComponent(token),{method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});
       const data=await r.json();
@@ -1187,12 +1268,12 @@ if ('serviceWorker' in navigator) {
       trackingStatus.textContent='Não localizado';
       trackingSteps.innerHTML='<div class="statusStep current"><i></i><span>Não foi possível carregar este pedido.</span></div>';
       if(open)show();
-    }finally{loading=false}
+    }finally{loading=false;if(portalLoading)portalLoading.style.display='none'}
   }
   function startPolling(){
     stopPolling();
     if(!currentToken)return;
-    pollTimer=setInterval(()=>loadToken(currentToken,false),8000);
+    pollTimer=setInterval(()=>loadToken(currentToken,false),5000);
   }
   function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
   document.getElementById('pixCopy')?.addEventListener('click',async()=>{
@@ -1221,6 +1302,72 @@ if ('serviceWorker' in navigator) {
   };
   const token=new URLSearchParams(location.search).get('acompanhamento');
   if(token){currentToken=token;setTimeout(()=>loadToken(token,true).then(startPolling),120)}
+})();
+</script>
+
+
+<script>
+(function(){
+  const qs=new URLSearchParams(location.search);
+  const token=qs.get('acompanhamento');
+  const page=document.getElementById('orderPortalPage');
+  if(!token || !page) return;
+  document.body.classList.add('portal-only');
+  page.classList.add('active');
+  // Portal is intentionally a separate visual context; the public site remains out of this view.
+  Array.from(document.body.children).forEach(el=>{ if(el!==page && !el.classList.contains('portalPrint')) el.style.display='none'; });
+  const busy=document.getElementById('orderPortalBusy');
+  const status=document.getElementById('orderPortalStatus');
+  const sub=document.getElementById('orderPortalSub');
+  const code=document.getElementById('orderPortalCode');
+  const modality=document.getElementById('orderPortalModality');
+  const episode=document.getElementById('orderPortalEpisode');
+  const quantity=document.getElementById('orderPortalQuantity');
+  const pct=document.getElementById('orderPortalPct');
+  const bar=document.getElementById('orderPortalBar');
+  const timeline=document.getElementById('orderPortalTimeline');
+  const msg=document.getElementById('orderPortalMessage');
+  const msgTitle=document.getElementById('orderPortalMessageTitle');
+  const msgText=document.getElementById('orderPortalMessageText');
+  const receipt=document.getElementById('orderPortalReceipt');
+  const receiptBtn=document.getElementById('orderPortalReceiptBtn');
+  let latest=null, timer=null, loading=false;
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function render(d){
+    latest=d;
+    code.textContent=d.code||'—';
+    status.textContent=d.statusLabel||d.status||'—';
+    modality.textContent=d.modality||'—';
+    episode.textContent=d.episode||'A definir';
+    quantity.textContent=d.quantity||1;
+    const n=Math.max(0,Math.min(100,Number(d.progressPercent)||0)); pct.textContent=n+'%'; bar.style.width=n+'%';
+    const st=d.status||'';
+    sub.textContent=st==='FINALIZADO'?'Participação finalizada e registrada pela DOOX.':st==='REJEITADO'?'A participação não foi aprovada. Veja a mensagem abaixo.':'O andamento desta solicitação é atualizado pela DOOX.';
+    timeline.innerHTML=(d.steps||[]).map(x=>`<div class="statusStep ${x.state==='completed'?'done':''} ${x.state==='current'?'current':''}"><i></i><span>${esc(x.label)}</span></div>`).join('');
+    const text=d.observationClient||d.rejectionReason||'';
+    msg.classList.toggle('show',!!text);
+    msgTitle.textContent=d.rejectionReason?'PARTICIPAÇÃO RECUSADA':'MENSAGEM DA DOOX';
+    msgText.textContent=text;
+    const eligible=!!(d.receipt&&d.receipt.eligible);
+    receipt.classList.toggle('show',eligible); receiptBtn.style.display=eligible?'inline-block':'none';
+  }
+  async function load(){
+    if(loading)return; loading=true; busy.style.visibility='visible';
+    try{ const r=await fetch('/api/request?action=pedido&token='+encodeURIComponent(token),{cache:'no-store',headers:{Accept:'application/json'}}); const d=await r.json(); if(!d.ok)throw new Error(d.error||'Pedido não encontrado.'); render(d);}
+    catch(e){ status.textContent='Pedido não localizado'; sub.textContent=e.message||'Não foi possível consultar este acompanhamento.'; timeline.innerHTML=''; }
+    finally{loading=false;busy.style.visibility='hidden';}
+  }
+  function start(){ if(timer)clearInterval(timer); timer=setInterval(load,5000); }
+  function makeReceipt(){
+    if(!latest || !(latest.receipt&&latest.receipt.eligible))return;
+    const r=latest.receipt;
+    const issued=new Date().toLocaleString('pt-BR',{dateStyle:'medium',timeStyle:'short'});
+    const root=document.getElementById('portalPrint');
+    root.innerHTML=`<div class="portalPrintBox"><div class="portalPrintTitle">DOOX · COMPROVANTE DE VEICULAÇÃO</div><span class="portalPrintTag">VEICULADO / FINALIZADO</span><div class="portalPrintGrid"><div class="portalPrintCell"><small>Código DOOX</small><b>${esc(r.code)}</b></div><div class="portalPrintCell"><small>Empresa / Nome</small><b>${esc(r.nameOrCompany||'—')}</b></div><div class="portalPrintCell"><small>Modalidade</small><b>${esc(r.modality||'—')}</b></div><div class="portalPrintCell"><small>Episódio</small><b>${esc(r.episode||'—')}</b></div><div class="portalPrintCell"><small>Quantidade</small><b>${esc(r.quantity||1)}</b></div><div class="portalPrintCell"><small>Emissão</small><b>${esc(issued)}</b></div></div><div class="portalPrintFoot">Este documento comprova que a solicitação identificada pelo código ${esc(r.code)} foi concluída no fluxo operacional da DOOX e registrada como veiculada. Documento gerado a partir do acompanhamento privado do pedido.</div></div>`;
+    document.body.classList.add('portal-print-mode'); window.print(); setTimeout(()=>document.body.classList.remove('portal-print-mode'),1000);
+  }
+  document.getElementById('orderPortalRefresh')?.addEventListener('click',load); receiptBtn?.addEventListener('click',makeReceipt);
+  load(); start();
 })();
 </script>
 

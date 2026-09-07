@@ -4,12 +4,12 @@
  * OBJETIVO
  * - Usar a planilha EXISTENTE.
  * - Manter o contrato do Web App usado pelo site V20.
- * - Substituir a estrutura operacional antiga por 5 abas simples.
+ * - Operar com apenas 2 abas visíveis: PEDIDO e PAGAMENTO.
  * - Receber pedidos do site via doPost().
  * - Guardar Observações corretamente.
  * - Calcular preço no servidor.
  * - Gerar Código DOOX.
- * - Controlar pedidos, pagamentos, clientes, episódios e veiculações.
+ * - Controlar pedidos, pagamentos, episódios e veiculações; clientes são dados do próprio pedido, sem cadastro permanente.
  * - Permitir arquivamento mensal antes do reset.
  *
  * IMPORTANTE
@@ -25,10 +25,6 @@ const CONFIG = {
   // Deixe vazio para o sistema criar uma pasta automaticamente.
   ARCHIVE_FOLDER_ID: '',
   ARCHIVE_FOLDER_NAME: 'DOOX — HOCCO — ARQUIVOS',
-
-  // No fechamento mensal, limpa também CLIENTES.
-  // true = tudo do ciclo é arquivado e a operação começa limpa.
-  RESET_CLIENTES_MENSAL: true,
 
   TIMEZONE: Session.getScriptTimeZone() || 'America/Sao_Paulo',
 
@@ -79,7 +75,31 @@ const CONFIG = {
   PIX_KEY: 'c9316176-6f92-413e-9209-63ae6f661ba9',
   PIX_MERCHANT_NAME: 'DOOX STUDIOS',
   PIX_MERCHANT_CITY: 'LENCOIS PAULISTA',
-  PIX_TXID: '***'
+  PIX_TXID: '***',
+
+  // Instruções comerciais por modalidade — fonte única para WhatsApp e portal.
+  CLIENT_INSTRUCTIONS: {
+    'Presença no Rodapé': {
+      title: 'Materiais para Presença no Rodapé',
+      items: ['Logo da empresa em boa qualidade', 'Nome fantasia da empresa', 'Rede social que deseja destacar (ex.: @empresa)', 'Segmento da empresa']
+    },
+    'Sponsor Overlay': {
+      title: 'Materiais para Sponsor Overlay',
+      items: ['Logo da empresa em boa qualidade', 'Nome da empresa', 'Rede social que deseja destacar', 'Texto curto da mensagem ou chamada', 'Imagem ou material visual que deseja utilizar', 'Observações importantes para a produção']
+    },
+    'Overlay + Áudio': {
+      title: 'Materiais para Overlay + Áudio',
+      items: ['Logo da empresa em boa qualidade', 'Nome da empresa', 'Rede social que deseja destacar', 'Texto curto da mensagem ou chamada', 'Imagem ou material visual', 'Áudio ou roteiro curto para a locução', 'Observações importantes para a produção']
+    },
+    'Empresa Patrocinadora do Episódio': {
+      title: 'Materiais para Patrocínio do Episódio',
+      items: ['Logo da empresa em boa qualidade', 'Nome fantasia da empresa', 'Rede social que deseja destacar', 'Texto institucional curto', 'Imagem ou material visual da empresa']
+    },
+    'Apoiador Individual': {
+      title: 'Dados para Apoiador Individual',
+      items: ['Nome que deseja utilizar na identificação', 'Rede social, se desejar divulgá-la']
+    }
+  }
 };
 
 /*************************************************
@@ -87,136 +107,316 @@ const CONFIG = {
  *************************************************/
 
 const SHEETS = {
-
   PEDIDOS: {
-    name: 'PEDIDOS',
+    name: 'PEDIDO',
     headers: [
-      'Código DOOX',
-      'Data/Hora',
-      'Nome / Empresa',
-      'Tipo',
-      'WhatsApp',
-      'E-mail',
-      '@ / Perfil / Site',
-      'Modalidade',
-      'Episódio',
-      'Momento desejado',
-      'Faixa comercial',
-      'Valor unitário',
-      'Quantidade',
-      'Valor total',
-      'Status',
-      'Termos',
-      'Regras',
-      'Observações',
-      'Observação Cliente',
-      'Criado em',
-      'Atualizado em',
-      'Reserva',
-      'Client Request ID',
-      'Token de Acompanhamento',
-      'Última Notificação'
+      'Código DOOX','Data/Hora','Nome / Empresa','Tipo','WhatsApp','E-mail','@ / Perfil / Site',
+      'Modalidade','Episódio','Momento desejado','Faixa comercial','Valor unitário','Quantidade','Valor total',
+      'Status','Termos','Regras','Observações','Observação Cliente','Criado em','Atualizado em','Reserva',
+      'Client Request ID','Token de Acompanhamento','Última Notificação'
     ]
   },
-
   PAGAMENTOS: {
-    name: 'PAGAMENTOS',
+    name: 'PAGAMENTO',
     headers: [
-      'Código DOOX',
-      'Data/Hora',
-      'Nome / Empresa',
-      'Valor devido',
-      'Forma de pagamento',
-      'Status',
-      'Data pagamento',
-      'Observação',
-      'Atualizado em'
+      'Código DOOX','Data/Hora','Nome / Empresa','Valor devido','Forma de pagamento','Status pagamento',
+      'Data pagamento','Status do Pedido','Observação','Atualizado em'
     ]
   },
-
-  CLIENTES: {
-    name: 'CLIENTES',
-    headers: [
-      'ID Cliente',
-      'Nome / Empresa',
-      'Tipo',
-      'WhatsApp',
-      'E-mail',
-      '@ / Perfil / Site',
-      'Primeiro pedido em',
-      'Último pedido em',
-      'Total de pedidos',
-      'Atualizado em'
-    ]
-  },
-
   EPISODIOS: {
-    name: 'EPISÓDIOS',
+    name: '_EPISÓDIOS',
     headers: [
-      'Código Episódio',
-      'Número',
-      'Data prevista',
-      'Status',
-
-      'Capacidade Rodapé',
-      'Ocupado Rodapé',
-      'Vagas Rodapé',
-
-      'Capacidade Sponsor Overlay',
-      'Ocupado Sponsor Overlay',
-      'Vagas Sponsor Overlay',
-
-      'Capacidade Overlay + Áudio',
-      'Ocupado Overlay + Áudio',
-      'Vagas Overlay + Áudio',
-
-      'Capacidade Apoiador Individual',
-      'Ocupado Apoiador Individual',
-      'Vagas Apoiador Individual',
-
-      'Capacidade Empresa Patrocinadora',
-      'Ocupado Empresa Patrocinadora',
-      'Vagas Empresa Patrocinadora',
-
-      'Observação',
-      'Atualizado em'
+      'Código Episódio','Número','Data prevista','Status',
+      'Capacidade Rodapé','Ocupado Rodapé','Vagas Rodapé',
+      'Capacidade Sponsor Overlay','Ocupado Sponsor Overlay','Vagas Sponsor Overlay',
+      'Capacidade Overlay + Áudio','Ocupado Overlay + Áudio','Vagas Overlay + Áudio',
+      'Capacidade Apoiador Individual','Ocupado Apoiador Individual','Vagas Apoiador Individual',
+      'Capacidade Empresa Patrocinadora','Ocupado Empresa Patrocinadora','Vagas Empresa Patrocinadora',
+      'Observação','Atualizado em'
     ]
   },
-
   LOG: {
-    name: 'LOG',
-    headers: [
-      'Data/Hora',
-      'Código DOOX',
-      'Ação',
-      'Status anterior',
-      'Status novo',
-      'Observação',
-      'Operador'
-    ]
+    name: '_LOG',
+    headers: ['Data/Hora','Código DOOX','Ação','Status anterior','Status novo','Observação','Operador']
   },
-
   VEICULACOES: {
-    name: 'VEICULAÇÕES',
-    headers: [
-      'Código DOOX',
-      'Episódio',
-      'Nome / Empresa',
-      'Modalidade',
-      'Momento efetivo',
-      'Status',
-      'Data publicação',
-      'Observação',
-      'Atualizado em'
-    ]
+    name: '_VEICULAÇÕES',
+    headers: ['Código DOOX','Episódio','Nome / Empresa','Modalidade','Momento efetivo','Status','Data publicação','Observação','Atualizado em']
   }
 };
-
 
 /*************************************************
  * WEB APP
  * CONTRATO COMPATÍVEL COM O SITE V20
  *************************************************/
+
+
+function getClientInstructions_(modality) {
+  const key = String(modality || '').trim();
+  const cfg = CONFIG.CLIENT_INSTRUCTIONS[key] || { title: 'Materiais necessários', items: ['A DOOX informará os materiais necessários conforme a análise do pedido.'] };
+  return { title: cfg.title, items: cfg.items.slice() };
+}
+
+function migrateOperationalSheetNames_(ss) {
+  const aliases = [
+    ['PEDIDOS', SHEETS.PEDIDOS.name],
+    ['PAGAMENTOS', SHEETS.PAGAMENTOS.name],
+    ['EPISÓDIOS', SHEETS.EPISODIOS.name],
+    ['VEICULAÇÕES', SHEETS.VEICULACOES.name],
+    ['LOG', SHEETS.LOG.name]
+  ];
+  aliases.forEach(pair => {
+    const oldSheet = ss.getSheetByName(pair[0]);
+    const newSheet = ss.getSheetByName(pair[1]);
+    if (oldSheet && !newSheet) oldSheet.setName(pair[1]);
+  });
+
+  // CLIENTE não faz mais parte da operação. Preservamos a aba antiga como técnica/legado.
+  const legacy = ss.getSheetByName('CLIENTE') || ss.getSheetByName('CLIENTES');
+  if (legacy && !ss.getSheetByName('_CLIENTE_LEGADO')) {
+    try { legacy.setName('_CLIENTE_LEGADO'); } catch (_) {}
+  } else if (legacy) {
+    try { legacy.hideSheet(); } catch (_) {}
+  }
+}
+
+function ensureEditTrigger_(ss) {
+  const triggers = ScriptApp.getProjectTriggers();
+  const exists = triggers.some(t => t.getHandlerFunction() === 'DOOX_onEdit' && t.getEventType() === ScriptApp.EventType.ON_EDIT);
+  if (!exists) {
+    ScriptApp.newTrigger('DOOX_onEdit').forSpreadsheet(ss).onEdit().create();
+  }
+}
+
+function showOnlyOperationalSheets_(ss) {
+  const visible = [SHEETS.PAGAMENTOS.name];
+  ss.getSheets().forEach(sheet => {
+    try {
+      if (visible.indexOf(sheet.getName()) >= 0) sheet.showSheet();
+      else sheet.hideSheet();
+    } catch (_) {}
+  });
+}
+
+function applyStatusValidationToRow_(sheet, row, headerName) {
+  const map = headerMap_(sheet);
+  const col = map[headerName];
+  if (!col || row < 2) return;
+  const current = String(sheet.getRange(row, col).getValue() || '').trim().toUpperCase();
+  const options = allowedNextStatuses_(current);
+  if (options.length) {
+    sheet.getRange(row, col).setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInList(options, true).setAllowInvalid(false).build());
+  } else {
+    sheet.getRange(row, col).clearDataValidations();
+  }
+}
+
+function ensureStatusValidation_(sheet) {
+  const map = headerMap_(sheet);
+  const statusCol = map['Status'];
+  if (!statusCol) return;
+  const lastRow = Math.max(2, sheet.getLastRow());
+  const allStatuses = [
+    'SOLICITADO','EM ANÁLISE','AGUARDANDO PAGAMENTO','PAGAMENTO RECEBIDO',
+    'MATERIAL PENDENTE','MATERIAL RECEBIDO','EM PRODUÇÃO','PROGRAMADO',
+    'PUBLICADO','FINALIZADO','REJEITADO','CANCELADO','ARQUIVADO'
+  ];
+  sheet.getRange(2, statusCol, lastRow - 1, 1)
+    .setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInList(allStatuses, true)
+      .setAllowInvalid(false)
+      .build());
+  sheet.getRange(1, statusCol).setBackground('#ff6900').setFontColor('#ffffff').setFontWeight('bold');
+}
+
+function ensurePaymentValidations_(sheet) {
+  const map = headerMap_(sheet);
+  const pedidoCol = map['Status do Pedido'];
+  const payCol = map['Status pagamento'];
+  const lastRow = Math.max(2, sheet.getLastRow());
+  const orderStatuses = [
+    'SOLICITADO','EM ANÁLISE','AGUARDANDO PAGAMENTO','PAGAMENTO RECEBIDO',
+    'MATERIAL PENDENTE','MATERIAL RECEBIDO','EM PRODUÇÃO','PROGRAMADO',
+    'PUBLICADO','FINALIZADO','REJEITADO','CANCELADO','ARQUIVADO'
+  ];
+  if (pedidoCol) {
+    sheet.getRange(2, pedidoCol, lastRow - 1, 1)
+      .setDataValidation(SpreadsheetApp.newDataValidation()
+        .requireValueInList(orderStatuses, true)
+        .setAllowInvalid(false)
+        .build());
+    sheet.getRange(1, pedidoCol).setBackground('#ff6900').setFontColor('#ffffff').setFontWeight('bold');
+  }
+  if (payCol) {
+    const paymentStatuses = ['AGUARDANDO PAGAMENTO','PAGAMENTO RECEBIDO'];
+    sheet.getRange(2, payCol, lastRow - 1, 1)
+      .setDataValidation(SpreadsheetApp.newDataValidation()
+        .requireValueInList(paymentStatuses, true)
+        .setAllowInvalid(false)
+        .build());
+    sheet.getRange(1, payCol).setBackground('#ff6900').setFontColor('#ffffff').setFontWeight('bold');
+  }
+}
+
+function DOOX_onEdit(e) {
+  try {
+    if (!e || !e.range || e.range.getRow() < 2 || e.range.getNumRows() !== 1 || e.range.getNumColumns() !== 1) return;
+    const sheet = e.range.getSheet();
+    const name = sheet.getName();
+    if (name !== SHEETS.PEDIDOS.name && name !== SHEETS.PAGAMENTOS.name) return;
+    const map = headerMap_(sheet);
+    const col = e.range.getColumn();
+
+    if (name === SHEETS.PEDIDOS.name && col === map['Status']) {
+      const code = String(sheet.getRange(e.range.getRow(), map['Código DOOX']).getValue() || '').trim();
+      const requested = String(e.range.getValue() || '').trim().toUpperCase();
+      const old = String(e.oldValue || '').trim().toUpperCase();
+      if (!code || !requested) return;
+      if (requested === 'REJEITADO') {
+        const reason = String(sheet.getRange(e.range.getRow(), map['Observação Cliente']).getValue() || '').trim();
+        if (!reason) { e.range.setValue(old); SpreadsheetApp.getActive().toast('Informe primeiro o motivo em Observação Cliente.', 'DOOX', 5); return; }
+      }
+      try {
+        if (requested === 'PAGAMENTO RECEBIDO') {
+          confirmarPagamento(code, 'PIX', 'Pagamento conferido e confirmado pela DOOX.');
+        } else {
+          atualizarStatusPedido_(getSpreadsheet_(), code, requested, { action: 'ALTERAÇÃO PELO STATUS', observation: requested === 'REJEITADO' ? String(sheet.getRange(e.range.getRow(), map['Observação Cliente']).getValue() || '').trim() : '', operator: 'OPERADOR' });
+        }
+        sincronizarPagamentoComPedido_(getSpreadsheet_(), code);
+        refreshStatusDropdowns_(getSpreadsheet_(), code);
+        SpreadsheetApp.getActive().toast('Status atualizado: ' + requested, 'DOOX', 3);
+      } catch (err) {
+        e.range.setValue(old);
+        SpreadsheetApp.getActive().toast(err.message || String(err), 'DOOX — atenção', 6);
+      }
+      return;
+    }
+
+    if (name === SHEETS.PAGAMENTOS.name && col === map['Status do Pedido']) {
+      const code = String(sheet.getRange(e.range.getRow(), map['Código DOOX']).getValue() || '').trim();
+      const requested = String(e.range.getValue() || '').trim().toUpperCase();
+      const old = String(e.oldValue || '').trim().toUpperCase();
+      if (!code || !requested) return;
+      try {
+        const pedido = findPedidoByCode_(getSpreadsheet_(), code);
+        if (!pedido) throw new Error('Pedido não encontrado: ' + code);
+        if (requested === 'REJEITADO') {
+          const reason = String(sheet.getRange(e.range.getRow(), map['Observação']).getValue() || '').trim();
+          if (!reason) throw new Error('Informe o motivo na coluna Observação antes de recusar.');
+          atualizarStatusPedido_(getSpreadsheet_(), code, requested, { action: 'ALTERAÇÃO PELO PAGAMENTO', observation: reason, operator: 'OPERADOR' });
+        } else if (requested === 'PAGAMENTO RECEBIDO') {
+          confirmarPagamento(code, 'PIX', 'Pagamento conferido e confirmado pela DOOX.');
+        } else {
+          atualizarStatusPedido_(getSpreadsheet_(), code, requested, { action: 'ALTERAÇÃO PELO PAGAMENTO', operator: 'OPERADOR' });
+        }
+        refreshStatusDropdowns_(getSpreadsheet_(), code);
+        SpreadsheetApp.getActive().toast('Status do pedido atualizado: ' + requested, 'DOOX', 3);
+      } catch (err) {
+        e.range.setValue(old);
+        SpreadsheetApp.getActive().toast(err.message || String(err), 'DOOX — atenção', 6);
+      }
+      return;
+    }
+
+    if (name === SHEETS.PAGAMENTOS.name && col === map['Status pagamento']) {
+      const code = String(sheet.getRange(e.range.getRow(), map['Código DOOX']).getValue() || '').trim();
+      const requested = String(e.range.getValue() || '').trim().toUpperCase();
+      if (!code || !requested) return;
+      try {
+        if (requested === 'PAGAMENTO RECEBIDO') confirmarPagamento(code, 'PIX', 'Pagamento conferido e confirmado pela DOOX.');
+        else atualizarPagamento(code, requested, '', 'Status financeiro atualizado pelo operador.');
+        SpreadsheetApp.getActive().toast('Pagamento atualizado: ' + requested, 'DOOX', 3);
+      } catch (err) {
+        SpreadsheetApp.getActive().toast(err.message || String(err), 'DOOX — atenção', 6);
+      }
+    }
+  } catch (_) {}
+}
+
+function refreshStatusDropdowns_(ss, code) {
+  const pedido = findPedidoByCode_(ss, code);
+  if (!pedido) return;
+  const validation = function(current) {
+    const cur = String(current || '').trim().toUpperCase();
+    const opts = allowedNextStatuses_(cur).slice();
+    if (cur && opts.indexOf(cur) === -1) opts.unshift(cur);
+    if (!opts.length) return null;
+    return SpreadsheetApp.newDataValidation()
+      .requireValueInList(opts, true)
+      .setAllowInvalid(false)
+      .build();
+  };
+
+  const ps = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const pm = headerMap_(ps);
+  if (pm['Status']) {
+    const rule = validation(pedido.status);
+    if (rule) ps.getRange(pedido.row, pm['Status']).setDataValidation(rule);
+  }
+
+  const pay = getPaymentRecord_(ss, code);
+  if (pay) {
+    const sh = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+    const m = headerMap_(sh);
+    if (m['Status do Pedido']) {
+      const rule = validation(pedido.status);
+      if (rule) sh.getRange(pay.row, m['Status do Pedido']).setDataValidation(rule);
+      sh.getRange(pay.row, m['Status do Pedido']).setValue(pedido.status);
+    }
+    if (m['Status pagamento']) {
+      const payCurrent = String(sh.getRange(pay.row, m['Status pagamento']).getValue() || '').trim().toUpperCase();
+      const payOpts = ['AGUARDANDO PAGAMENTO','PAGAMENTO INFORMADO','PAGAMENTO RECEBIDO'];
+      if (payOpts.indexOf(payCurrent) === -1) payOpts.unshift(payCurrent);
+      sh.getRange(pay.row, m['Status pagamento']).setDataValidation(SpreadsheetApp.newDataValidation()
+        .requireValueInList(payOpts.filter(Boolean), true)
+        .setAllowInvalid(false).build());
+    }
+  }
+}
+
+function sincronizarPagamentoComPedido_(ss, code) {
+  const pedido = findPedidoByCode_(ss, code);
+  const pay = getPaymentRecord_(ss, code);
+  if (!pedido || !pay) return;
+  const sh = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+  const m = headerMap_(sh);
+  if (m['Status do Pedido']) sh.getRange(pay.row, m['Status do Pedido']).setValue(pedido.status);
+  sh.getRange(pay.row, m['Atualizado em']).setValue(new Date());
+}
+
+function executarAcaoPedido_(codigo, acao, observacao) {
+  const ss = getSpreadsheet_();
+  ensureOperationalStructure_(ss);
+  const action = String(acao || '').trim().toUpperCase();
+  if (!codigo || !action) return { ok: true, ignored: true };
+  if (action === 'ANALISAR') return atualizarStatusPedido_(ss, codigo, 'EM ANÁLISE', { action: 'ANALISAR' });
+  if (action === 'APROVAR') return atualizarStatusPedido_(ss, codigo, 'AGUARDANDO PAGAMENTO', { action: 'APROVAR' });
+  if (action === 'CONFIRMAR PAGAMENTO') return confirmarPagamento(codigo, 'PIX', observacao || 'Pagamento conferido e confirmado pela DOOX.');
+  if (action === 'AGUARDAR MATERIAL') return atualizarStatusPedido_(ss, codigo, 'MATERIAL PENDENTE', { action: 'AGUARDAR MATERIAL' });
+  if (action === 'RECEBER MATERIAL') return atualizarStatusPedido_(ss, codigo, 'MATERIAL RECEBIDO', { action: 'RECEBER MATERIAL' });
+  if (action === 'APROVAR MATERIAL') return atualizarStatusPedido_(ss, codigo, 'EM PRODUÇÃO', { action: 'APROVAR MATERIAL' });
+  if (action === 'PROGRAMAR') return atualizarStatusPedido_(ss, codigo, 'PROGRAMADO', { action: 'PROGRAMAR' });
+  if (action === 'PUBLICAR') return atualizarStatusPedido_(ss, codigo, 'PUBLICADO', { action: 'PUBLICAR' });
+  if (action === 'FINALIZAR') return atualizarStatusPedido_(ss, codigo, 'FINALIZADO', { action: 'FINALIZAR' });
+  if (action === 'CANCELAR') return atualizarStatusPedido_(ss, codigo, 'CANCELADO', { action: 'CANCELAR', observation: observacao || 'Pedido cancelado pela DOOX.' });
+  if (action === 'ARQUIVAR') return atualizarStatusPedido_(ss, codigo, 'ARQUIVADO', { action: 'ARQUIVAR' });
+  if (action === 'RECUSAR PARTICIPAÇÃO') return recusarParticipacao(codigo, observacao);
+  throw new Error('Ação não reconhecida: ' + action);
+}
+
+function recusarParticipacao(codigo, motivo) {
+  const reason = String(motivo || '').trim();
+  if (!reason) throw new Error('Informe o motivo da recusa na coluna "Observação Cliente" antes de escolher RECUSAR PARTICIPAÇÃO.');
+  const ss = getSpreadsheet_();
+  ensureOperationalStructure_(ss);
+  const result = atualizarStatusPedido_(ss, codigo, 'REJEITADO', { action: 'RECUSAR PARTICIPAÇÃO', observation: reason, operator: 'OPERADOR' });
+  const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const found = findRowByFirstColumn_(sheet, codigo);
+  const map = headerMap_(sheet);
+  sheet.getRange(found.row, map['Observação Cliente']).setValue(reason);
+  return { ok: true, code: codigo, status: 'REJEITADO', statusLabel: 'Participação recusada', reason: reason };
+}
 
 function doGet(e) {
 
@@ -376,7 +576,7 @@ function doPost(e) {
 
     if (action === 'atualizarStatus') {
       const ss = getSpreadsheet_();
-      setupMVP_(ss);
+      ensureOperationalStructure_(ss);
       return json_(atualizarStatusPedido_(ss, body.code, body.status, { action: body.actionLabel || 'ATUALIZAR STATUS', observation: body.observacao || '' }));
     }
 
@@ -423,7 +623,7 @@ function informarPagamento_(raw) {
   const token = String(raw.token || '').trim();
   if (!token) throw new Error('Token de acompanhamento não informado.');
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
   const pedido = findPedidoByTrackingToken_(ss, token);
   if (!pedido) throw new Error('Pedido não encontrado ou token inválido.');
   const status = String(pedido.status || '').toUpperCase();
@@ -435,7 +635,7 @@ function informarPagamento_(raw) {
   const found = findRowByFirstColumn_(sheet, pedido.code);
   if (!found) throw new Error('Registro financeiro não encontrado.');
   const map = headerMap_(sheet);
-  sheet.getRange(found.row, map['Status']).setValue('PAGAMENTO INFORMADO');
+  sheet.getRange(found.row, map['Status pagamento']).setValue('PAGAMENTO INFORMADO');
   sheet.getRange(found.row, map['Observação']).setValue('Cliente informou pagamento pelo portal. Aguardando conferência manual.');
   sheet.getRange(found.row, map['Atualizado em']).setValue(new Date());
   return { ok: true, code: pedido.code, status: 'AGUARDANDO PAGAMENTO', paymentReported: true, message: 'Pagamento informado. A DOOX fará a conferência.' };
@@ -447,7 +647,7 @@ function registerRequest_(raw) {
   const ss = getSpreadsheet_();
 
   // Garante estrutura mínima sem apagar nada.
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
 
 
   const r = normalizeRequest_(raw);
@@ -481,6 +681,7 @@ function registerRequest_(raw) {
         quantity: existing.quantity,
         status: existing.status,
         total: existing.total,
+        instructions: getClientInstructions_(existing.modality),
         order: existing
 
       };
@@ -495,14 +696,6 @@ function registerRequest_(raw) {
       r.modality,
       r.moment,
       r.quantity
-    );
-
-
-  // CLIENTE
-  const clientId =
-    upsertClient_(
-      ss,
-      r
     );
 
 
@@ -725,9 +918,8 @@ function registerRequest_(raw) {
 
   pedidoSheet.appendRow(row);
 
-  const newRow =
-    pedidoSheet.getLastRow();
-
+  const newRow = pedidoSheet.getLastRow();
+  applyStatusValidationToRow_(pedidoSheet, newRow, 'Status');
 
   /*************************************************
    * PAGAMENTO
@@ -743,35 +935,9 @@ function registerRequest_(raw) {
     );
 
 
-  pagamentoSheet.appendRow([
-
-    code,
-
-    now,
-
-    r.nameOrCompany,
-
-    price.total,
-
-    '',
-
-    'AGUARDANDO PAGAMENTO',
-
-    '',
-
-    '',
-
-    now
-
-  ]);
-
-
-  updateClientOrderStats_(
-    ss,
-    clientId,
-    now
-  );
-
+  pagamentoSheet.appendRow([code, now, r.nameOrCompany, price.total, '', 'AGUARDANDO PAGAMENTO', '', 'SOLICITADO', '', now]);
+  const newPaymentRow = pagamentoSheet.getLastRow();
+  applyStatusValidationToRow_(pagamentoSheet, newPaymentRow, 'Status do Pedido');
 
   formatDataRows_(
     pedidoSheet
@@ -793,7 +959,6 @@ function registerRequest_(raw) {
 
     code: code,
 
-    clientId: clientId,
 
     modality: r.modality,
 
@@ -818,6 +983,8 @@ function registerRequest_(raw) {
 
     observation:
       r.observation,
+
+    instructions: getClientInstructions_(r.modality),
 
     row: newRow
 
@@ -1128,7 +1295,7 @@ function getPaymentRecord_(ss, code) {
   const vals = sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).getValues();
   for (let i = vals.length - 1; i >= 0; i--) {
     if (String(vals[i][0] || '').trim() === String(code || '').trim()) {
-      return { row: i + 2, status: String(vals[i][5] || ''), updatedAt: vals[i][8] || '' };
+      return { row: i + 2, status: String(vals[i][5] || ''), updatedAt: vals[i][9] || '' };
     }
   }
   return null;
@@ -1162,1602 +1329,28 @@ function buildPublicPayment_(ss, pedido) {
 
 
 /*************************************************
- * CLIENTES
- *************************************************/
-
-function upsertClient_(
-  ss,
-  r
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.CLIENTES.name
-    );
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const lastRow =
-    sheet.getLastRow();
-
-
-  let foundRow =
-    0;
-
-
-  if (lastRow >= 2) {
-
-    const values =
-      sheet.getRange(
-        2,
-        1,
-        lastRow - 1,
-        sheet.getLastColumn()
-      ).getValues();
-
-
-    const wa =
-      normalizePhone_(
-        r.whatsapp
-      );
-
-
-    const email =
-      normalizeEmail_(
-        r.email
-      );
-
-
-    for (
-      let i = 0;
-      i < values.length;
-      i++
-    ) {
-
-      const row =
-        values[i];
-
-
-      const rowWa =
-        normalizePhone_(
-          String(
-            row[
-              map['WhatsApp'] - 1
-            ] || ''
-          )
-        );
-
-
-      const rowEmail =
-        normalizeEmail_(
-          String(
-            row[
-              map['E-mail'] - 1
-            ] || ''
-          )
-        );
-
-
-      if (
-
-        (
-          wa &&
-          rowWa &&
-          wa === rowWa
-        )
-
-        ||
-
-        (
-          email &&
-          rowEmail &&
-          email === rowEmail
-        )
-
-      ) {
-
-        foundRow =
-          i + 2;
-
-        break;
-
-      }
-
-    }
-
-  }
-
-
-  const now =
-    new Date();
-
-
-  if (foundRow) {
-
-    const existing =
-      sheet.getRange(
-        foundRow,
-        1,
-        1,
-        sheet.getLastColumn()
-      ).getValues()[0];
-
-
-    if (
-      !existing[
-        map['Nome / Empresa'] - 1
-      ]
-    ) {
-
-      sheet.getRange(
-        foundRow,
-        map['Nome / Empresa']
-      ).setValue(
-        r.nameOrCompany
-      );
-
-    }
-
-
-    sheet.getRange(
-      foundRow,
-      map['Tipo']
-    ).setValue(
-      r.type
-    );
-
-
-    sheet.getRange(
-      foundRow,
-      map['WhatsApp']
-    ).setValue(
-      r.whatsapp
-    );
-
-
-    if (r.email) {
-
-      sheet.getRange(
-        foundRow,
-        map['E-mail']
-      ).setValue(
-        r.email
-      );
-
-    }
-
-
-    if (r.profile) {
-
-      sheet.getRange(
-        foundRow,
-        map['@ / Perfil / Site']
-      ).setValue(
-        r.profile
-      );
-
-    }
-
-
-    sheet.getRange(
-      foundRow,
-      map['Último pedido em']
-    ).setValue(
-      now
-    );
-
-
-    sheet.getRange(
-      foundRow,
-      map['Atualizado em']
-    ).setValue(
-      now
-    );
-
-
-    return String(
-      existing[
-        map['ID Cliente'] - 1
-      ]
-    );
-
-  }
-
-
-  const id =
-    nextClientCode_();
-
-
-  const row = [
-
-    id,
-
-    r.nameOrCompany,
-
-    r.type,
-
-    r.whatsapp,
-
-    r.email,
-
-    r.profile,
-
-    now,
-
-    now,
-
-    1,
-
-    now
-
-  ];
-
-
-  sheet.appendRow(
-    row
-  );
-
-
-  return id;
-
-}
-
-
-function updateClientOrderStats_(
-  ss,
-  clientId,
-  now
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.CLIENTES.name
-    );
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const lastRow =
-    sheet.getLastRow();
-
-
-  if (lastRow < 2) {
-    return;
-  }
-
-
-  const ids =
-    sheet.getRange(
-      2,
-      map['ID Cliente'],
-      lastRow - 1,
-      1
-    ).getValues();
-
-
-  for (
-    let i = 0;
-    i < ids.length;
-    i++
-  ) {
-
-    if (
-      String(
-        ids[i][0]
-      ) ===
-      String(clientId)
-    ) {
-
-      const row =
-        i + 2;
-
-
-      const countCell =
-        sheet.getRange(
-          row,
-          map['Total de pedidos']
-        );
-
-
-      const current =
-        Number(
-          countCell.getValue() || 0
-        );
-
-
-      countCell.setValue(
-        current + 1
-      );
-
-
-      sheet.getRange(
-        row,
-        map['Último pedido em']
-      ).setValue(
-        now
-      );
-
-
-      sheet.getRange(
-        row,
-        map['Atualizado em']
-      ).setValue(
-        now
-      );
-
-
-      return;
-
-    }
-
-  }
-
-}
-
-
-/*************************************************
- * CÓDIGOS
- *************************************************/
-
-function nextOrderCode_() {
-
-  const props =
-    PropertiesService
-      .getScriptProperties();
-
-
-  let seq =
-    Number(
-      props.getProperty(
-        'DOOX_ORDER_SEQ'
-      ) || 0
-    ) + 1;
-
-
-  props.setProperty(
-    'DOOX_ORDER_SEQ',
-    String(seq)
-  );
-
-
-  const yy =
-    Utilities.formatDate(
-      new Date(),
-      CONFIG.TIMEZONE,
-      'yy'
-    );
-
-
-  return (
-    'DOOX-' +
-    yy +
-    '-' +
-    String(seq).padStart(
-      4,
-      '0'
-    )
-  );
-
-}
-
-
-function nextClientCode_() {
-
-  const props =
-    PropertiesService
-      .getScriptProperties();
-
-
-  let seq =
-    Number(
-      props.getProperty(
-        'DOOX_CLIENT_SEQ'
-      ) || 0
-    ) + 1;
-
-
-  props.setProperty(
-    'DOOX_CLIENT_SEQ',
-    String(seq)
-  );
-
-
-  return (
-    'CLI-' +
-    String(seq).padStart(
-      4,
-      '0'
-    )
-  );
-
-}
-
-
-function nextEpisodeCode_() {
-
-  const props =
-    PropertiesService
-      .getScriptProperties();
-
-
-  let seq =
-    Number(
-      props.getProperty(
-        'DOOX_EPISODE_SEQ'
-      ) || 0
-    ) + 1;
-
-
-  props.setProperty(
-    'DOOX_EPISODE_SEQ',
-    String(seq)
-  );
-
-
-  return (
-    'EP' +
-    String(seq).padStart(
-      2,
-      '0'
-    )
-  );
-
-}
-
-
-/*************************************************
- * EPISÓDIOS
- *************************************************/
-
-function createEpisode_(
-  ss,
-  dateValue
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.EPISODIOS.name
-    );
-
-
-  const code =
-    nextEpisodeCode_();
-
-
-  const number =
-    Number(
-      code.replace(
-        /^EP/i,
-        ''
-      )
-    );
-
-
-  const date =
-    dateValue ||
-    new Date();
-
-
-  const row = [
-
-    code,
-
-    number,
-
-    date,
-
-    'ABERTO',
-
-    // RODAPÉ
-    50,
-    0,
-    50,
-
-    // SPONSOR OVERLAY
-    10,
-    0,
-    10,
-
-    // OVERLAY + ÁUDIO
-    10,
-    0,
-    10,
-
-    // APOIADOR
-    50,
-    0,
-    50,
-
-    // EMPRESA PATROCINADORA
-    1,
-    0,
-    1,
-
-    '',
-
-    new Date()
-
-  ];
-
-
-  sheet.appendRow(
-    row
-  );
-
-
-  formatDataRows_(
-    sheet
-  );
-
-
-  return code;
-
-}
-
-
-/*************************************************
- * PRIMEIRO EPISÓDIO
- *************************************************/
-
-function setupPrimeiroEpisodio_() {
-
-  const ss =
-    getSpreadsheet_();
-
-
-  setupMVP_(
-    ss
-  );
-
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.EPISODIOS.name
-    );
-
-
-  if (
-    sheet.getLastRow() < 2
-  ) {
-
-    return createEpisode_(
-      ss,
-      new Date()
-    );
-
-  }
-
-
-  return String(
-    sheet
-      .getRange(
-        2,
-        1
-      )
-      .getValue()
-      ||
-      createEpisode_(
-        ss,
-        new Date()
-      )
-  );
-
-}
-
-
-/*************************************************
- * RESERVA
- *************************************************/
-
-function reserveOrder_(
-  code
-) {
-
-  const ss =
-    getSpreadsheet_();
-
-
-  setupMVP_(
-    ss
-  );
-
-
-  const pedido =
-    findPedidoByCode_(
-      ss,
-      code
-    );
-
-
-  if (!pedido) {
-
-    throw new Error(
-      'Pedido não encontrado: ' +
-      code
-    );
-
-  }
-
-
-  if (
-
-    pedido.reserva ===
-    'RESERVADO'
-
-    ||
-
-    pedido.reserva ===
-    'CONFIRMADO'
-
-  ) {
-
-    return {
-
-      ok: true,
-
-      code: code,
-
-      message:
-        'Pedido já possui reserva.',
-
-      episode:
-        pedido.episode
-
-    };
-
-  }
-
-
-  const episodeCode =
-    findEpisodeForReservation_(
-      ss,
-      pedido.modality,
-      pedido.quantity
-    );
-
-
-  allocateEpisode_(
-    ss,
-    episodeCode,
-    pedido.modality,
-    pedido.quantity
-  );
-
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.PEDIDOS.name
-    );
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Episódio']
-  ).setValue(
-    episodeCode
-  );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Reserva']
-  ).setValue(
-    'RESERVADO'
-  );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Status']
-  ).setValue(
-    'AGUARDANDO PAGAMENTO'
-  );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Atualizado em']
-  ).setValue(
-    new Date()
-  );
-
-
-  return {
-
-    ok: true,
-
-    code: code,
-
-    episode:
-      episodeCode,
-
-    reservation:
-      'RESERVADO'
-
-  };
-
-}
-
-
-function releaseOrderReservation_(
-  code,
-  newStatus
-) {
-
-  const ss =
-    getSpreadsheet_();
-
-
-  setupMVP_(
-    ss
-  );
-
-
-  const pedido =
-    findPedidoByCode_(
-      ss,
-      code
-    );
-
-
-  if (!pedido) {
-
-    throw new Error(
-      'Pedido não encontrado: ' +
-      code
-    );
-
-  }
-
-
-  if (
-
-    pedido.episode
-
-    &&
-
-    (
-      pedido.reserva ===
-      'RESERVADO'
-
-      ||
-
-      pedido.reserva ===
-      'CONFIRMADO'
-    )
-
-  ) {
-
-    deallocateEpisode_(
-      ss,
-      pedido.episode,
-      pedido.modality,
-      pedido.quantity
-    );
-
-  }
-
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.PEDIDOS.name
-    );
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Episódio']
-  ).setValue(
-    ''
-  );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Reserva']
-  ).setValue(
-    'CANCELADO'
-  );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Status']
-  ).setValue(
-    newStatus ||
-    'CANCELADO'
-  );
-
-
-  sheet.getRange(
-    pedido.row,
-    map['Atualizado em']
-  ).setValue(
-    new Date()
-  );
-
-
-  return {
-
-    ok: true,
-
-    code: code,
-
-    reservation:
-      'CANCELADO'
-
-  };
-
-}
-
-
-/*************************************************
- * CONFIRMAR RESERVA
- *************************************************/
-
-function confirmarReserva(
-  codigo
-) {
-
-  const result =
-    reserveOrder_(
-      codigo
-    );
-
-
-  const ss =
-    getSpreadsheet_();
-
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.PEDIDOS.name
-    );
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const pedido =
-    findPedidoByCode_(
-      ss,
-      codigo
-    );
-
-
-  if (pedido) {
-
-    sheet.getRange(
-      pedido.row,
-      map['Reserva']
-    ).setValue(
-      'CONFIRMADO'
-    );
-
-
-    sheet.getRange(
-      pedido.row,
-      map['Atualizado em']
-    ).setValue(
-      new Date()
-    );
-
-  }
-
-
-  return result;
-
-}
-
-
-/*************************************************
- * CANCELAR RESERVA
- *************************************************/
-
-function cancelarReserva(
-  codigo
-) {
-
-  return releaseOrderReservation_(
-    codigo,
-    'CANCELADO'
-  );
-
-}
-
-
-/*************************************************
- * LOCALIZAR EPISÓDIO COM VAGA
- *************************************************/
-
-function findEpisodeForReservation_(
-  ss,
-  modality,
-  quantity
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.EPISODIOS.name
-    );
-
-
-  const rows =
-    getDataRows_(
-      sheet
-    );
-
-
-  for (
-    let i = 0;
-    i < rows.length;
-    i++
-  ) {
-
-    const row =
-      rows[i];
-
-
-    const status =
-      String(
-        row[3] || ''
-      ).toUpperCase();
-
-
-    if (
-      status !== 'ABERTO'
-    ) {
-      continue;
-    }
-
-
-    const available =
-      getEpisodeAvailabilityFromRow_(
-        row,
-        modality
-      );
-
-
-    if (
-      available >= quantity
-    ) {
-
-      return String(
-        row[0]
-      );
-
-    }
-
-  }
-
-
-  // Não encontrou episódio com vaga suficiente.
-  // Cria o próximo episódio.
-  return createEpisode_(
-    ss,
-    new Date()
-  );
-
-}
-
-
-/*************************************************
- * OCUPAR VAGA
- *************************************************/
-
-function allocateEpisode_(
-  ss,
-  episodeCode,
-  modality,
-  quantity
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.EPISODIOS.name
-    );
-
-
-  const found =
-    findRowByFirstColumn_(
-      sheet,
-      episodeCode
-    );
-
-
-  if (!found) {
-
-    throw new Error(
-      'Episódio não encontrado: ' +
-      episodeCode
-    );
-
-  }
-
-
-  const row =
-    found.row;
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const occupiedHeader =
-    occupiedHeaderForModality_(
-      modality
-    );
-
-
-  const capacityHeader =
-    capacityHeaderForModality_(
-      modality
-    );
-
-
-  const availableHeader =
-    availableHeaderForModality_(
-      modality
-    );
-
-
-  const capacity =
-    Number(
-      sheet
-        .getRange(
-          row,
-          map[capacityHeader]
-        )
-        .getValue() || 0
-    );
-
-
-  const occupied =
-    Number(
-      sheet
-        .getRange(
-          row,
-          map[occupiedHeader]
-        )
-        .getValue() || 0
-    );
-
-
-  const available =
-    capacity -
-    occupied;
-
-
-  if (
-    available < quantity
-  ) {
-
-    throw new Error(
-
-      'Não há vagas suficientes no episódio ' +
-      episodeCode +
-      ' para ' +
-      modality +
-      '.'
-
-    );
-
-  }
-
-
-  const newOccupied =
-    occupied +
-    quantity;
-
-
-  sheet
-    .getRange(
-      row,
-      map[occupiedHeader]
-    )
-    .setValue(
-      newOccupied
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map[availableHeader]
-    )
-    .setValue(
-      Math.max(
-        0,
-        capacity -
-        newOccupied
-      )
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map['Atualizado em']
-    )
-    .setValue(
-      new Date()
-    );
-
-
-  updateEpisodeStatus_(
-    sheet,
-    row
-  );
-
-}
-
-
-/*************************************************
- * LIBERAR VAGA
- *************************************************/
-
-function deallocateEpisode_(
-  ss,
-  episodeCode,
-  modality,
-  quantity
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.EPISODIOS.name
-    );
-
-
-  const found =
-    findRowByFirstColumn_(
-      sheet,
-      episodeCode
-    );
-
-
-  if (!found) {
-    return;
-  }
-
-
-  const row =
-    found.row;
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const occupiedHeader =
-    occupiedHeaderForModality_(
-      modality
-    );
-
-
-  const capacityHeader =
-    capacityHeaderForModality_(
-      modality
-    );
-
-
-  const availableHeader =
-    availableHeaderForModality_(
-      modality
-    );
-
-
-  const capacity =
-    Number(
-      sheet
-        .getRange(
-          row,
-          map[capacityHeader]
-        )
-        .getValue() || 0
-    );
-
-
-  const occupied =
-    Number(
-      sheet
-        .getRange(
-          row,
-          map[occupiedHeader]
-        )
-        .getValue() || 0
-    );
-
-
-  const newOccupied =
-    Math.max(
-      0,
-      occupied -
-      quantity
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map[occupiedHeader]
-    )
-    .setValue(
-      newOccupied
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map[availableHeader]
-    )
-    .setValue(
-      Math.max(
-        0,
-        capacity -
-        newOccupied
-      )
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map['Atualizado em']
-    )
-    .setValue(
-      new Date()
-    );
-
-
-  updateEpisodeStatus_(
-    sheet,
-    row
-  );
-
-}
-
-
-/*************************************************
- * STATUS DO EPISÓDIO
- *************************************************/
-
-function updateEpisodeStatus_(
-  sheet,
-  row
-) {
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const headers = [
-
-    [
-      'Capacidade Rodapé',
-      'Ocupado Rodapé'
-    ],
-
-    [
-      'Capacidade Sponsor Overlay',
-      'Ocupado Sponsor Overlay'
-    ],
-
-    [
-      'Capacidade Overlay + Áudio',
-      'Ocupado Overlay + Áudio'
-    ],
-
-    [
-      'Capacidade Apoiador Individual',
-      'Ocupado Apoiador Individual'
-    ],
-
-    [
-      'Capacidade Empresa Patrocinadora',
-      'Ocupado Empresa Patrocinadora'
-    ]
-
-  ];
-
-
-  const allFull =
-    headers.every(
-      ([cap, occ]) => {
-
-        const c =
-          Number(
-            sheet
-              .getRange(
-                row,
-                map[cap]
-              )
-              .getValue() || 0
-          );
-
-
-        const o =
-          Number(
-            sheet
-              .getRange(
-                row,
-                map[occ]
-              )
-              .getValue() || 0
-          );
-
-
-        return o >= c;
-
-      }
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map['Status']
-    )
-    .setValue(
-      allFull
-        ? 'ENCERRADO'
-        : 'ABERTO'
-    );
-
-}
-
-
-/*************************************************
- * DISPONIBILIDADE DO EPISÓDIO
- *************************************************/
-
-function getEpisodeAvailabilityFromRow_(
-  row,
-  modality
-) {
-
-  const indexByMod = {
-
-    'Presença no Rodapé':
-      [4, 5],
-
-    'Sponsor Overlay':
-      [7, 8],
-
-    'Overlay + Áudio':
-      [10, 11],
-
-    'Apoiador Individual':
-      [13, 14],
-
-    'Empresa Patrocinadora do Episódio':
-      [16, 17]
-
-  };
-
-
-  const pair =
-    indexByMod[
-      modality
-    ];
-
-
-  if (!pair) {
-    return 0;
-  }
-
-
-  return Math.max(
-
-    0,
-
-    Number(
-      row[pair[0]] || 0
-    ) -
-
-    Number(
-      row[pair[1]] || 0
-    )
-
-  );
-
-}
-
-
-/*************************************************
- * CABEÇALHO — CAPACIDADE
- *************************************************/
-
-function capacityHeaderForModality_(
-  modality
-) {
-
-  const map = {
-
-    'Presença no Rodapé':
-      'Capacidade Rodapé',
-
-    'Sponsor Overlay':
-      'Capacidade Sponsor Overlay',
-
-    'Overlay + Áudio':
-      'Capacidade Overlay + Áudio',
-
-    'Apoiador Individual':
-      'Capacidade Apoiador Individual',
-
-    'Empresa Patrocinadora do Episódio':
-      'Capacidade Empresa Patrocinadora'
-
-  };
-
-
-  return (
-    map[modality] ||
-    ''
-  );
-
-}
-
-
-/*************************************************
- * CABEÇALHO — OCUPADO
- *************************************************/
-
-function occupiedHeaderForModality_(
-  modality
-) {
-
-  const map = {
-
-    'Presença no Rodapé':
-      'Ocupado Rodapé',
-
-    'Sponsor Overlay':
-      'Ocupado Sponsor Overlay',
-
-    'Overlay + Áudio':
-      'Ocupado Overlay + Áudio',
-
-    'Apoiador Individual':
-      'Ocupado Apoiador Individual',
-
-    'Empresa Patrocinadora do Episódio':
-      'Ocupado Empresa Patrocinadora'
-
-  };
-
-
-  return (
-    map[modality] ||
-    ''
-  );
-
-}
-
-
-/*************************************************
- * CABEÇALHO — VAGAS
- *************************************************/
-
-function availableHeaderForModality_(
-  modality
-) {
-
-  const map = {
-
-    'Presença no Rodapé':
-      'Vagas Rodapé',
-
-    'Sponsor Overlay':
-      'Vagas Sponsor Overlay',
-
-    'Overlay + Áudio':
-      'Vagas Overlay + Áudio',
-
-    'Apoiador Individual':
-      'Vagas Apoiador Individual',
-
-    'Empresa Patrocinadora do Episódio':
-      'Vagas Empresa Patrocinadora'
-
-  };
-
-
-  return (
-    map[modality] ||
-    ''
-  );
-
-}
-
-
-/*************************************************
  * PAGAMENTOS
  *************************************************/
 
-function atualizarPagamento(
-  codigo,
-  status,
-  formaPagamento,
-  observacao
-) {
+function atualizarPagamento(codigo, status, formaPagamento, observacao) {
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
-
+  ensureOperationalStructure_(ss);
   const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
   const found = findRowByFirstColumn_(sheet, codigo);
   if (!found) throw new Error('Pagamento não encontrado para o código: ' + codigo);
-
   const map = headerMap_(sheet);
-  const oldStatus = String(found.values[map['Status'] - 1] || '').trim().toUpperCase();
+  const oldStatus = String(found.values[map['Status pagamento'] - 1] || '').trim().toUpperCase();
   let normalizedStatus = String(status || '').trim().toUpperCase();
   if (normalizedStatus === 'PAGO') normalizedStatus = 'PAGAMENTO RECEBIDO';
   if (!normalizedStatus) normalizedStatus = 'AGUARDANDO PAGAMENTO';
-
   sheet.getRange(found.row, map['Forma de pagamento']).setValue(formaPagamento || '');
-  sheet.getRange(found.row, map['Status']).setValue(normalizedStatus);
+  sheet.getRange(found.row, map['Status pagamento']).setValue(normalizedStatus);
   if (observacao !== undefined) sheet.getRange(found.row, map['Observação']).setValue(observacao || '');
   const now = new Date();
   sheet.getRange(found.row, map['Atualizado em']).setValue(now);
-
   if (normalizedStatus === 'PAGAMENTO RECEBIDO') {
     sheet.getRange(found.row, map['Data pagamento']).setValue(now);
-    const pedidoAtual = findPedidoByCode_(ss, codigo);
-    const pedidoStatus = String(pedidoAtual && pedidoAtual.status || '').toUpperCase();
-    // O pagamento pode ser confirmado antes da análise. Nesse caso, mantemos
-    // o status operacional do pedido e registramos o pagamento separadamente.
-    if (pedidoStatus === 'AGUARDANDO PAGAMENTO') {
-      atualizarStatusPedido_(ss, codigo, 'PAGAMENTO RECEBIDO', {
-        action: 'CONFIRMAR PAGAMENTO',
-        observation: observacao || 'Pagamento confirmado no financeiro.'
-      });
-    } else {
-      logAction_(ss, codigo, 'PAGAMENTO CONFIRMADO', pedidoStatus, pedidoStatus, observacao || 'Pagamento confirmado no financeiro; status operacional preservado.', 'OPERADOR');
-    }
   }
-
   logAction_(ss, codigo, 'ATUALIZAR PAGAMENTO', oldStatus, normalizedStatus, observacao || '', 'OPERADOR');
   return { ok: true, code: codigo, paymentStatus: normalizedStatus };
 }
@@ -2767,26 +1360,20 @@ function confirmarPagamento(codigo, formaPagamento, observacao) {
   lock.waitLock(30000);
   try {
     const ss = getSpreadsheet_();
-    setupMVP_(ss);
+    ensureOperationalStructure_(ss);
     const pedido = findPedidoByCode_(ss, codigo);
     if (!pedido) throw new Error('Pedido não encontrado: ' + codigo);
     const statusAtual = String(pedido.status || '').toUpperCase();
-    if (statusAtual === 'PAGAMENTO RECEBIDO') {
-      return { ok: true, code: codigo, status: statusAtual, paymentStatus: 'PAGAMENTO RECEBIDO', message: 'Pagamento já estava confirmado.' };
-    }
-    const allowedOrderStatuses = ['SOLICITADO', 'EM ANÁLISE', 'AGUARDANDO PAGAMENTO'];
-    if (allowedOrderStatuses.indexOf(statusAtual) === -1) {
+    const allowedOrderStatuses = ['SOLICITADO','EM ANÁLISE','AGUARDANDO PAGAMENTO'];
+    const payResult = atualizarPagamento(codigo, 'PAGAMENTO RECEBIDO', formaPagamento || 'PIX', observacao || 'Pagamento conferido e confirmado pela DOOX.');
+    if (statusAtual === 'AGUARDANDO PAGAMENTO') {
+      atualizarStatusPedido_(ss, codigo, 'PAGAMENTO RECEBIDO', { action: 'CONFIRMAR PAGAMENTO', observation: observacao || 'Pagamento confirmado no financeiro.' });
+      sincronizarPagamentoComPedido_(ss, codigo);
+    } else if (allowedOrderStatuses.indexOf(statusAtual) === -1) {
       throw new Error('Não é possível confirmar pagamento nesta etapa. Status atual: ' + statusAtual);
     }
-    const result = atualizarPagamento(codigo, 'PAGAMENTO RECEBIDO', formaPagamento || 'PIX', observacao || 'Pagamento conferido e confirmado pela DOOX.');
-    return {
-      ok: true,
-      code: codigo,
-      status: statusAtual,
-      nextAction: nextActionForStatus_(statusAtual),
-      paymentStatus: result.paymentStatus,
-      message: statusAtual === 'AGUARDANDO PAGAMENTO' ? 'Pagamento confirmado. Pedido liberado para a próxima etapa.' : 'Pagamento confirmado. O status operacional do pedido permanece em ' + statusAtual + ' até a próxima ação.'
-    };
+    refreshStatusDropdowns_(ss, codigo);
+    return { ok: true, code: codigo, status: findPedidoByCode_(ss, codigo).status, paymentStatus: payResult.paymentStatus, message: 'Pagamento confirmado.' };
   } finally {
     lock.releaseLock();
   }
@@ -2836,14 +1423,19 @@ function atualizarStatusPedido_(ss, codigo, status, meta) {
   if (meta && meta.observation && map['Observações']) {
     sheet.getRange(found.row, map['Observações']).setValue(meta.observation);
   }
+  if (normalized === 'REJEITADO' && meta && meta.observation && map['Observação Cliente']) {
+    sheet.getRange(found.row, map['Observação Cliente']).setValue(meta.observation);
+  }
+  sincronizarPagamentoComPedido_(ss, codigo);
   logAction_(ss, codigo, (meta && meta.action) || 'ATUALIZAR STATUS', current, normalized, (meta && meta.observation) || '', (meta && meta.operator) || 'OPERADOR');
+  refreshStatusDropdowns_(ss, codigo);
 
   return { ok: true, code: codigo, status: normalized, previousStatus: current, nextAction: nextActionForStatus_(normalized) };
 }
 
 function atualizarStatus(codigo, status) {
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
   return atualizarStatusPedido_(ss, codigo, status, { action: 'ATUALIZAR STATUS' });
 }
 
@@ -2868,7 +1460,7 @@ function nextActionForStatus_(status) {
 
 function publicarObservacaoCliente(codigo, observacao) {
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
   const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
   const found = findRowByFirstColumn_(sheet, codigo);
   if (!found) throw new Error('Pedido não encontrado: ' + codigo);
@@ -2901,9 +1493,7 @@ function registrarVeiculacao(
     getSpreadsheet_();
 
 
-  setupMVP_(
-    ss
-  );
+  ensureOperationalStructure_(ss);
 
 
   const pedido =
@@ -3052,9 +1642,27 @@ function setupMVP() {
 }
 
 
+
+function ensureOperationalStructure_(ss) {
+  // Rotinas de produção NÃO devem executar o setup completo.
+  // Apenas garantimos que as duas abas operacionais e as abas técnicas existam
+  // e que os cabeçalhos estejam presentes. Isso evita travamentos por formatação,
+  // filtros e validações repetidas a cada requisição/status/pagamento.
+  migrateOperationalSheetNames_(ss);
+  Object.keys(SHEETS).forEach(function(key) {
+    const def = SHEETS[key];
+    let sheet = ss.getSheetByName(def.name);
+    if (!sheet) sheet = ss.insertSheet(def.name);
+    ensureHeaders_(sheet, def.headers);
+  });
+  return true;
+}
+
 function setupMVP_(
   ss
 ) {
+
+  migrateOperationalSheetNames_(ss);
 
   const names =
     [];
@@ -3091,11 +1699,14 @@ function setupMVP_(
       );
 
 
-      formatSheet_(
-        sheet,
-        def.headers
-      );
-
+      if (def.name === SHEETS.PEDIDOS.name || def.name === SHEETS.PAGAMENTOS.name) {
+        formatSheet_(sheet, def.headers);
+        if (def.name === SHEETS.PEDIDOS.name) ensureStatusValidation_(sheet);
+        if (def.name === SHEETS.PAGAMENTOS.name) ensurePaymentValidations_(sheet);
+      } else {
+        if (sheet.getFrozenRows() < 1) { try { sheet.setFrozenRows(1); } catch (_) {} }
+      }
+      if (def.name.charAt(0) === '_') { try { sheet.hideSheet(); } catch (_) {} }
 
       names.push(
         def.name
@@ -3105,7 +1716,10 @@ function setupMVP_(
   );
 
 
-  // Cria episódio somente se a aba estiver vazia.
+  showOnlyOperationalSheets_(ss);
+  ensureEditTrigger_(ss);
+
+  // Dados de episódio continuam internos e não aparecem como aba operacional.
   const episodeSheet =
     getSheet_(
       ss,
@@ -3129,6 +1743,30 @@ function setupMVP_(
 
 }
 
+
+function createEpisode_(ss, when) {
+  const sheet = getSheet_(ss, SHEETS.EPISODIOS.name);
+  const now = when instanceof Date ? when : new Date();
+  const lastRow = sheet.getLastRow();
+  let nextNumber = 1;
+  if (lastRow >= 2) {
+    const nums = sheet.getRange(2, 2, lastRow - 1, 1).getValues().flat()
+      .map(v => Number(v)).filter(n => Number.isFinite(n) && n > 0);
+    if (nums.length) nextNumber = Math.max.apply(null, nums) + 1;
+  }
+  const code = 'EP' + String(nextNumber).padStart(2, '0');
+  const row = [
+    code, nextNumber, now, 'ABERTO',
+    50, 0, 50,
+    10, 0, 10,
+    10, 0, 10,
+    50, 0, 50,
+    1, 0, 1,
+    '', now
+  ];
+  sheet.appendRow(row);
+  return { code: code, number: nextNumber, row: sheet.getLastRow(), status: 'ABERTO' };
+}
 
 /*************************************************
  * MIGRAÇÃO INICIAL
@@ -3365,9 +2003,7 @@ function fecharMesEArquivar() {
     getSpreadsheet_();
 
 
-  setupMVP_(
-    ss
-  );
+  ensureOperationalStructure_(ss);
 
 
   const month =
@@ -3394,10 +2030,7 @@ function fecharMesEArquivar() {
    * LIMPA OS DADOS
    *************************************************/
 
-  clearOperationalData_(
-    ss,
-    CONFIG.RESET_CLIENTES_MENSAL
-  );
+  clearOperationalData_(ss);
 
 
   /*************************************************
@@ -3462,10 +2095,7 @@ function fecharMesEArquivar() {
  * LIMPEZA DO OPERACIONAL
  *************************************************/
 
-function clearOperationalData_(
-  ss,
-  resetClients
-) {
+function clearOperationalData_(ss) {
 
   const names = [
 
@@ -3480,13 +2110,6 @@ function clearOperationalData_(
   ];
 
 
-  if (resetClients) {
-
-    names.push(
-      SHEETS.CLIENTES.name
-    );
-
-  }
 
 
   names.forEach(
@@ -3957,6 +2580,39 @@ function getArchiveFolder_() {
 
 
 /*************************************************
+ * TESTE OPERACIONAL V30
+ * Valida a nova estrutura de duas abas visíveis,
+ * instruções por modalidade e recusa com justificativa.
+ *************************************************/
+function TESTE_OPERACAO_V30() {
+  const ss = getSpreadsheet_();
+  ensureOperationalStructure_(ss);
+  const visible = ss.getSheets().filter(s => !s.isSheetHidden()).map(s => s.getName());
+  const expected = [SHEETS.PAGAMENTOS.name];
+  if (JSON.stringify(visible.sort()) !== JSON.stringify(expected.slice().sort())) {
+    throw new Error('Estrutura visível inesperada. Visíveis: ' + visible.join(', '));
+  }
+
+  const id = 'TESTE-V30-' + Date.now();
+  const pedido = registerRequest_({
+    action: 'registerRequest', clientRequestId: id,
+    name: 'TESTE DOOX V30', company: 'TESTE DOOX V30', type: 'Empresa',
+    whatsapp: '14999999999', email: 'teste-v30@doox.local', profile: '@teste.doox.v30',
+    modality: 'Sponsor Overlay', moment: '04:00–06:30', quantity: 1,
+    observation: 'TESTE V30 — excluir depois.', termsAccepted: true, rulesAccepted: true
+  });
+  if (!pedido.ok || !pedido.instructions || pedido.instructions.items.length < 1) throw new Error('Instruções da modalidade não foram retornadas.');
+
+  const rejected = recusarParticipacao(pedido.code, 'Material incompatível com as especificações editoriais da HOCCO.');
+  if (!rejected.ok || rejected.status !== 'REJEITADO') throw new Error('Falha no fluxo de recusa.');
+  const publicData = getPublicOrderStatus_(pedido.trackingToken);
+  if (!publicData.ok || publicData.status !== 'REJEITADO' || publicData.rejectionReason !== 'Material incompatível com as especificações editoriais da HOCCO.') {
+    throw new Error('A justificativa da recusa não chegou ao acompanhamento público.');
+  }
+  return { ok: true, visibleSheets: visible, code: pedido.code, rejection: publicData.rejectionReason, instructions: pedido.instructions };
+}
+
+/*************************************************
  * TESTE DO SISTEMA
  *************************************************/
 
@@ -3966,9 +2622,7 @@ function testarSistema() {
     getSpreadsheet_();
 
 
-  setupMVP_(
-    ss
-  );
+  ensureOperationalStructure_(ss);
 
 
   return {
@@ -4270,15 +2924,12 @@ function TESTE_PIX_V11() {
 function LIMPAR_TESTES_V11() {
 
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
 
   const pedidos = getSheet_(ss, SHEETS.PEDIDOS.name);
   const pagamentos = getSheet_(ss, SHEETS.PAGAMENTOS.name);
-  const clientes = getSheet_(ss, SHEETS.CLIENTES.name);
-
   let pedidosRemovidos = 0;
   let pagamentosRemovidos = 0;
-  let clientesRemovidos = 0;
   const codigos = [];
 
   // PEDIDOS
@@ -4312,27 +2963,11 @@ function LIMPAR_TESTES_V11() {
     }
   }
 
-  // CLIENTES criados exclusivamente pelo teste.
-  if (clientes.getLastRow() >= 2) {
-    const cm = headerMap_(clientes);
-    const clientValues = clientes.getRange(2, 1, clientes.getLastRow() - 1, clientes.getLastColumn()).getValues();
-
-    for (let i = clientValues.length - 1; i >= 0; i--) {
-      const email = normalizeEmail_(clientValues[i][cm['E-mail'] - 1]);
-      const name = String(clientValues[i][cm['Nome / Empresa'] - 1] || '');
-
-      if (email === 'teste-v11@doox.local' || name === 'TESTE DOOX V11') {
-        clientes.deleteRow(i + 2);
-        clientesRemovidos++;
-      }
-    }
-  }
 
   const result = {
     ok: true,
     pedidosRemovidos: pedidosRemovidos,
     pagamentosRemovidos: pagamentosRemovidos,
-    clientesRemovidos: clientesRemovidos,
     codigos: codigos
   };
 
@@ -4363,7 +2998,7 @@ function createTrackingToken_() {
 function getPublicOrderStatus_(token) {
 
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
 
   const pedido =
     findPedidoByTrackingToken_(
@@ -4394,62 +3029,50 @@ function getPublicOrderStatus_(token) {
     steps: publicStatusSteps_(status),
     nextAction: nextActionForStatus_(status),
     observationClient: pedido.observationClient || '',
-    payment: buildPublicPayment_(ss, pedido)
+    rejectionReason: status === 'REJEITADO' ? (pedido.observationClient || '') : '',
+    instructions: getClientInstructions_(pedido.modality),
+    progressPercent: publicProgressPercent_(status),
+    payment: buildPublicPayment_(ss, pedido),
+    receipt: {
+      eligible: ['FINALIZADO','PUBLICADO'].indexOf(status) >= 0,
+      nameOrCompany: pedido.nameOrCompany || '',
+      modality: pedido.modality || '',
+      quantity: pedido.quantity || 1,
+      episode: pedido.episode || '',
+      code: pedido.code || '',
+      issuedAt: new Date()
+    }
   };
 
 }
 
 
-function publicStatusSteps_(currentStatus) {
-
-  const flow = [
-    ['SOLICITADO', 'Solicitação recebida'],
-    ['EM ANÁLISE', 'Em análise'],
-    ['AGUARDANDO PAGAMENTO', 'Aguardando pagamento'],
-    ['PAGAMENTO RECEBIDO', 'Pagamento recebido'],
-    ['MATERIAL PENDENTE', 'Material pendente'],
-    ['MATERIAL RECEBIDO', 'Material recebido'],
-    ['EM PRODUÇÃO', 'Em produção'],
-    ['PROGRAMADO', 'Programado'],
-    ['PUBLICADO', 'Veiculado'],
-    ['FINALIZADO', 'Finalizado']
-  ];
-
-  const exceptional = [
-    'REJEITADO',
-    'CANCELADO',
-    'ARQUIVADO'
-  ];
-
-  const currentIndex = flow.findIndex(
-    item => item[0] === currentStatus
-  );
-
-  if (exceptional.indexOf(currentStatus) >= 0) {
-    return flow.map(item => ({
-      status: item[0],
-      label: item[1],
-      state: 'inactive'
-    })).concat([{ 
-      status: currentStatus,
-      label: publicStatusLabel_(currentStatus),
-      state: 'current'
-    }]);
-  }
-
-  return flow.map((item, index) => ({
-    status: item[0],
-    label: item[1],
-    state:
-      index < currentIndex
-        ? 'completed'
-        : index === currentIndex
-          ? 'current'
-          : 'pending'
-  }));
-
+function publicProgressPercent_(status) {
+  const map = { 'SOLICITADO': 10, 'EM ANÁLISE': 20, 'AGUARDANDO PAGAMENTO': 35, 'PAGAMENTO RECEBIDO': 45, 'MATERIAL PENDENTE': 55, 'MATERIAL RECEBIDO': 65, 'EM PRODUÇÃO': 78, 'PROGRAMADO': 88, 'PUBLICADO': 96, 'FINALIZADO': 100, 'REJEITADO': 100, 'CANCELADO': 100, 'ARQUIVADO': 100 };
+  return map[status] || 0;
 }
 
+function publicStatusSteps_(currentStatus) {
+  const groups = [
+    { key: 'SOLICITAÇÃO', statuses: ['SOLICITADO'], label: 'Solicitação recebida' },
+    { key: 'ANÁLISE', statuses: ['EM ANÁLISE'], label: 'Em análise' },
+    { key: 'PAGAMENTO', statuses: ['AGUARDANDO PAGAMENTO', 'PAGAMENTO RECEBIDO'], label: 'Pagamento' },
+    { key: 'MATERIAL', statuses: ['MATERIAL PENDENTE', 'MATERIAL RECEBIDO'], label: 'Materiais' },
+    { key: 'PRODUÇÃO', statuses: ['EM PRODUÇÃO', 'PROGRAMADO', 'PUBLICADO', 'FINALIZADO'], label: 'Produção e veiculação' }
+  ];
+  const exceptional = ['REJEITADO', 'CANCELADO', 'ARQUIVADO'];
+  if (exceptional.indexOf(currentStatus) >= 0) {
+    return groups.map(g => ({ status: g.key, label: g.label, state: 'inactive' }))
+      .concat([{ status: currentStatus, label: publicStatusLabel_(currentStatus), state: 'current' }]);
+  }
+  let currentGroup = groups.findIndex(g => g.statuses.indexOf(currentStatus) >= 0);
+  if (currentGroup < 0) currentGroup = 0;
+  return groups.map((g, index) => ({
+    status: g.key,
+    label: g.label,
+    state: index < currentGroup ? 'completed' : index === currentGroup ? 'current' : 'pending'
+  }));
+}
 
 function publicStatusLabel_(status) {
 
@@ -4464,7 +3087,7 @@ function publicStatusLabel_(status) {
     'PROGRAMADO': 'Programado',
     'PUBLICADO': 'Veiculado',
     'FINALIZADO': 'Finalizado',
-    'REJEITADO': 'Solicitação não aprovada',
+    'REJEITADO': 'Participação recusada',
     'CANCELADO': 'Solicitação cancelada',
     'ARQUIVADO': 'Registro arquivado'
   };
@@ -4868,16 +3491,11 @@ function formatSheet_(
   }
 
 
-  sheet
-    .getRange(
-      1,
-      1,
-      1,
-      headers.length
-    )
-    .setFontWeight(
-      'bold'
-    );
+  const headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setFontWeight('bold').setBackground('#ff6900').setFontColor('#ffffff').setVerticalAlignment('middle');
+  headerRange.setWrap(true);
+  sheet.setFrozenRows(1);
+  sheet.setRowHeight(1, 34);
 
 
   sheet
@@ -4933,6 +3551,23 @@ function formatSheet_(
 
   }
 
+
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow >= 2) {
+      sheet.getRange(2, 1, lastRow - 1, headers.length).setBackground('#ffffff').setFontColor('#222222');
+      const map = headerMap_(sheet);
+      if (map['Status']) {
+        sheet.getRange(2, map['Status'], Math.max(1, lastRow - 1), 1).setFontWeight('bold').setBackground('#fff1e6');
+      }
+      if (map['Status do Pedido']) {
+        sheet.getRange(2, map['Status do Pedido'], Math.max(1, lastRow - 1), 1).setFontWeight('bold').setBackground('#fff1e6');
+      }
+      if (map['Status pagamento']) {
+        sheet.getRange(2, map['Status pagamento'], Math.max(1, lastRow - 1), 1).setFontWeight('bold').setBackground('#fff1e6');
+      }
+    }
+  } catch (_) {}
 
   try {
 
@@ -5648,7 +4283,7 @@ function jsonError_(
 
 function getPainelPedidos(filtro) {
   const ss = getSpreadsheet_();
-  setupMVP_(ss);
+  ensureOperationalStructure_(ss);
   const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
   const map = headerMap_(sheet);
   const last = sheet.getLastRow();

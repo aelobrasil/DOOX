@@ -1,43 +1,28 @@
-# DOOX / HOCCO — Site Final PWA
+# DOOX / HOCCO — V31 DEFINITIVO
 
-## Identidade
-- Aba do navegador/site: **Doox**
-- App instalado: **HOCCO**
-- Ícone/favicons: **D.** com ponto laranja
+Pacote operacional definitivo para o site HOCCO + Google Apps Script.
 
-## PWA
-O projeto contém:
-- `manifest.webmanifest`
-- `sw.js`
-- `icon-192.png`
-- `icon-512.png`
-- `apple-touch-icon.png`
+## Arquitetura da planilha
 
-O Service Worker registra e armazena o app shell e os assets locais. Em produção, a Vercel fornece HTTPS, necessário para o funcionamento normal do Service Worker e instalação.
+Abas visíveis: PEDIDO e PAGAMENTO.
 
-O botão **Instalar HOCCO** aparece quando o navegador oferece o fluxo de instalação. Em navegadores que não oferecem `beforeinstallprompt`, o usuário deve usar a opção de instalação do próprio navegador.
+A aba CLIENTE foi removida da operação. Os dados do solicitante pertencem ao próprio PEDIDO.
 
-## Fluxo comercial
-Escolher → Simular → Revisar → aceitar Termos/Regras → Finalizar → WhatsApp.
+Abas técnicas ficam ocultas: _EPISÓDIOS, _VEICULAÇÕES, _LOG e _CLIENTE_LEGADO quando houver.
 
-A pré-solicitação é local (`localStorage`) e não é banco de dados.
+## Controle de status
 
-## WhatsApp
-+55 14 98115-0675.
+O status é alterado diretamente na própria célula por lista suspensa. Não há botões/checkboxes fixos no final das linhas.
 
-## Deploy
-Abra a pasta no VS Code e publique na Vercel. O site é estático; Node.js/Vercel CLI é apenas para o processo de deploy.
+Fluxo: SOLICITADO → EM ANÁLISE → AGUARDANDO PAGAMENTO → PAGAMENTO RECEBIDO → MATERIAL PENDENTE → MATERIAL RECEBIDO → EM PRODUÇÃO → PROGRAMADO → PUBLICADO → FINALIZADO.
 
+Exceções: REJEITADO, CANCELADO, ARQUIVADO.
 
-## V12 — regra comercial definitiva
-- Sponsor Overlay e Overlay + Áudio calculam o preço automaticamente a partir da faixa/momento selecionado.
-- O campo de faixa/preço é apenas informativo e não pode ser selecionado independentemente do momento.
-- Empresa Patrocinadora do Episódio: exatamente 10 vagas por episódio; o formulário limita a quantidade a 10.
-- Solicitações e mensagem de WhatsApp usam a mesma regra momento → faixa → preço.
+## Implantação
 
-
-V29: alinhamento final com Apps Script V29, pagamento imediato, acompanhamento por token, proxy GET/POST sem cache de `/api/` e correção do teste interno de acompanhamento
-V15: corrige atualização do Service Worker (cache versionado/network-first para index) e adiciona fallback de redirecionamento ao WhatsApp em navegadores móveis. Apps Script V5 normaliza Overlay + Áudio.
-
-## V16 — integração robusta
-Esta versão envia a solicitação para `/api/request` no próprio domínio Vercel. A função serverless faz a ponte servidor-a-servidor com o Google Apps Script e devolve JSON ao navegador. Isso elimina o POST `no-cors` opaco do navegador e permite confirmar o registro antes de abrir o WhatsApp.
+1. Abra o Apps Script vinculado/associado à planilha operacional.
+2. Substitua o código pelo arquivo DOOX-APPS-SCRIPT-Code.gs.
+3. Salve.
+4. Execute setupMVP() uma vez e autorize as permissões solicitadas.
+5. Não execute resetarEstruturaAntiga() durante o teste normal.
+6. Faça um pedido de teste pelo site e valide o fluxo completo.
