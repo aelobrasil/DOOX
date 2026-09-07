@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HOCCO">
 <title>Doox</title>
-<meta name="doox-build" content="V17-SUBMISSION-FIX">
+<meta name="doox-build" content="V24-INTEGRATED-V3-PORTAL">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2309090a'/%3E%3Ctext x='12' y='45' font-family='Arial' font-size='37' font-weight='900' fill='white'%3ED%3C/text%3E%3Ccircle cx='47' cy='17' r='5' fill='%23ff6a00'/%3E%3C/svg%3E">
 <style>
 :root{--ink:#0a0a0b;--paper:#f5f4f1;--white:#fff;--line:#e6e3dd;--muted:#696969;--orange:#ff6900;--orange2:#ff8a34;--dark:#111113;--soft:#f0ede7;--shadow:0 24px 80px #00000012}
@@ -881,6 +881,8 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
   // Exact WhatsApp submission message, with second-submission trigger.
   const send=$('#sendWhatsapp');
+  function trackingUrlFromToken(token){return location.origin+'/?acompanhamento='+encodeURIComponent(token)}
+
   function buildApiPayload(){
     const modeValue=req.mode?.value||'';
     const modeMax=req.mode?.value==='Presença no Rodapé'||req.mode?.value==='Apoiador Individual'?50:(req.mode?.value==='Empresa Patrocinadora do Episódio'?1:10);
@@ -987,6 +989,15 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
       return;
     }
 
+    const trackingResultWrap=document.getElementById('trackingResultWrap');
+    const trackingResultLink=document.getElementById('trackingResultLink');
+    if(registered?.trackingToken){
+      const publicTrackingUrl=trackingUrlFromToken(registered.trackingToken);
+      if(trackingResultLink){trackingResultLink.href=publicTrackingUrl;}
+      if(trackingResultWrap)trackingResultWrap.style.display='block';
+      try{window.history.replaceState({},'',publicTrackingUrl);}catch(_){ }
+    }
+
     // A solicitação já foi registrada no Sheets. O WhatsApp recebe somente uma saudação;
     // nenhum dado pessoal, código, preço ou conteúdo do pedido é repetido na conversa.
     const greeting=`Olá! Seja bem-vindo(a) à HOCCO.
@@ -1091,7 +1102,7 @@ if ('serviceWorker' in navigator) {
 </div>
   </div>
 </div>
-<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div></div></div>
+<div id="submissionStatus" class="submissionStatus" role="status" aria-live="polite"><div class="submissionCard"><div class="submissionPulse"></div><div class="submissionStep" id="submissionStep">1/4</div><strong id="submissionText">Validando sua solicitação</strong><p id="submissionDetail">Verificando os dados informados.</p><div id="trackingResultWrap" style="display:none;margin-top:14px"><div style="font-size:12px;font-weight:900;letter-spacing:.5px;margin-bottom:6px">ACOMPANHAMENTO DO PEDIDO</div><a id="trackingResultLink" href="#" target="_self" style="display:block;background:#111;color:#fff;text-decoration:none;border-radius:16px;padding:14px 16px;font-weight:900;text-align:center">ABRIR ACOMPANHAMENTO ↗</a></div><div id="whatsappFinalizeWrap" style="display:none;margin-top:18px"><button id="whatsappFinalize" type="button" class="btn orange" style="width:100%;max-width:420px">FINALIZAR PARTICIPAÇÃO ↗</button><p style="margin:10px 0 0;font-size:12px;color:#777">Sua solicitação já foi registrada. Use este botão para continuar no WhatsApp da DOOX.</p></div></div></div>
 <div class="installToast" id="installToast">No Chrome/Android/iOS compatível com instalação automática foi detectado. Em navegadores suportados, use o menu "Instalar app".</div>
 
 

@@ -36,7 +36,7 @@ Abra a pasta no VS Code e publique na Vercel. O site é estático; Node.js/Verce
 - Solicitações e mensagem de WhatsApp usam a mesma regra momento → faixa → preço.
 
 
-V23: alinha o site ao Apps Script V11/V3, corrige o proxy GET/POST de `/api/request` e usa o mesmo código de backend
+V24: alinha o site ao Apps Script V11/V3, corrige o proxy GET/POST de `/api/request`, evita cache do `/api/` e exibe o link privado de acompanhamento após o registro
 V15: corrige atualização do Service Worker (cache versionado/network-first para index) e adiciona fallback de redirecionamento ao WhatsApp em navegadores móveis. Apps Script V5 normaliza Overlay + Áudio.
 
 ## V16 — integração robusta

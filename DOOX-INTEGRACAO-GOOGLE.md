@@ -23,3 +23,7 @@ O endpoint configurado no site é:
 https://script.google.com/macros/s/AKfycbwsoDs3kQ-2AC4WLW7_yHl-EQ5_BJvWow-3VG-f5eUz0a46kFR98ZCHSz6wcXgWzRWZmQ/exec
 
 Depois teste uma solicitação real de ponta a ponta.
+
+
+## V24 — integração
+O endpoint do site continua apontando para a implantação do Web App indicada acima. GET de acompanhamento vai para doGet; POST de pedidos/pagamento vai para doPost. O Service Worker não armazena respostas de `/api/`.
