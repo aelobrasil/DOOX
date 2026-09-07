@@ -109,6 +109,7 @@ const SHEETS = {
       'Termos',
       'Regras',
       'Observações',
+      'Observação Cliente',
       'Criado em',
       'Atualizado em',
       'Reserva',
@@ -179,6 +180,19 @@ const SHEETS = {
 
       'Observação',
       'Atualizado em'
+    ]
+  },
+
+  LOG: {
+    name: 'LOG',
+    headers: [
+      'Data/Hora',
+      'Código DOOX',
+      'Ação',
+      'Status anterior',
+      'Status novo',
+      'Observação',
+      'Operador'
     ]
   },
 
@@ -268,7 +282,10 @@ function doGet(e) {
         acceptedPostActions: [
           'registerRequest',
           'testSpreadsheet',
-          'informarPagamento'
+          'informarPagamento',
+          'confirmarPagamento',
+          'atualizarStatus',
+          'publicarObservacao'
         ],
 
         acceptedGetActions: [
@@ -353,6 +370,20 @@ function doPost(e) {
       return json_(informarPagamento_(body));
     }
 
+    if (action === 'confirmarPagamento') {
+      return json_(confirmarPagamento(body.code, body.formaPagamento || 'PIX', body.observacao || 'Pagamento conferido e confirmado pela DOOX.'));
+    }
+
+    if (action === 'atualizarStatus') {
+      const ss = getSpreadsheet_();
+      setupMVP_(ss);
+      return json_(atualizarStatusPedido_(ss, body.code, body.status, { action: body.actionLabel || 'ATUALIZAR STATUS', observation: body.observacao || '' }));
+    }
+
+    if (action === 'publicarObservacao') {
+      return json_(publicarObservacaoCliente(body.code, body.observacao || ''));
+    }
+
     if (action !== 'registerRequest') {
       throw new Error('Ação não reconhecida: ' + action);
     }
@@ -396,8 +427,9 @@ function informarPagamento_(raw) {
   const pedido = findPedidoByTrackingToken_(ss, token);
   if (!pedido) throw new Error('Pedido não encontrado ou token inválido.');
   const status = String(pedido.status || '').toUpperCase();
-  if (status !== 'AGUARDANDO PAGAMENTO') {
-    return { ok: true, code: pedido.code, status: status, message: 'O pagamento ainda não está disponível para este pedido.' };
+  const allowedStatuses = ['SOLICITADO', 'EM ANÁLISE', 'AGUARDANDO PAGAMENTO'];
+  if (allowedStatuses.indexOf(status) === -1) {
+    return { ok: true, code: pedido.code, status: status, message: 'O pagamento não está disponível nesta etapa.' };
   }
   const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
   const found = findRowByFirstColumn_(sheet, pedido.code);
@@ -444,7 +476,11 @@ function registerRequest_(raw) {
           'Pedido já registrado anteriormente.',
 
         code: existing.code,
-
+        trackingToken: existing.trackingToken,
+        modality: existing.modality,
+        quantity: existing.quantity,
+        status: existing.status,
+        total: existing.total,
         order: existing
 
       };
@@ -635,6 +671,13 @@ function registerRequest_(raw) {
     map,
     'Observações',
     r.observation
+  );
+
+  put_(
+    row,
+    map,
+    'Observação Cliente',
+    ''
   );
 
   put_(
@@ -1094,8 +1137,9 @@ function getPaymentRecord_(ss, code) {
 function buildPublicPayment_(ss, pedido) {
   const status = String(pedido.status || '').toUpperCase();
   const payment = getPaymentRecord_(ss, pedido.code);
+  const paymentAvailableStatuses = ['SOLICITADO', 'EM ANÁLISE', 'AGUARDANDO PAGAMENTO'];
   const result = {
-    available: status === 'AGUARDANDO PAGAMENTO',
+    available: paymentAvailableStatuses.indexOf(status) !== -1,
     status: payment ? payment.status : '',
     amount: null,
     amountLabel: '',
@@ -1103,7 +1147,7 @@ function buildPublicPayment_(ss, pedido) {
     pixPayload: '',
     orderCode: pedido.code
   };
-  if (status !== 'AGUARDANDO PAGAMENTO') return result;
+  if (!result.available) return result;
 
   const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
   const map = headerMap_(sheet);
@@ -2679,261 +2723,167 @@ function atualizarPagamento(
   formaPagamento,
   observacao
 ) {
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
 
-  const ss =
-    getSpreadsheet_();
+  const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+  const found = findRowByFirstColumn_(sheet, codigo);
+  if (!found) throw new Error('Pagamento não encontrado para o código: ' + codigo);
 
+  const map = headerMap_(sheet);
+  const oldStatus = String(found.values[map['Status'] - 1] || '').trim().toUpperCase();
+  let normalizedStatus = String(status || '').trim().toUpperCase();
+  if (normalizedStatus === 'PAGO') normalizedStatus = 'PAGAMENTO RECEBIDO';
+  if (!normalizedStatus) normalizedStatus = 'AGUARDANDO PAGAMENTO';
 
-  setupMVP_(
-    ss
-  );
+  sheet.getRange(found.row, map['Forma de pagamento']).setValue(formaPagamento || '');
+  sheet.getRange(found.row, map['Status']).setValue(normalizedStatus);
+  if (observacao !== undefined) sheet.getRange(found.row, map['Observação']).setValue(observacao || '');
+  const now = new Date();
+  sheet.getRange(found.row, map['Atualizado em']).setValue(now);
 
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.PAGAMENTOS.name
-    );
-
-
-  const found =
-    findRowByFirstColumn_(
-      sheet,
-      codigo
-    );
-
-
-  if (!found) {
-
-    throw new Error(
-      'Pagamento não encontrado para o código: ' +
-      codigo
-    );
-
+  if (normalizedStatus === 'PAGAMENTO RECEBIDO') {
+    sheet.getRange(found.row, map['Data pagamento']).setValue(now);
+    const pedidoAtual = findPedidoByCode_(ss, codigo);
+    const pedidoStatus = String(pedidoAtual && pedidoAtual.status || '').toUpperCase();
+    // O pagamento pode ser confirmado antes da análise. Nesse caso, mantemos
+    // o status operacional do pedido e registramos o pagamento separadamente.
+    if (pedidoStatus === 'AGUARDANDO PAGAMENTO') {
+      atualizarStatusPedido_(ss, codigo, 'PAGAMENTO RECEBIDO', {
+        action: 'CONFIRMAR PAGAMENTO',
+        observation: observacao || 'Pagamento confirmado no financeiro.'
+      });
+    } else {
+      logAction_(ss, codigo, 'PAGAMENTO CONFIRMADO', pedidoStatus, pedidoStatus, observacao || 'Pagamento confirmado no financeiro; status operacional preservado.', 'OPERADOR');
+    }
   }
 
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const row =
-    found.row;
-
-
-  const normalizedStatus =
-    String(
-      status || ''
-    )
-      .trim()
-      .toUpperCase();
-
-
-  sheet
-    .getRange(
-      row,
-      map['Forma de pagamento']
-    )
-    .setValue(
-      formaPagamento ||
-      ''
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map['Status']
-    )
-    .setValue(
-      normalizedStatus ||
-      'AGUARDANDO PAGAMENTO'
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map['Observação']
-    )
-    .setValue(
-      observacao ||
-      ''
-    );
-
-
-  sheet
-    .getRange(
-      row,
-      map['Atualizado em']
-    )
-    .setValue(
-      new Date()
-    );
-
-
-  if (
-    normalizedStatus ===
-    'PAGO'
-  ) {
-
-    sheet
-      .getRange(
-        row,
-        map['Data pagamento']
-      )
-      .setValue(
-        new Date()
-      );
-
-
-    atualizarStatusPedido_(
-      ss,
-      codigo,
-      'PAGAMENTO RECEBIDO'
-    );
-
-  }
-
-
-  return {
-
-    ok: true,
-
-    code: codigo,
-
-    paymentStatus:
-      normalizedStatus
-
-  };
-
+  logAction_(ss, codigo, 'ATUALIZAR PAGAMENTO', oldStatus, normalizedStatus, observacao || '', 'OPERADOR');
+  return { ok: true, code: codigo, paymentStatus: normalizedStatus };
 }
 
+function confirmarPagamento(codigo, formaPagamento, observacao) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const ss = getSpreadsheet_();
+    setupMVP_(ss);
+    const pedido = findPedidoByCode_(ss, codigo);
+    if (!pedido) throw new Error('Pedido não encontrado: ' + codigo);
+    const statusAtual = String(pedido.status || '').toUpperCase();
+    if (statusAtual === 'PAGAMENTO RECEBIDO') {
+      return { ok: true, code: codigo, status: statusAtual, paymentStatus: 'PAGAMENTO RECEBIDO', message: 'Pagamento já estava confirmado.' };
+    }
+    const allowedOrderStatuses = ['SOLICITADO', 'EM ANÁLISE', 'AGUARDANDO PAGAMENTO'];
+    if (allowedOrderStatuses.indexOf(statusAtual) === -1) {
+      throw new Error('Não é possível confirmar pagamento nesta etapa. Status atual: ' + statusAtual);
+    }
+    const result = atualizarPagamento(codigo, 'PAGAMENTO RECEBIDO', formaPagamento || 'PIX', observacao || 'Pagamento conferido e confirmado pela DOOX.');
+    return {
+      ok: true,
+      code: codigo,
+      status: statusAtual,
+      nextAction: nextActionForStatus_(statusAtual),
+      paymentStatus: result.paymentStatus,
+      message: statusAtual === 'AGUARDANDO PAGAMENTO' ? 'Pagamento confirmado. Pedido liberado para a próxima etapa.' : 'Pagamento confirmado. O status operacional do pedido permanece em ' + statusAtual + ' até a próxima ação.'
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 /*************************************************
  * STATUS DO PEDIDO
  *************************************************/
 
-function atualizarStatusPedido_(
-  ss,
-  codigo,
-  status
-) {
-
-  const sheet =
-    getSheet_(
-      ss,
-      SHEETS.PEDIDOS.name
-    );
-
-
-  const found =
-    findRowByFirstColumn_(
-      sheet,
-      codigo
-    );
-
-
-  if (!found) {
-
-    throw new Error(
-      'Pedido não encontrado: ' +
-      codigo
-    );
-
-  }
-
-
-  const map =
-    headerMap_(
-      sheet
-    );
-
-
-  const normalized =
-    String(
-      status || ''
-    )
-      .trim()
-      .toUpperCase();
-
-
-  sheet
-    .getRange(
-      found.row,
-      map['Status']
-    )
-    .setValue(
-      normalized
-    );
-
-
-  const updatedAt = new Date();
-
-  sheet
-    .getRange(
-      found.row,
-      map['Atualizado em']
-    )
-    .setValue(
-      updatedAt
-    );
-
-  // Marca a mudança para a futura camada de notificações.
-  // Não envia WhatsApp/e-mail nesta primeira etapa.
-  if (map['Última Notificação']) {
-    sheet
-      .getRange(
-        found.row,
-        map['Última Notificação']
-      )
-      .setValue(
-        updatedAt
-      );
-  }
-
-
-  return {
-
-    ok: true,
-
-    code: codigo,
-
-    status: normalized
-
+function allowedNextStatuses_(current) {
+  const next = {
+    'SOLICITADO': ['EM ANÁLISE', 'REJEITADO', 'CANCELADO'],
+    'EM ANÁLISE': ['AGUARDANDO PAGAMENTO', 'REJEITADO', 'CANCELADO'],
+    'AGUARDANDO PAGAMENTO': ['PAGAMENTO RECEBIDO', 'CANCELADO'],
+    'PAGAMENTO RECEBIDO': ['MATERIAL PENDENTE', 'CANCELADO'],
+    'MATERIAL PENDENTE': ['MATERIAL RECEBIDO', 'CANCELADO'],
+    'MATERIAL RECEBIDO': ['EM PRODUÇÃO', 'MATERIAL PENDENTE', 'CANCELADO'],
+    'EM PRODUÇÃO': ['PROGRAMADO', 'CANCELADO'],
+    'PROGRAMADO': ['PUBLICADO', 'CANCELADO'],
+    'PUBLICADO': ['FINALIZADO'],
+    'FINALIZADO': ['ARQUIVADO'],
+    'REJEITADO': ['ARQUIVADO'],
+    'CANCELADO': ['ARQUIVADO'],
+    'ARQUIVADO': []
   };
-
+  return next[current] || [];
 }
 
+function atualizarStatusPedido_(ss, codigo, status, meta) {
+  const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const found = findRowByFirstColumn_(sheet, codigo);
+  if (!found) throw new Error('Pedido não encontrado: ' + codigo);
 
-/*************************************************
- * FUNÇÃO MANUAL — ATUALIZAR STATUS
- *************************************************/
+  const map = headerMap_(sheet);
+  const current = String(found.values[map['Status'] - 1] || '').trim().toUpperCase();
+  const normalized = String(status || '').trim().toUpperCase();
+  if (!normalized) throw new Error('Status não informado.');
+  if (current !== normalized && allowedNextStatuses_(current).indexOf(normalized) === -1) {
+    throw new Error('Transição de status não permitida: ' + current + ' → ' + normalized);
+  }
 
-function atualizarStatus(
-  codigo,
-  status
-) {
+  const now = new Date();
+  sheet.getRange(found.row, map['Status']).setValue(normalized);
+  sheet.getRange(found.row, map['Atualizado em']).setValue(now);
+  if (map['Última Notificação']) sheet.getRange(found.row, map['Última Notificação']).setValue(now);
 
-  const ss =
-    getSpreadsheet_();
+  if (meta && meta.observation && map['Observações']) {
+    sheet.getRange(found.row, map['Observações']).setValue(meta.observation);
+  }
+  logAction_(ss, codigo, (meta && meta.action) || 'ATUALIZAR STATUS', current, normalized, (meta && meta.observation) || '', (meta && meta.operator) || 'OPERADOR');
 
-
-  setupMVP_(
-    ss
-  );
-
-
-  return atualizarStatusPedido_(
-    ss,
-    codigo,
-    status
-  );
-
+  return { ok: true, code: codigo, status: normalized, previousStatus: current, nextAction: nextActionForStatus_(normalized) };
 }
 
+function atualizarStatus(codigo, status) {
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
+  return atualizarStatusPedido_(ss, codigo, status, { action: 'ATUALIZAR STATUS' });
+}
+
+function nextActionForStatus_(status) {
+  const map = {
+    'SOLICITADO': 'ANALISAR',
+    'EM ANÁLISE': 'APROVAR / REJEITAR',
+    'AGUARDANDO PAGAMENTO': 'AGUARDAR PAGAMENTO',
+    'PAGAMENTO RECEBIDO': 'RECEBER MATERIAL',
+    'MATERIAL PENDENTE': 'RECEBER MATERIAL',
+    'MATERIAL RECEBIDO': 'APROVAR MATERIAL',
+    'EM PRODUÇÃO': 'PROGRAMAR',
+    'PROGRAMADO': 'REGISTRAR VEICULAÇÃO',
+    'PUBLICADO': 'FINALIZAR',
+    'FINALIZADO': 'ARQUIVAR / REUTILIZAR VAGA',
+    'REJEITADO': 'ARQUIVAR',
+    'CANCELADO': 'ARQUIVAR',
+    'ARQUIVADO': '—'
+  };
+  return map[status] || '—';
+}
+
+function publicarObservacaoCliente(codigo, observacao) {
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
+  const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const found = findRowByFirstColumn_(sheet, codigo);
+  if (!found) throw new Error('Pedido não encontrado: ' + codigo);
+  const map = headerMap_(sheet);
+  const text = String(observacao || '').trim();
+  sheet.getRange(found.row, map['Observação Cliente']).setValue(text);
+  sheet.getRange(found.row, map['Atualizado em']).setValue(new Date());
+  logAction_(ss, codigo, 'OBSERVAÇÃO PARA CLIENTE', String(found.values[map['Status'] - 1] || ''), String(found.values[map['Status'] - 1] || ''), text, 'OPERADOR');
+  return { ok: true, code: codigo, observationClient: text };
+}
+
+function logAction_(ss, codigo, action, beforeStatus, afterStatus, observation, operator) {
+  const sheet = getSheet_(ss, SHEETS.LOG.name);
+  sheet.appendRow([new Date(), codigo || '', action || '', beforeStatus || '', afterStatus || '', observation || '', operator || 'OPERADOR']);
+}
 
 /*************************************************
  * VEICULAÇÃO
@@ -4151,7 +4101,7 @@ function TESTE_ACOMPANHAMENTO_V11() {
 
   const ss = getSpreadsheet_();
 
-  // 1. Consulta pública enquanto SOLICITADO.
+  // 1. Consulta pública enquanto SOLICITADO. O Pix já deve estar disponível.
   const antes = getPublicOrderStatus_(pedido.trackingToken);
   Logger.log('2) ACOMPANHAMENTO — antes de liberar pagamento:');
   Logger.log(JSON.stringify(antes, null, 2));
@@ -4160,22 +4110,41 @@ function TESTE_ACOMPANHAMENTO_V11() {
   if (antes.status !== 'SOLICITADO') {
     throw new Error('Status inicial inesperado: ' + antes.status);
   }
-  if (antes.payment.available !== false) {
-    throw new Error('Pagamento não deveria estar disponível em SOLICITADO.');
+  if (antes.payment.available !== true) {
+    throw new Error('Pagamento deveria estar disponível em SOLICITADO.');
+  }
+  if (Number(antes.payment.amount) !== Number(pedido.total)) {
+    throw new Error(
+      'Valor inicial do acompanhamento diferente do pedido: ' +
+      antes.payment.amount + ' x ' + pedido.total
+    );
+  }
+  if (!antes.payment.pixPayload) {
+    throw new Error('PIX Copia e Cola não foi gerado no acompanhamento inicial.');
   }
 
-  // 2. Operador libera o pagamento.
+  // 2. O status operacional precisa respeitar as transições: SOLICITADO -> EM ANÁLISE -> AGUARDANDO PAGAMENTO.
+  const emAnalise = atualizarStatusPedido_(
+    ss,
+    pedido.code,
+    'EM ANÁLISE',
+    { action: 'TESTE — ANALISAR' }
+  );
+  Logger.log('3) STATUS ALTERADO PARA EM ANÁLISE:');
+  Logger.log(JSON.stringify(emAnalise, null, 2));
+
   const liberado = atualizarStatusPedido_(
     ss,
     pedido.code,
-    'AGUARDANDO PAGAMENTO'
+    'AGUARDANDO PAGAMENTO',
+    { action: 'TESTE — LIBERAR PAGAMENTO' }
   );
-  Logger.log('3) STATUS ALTERADO PARA AGUARDANDO PAGAMENTO:');
+  Logger.log('4) STATUS ALTERADO PARA AGUARDANDO PAGAMENTO:');
   Logger.log(JSON.stringify(liberado, null, 2));
 
-  // 3. Consulta pública deve trazer valor + Pix.
+  // 3. Consulta pública deve continuar trazendo valor + Pix.
   const depoisLiberacao = getPublicOrderStatus_(pedido.trackingToken);
-  Logger.log('4) ACOMPANHAMENTO — pagamento liberado:');
+  Logger.log('5) ACOMPANHAMENTO — pagamento liberado:');
   Logger.log(JSON.stringify(depoisLiberacao, null, 2));
 
   if (!depoisLiberacao.ok) throw new Error('Falha na consulta após liberar pagamento.');
@@ -4199,7 +4168,7 @@ function TESTE_ACOMPANHAMENTO_V11() {
   const informado = informarPagamento_({
     token: pedido.trackingToken
   });
-  Logger.log('5) CLIENTE INFORMOU PAGAMENTO:');
+  Logger.log('6) CLIENTE INFORMOU PAGAMENTO:');
   Logger.log(JSON.stringify(informado, null, 2));
 
   if (!informado.ok || informado.paymentReported !== true) {
@@ -4209,28 +4178,32 @@ function TESTE_ACOMPANHAMENTO_V11() {
     throw new Error('O aviso do cliente alterou indevidamente o status do pedido.');
   }
 
-  // 5. Confirmação manual pelo operador.
-  const confirmado = atualizarPagamento(
+  // 5. Confirmação manual pelo operador: uma única operação deve atualizar financeiro + pedido.
+  const confirmado = confirmarPagamento(
     pedido.code,
-    'PAGAMENTO RECEBIDO',
     'PIX',
     'TESTE INTERNO V11 — pagamento confirmado manualmente.'
   );
-  Logger.log('6) PAGAMENTO CONFIRMADO NO FINANCEIRO:');
+  Logger.log('7) PAGAMENTO CONFIRMADO NO FINANCEIRO:');
   Logger.log(JSON.stringify(confirmado, null, 2));
 
-  // 6. Atualiza o pedido para PAGAMENTO RECEBIDO.
-  const statusFinal = atualizarStatusPedido_(
-    ss,
-    pedido.code,
-    'PAGAMENTO RECEBIDO'
-  );
-  Logger.log('7) STATUS FINAL DO PEDIDO:');
-  Logger.log(JSON.stringify(statusFinal, null, 2));
+  if (!confirmado.ok || confirmado.paymentStatus !== 'PAGAMENTO RECEBIDO') {
+    throw new Error('CONFIRMAR PAGAMENTO não confirmou o financeiro corretamente.');
+  }
+
+  // 6. A confirmação única deve ter levado o pedido a PAGAMENTO RECEBIDO.
+  const pedidoDepoisPagamento = findPedidoByCode_(ss, pedido.code);
+  const statusFinal = String(pedidoDepoisPagamento && pedidoDepoisPagamento.status || '').toUpperCase();
+  Logger.log('8) STATUS FINAL DO PEDIDO:');
+  Logger.log(JSON.stringify({ ok: true, code: pedido.code, status: statusFinal }, null, 2));
+
+  if (statusFinal !== 'PAGAMENTO RECEBIDO') {
+    throw new Error('CONFIRMAR PAGAMENTO deveria atualizar o pedido para PAGAMENTO RECEBIDO. Status: ' + statusFinal);
+  }
 
   // 7. Consulta final pública.
   const final = getPublicOrderStatus_(pedido.trackingToken);
-  Logger.log('8) ACOMPANHAMENTO FINAL:');
+  Logger.log('9) ACOMPANHAMENTO FINAL:');
   Logger.log(JSON.stringify(final, null, 2));
 
   if (!final.ok) throw new Error('Falha na consulta final do acompanhamento.');
@@ -4419,6 +4392,8 @@ function getPublicOrderStatus_(token) {
     statusLabel: publicStatusLabel_(status),
     updatedAt: pedido.updatedAt,
     steps: publicStatusSteps_(status),
+    nextAction: nextActionForStatus_(status),
+    observationClient: pedido.observationClient || '',
     payment: buildPublicPayment_(ss, pedido)
   };
 
@@ -4542,7 +4517,8 @@ function findPedidoByTrackingToken_(ss, token) {
         quantity: Number(values[i][map['Quantidade'] - 1] || 0),
         episode: String(values[i][map['Episódio'] - 1] || ''),
         status: String(values[i][map['Status'] - 1] || ''),
-        updatedAt: values[i][map['Atualizado em'] - 1] || ''
+        updatedAt: values[i][map['Atualizado em'] - 1] || '',
+        observationClient: map['Observação Cliente'] ? String(values[i][map['Observação Cliente'] - 1] || '') : ''
       };
 
     }
@@ -4729,20 +4705,14 @@ function findPedidoByClientRequestId_(
 
 
       return {
-
-        row:
-          row,
-
-        code:
-          String(
-            values[i][
-              map['Código DOOX'] - 1
-            ] || ''
-          ),
-
-        order:
-          values[i]
-
+        row: row,
+        code: String(values[i][map['Código DOOX'] - 1] || ''),
+        trackingToken: String(values[i][map['Token de Acompanhamento'] - 1] || ''),
+        modality: String(values[i][map['Modalidade'] - 1] || ''),
+        quantity: Number(values[i][map['Quantidade'] - 1] || 0),
+        total: Number(values[i][map['Valor total'] - 1] || 0),
+        status: String(values[i][map['Status'] - 1] || ''),
+        order: values[i]
       };
 
     }
@@ -5673,6 +5643,81 @@ function jsonError_(
 
 
 /*************************************************
+ * PAINEL OPERACIONAL DOOX
+ *************************************************/
+
+function getPainelPedidos(filtro) {
+  const ss = getSpreadsheet_();
+  setupMVP_(ss);
+  const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
+  const map = headerMap_(sheet);
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: true, orders: [], total: 0 };
+  const values = sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).getValues();
+  const q = String(filtro || '').trim().toLowerCase();
+  const orders = values.map((v, i) => ({
+    row: i + 2,
+    code: String(v[map['Código DOOX'] - 1] || ''),
+    name: String(v[map['Nome / Empresa'] - 1] || ''),
+    type: String(v[map['Tipo'] - 1] || ''),
+    whatsapp: String(v[map['WhatsApp'] - 1] || ''),
+    modality: String(v[map['Modalidade'] - 1] || ''),
+    moment: String(v[map['Momento desejado'] - 1] || ''),
+    tier: String(v[map['Faixa comercial'] - 1] || ''),
+    total: Number(v[map['Valor total'] - 1] || 0),
+    quantity: Number(v[map['Quantidade'] - 1] || 0),
+    status: String(v[map['Status'] - 1] || ''),
+    updatedAt: v[map['Atualizado em'] - 1] || '',
+    observation: String(v[map['Observações'] - 1] || ''),
+    observationClient: map['Observação Cliente'] ? String(v[map['Observação Cliente'] - 1] || '') : '',
+    nextAction: nextActionForStatus_(String(v[map['Status'] - 1] || '').trim().toUpperCase())
+  })).filter(o => !q || (o.code + ' ' + o.name + ' ' + o.whatsapp + ' ' + o.modality + ' ' + o.status).toLowerCase().indexOf(q) >= 0);
+  orders.reverse();
+  return { ok: true, orders: orders.slice(0, 100), total: orders.length };
+}
+
+function abrirPainelDOOX() {
+  const html = HtmlService.createHtmlOutput(`
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#f5f5f7;color:#171717}.top{display:flex;gap:8px}.top input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:12px}.top button,.btn{border:0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}.top button{background:#111;color:#fff}.grid{display:grid;gap:10px;margin-top:14px}.card{background:#fff;border:1px solid #e6e6e6;border-radius:16px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.05)}.row{display:flex;justify-content:space-between;gap:10px}.code{font-weight:900}.pill{background:#111;color:#fff;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:800}.meta{font-size:12px;color:#666;margin:8px 0;line-height:1.45}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.btn{background:#eee}.btn.primary{background:#ff6900;color:#111}.btn.dark{background:#111;color:#fff}.btn:disabled{opacity:.45}.selected{outline:2px solid #ff6900}.note{margin-top:10px}.note textarea{width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:12px;padding:10px;min-height:64px}.small{font-size:11px;color:#777;margin-top:8px}.empty{padding:20px;text-align:center;color:#777}
+</style></head><body><div class="top"><input id="q" placeholder="Buscar código, cliente, telefone..."><button onclick="load()">ATUALIZAR</button></div><div class="small">Painel DOOX — atualiza automaticamente.</div><div id="grid" class="grid"><div class="empty">Carregando...</div></div><script>
+let selected=null;function esc(s){return String(s||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;'}[m]||m))}
+function money(n){return 'R$ '+Number(n||0).toFixed(2).replace('.',',')}
+function load(){google.script.run.withSuccessHandler(render).withFailureHandler(err=>alert(err.message||err)).getPainelPedidos(document.getElementById('q').value)}
+function render(r){const g=document.getElementById('grid');if(!r.orders||!r.orders.length){g.innerHTML='<div class="empty">Nenhum pedido encontrado.</div>';return}g.innerHTML=r.orders.map(o=>{
+ const dis=(s)=>o.status===s?'':'disabled';
+ return '<div class="card '+(selected===o.code?'selected':'')+'" onclick="selectCard(\''+esc(o.code)+'\')"><div class="row"><span class="code">'+esc(o.code)+'</span><span class="pill">'+esc(o.status)+'</span></div><div><b>'+esc(o.name)+'</b></div><div class="meta">'+esc(o.modality)+' · '+money(o.total)+' · qtd. '+o.quantity+'<br>Próxima ação: <b>'+esc(o.nextAction)+'</b></div><div class="actions">'+
+ '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'analisar\')">ANALISAR</button>'+ 
+ '<button class="btn primary" onclick="act(event,\''+esc(o.code)+'\',\'aprovar\')">APROVAR</button>'+ 
+ '<button class="btn dark" onclick="act(event,\''+esc(o.code)+'\',\'pagamento\')">CONFIRMAR PAGAMENTO</button>'+ 
+ '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'material\')">RECEBER MATERIAL</button>'+ 
+ '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'aprovarmaterial\')">APROVAR MATERIAL</button>'+ 
+ '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'programar\')">PROGRAMAR</button>'+ 
+ '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'veicular\')">VEICULAR</button>'+ 
+ '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'finalizar\')">FINALIZAR</button></div>'+ 
+ '<div class="note"><textarea id="note-'+esc(o.code)+'" placeholder="Observação para o cliente...">'+esc(o.observationClient)+'</textarea><button class="btn" style="width:100%;margin-top:6px" onclick="publish(event,\''+esc(o.code)+'\')">PUBLICAR OBSERVAÇÃO</button></div>'+ 
+ '<div class="small">Interna: '+esc(o.observation||'—')+'</div></div>';
+}).join('')}
+function selectCard(c){selected=c;load()} 
+function act(ev,code,type){ev.stopPropagation();let fn=null;let args=[];
+ if(type==='analisar')fn='atualizarStatus',args=[code,'EM ANÁLISE'];
+ if(type==='aprovar')fn='atualizarStatus',args=[code,'AGUARDANDO PAGAMENTO'];
+ if(type==='pagamento'){fn='confirmarPagamento';args=[code,'PIX','Pagamento conferido e confirmado pela DOOX.']}
+ if(type==='material')fn='atualizarStatus',args=[code,'MATERIAL RECEBIDO'];
+ if(type==='aprovarmaterial')fn='atualizarStatus',args=[code,'EM PRODUÇÃO'];
+ if(type==='programar')fn='atualizarStatus',args=[code,'PROGRAMADO'];
+ if(type==='veicular')fn='atualizarStatus',args=[code,'PUBLICADO'];
+ if(type==='finalizar')fn='atualizarStatus',args=[code,'FINALIZADO'];
+ if(!fn)return;if(!confirm('Executar '+type+' em '+code+'?'))return;google.script.run.withSuccessHandler(r=>{alert('OK: '+r.status);load()}).withFailureHandler(err=>alert(err.message||err))[fn](...args)
+}
+function publish(ev,code){ev.stopPropagation();const t=document.getElementById('note-'+code);google.script.run.withSuccessHandler(()=>{alert('Observação publicada.');load()}).withFailureHandler(err=>alert(err.message||err)).publicarObservacaoCliente(code,t?t.value:'')}
+load();setInterval(load,8000);
+</script></body></html>`)
+    .setTitle('Painel DOOX');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/*************************************************
  * MENU NA PLANILHA
  *************************************************/
 
@@ -5685,6 +5730,10 @@ function onOpen() {
 
       .createMenu(
         'DOOX MVP'
+      )
+      .addItem(
+        'Abrir Painel DOOX',
+        'abrirPainelDOOX'
       )
 
       .addItem(
