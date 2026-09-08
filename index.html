@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HOCCO">
 <title>Doox</title>
-<meta name="doox-build" content="V31-FINAL-PRODUCAO">
+<meta name="doox-build" content="V32-SIMULACAO-INTERATIVA">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2309090a'/%3E%3Ctext x='12' y='45' font-family='Arial' font-size='37' font-weight='900' fill='white'%3ED%3C/text%3E%3Ccircle cx='47' cy='17' r='5' fill='%23ff6a00'/%3E%3C/svg%3E">
 <style>
 :root{--ink:#0a0a0b;--paper:#f5f4f1;--white:#fff;--line:#e6e3dd;--muted:#696969;--orange:#ff6900;--orange2:#ff8a34;--dark:#111113;--soft:#f0ede7;--shadow:0 24px 80px #00000012}
@@ -125,6 +125,9 @@
 @media(max-width:640px){.orderPortalPage{padding:12px}.orderPortalShell{border-radius:22px}.orderPortalTop{padding:17px}.orderPortalBody{padding:18px}.portalMainStatus{font-size:27px}.portalMetaGrid{grid-template-columns:1fr 1fr}.orderPortalActions>*{flex:1 1 100%}}
 .portalPrint{display:none}
 @media print{body.portal-print-mode>*:not(.portalPrint){display:none!important}.portalPrint{display:block!important;font-family:Arial,sans-serif;padding:30px;color:#111}.portalPrintBox{max-width:760px;margin:auto;border:2px solid #111;padding:28px;border-radius:18px}.portalPrintTitle{font-size:28px;font-weight:900}.portalPrintTag{display:inline-block;margin-top:10px;padding:8px 11px;border-radius:999px;background:#ff6900;font-weight:900}.portalPrintGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}.portalPrintCell{border:1px solid #ddd;padding:13px;border-radius:12px}.portalPrintCell small{display:block;color:#777;text-transform:uppercase;font-size:9px;font-weight:900;margin-bottom:5px}.portalPrintCell b{font-size:13px}.portalPrintFoot{margin-top:24px;color:#666;font-size:11px;line-height:1.5}}
+/* ===== V32 SIMULAÇÃO INTERATIVA ===== */
+.simTimelineWrap{margin-top:14px;padding:16px 17px;border:1px solid #2d2d30;background:#18181a;border-radius:20px}.simTimelineHead{display:flex;justify-content:space-between;gap:18px;align-items:end}.simTimelineHead small{display:block;color:var(--orange);font-size:9px;font-weight:950;letter-spacing:1.4px}.simTimelineHead strong{display:block;margin-top:4px;font-size:14px}.simTimelineHead>span{font-size:10px;color:#999;max-width:340px;text-align:right}.simTimeline{position:relative;display:grid;grid-template-columns:8% 14% 14% 18% 18% 18%;gap:4px;align-items:stretch;margin-top:14px;height:44px}.simTimeline:before{content:"";position:absolute;left:7%;right:0;top:50%;height:2px;background:#343437}.simTick{display:flex;align-items:end;justify-content:start;padding-bottom:2px;color:#777;font-size:8px;position:relative;z-index:2}.simBand{position:relative;z-index:2;border:1px solid #343438;border-radius:10px;background:#202023;color:#aaa;display:flex;align-items:center;justify-content:center;padding:0 4px;font-size:8px;font-weight:850;transition:.25s}.simBand.active{border-color:var(--orange);background:#ff690018;color:#fff;box-shadow:inset 0 0 0 1px #ff690036}.simBand span{white-space:nowrap}.simPlayhead{position:absolute;top:-5px;width:2px;height:54px;background:var(--orange);left:14%;z-index:5;box-shadow:0 0 14px #ff690088;transition:left 5.2s cubic-bezier(.18,.72,.18,1)}.simPlayhead:after{content:"";position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;background:var(--orange)}.simTimelineFoot{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:9px;color:#999}.simTimelineFoot b{color:var(--orange);letter-spacing:1px}.simGuarantee{margin-top:10px;padding:12px 14px;border-radius:15px;background:#111;border:1px solid #2c2c2f;display:flex;gap:10px;align-items:flex-start}.simGuarantee b{font-size:11px;color:#fff;white-space:nowrap}.simGuarantee span{font-size:10px;line-height:1.45;color:#999}.simExplain{margin-top:13px}.installAppBtn{display:none;border:0;background:#111;color:#fff;border-radius:15px;padding:11px 14px;font-weight:900;cursor:pointer}.portalMobileTools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.portalMobileTools button,.portalMobileTools a{border:0;border-radius:13px;padding:11px 13px;font-weight:900;font-size:11px;text-decoration:none;cursor:pointer}.portalShareBtn{background:#f0eee9;color:#111}.portalNewBtn{background:var(--orange);color:#111}.portalUploadHint{margin-top:10px;padding:12px 13px;border-radius:14px;background:#fafafa;border:1px dashed #ddd;font-size:10px;color:#777;line-height:1.45}
+@media(max-width:650px){.simTimelineWrap{padding:14px 12px}.simTimelineHead{align-items:flex-start;flex-direction:column;gap:6px}.simTimelineHead>span{text-align:left}.simTimeline{grid-template-columns:7% repeat(5,1fr);gap:3px;height:52px}.simBand{font-size:7px;padding:0 2px}.simBand span{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.2px}.simPlayhead{height:62px}.simGuarantee{flex-direction:column;gap:4px}.installAppBtn{display:inline-flex}.top .ctaSmall{display:none}.orderPortalPage{padding:10px}.portalMetaGrid{grid-template-columns:1fr 1fr}.portalMobileTools>*{flex:1 1 100%}}
 /* ===== V9 MASTER UX ===== */
 .footerDemoFrame{display:block!important;opacity:0;pointer-events:none;position:absolute;left:2.5%;right:2.5%;bottom:5.5%;z-index:20;transform:translateY(34px)}
 .footerDemoFrame.show{animation:footerBatchIn 5s cubic-bezier(.22,.8,.22,1) both}
@@ -279,6 +282,11 @@ body{overflow-x:hidden}
         <button class="portalActionDark" id="orderPortalRefresh" type="button">ATUALIZAR</button>
         <button class="portalActionLight" id="orderPortalReceiptBtn" type="button" style="display:none">BAIXAR COMPROVANTE</button>
       </div>
+      <div class="portalMobileTools">
+        <button class="portalShareBtn" id="orderPortalShare" type="button">COMPARTILHAR PEDIDO</button>
+        <button class="portalNewBtn" id="orderPortalInstall" type="button">INSTALAR HOCCO NO CELULAR</button>
+      </div>
+      <div class="portalUploadHint" id="portalMaterialHint">Os materiais desta solicitação são enviados conforme a orientação da DOOX pelo WhatsApp. Mantenha este acompanhamento salvo para consultar o pedido.</div>
       <div class="portalFooterNote">Este acompanhamento é privado e está vinculado exclusivamente a este pedido. Uma nova solicitação gera um novo código e um novo acompanhamento.</div>
     </div>
   </div>
@@ -331,7 +339,7 @@ body{overflow-x:hidden}
 <div class="card product"><span class="num">01 · PESSOAS</span><h3>Apoiador Individual</h3><p>Reconhecimento nos créditos e espaços institucionais destinados a quem participa do projeto.</p><div class="price">R$ 9,90</div><div class="meta">Estrutura: até 50 participações</div><button data-preview="individual" onclick="window.goPreview('individual')">Ver na simulação</button></div>
 </div></div></section>
 
-<section class="view" id="preview"><div class="section dark"><div class="wrap"><div class="kicker">SIMULAÇÃO COMPLETA</div><h2 class="title">Todas as presenças em tela.</h2><p class="desc">As imagens abaixo são referências reais de POV, gravação e produção audiovisual, usadas apenas para demonstrar a experiência. Elas não são cenas da HOCCO. Escolha a modalidade e veja como sua participação muda na tela.</p>
+<section class="view" id="preview"><div class="section dark"><div class="wrap"><div class="kicker">SIMULAÇÃO COMPLETA</div><h2 class="title">Todas as presenças em tela.</h2><p class="desc">As imagens abaixo são referências visuais para demonstrar a experiência. Elas não são cenas da HOCCO. Escolha a modalidade, indique a faixa quando ela existir e veja o formato, a duração e o contexto da sua presença antes de solicitar.</p>
 <div class="previewShell"><div class="previewTop"><div class="previewTitle"><small>DOOX PREVIEW</small><b id="previewName">SPONSOR OVERLAY</b></div><div class="switch"><button class="device active" data-device="desktop">Computador</button><button class="device" data-device="phone">Celular</button></div></div>
 <div class="screen" id="screen" data-moment="essential"><img id="simImage" class="simImage" src="simulacao-cinematica.jpg" alt="Cenário demonstrativo de produção audiovisual"><div class="scene"></div><div class="playerMark">▶ VÍDEO DEMONSTRATIVO</div><div class="sceneLabel" id="sceneLabel">MOMENTO ESSENCIAL · CENA DE MENOR ATENÇÃO</div><div class="timeBadge" id="timeBadge">DURAÇÃO <span>≈ 5s</span></div><div class="creditClock" id="creditClock" style="display:none">SIMULAÇÃO DE CRÉDITOS</div>
 <div class="overlay visualOverlay" id="ovVisual"><div class="hoccoBadge"><img class="hoccoMark" src="hocco-poster-oficial.png" alt="HOCCO"><span>HOCCO</span></div><div class="sponsorCopy"><div class="companyName" id="pName">SUA EMPRESA</div><div class="handle" id="pHandle">@suaempresa</div><div class="tiny">PRESENÇA DE SPONSOR</div><div class="audioBadge" id="audioBadge">🔊 ÁUDIO CURTO INTEGRADO</div></div><div class="companyLogoWrap"><img id="companyLogo" alt="Logo da empresa" style="display:none"><span class="companyLogoFallback" id="companyLogoFallback">LOGO</span></div></div>
@@ -374,7 +382,16 @@ body{overflow-x:hidden}
 <div class="control"><label>MODALIDADE</label><select id="mode"><option value="footer">Presença no Rodapé</option><option value="overlay" selected>Sponsor Overlay</option><option value="audio">Overlay + Áudio</option><option value="individual">Apoiador Individual</option><option value="sponsor">Empresa Patrocinadora do Episódio</option></select></div>
 <div class="control"><label>NOME PARA TESTAR</label><input id="inputName" value="SUA EMPRESA"></div>
 <div class="control"><label>@ / PERFIL</label><input id="inputHandle" value="@suaempresa"></div><div class="control"><label>FAIXA / PREÇO (AUTOMÁTICO)</label><select id="priceTier" aria-label="Faixa e preço calculados automaticamente pelo momento escolhido"><option value="essential">Essencial · entrada</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div><div class="control"><label>MOMENTO DESEJADO / FAIXA</label><select id="moment"><option value="essential">00:30–02:00</option><option value="regular">02:00–04:00</option><option value="valued">04:00–06:30</option><option value="premium">06:30–09:00</option><option value="special">09:00–11:00</option></select></div>
-</div><button class="playDemo" id="playDemo" type="button">▶ EXECUTAR DEMONSTRAÇÃO COMPLETA</button>
+</div>
+<div class="simTimelineWrap" aria-label="Faixas comerciais e posição aproximada no episódio">
+  <div class="simTimelineHead"><div><small>MAPA DO EPISÓDIO</small><strong id="simTimelineTitle">Faixa aproximada</strong></div><span id="simTimelineHint">O ponto exato é definido pela produção.</span></div>
+  <div class="simTimeline" id="simTimeline">
+    <div class="simTick"><span>00:00</span></div><div class="simBand" data-band="essential"><span>00:30–02:00</span></div><div class="simBand" data-band="regular"><span>02:00–04:00</span></div><div class="simBand" data-band="valued"><span>04:00–06:30</span></div><div class="simBand" data-band="premium"><span>06:30–09:00</span></div><div class="simBand" data-band="special"><span>09:00–11:00</span></div><div class="simPlayhead" id="simPlayhead" aria-hidden="true"></div>
+  </div>
+  <div class="simTimelineFoot"><span id="simRangeLabel">00:30–02:00</span><b id="simEditorialLabel">FAIXA COMERCIAL</b></div>
+</div>
+<div class="simGuarantee"><b>Você escolhe a categoria e a faixa.</b><span>A demonstração mostra o formato e o intervalo aproximado. A DOOX define o ponto exato dentro da edição para preservar a narrativa.</span></div>
+<button class="playDemo" id="playDemo" type="button">▶ EXECUTAR DEMONSTRAÇÃO COMPLETA</button>
 <div class="simExplain">
   <div><b>1.</b> escolha a modalidade</div>
   <div><b>2.</b> veja onde ela aparece</div>
@@ -399,7 +416,7 @@ body{overflow-x:hidden}
       <div><b>03 · SAI</b>o bloco desaparece sem interromper a história</div>
       <div><b>04 · VOLTA</b>uma segunda exibição pode acontecer mais tarde</div>
     </div>
-<div class="proceedWrap"><button class="btn orange" id="proceedFromPreview">PROSSEGUIR COM PARTICIPAÇÃO NO REALITY BIOGRÁFICO</button><p id="simulationRule" class="creditHint"></p></div></div></div></section>
+<div class="proceedWrap"><button class="btn orange" id="proceedFromPreview">PROSSEGUIR COM ESTA PARTICIPAÇÃO</button><p id="simulationRule" class="creditHint"></p></div></div></div></section>
 
 <section class="view" id="poster"><div class="wrap posterPage"><div class="posterGrid"><div><img class="posterImg" src="hocco-poster-oficial.png" alt="Poster oficial da temporada HOCCO"></div><div class="posterInfo"><div class="kicker">POSTER OFICIAL</div><h1>HOCCO</h1><p class="lead">Você chegou no meio da história.</p><p class="desc">O poster apresenta a temporada da HOCCO, um reality de negócios em primeira pessoa centrado em Alex Hocc. Alex é o eixo da narrativa: ele trabalha, decide, negocia, cria, erra, aprende e constrói projetos enquanto a audiência acompanha sua evolução. Empresas, pessoas e lugares entram na história quando passam a fazer parte desse caminho.</p><p class="desc">A temporada acompanha o crescimento de Alex e da própria operação — do começo simples às primeiras oportunidades, eventos, comunidade e negócios reais. Nem tudo é explicado; parte da história acontece nos detalhes, nos silêncios, nas escolhas e nas consequências.</p><div class="actions"><button class="btn orange" data-go="request">Participar do universo</button><button class="btn" style="background:#111;color:#fff" data-go="preview">Ver simulações</button></div></div></div></div></section>
 
@@ -497,6 +514,8 @@ body{overflow-x:hidden}
   const timeBadge=$('#timeBadge'), creditClock=$('#creditClock'), audioBadge=$('#audioBadge');
   const simWhere=$('#simWhere'), simHow=$('#simHow'), simDescription=$('#simDescription'), simPriceInfo=$('#simPriceInfo'), simDisclaimer=$('#simDisclaimer');
   const simMetaMode=$('#simMode');
+  const simTimeline=$('#simTimeline'), simTimelineTitle=$('#simTimelineTitle'), simTimelineHint=$('#simTimelineHint'), simRangeLabel=$('#simRangeLabel'), simEditorialLabel=$('#simEditorialLabel'), simPlayhead=$('#simPlayhead');
+  const rangePositions={essential:[14,27],regular:[28,42],valued:[43,60],premium:[61,78],special:[79,96]};
 
   const priceOptions={
     footer:[['fixed','R$ 49,90']],
@@ -513,6 +532,47 @@ body{overflow-x:hidden}
     individual:{title:'APOIADOR INDIVIDUAL',where:'Créditos',how:'Lista de nomes / @',desc:'A tela fica preta e apresenta a relação de apoiadores. O nome ou @ entra em uma rotação coletiva.',disclaimer:'Apresentação ilustrativa; posição e ordem podem variar.'},
     sponsor:{title:'EMPRESA PATROCINADORA DO EPISÓDIO',where:'Pós-créditos',how:'HOCCO + empresa + @',desc:'A tela fica preta e apresenta a empresa como participante da sustentação comercial do episódio.',disclaimer:'Imagem, posição e composição são demonstrativas.'}
   };
+  function renderSimulationTimeline(){
+    const m=mode?.value||'overlay';
+    const timed=['overlay','audio'].includes(m);
+    $$('.simBand').forEach(b=>b.classList.toggle('active',timed && b.dataset.band===moment?.value));
+    if(!simTimelineTitle||!simRangeLabel||!simEditorialLabel||!simTimelineHint)return;
+    if(m==='footer'){
+      simTimelineTitle.textContent='Presença coletiva no episódio';
+      simTimelineHint.textContent='O bloco é organizado pela DOOX conforme a edição.';
+      simRangeLabel.textContent='Bloco coletivo · aproximadamente 5s por exibição';
+      simEditorialLabel.textContent='RODAPÉ';
+      if(simPlayhead){simPlayhead.style.transition='none';simPlayhead.style.left='12%';}
+    }else if(timed){
+      const key=moment?.value||'essential', info=momentInfo[key]||momentInfo.essential, pos=rangePositions[key]||rangePositions.essential;
+      simTimelineTitle.textContent=info.label;
+      simTimelineHint.textContent='O minuto exato dentro desta faixa não é garantido.';
+      simRangeLabel.textContent=info.range;
+      simEditorialLabel.textContent=m==='audio'?'OVERLAY + ÁUDIO':'SPONSOR OVERLAY';
+      if(simPlayhead){simPlayhead.style.transition='none';simPlayhead.style.left=pos[0]+'%';}
+    }else if(m==='individual'){
+      simTimelineTitle.textContent='Créditos do episódio';
+      simTimelineHint.textContent='A posição e a ordem da rotação podem variar.';
+      simRangeLabel.textContent='Após a história'; simEditorialLabel.textContent='APOIADOR INDIVIDUAL';
+      if(simPlayhead){simPlayhead.style.transition='none';simPlayhead.style.left='95%';}
+    }else{
+      simTimelineTitle.textContent='Pós-créditos';
+      simTimelineHint.textContent='Apresentação institucional demonstrativa.';
+      simRangeLabel.textContent='Pós-créditos'; simEditorialLabel.textContent='PATROCÍNIO DO EPISÓDIO';
+      if(simPlayhead){simPlayhead.style.transition='none';simPlayhead.style.left='97%';}
+    }
+  }
+
+  function animateSimulationTimeline(){
+    if(!simPlayhead || !mode)return;
+    const m=mode.value;
+    if(['overlay','audio'].includes(m)){
+      const p=rangePositions[moment?.value||'essential']||rangePositions.essential;
+      simPlayhead.style.left=p[0]+'%';
+      requestAnimationFrame(()=>{requestAnimationFrame(()=>{simPlayhead.style.transition='left 5.2s cubic-bezier(.18,.72,.18,1)';simPlayhead.style.left=p[1]+'%';});});
+    }
+  }
+
   const simImages=['pov-demo-01.jpg','pov-demo-02.jpg','simulacao-cinematica.jpg','overlay-cinematic.png'];
   let simImageIndex=0;
 
@@ -812,6 +872,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     $('#simDurationLarge')&&( $('#simDurationLarge').textContent=(m==='individual'||m==='sponsor')?'Apresentação de créditos':'≈ 5 segundos' );
     $('#simContextLarge')&&( $('#simContextLarge').textContent=info.ctx );
     $('#priceLogic')&&( $('#priceLogic').innerHTML = m==='footer' ? '<strong>Regra de preço:</strong> valor único de <strong>R$ 49,90</strong>.' : '<strong>Regra de preço:</strong> o valor acompanha a faixa/momento escolhido.' );
+    renderSimulationTimeline();
     return info;
   }
 
@@ -827,6 +888,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     if(!mode || !screen)return;
     setBrand();updateSimLabels();clearSimulation();
     const m=mode.value;
+    animateSimulationTimeline();
     if(m==='footer'){
       screen.classList.add('footer-demo');
       if(timeBadge){timeBadge.style.display='block';timeBadge.innerHTML='EXIBIÇÃO <span>≈ 5s</span>'}
@@ -1056,7 +1118,7 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
     const paymentUrl=registered?.trackingToken ? location.origin+'/?pagamento='+encodeURIComponent(registered.trackingToken) : '';
     const instructions=registered?.instructions||{title:'Próximos passos',items:['A equipe DOOX orientará os próximos passos pelo atendimento.']};
     const checklist=(instructions.items||[]).map((item,i)=>`${i+1}. ${item}`).join('\n');
-    const greeting=`Olá! Seja bem-vindo(a) à HOCCO.\n\nSua solicitação ${registered.code||''} foi registrada.\n\nMATERIAIS NECESSÁRIOS\n${instructions.title}\n${checklist}\n\nPAGAMENTO\nValor: R$ ${(Number(registered.total)||0).toFixed(2).replace('.',',')}\nRealize o pagamento pelo link seguro abaixo:\n${paymentUrl}\n\nDepois de realizar o pagamento, envie aqui no WhatsApp o comprovante.\n\nACOMPANHAMENTO\nAcompanhe o andamento do pedido pelo link privado:\n${publicTrackingUrl}\n\nA equipe DOOX seguirá com a análise, produção e veiculação conforme o fluxo da sua solicitação.`;
+    const greeting=`Olá! Seja bem-vindo(a) à HOCCO.\n\nSua solicitação ${registered.code||''} — ${registered.modality||apiPayload.modality||''} foi registrada.\n\nMATERIAIS NECESSÁRIOS\n${instructions.title}\n${checklist}\n\nPAGAMENTO\nValor: R$ ${(Number(registered.total)||0).toFixed(2).replace('.',',')}\nAcesse a área segura para pagar e acompanhar os dados do PIX:\n${paymentUrl}\n\nAPÓS O PAGAMENTO\nEnvie aqui no WhatsApp o comprovante para conferência da DOOX.\n\nACOMPANHAMENTO DO PEDIDO\nAcesse sua área privada pelo link abaixo. Ele fica vinculado somente a este pedido:\n${publicTrackingUrl}\n\nA DOOX seguirá com a análise, produção e veiculação conforme o fluxo desta solicitação.`;
     const waUrl=`https://wa.me/5514981150675?text=${encodeURIComponent(greeting)}`;
     try{ localStorage.removeItem(draftKey); }catch(_){}
 
@@ -1126,11 +1188,18 @@ rules:{title:'Regras de Participação',content:`<p class="updated">Última atua
 
 
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try { const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); } catch (_) {}
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{}));
+  let deferred=null;
+  const btn=document.getElementById('installAppBtn');
+  const toast=document.getElementById('installToast');
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;if(btn)btn.style.display='inline-flex';});
+  btn?.addEventListener('click',async()=>{
+    if(deferred){deferred.prompt(); try{await deferred.userChoice;}catch(_){} deferred=null; return;}
+    if(toast){toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),4200);}
   });
-}
+})();
 </script>
 
 
@@ -1281,7 +1350,7 @@ if ('serviceWorker' in navigator) {
   function startPolling(){
     stopPolling();
     if(!currentToken)return;
-    pollTimer=setInterval(()=>loadToken(currentToken,false),1500);
+    pollTimer=setInterval(()=>loadToken(currentToken,false),1000);
   }
   function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
   document.getElementById('pixCopy')?.addEventListener('click',async()=>{
@@ -1374,7 +1443,7 @@ if ('serviceWorker' in navigator) {
     }
     const n=Math.max(0,Math.min(100,Number(d.progressPercent)||0)); pct.textContent=n+'%'; bar.style.width=n+'%';
     const st=d.status||'';
-    sub.textContent=st==='FINALIZADO'?'Participação finalizada e registrada pela DOOX.':st==='REJEITADO'?'A participação não foi aprovada. Veja a mensagem abaixo.':'O andamento desta solicitação é atualizado pela DOOX.';
+    sub.textContent=st==='FINALIZADO'?'Participação finalizada e registrada pela DOOX. O comprovante está disponível abaixo.':st==='REJEITADO'?'A participação não foi aprovada. Veja a mensagem abaixo.':st==='MATERIAL PENDENTE'?'Aguardamos os materiais necessários para continuar.':'O andamento desta solicitação é atualizado pela DOOX.';
     timeline.innerHTML=(d.steps||[]).map(x=>`<div class="statusStep ${x.state==='completed'?'done':''} ${x.state==='current'?'current':''}"><i></i><span>${esc(x.label)}</span></div>`).join('');
     const text=d.observationClient||d.rejectionReason||'';
     msg.classList.toggle('show',!!text);
@@ -1389,7 +1458,7 @@ if ('serviceWorker' in navigator) {
     catch(e){ status.textContent='Pedido não localizado'; sub.textContent=e.message||'Não foi possível consultar este acompanhamento.'; timeline.innerHTML=''; }
     finally{loading=false;busy.style.visibility='hidden';}
   }
-  function start(){ if(timer)clearInterval(timer); timer=setInterval(load,1500); }
+  function start(){ if(timer)clearInterval(timer); timer=setInterval(load,1000); }
   function makeReceipt(){
     if(!latest || !(latest.receipt&&latest.receipt.eligible))return;
     const r=latest.receipt;
@@ -1399,6 +1468,14 @@ if ('serviceWorker' in navigator) {
     document.body.classList.add('portal-print-mode'); window.print(); setTimeout(()=>document.body.classList.remove('portal-print-mode'),1000);
   }
   document.getElementById('orderPortalRefresh')?.addEventListener('click',load); receiptBtn?.addEventListener('click',makeReceipt);
+  document.getElementById('orderPortalShare')?.addEventListener('click',async()=>{
+    const shareUrl=location.href;
+    try{
+      if(navigator.share){ await navigator.share({title:'DOOX · acompanhamento',text:'Acompanhar meu pedido '+(latest?.code||''),url:shareUrl}); }
+      else { await navigator.clipboard.writeText(shareUrl); const b=document.getElementById('orderPortalShare'); if(b){b.textContent='LINK COPIADO ✓';setTimeout(()=>b.textContent='COMPARTILHAR PEDIDO',1800);} }
+    }catch(_){}
+  });
+  document.getElementById('orderPortalInstall')?.addEventListener('click',()=>document.getElementById('installAppBtn')?.click());
   portalPaymentCopy?.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(portalPaymentPix.value||''); portalPaymentCopy.textContent='COPIADO ✓'; setTimeout(()=>portalPaymentCopy.textContent='COPIAR',1800);}catch(_){portalPaymentPix.select();document.execCommand('copy');portalPaymentCopy.textContent='COPIADO ✓';setTimeout(()=>portalPaymentCopy.textContent='COPIAR',1800);} });
   portalPaymentProof?.addEventListener('click',async()=>{
     try{

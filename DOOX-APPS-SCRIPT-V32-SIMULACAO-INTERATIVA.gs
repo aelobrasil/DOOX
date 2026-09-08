@@ -157,6 +157,30 @@ function getClientInstructions_(modality) {
   return { title: cfg.title, items: cfg.items.slice() };
 }
 
+function getSimulationSpec_(modality, moment) {
+  const m = String(modality || '').trim();
+  const k = String(moment || '').trim();
+  const ranges = {
+    '00:30–02:00': { label: 'Primeira faixa · menor atenção', unit: 39.90, audioUnit: 49.90 },
+    '02:00–04:00': { label: 'Segunda faixa · atenção normal', unit: 49.90, audioUnit: 59.90 },
+    '04:00–06:30': { label: 'Terceira faixa · maior interesse', unit: 59.90, audioUnit: 69.90 },
+    '06:30–09:00': { label: 'Quarta faixa · alta atenção', unit: 69.90, audioUnit: 79.90 },
+    '09:00–11:00': { label: 'Quinta faixa · atenção excepcional', unit: 79.90, audioUnit: 89.90 }
+  };
+  if (m === 'Presença no Rodapé') return { mode: 'footer', title: 'PRESENÇA NO RODAPÉ', where: 'Durante o episódio', duration: '≈ 5 segundos', range: 'Bloco coletivo', unitPrice: 49.90, exactMinute: false, copy: 'Até 10 empresas podem aparecer juntas no mesmo bloco; a DOOX organiza a composição conforme a edição.' };
+  if (m === 'Sponsor Overlay') {
+    const r = ranges[k] || ranges['00:30–02:00'];
+    return { mode: 'overlay', title: 'SPONSOR OVERLAY', where: 'Durante o episódio', duration: '≈ 5 segundos', range: k || '00:30–02:00', rangeLabel: r.label, unitPrice: r.unit, exactMinute: false, copy: 'A faixa representa um intervalo comercial. O minuto exato dentro dela é definido pela produção.' };
+  }
+  if (m === 'Overlay + Áudio') {
+    const r = ranges[k] || ranges['00:30–02:00'];
+    return { mode: 'audio', title: 'OVERLAY + ÁUDIO', where: 'Durante o episódio', duration: '≈ 5 segundos', range: k || '00:30–02:00', rangeLabel: r.label, unitPrice: r.audioUnit, exactMinute: false, copy: 'A faixa representa um intervalo comercial. O momento exato e a presença do áudio dependem da edição.' };
+  }
+  if (m === 'Apoiador Individual') return { mode: 'individual', title: 'APOIADOR INDIVIDUAL', where: 'Créditos', duration: 'Apresentação de créditos', range: 'Após a história', unitPrice: 9.90, exactMinute: false, copy: 'A ordem e a posição da identificação podem variar dentro da rotação de créditos.' };
+  if (m === 'Empresa Patrocinadora do Episódio') return { mode: 'sponsor', title: 'EMPRESA PATROCINADORA DO EPISÓDIO', where: 'Pós-créditos', duration: 'Apresentação institucional', range: 'Pós-créditos', unitPrice: 89.90, exactMinute: false, copy: 'Apresentação institucional demonstrativa; posição e composição são definidas pela produção.' };
+  return { mode: '', title: m, where: '', duration: '', range: '', unitPrice: 0, exactMinute: false, copy: '' };
+}
+
 function migrateOperationalSheetNames_(ss) {
   const aliases = [
     ['PEDIDOS', SHEETS.PEDIDOS.name],
@@ -438,7 +462,7 @@ function doGet(e) {
       return json_({
         ok: true,
         service: 'DOOX HOCCO MVP',
-        version: 'MVP-2026',
+        version: 'V32-SIMULACAO-INTERATIVA',
         spreadsheet: CONFIG.SPREADSHEET_ID,
         timestamp: new Date().toISOString()
       });
@@ -987,6 +1011,9 @@ function registerRequest_(raw) {
       r.observation,
 
     instructions: getClientInstructions_(r.modality),
+    simulation: getSimulationSpec_(r.modality, r.moment),
+    payment: { available: true, path: '/?pagamento=' + encodeURIComponent(trackingToken) },
+    tracking: { available: true, path: '/?acompanhamento=' + encodeURIComponent(trackingToken) },
 
     row: newRow
 
@@ -1336,7 +1363,6 @@ function buildPublicPayment_(ss, pedido) {
 
 function atualizarPagamento(codigo, status, formaPagamento, observacao) {
   const ss = getSpreadsheet_();
-  ensureOperationalStructure_(ss);
   const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
   const found = findRowByFirstColumn_(sheet, codigo);
   if (!found) throw new Error('Pagamento não encontrado para o código: ' + codigo);
@@ -1362,17 +1388,17 @@ function confirmarPagamento(codigo, formaPagamento, observacao) {
   lock.waitLock(30000);
   try {
     const ss = getSpreadsheet_();
-    ensureOperationalStructure_(ss);
     const pedido = findPedidoByCode_(ss, codigo);
     if (!pedido) throw new Error('Pedido não encontrado: ' + codigo);
     const statusAtual = String(pedido.status || '').toUpperCase();
     const allowedOrderStatuses = ['SOLICITADO','EM ANÁLISE','AGUARDANDO PAGAMENTO'];
+    if (allowedOrderStatuses.indexOf(statusAtual) === -1) {
+      throw new Error('Não é possível confirmar pagamento nesta etapa. Status atual: ' + statusAtual);
+    }
     const payResult = atualizarPagamento(codigo, 'PAGAMENTO RECEBIDO', formaPagamento || 'PIX', observacao || 'Pagamento conferido e confirmado pela DOOX.');
     if (statusAtual === 'AGUARDANDO PAGAMENTO') {
       atualizarStatusPedido_(ss, codigo, 'PAGAMENTO RECEBIDO', { action: 'CONFIRMAR PAGAMENTO', observation: observacao || 'Pagamento confirmado no financeiro.' });
       sincronizarPagamentoComPedido_(ss, codigo);
-    } else if (allowedOrderStatuses.indexOf(statusAtual) === -1) {
-      throw new Error('Não é possível confirmar pagamento nesta etapa. Status atual: ' + statusAtual);
     }
     refreshStatusDropdowns_(ss, codigo);
     return { ok: true, code: codigo, status: findPedidoByCode_(ss, codigo).status, paymentStatus: payResult.paymentStatus, message: 'Pagamento confirmado.' };
@@ -1680,6 +1706,24 @@ function ensureOperationalStructure_(ss) {
   return true;
 }
 
+function ensureOperationalStatusDropdowns_(ss) {
+  const p = getSheet_(ss, SHEETS.PAGAMENTOS.name);
+  const m = headerMap_(p);
+  const last = p.getLastRow();
+  if (last < 2 || !m['Status do Pedido']) return;
+  const statusCol = m['Status do Pedido'];
+  const rows = p.getRange(2, statusCol, last - 1, 1).getValues();
+  for (let i = 0; i < rows.length; i++) {
+    const current = String(rows[i][0] || '').trim().toUpperCase();
+    if (!current) continue;
+    const opts = allowedNextStatuses_(current).slice();
+    if (opts.indexOf(current) === -1) opts.unshift(current);
+    if (!opts.length) opts.push(current);
+    p.getRange(i + 2, statusCol).setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInList(opts, true).setAllowInvalid(false).build());
+  }
+}
+
 function setupMVP_(
   ss
 ) {
@@ -1740,6 +1784,7 @@ function setupMVP_(
 
   showOnlyOperationalSheets_(ss);
   ensureEditTrigger_(ss);
+  ensureOperationalStatusDropdowns_(ss);
 
   // Dados de episódio continuam internos e não aparecem como aba operacional.
   const episodeSheet =
@@ -3020,7 +3065,6 @@ function createTrackingToken_() {
 function getPublicOrderStatus_(token) {
 
   const ss = getSpreadsheet_();
-  ensureOperationalStructure_(ss);
 
   const pedido =
     findPedidoByTrackingToken_(
@@ -3048,11 +3092,13 @@ function getPublicOrderStatus_(token) {
     status: status,
     statusLabel: publicStatusLabel_(status),
     updatedAt: pedido.updatedAt,
+    versionKey: String(pedido.updatedAt || ''),
     steps: publicStatusSteps_(status),
     nextAction: nextActionForStatus_(status),
     observationClient: pedido.observationClient || '',
     rejectionReason: status === 'REJEITADO' ? (pedido.observationClient || '') : '',
     instructions: getClientInstructions_(pedido.modality),
+    simulation: getSimulationSpec_(pedido.modality, pedido.moment),
     progressPercent: publicProgressPercent_(status),
     payment: buildPublicPayment_(ss, pedido),
     receipt: {
@@ -4305,7 +4351,6 @@ function jsonError_(
 
 function getPainelPedidos(filtro) {
   const ss = getSpreadsheet_();
-  ensureOperationalStructure_(ss);
   const sheet = getSheet_(ss, SHEETS.PEDIDOS.name);
   const map = headerMap_(sheet);
   const last = sheet.getLastRow();
@@ -4324,6 +4369,7 @@ function getPainelPedidos(filtro) {
     total: Number(v[map['Valor total'] - 1] || 0),
     quantity: Number(v[map['Quantidade'] - 1] || 0),
     status: String(v[map['Status'] - 1] || ''),
+    paymentStatus: (function(){ const p = getPaymentRecord_(ss, String(v[map['Código DOOX'] - 1] || '')); return p ? p.status : ''; })(),
     updatedAt: v[map['Atualizado em'] - 1] || '',
     observation: String(v[map['Observações'] - 1] || ''),
     observationClient: map['Observação Cliente'] ? String(v[map['Observação Cliente'] - 1] || '') : '',
@@ -4336,41 +4382,15 @@ function getPainelPedidos(filtro) {
 function abrirPainelDOOX() {
   const html = HtmlService.createHtmlOutput(`
 <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#f5f5f7;color:#171717}.top{display:flex;gap:8px}.top input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:12px}.top button,.btn{border:0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}.top button{background:#111;color:#fff}.grid{display:grid;gap:10px;margin-top:14px}.card{background:#fff;border:1px solid #e6e6e6;border-radius:16px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.05)}.row{display:flex;justify-content:space-between;gap:10px}.code{font-weight:900}.pill{background:#111;color:#fff;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:800}.meta{font-size:12px;color:#666;margin:8px 0;line-height:1.45}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.btn{background:#eee}.btn.primary{background:#ff6900;color:#111}.btn.dark{background:#111;color:#fff}.btn:disabled{opacity:.45}.selected{outline:2px solid #ff6900}.note{margin-top:10px}.note textarea{width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:12px;padding:10px;min-height:64px}.small{font-size:11px;color:#777;margin-top:8px}.empty{padding:20px;text-align:center;color:#777}
-</style></head><body><div class="top"><input id="q" placeholder="Buscar código, cliente, telefone..."><button onclick="load()">ATUALIZAR</button></div><div class="small">Painel DOOX — atualiza automaticamente.</div><div id="grid" class="grid"><div class="empty">Carregando...</div></div><script>
-let selected=null;function esc(s){return String(s||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;'}[m]||m))}
-function money(n){return 'R$ '+Number(n||0).toFixed(2).replace('.',',')}
+body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#fff;color:#171717}
+.top{display:flex;gap:8px}.top input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:12px}.top button{border:0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer;background:#ff6900;color:#111}
+.table{margin-top:14px;border:1px solid #e6e6e6;border-radius:14px;overflow:auto}.row{display:grid;grid-template-columns:140px 1.4fr 1fr 130px 1fr;min-width:780px;border-top:1px solid #eee}.row:first-child{border-top:0}.cell{padding:10px 12px;font-size:12px}.head{font-weight:900;background:#111;color:#fff}.pill{font-weight:800}.small{font-size:11px;color:#777;margin-top:8px}
+</style></head><body><div class="top"><input id="q" placeholder="Buscar código, cliente, telefone..."><button onclick="load()">ATUALIZAR</button></div><div class="small">Painel somente para consulta. A alteração operacional é feita na lista Status da aba PAGAMENTO.</div><div id="box" class="table"><div class="row head"><div class="cell">CÓDIGO</div><div class="cell">CLIENTE</div><div class="cell">MODALIDADE</div><div class="cell">PAGAMENTO</div><div class="cell">STATUS</div></div></div><script>
+function esc(s){return String(s||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;'}[m]||m))}
 function load(){google.script.run.withSuccessHandler(render).withFailureHandler(err=>alert(err.message||err)).getPainelPedidos(document.getElementById('q').value)}
-function render(r){const g=document.getElementById('grid');if(!r.orders||!r.orders.length){g.innerHTML='<div class="empty">Nenhum pedido encontrado.</div>';return}g.innerHTML=r.orders.map(o=>{
- const dis=(s)=>o.status===s?'':'disabled';
- return '<div class="card '+(selected===o.code?'selected':'')+'" onclick="selectCard(\''+esc(o.code)+'\')"><div class="row"><span class="code">'+esc(o.code)+'</span><span class="pill">'+esc(o.status)+'</span></div><div><b>'+esc(o.name)+'</b></div><div class="meta">'+esc(o.modality)+' · '+money(o.total)+' · qtd. '+o.quantity+'<br>Próxima ação: <b>'+esc(o.nextAction)+'</b></div><div class="actions">'+
- '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'analisar\')">ANALISAR</button>'+ 
- '<button class="btn primary" onclick="act(event,\''+esc(o.code)+'\',\'aprovar\')">APROVAR</button>'+ 
- '<button class="btn dark" onclick="act(event,\''+esc(o.code)+'\',\'pagamento\')">CONFIRMAR PAGAMENTO</button>'+ 
- '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'material\')">RECEBER MATERIAL</button>'+ 
- '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'aprovarmaterial\')">APROVAR MATERIAL</button>'+ 
- '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'programar\')">PROGRAMAR</button>'+ 
- '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'veicular\')">VEICULAR</button>'+ 
- '<button class="btn" onclick="act(event,\''+esc(o.code)+'\',\'finalizar\')">FINALIZAR</button></div>'+ 
- '<div class="note"><textarea id="note-'+esc(o.code)+'" placeholder="Observação para o cliente...">'+esc(o.observationClient)+'</textarea><button class="btn" style="width:100%;margin-top:6px" onclick="publish(event,\''+esc(o.code)+'\')">PUBLICAR OBSERVAÇÃO</button></div>'+ 
- '<div class="small">Interna: '+esc(o.observation||'—')+'</div></div>';
-}).join('')}
-function selectCard(c){selected=c;load()} 
-function act(ev,code,type){ev.stopPropagation();let fn=null;let args=[];
- if(type==='analisar')fn='atualizarStatus',args=[code,'EM ANÁLISE'];
- if(type==='aprovar')fn='atualizarStatus',args=[code,'AGUARDANDO PAGAMENTO'];
- if(type==='pagamento'){fn='confirmarPagamento';args=[code,'PIX','Pagamento conferido e confirmado pela DOOX.']}
- if(type==='material')fn='atualizarStatus',args=[code,'MATERIAL RECEBIDO'];
- if(type==='aprovarmaterial')fn='atualizarStatus',args=[code,'EM PRODUÇÃO'];
- if(type==='programar')fn='atualizarStatus',args=[code,'PROGRAMADO'];
- if(type==='veicular')fn='atualizarStatus',args=[code,'PUBLICADO'];
- if(type==='finalizar')fn='atualizarStatus',args=[code,'FINALIZADO'];
- if(!fn)return;if(!confirm('Executar '+type+' em '+code+'?'))return;google.script.run.withSuccessHandler(r=>{alert('OK: '+r.status);load()}).withFailureHandler(err=>alert(err.message||err))[fn](...args)
-}
-function publish(ev,code){ev.stopPropagation();const t=document.getElementById('note-'+code);google.script.run.withSuccessHandler(()=>{alert('Observação publicada.');load()}).withFailureHandler(err=>alert(err.message||err)).publicarObservacaoCliente(code,t?t.value:'')}
-load();setInterval(load,8000);
-</script></body></html>`)
-    .setTitle('Painel DOOX');
+function render(r){const b=document.getElementById('box');const head=b.firstElementChild;if(!r.orders||!r.orders.length){b.innerHTML='';b.appendChild(head);const e=document.createElement('div');e.className='cell';e.textContent='Nenhum pedido encontrado.';b.appendChild(e);return;}b.innerHTML='';b.appendChild(head);r.orders.forEach(o=>{const row=document.createElement('div');row.className='row';row.innerHTML='<div class="cell">'+esc(o.code)+'</div><div class="cell">'+esc(o.name)+'</div><div class="cell">'+esc(o.modality)+'</div><div class="cell">'+esc(o.paymentStatus||'—')+'</div><div class="cell pill">'+esc(o.status)+'</div>';b.appendChild(row);})}
+load();setInterval(load,5000);
+</script></body></html>`).setTitle('Painel DOOX');
   SpreadsheetApp.getUi().showSidebar(html);
 }
 
@@ -4379,60 +4399,13 @@ load();setInterval(load,8000);
  *************************************************/
 
 function onOpen() {
-
   try {
-
-    SpreadsheetApp
-      .getUi()
-
-      .createMenu(
-        'DOOX MVP'
-      )
-      .addItem(
-        'Abrir Painel DOOX',
-        'abrirPainelDOOX'
-      )
-
-      .addItem(
-        'Preparar MVP',
-        'setupMVP'
-      )
-
-      .addItem(
-        'Testar sistema',
-        'testarSistema'
-      )
-
-      .addItem(
-        'Testar pedido V11',
-        'TESTE_PEDIDO_V11'
-      )
-
-      .addItem(
-        'Testar PIX V11',
-        'TESTE_PIX_V11'
-      )
-
-      .addItem(
-        'Limpar testes V11',
-        'LIMPAR_TESTES_V11'
-      )
-
-      .addSeparator()
-
-      .addItem(
-        'Fechar mês e arquivar',
-        'fecharMesEArquivar'
-      )
-
+    SpreadsheetApp.getUi()
+      .createMenu('DOOX')
+      .addItem('Abrir painel de consulta', 'abrirPainelDOOX')
+      .addItem('Preparar / corrigir estrutura', 'setupMVP')
+      .addItem('Verificar sistema', 'testarSistema')
+      .addItem('Fechar mês e arquivar', 'fecharMesEArquivar')
       .addToUi();
-
-  }
-
-  catch (_) {
-
-    // Pode ocorrer quando executado fora da interface da planilha.
-
-  }
-
+  } catch (_) {}
 }
