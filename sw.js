@@ -1,19 +1,64 @@
-const CACHE_NAME='hocco-doox-v32';
-const ASSETS=[
-'/','/index.html','/manifest.webmanifest','/icon-192.png','/icon-512.png','/apple-touch-icon.png',
-'/hocco-poster-oficial.png','/hocco-story-1.png','/hocco-story-2.png','/hocco-universe.png',
-'/insertion-guide.png','/overlay-cinematic.png','/pov-demo-01.jpg','/pov-demo-02.jpg','/pov-demo-03.jpg','/simulacao-cinematica.jpg'
+const CACHE_NAME = 'doox-hocco-v47-shell';
+const SHELL = [
+  '/',
+  '/index.html',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png'
 ];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{
- if(e.request.method!=='GET')return;
- const apiPath=new URL(e.request.url).pathname.startsWith('/api/');
- if(apiPath){ e.respondWith(fetch(e.request,{cache:'no-store'})); return; }
- const isNavigation=e.request.mode==='navigate' || new URL(e.request.url).pathname==='/' || new URL(e.request.url).pathname==='/index.html';
- if(isNavigation){
-   e.respondWith(fetch(e.request).then(r=>{const clone=r.clone();caches.open(CACHE_NAME).then(c=>c.put('/index.html',clone)).catch(()=>{});return r;}).catch(()=>caches.match('/index.html')));
-   return;
- }
- e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{const clone=r.clone();caches.open(CACHE_NAME).then(c=>c.put(e.request,clone)).catch(()=>{});return r;}).catch(()=>caches.match('/index.html'))));
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname.startsWith('/pagamento') || url.pathname.startsWith('/acompanhamento')) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put('/', copy)).catch(() => {});
+          return response;
+        })
+        .catch(() => caches.match('/').then(cached => cached || caches.match('/index.html')))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then(cached => {
+      if (cached) return cached;
+      return fetch(request).then(response => {
+        if (response.ok && ['image', 'script', 'style', 'font'].includes(request.destination)) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => {});
+        }
+        return response;
+      });
+    })
+  );
 });

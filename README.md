@@ -1,10 +1,9 @@
-# DOOX / HOCCO — V32 SIMULAÇÃO INTERATIVA
+# DOOX / HOCCO — V47 FINAL DEFINITIVO
 
-Pacote final com site comercial, simulador interativo e integração com Google Apps Script.
+Pacote de produção com site, API, PWA, simulação, integração Google Apps Script e documentação operacional.
 
-Estrutura: PAGAMENTO visível para operação; PEDIDO e abas técnicas internas/ocultas.
+CTA comercial único: **PARTICIPAR DO REALITY**.
 
-O simulador mostra a modalidade, faixa aproximada, duração e contexto, sem prometer minuto exato.
+A simulação é demonstrativa. A compra ocorre somente em PARTICIPAR DO REALITY, com modalidade, quantidade e faixa quando aplicável.
 
-
-V33: simulador usa o vídeo real `simulacao-hocco.mp4` como fundo; o cliente escolhe a faixa, e a posição exata continua sob controle editorial da DOOX.
+Use `DOOX-APPS-SCRIPT-V47-FINAL-ENTREGA.gs` no projeto Google Apps Script da planilha operacional indicada na documentação.

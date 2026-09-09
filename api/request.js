@@ -11,6 +11,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
 }
 
 module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   if (req.method !== 'POST' && req.method !== 'GET') {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ ok: false, error: 'Método não permitido.' });

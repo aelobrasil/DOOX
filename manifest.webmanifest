@@ -1,14 +1,13 @@
 {
   "name": "HOCCO",
   "short_name": "HOCCO",
-  "description": "HOCCO — produção audiovisual original da DOOX Studios.",
+  "description": "Participações e experiências comerciais oficiais da HOCCO pela DOOX Studios.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0b0b0c",
+  "background_color": "#ffffff",
   "theme_color": "#ff6900",
-  "lang": "pt-BR",
   "icons": [
     {
       "src": "/icon-192.png",

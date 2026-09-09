@@ -1,45 +1,37 @@
-# DOOX / HOCCO — Operação definitiva — V31
+# DOOX / HOCCO — Integração Google — V47 Final
 
 ## Arquitetura
+Site → /api/request → Google Apps Script → Google Sheets → /api/request → Painel privado do cliente.
 
-A planilha operacional tem somente duas abas visíveis:
+## Planilha
+Spreadsheet ID operacional: `1VWJKfePpzoFpH5h8Iyl58MErLGNjvgGB`
 
-- `PEDIDO`: registro comercial completo da solicitação e status operacional.
-- `PAGAMENTO`: controle financeiro e cópia operacional do status do pedido.
-
-Não existe mais cadastro permanente de `CLIENTE`. Nome, WhatsApp, e-mail, perfil e demais dados do solicitante ficam registrados no próprio pedido. A estrutura técnica (`_EPISÓDIOS`, `_VEICULAÇÕES`, `_LOG`) permanece oculta. Abas antigas de cliente, quando encontradas na migração, são preservadas como `_CLIENTE_LEGADO` e ficam ocultas.
-
-## Controle de status
-
-O operador não usa caixas ou botões fixos. O status fica na própria célula, ao lado do pedido. Ao clicar, o Google Sheets abre a lista de próximas etapas válidas para aquela situação. Após a escolha, o Apps Script valida a transição, atualiza `PEDIDO`, sincroniza `PAGAMENTO`, registra o log e alimenta o painel privado do cliente.
-
-Para recusar uma participação, escreva o motivo em `Observação Cliente` (na aba `PEDIDO`) ou em `Observação` (na aba `PAGAMENTO`) e depois selecione `REJEITADO` pelo status. Sem motivo, a mudança é recusada.
-
-## Fluxo operacional
-
-`SOLICITADO` → `EM ANÁLISE` → `AGUARDANDO PAGAMENTO` → `PAGAMENTO RECEBIDO` → `MATERIAL PENDENTE` → `MATERIAL RECEBIDO` → `EM PRODUÇÃO` → `PROGRAMADO` → `PUBLICADO` → `FINALIZADO`
-
-Também existem `REJEITADO`, `CANCELADO` e `ARQUIVADO` como estados excepcionais.
-
-## Implantação
-
-1. Abra a planilha operacional existente.
-2. Abra o projeto do Google Apps Script vinculado ao Web App.
-3. Substitua o conteúdo pelo arquivo `DOOX-APPS-SCRIPT-Code.gs`.
-4. Salve.
-5. Execute `setupMVP()` uma vez e autorize os acessos solicitados.
-6. Confirme que ficam visíveis somente `PEDIDO` e `PAGAMENTO`.
-7. Faça uma solicitação de teste pelo site.
-8. Confirme uma mudança de status diretamente na célula `Status`.
-9. Confirme um pagamento pela célula `Status pagamento` ou alterando o status para `PAGAMENTO RECEBIDO` quando permitido.
-10. Abra o link privado do pedido e confirme que o status mudou.
+A aba operacional visível é `PAGAMENTO`. A aba `PEDIDO` e as abas técnicas permanecem internas/ocultas.
 
 ## Web App
+O Apps Script deve ser implantado como Web App com acesso compatível com o uso público do site.
 
-O site usa o endpoint já configurado em `api/request.js`. Ao publicar nova versão do Apps Script, mantenha a mesma implantação/URL para que o proxy do site continue funcionando.
+## Ações públicas
+- `GET health`
+- `GET catalog`
+- `GET pedido&token=...`
+- `GET contract`
+- `POST registerRequest`
+- `POST informarPagamento`
 
-Após salvar o Apps Script, use `Implantar → Gerenciar implantações → Editar → Nova versão → Implantar` e teste a URL do Web App.
+## Ações protegidas
+- `GET/POST testSpreadsheet`
+- `POST confirmarPagamento`
+- `POST atualizarStatus`
+- `POST publicarObservacao`
 
-## Fechamento mensal
+As ações administrativas exigem a propriedade de Script `DOOX_OPERATOR_TOKEN`. Configure no editor do Apps Script executando `CONFIGURAR_TOKEN_OPERADOR('SEU_TOKEN_LONGO')` com um token de pelo menos 20 caracteres. Nunca publique esse token no site.
 
-Use `fecharMesEArquivar()` para arquivar o ciclo e iniciar a operação limpa com novo episódio. O fechamento não utiliza mais a aba `CLIENTE`.
+## Pagamento
+PIX oficial: chave aleatória configurada no Apps Script.
+Beneficiário apresentado ao cliente: Alex Sandro Soares Fernandes.
+Instituição financeira: Nu Pagamentos S.A. — Instituição de Pagamento (Nubank).
+WhatsApp oficial: +55 (14) 98115-0675.
+
+## Regra operacional
+O cliente informa pagamento; isso não confirma pagamento. A confirmação é feita pela operação DOOX, pelo fluxo interno autorizado.
