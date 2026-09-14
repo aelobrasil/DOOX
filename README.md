@@ -1,9 +1,29 @@
-# DOOX / HOCCO — V47 FINAL DEFINITIVO
+# DOOX / HOCCO — Blueprint Master 2026 — Vercel (versão definitiva)
 
-Pacote de produção com site, API, PWA, simulação, integração Google Apps Script e documentação operacional.
+Pacote estático preparado para Vercel + VS Code. A interface pública segue o Blueprint Master 2026; o site chama apenas `/api/doox`, e o proxy server-side conversa com o Web App do Apps Script.
 
-CTA comercial único: **PARTICIPAR DO REALITY**.
+## Estrutura
+- `index.html` — interface pública, simulação, participação, acompanhamento e rodapé legal.
+- `assets/hocco-simulacao-10s.mp4` — vídeo da simulação, 10 s.
+- `assets/overlay-audio-notificacao.mp3` — som de notificação de Overlay + Áudio.
+- `api/doox.js` — proxy Vercel → Apps Script.
+- `vercel.json` — cache + fallback das rotas públicas.
+- `.env.example` — variável obrigatória.
+- `manifest.webmanifest` + `sw.js` — PWA.
+- `integracao/` — cópia de referência do Apps Script operacional.
 
-A simulação é demonstrativa. A compra ocorre somente em PARTICIPAR DO REALITY, com modalidade, quantidade e faixa quando aplicável.
+## Integração
+Planilha oficial: `1VWJKfePpzoFpH5h8Iyl58MErLGNjvgGB`
+Projeto Apps Script informado: `1nmvXANhTKZ8boFo4fbaA_DDmMWFDlWKq56CrnEMvwagb92Nq34KPTUU4`
 
-Use `DOOX-APPS-SCRIPT-V47-FINAL-ENTREGA.gs` no projeto Google Apps Script da planilha operacional indicada na documentação.
+A URL do editor do Apps Script não deve ser usada pelo navegador. Publique o Apps Script como Web App e informe no Vercel a URL `/exec` na variável `APPS_SCRIPT_WEBAPP_URL`.
+
+## Deploy no VS Code
+1. Abra a pasta no VS Code.
+2. `vercel login`
+3. `vercel`
+4. Cadastre `APPS_SCRIPT_WEBAPP_URL` no Project Settings → Environment Variables.
+5. `vercel --prod`
+
+## Importante
+O site não acessa a planilha diretamente. Preços, capacidade, status, pagamento e criação do pedido são tratados pelo backend do Apps Script.
