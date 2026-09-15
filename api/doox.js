@@ -58,6 +58,15 @@ export default async function handler(req, res) {
     const text = await upstream.text();
     let data;
     try { data = JSON.parse(text); } catch (_) { data = { ok: false, message: 'Resposta inválida do serviço DOOX.' }; }
+    if (!data || typeof data !== 'object') data = { ok: false, message: String(data || 'Resposta inválida do serviço DOOX.') };
+    if (data.ok === false) {
+      const raw = data.message ?? data.error ?? data.details;
+      if (raw && typeof raw === 'object') {
+        data.message = typeof raw.message === 'string' ? raw.message : (typeof raw.error === 'string' ? raw.error : JSON.stringify(raw));
+      } else if (!data.message && raw != null) {
+        data.message = String(raw);
+      }
+    }
 
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('X-Content-Type-Options', 'nosniff');

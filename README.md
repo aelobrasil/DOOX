@@ -27,3 +27,8 @@ A URL do editor do Apps Script não deve ser usada pelo navegador. Publique o Ap
 
 ## Importante
 O site não acessa a planilha diretamente. Preços, capacidade, status, pagamento e criação do pedido são tratados pelo backend do Apps Script.
+
+
+## Correção V60 — tratamento de erro no finalizar
+
+A interface não usa mais `alert([object Object])`. Respostas de erro vindas do proxy/Apps Script são normalizadas para texto legível, exibidas dentro da própria página e o botão é liberado para nova tentativa.
