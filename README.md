@@ -1,43 +1,53 @@
-# DOOX / HOCCO — Blueprint Master 2026 — Vercel (versão definitiva)
+# DOOX / HOCCO — Blueprint Master 2026
 
-Pacote estático preparado para Vercel + VS Code. A interface pública segue o Blueprint Master 2026; o site chama apenas `/api/doox`, e o proxy server-side conversa com o Web App do Apps Script.
+Site público HOCCO preparado para Vercel com DOOX CORE server-side.
 
-## Estrutura
-- `index.html` — interface pública, simulação, participação, acompanhamento e rodapé legal.
-- `assets/hocco-simulacao-modelo.mp4` — vídeo-modelo usado na simulação, 10 s.
-- `assets/overlay-audio-notificacao.mp3` — som de notificação de Overlay + Áudio.
-- `api/doox.js` — proxy Vercel → Apps Script.
-- `vercel.json` — cache + fallback das rotas públicas.
-- `.env.example` — variável obrigatória.
-- `manifest.webmanifest` + `sw.js` — PWA.
-- `integracao/` — cópia de referência do Apps Script operacional.
+## Arquitetura
 
-## Integração
-Planilha oficial: `1VWJKfePpzoFpH5h8Iyl58MErLGNjvgGB`
-Projeto Apps Script informado: `1nmvXANhTKZ8boFo4fbaA_DDmMWFDlWKq56CrnEMvwagb92Nq34KPTUU4`
+Site 1 → `/api/doox` → DOOX CORE API → Supabase Postgres (`doox_core`)
 
-A URL do editor do Apps Script não deve ser usada pelo navegador. Publique o Apps Script como Web App e informe no Vercel a URL `/exec` na variável `APPS_SCRIPT_WEBAPP_URL`.
+O navegador não recebe credenciais do banco. A conexão do servidor usa somente `DOOX_DATABASE_URL` no ambiente da Vercel.
 
-## Deploy no VS Code
-1. Abra a pasta no VS Code.
-2. `vercel login`
-3. `vercel`
-4. Cadastre `APPS_SCRIPT_WEBAPP_URL` no Project Settings → Environment Variables.
-5. `vercel --prod`
+## Variáveis da Vercel
 
-## Importante
-O site não possui campos de upload. A simulação usa um monograma automático para representar a marca; quando a arte final da identidade visual for necessária, ela é tratada posteriormente pelos canais oficiais da DOOX.
+Configure:
 
-O site não acessa a planilha diretamente. Preços, capacidade, status, pagamento e criação do pedido são tratados pelo backend do Apps Script.
+- `DOOX_DATABASE_URL`
+- `DOOX_TRACKING_SECRET`
+- `DOOX_ADMIN_SECRET`
+- `DOOX_PUBLIC_BASE_URL`
+- `DOOX_TRACKING_TTL_DAYS` (opcional)
 
+## Supabase
 
-## Correção V60 — tratamento de erro no finalizar
+O banco precisa conter o schema `doox_core` criado pelo SQL MASTER do DOOX CORE. O código deste site não acessa as tabelas antigas `public.*` nem a antiga integração Apps Script.
 
-A interface não usa mais `alert([object Object])`. Respostas de erro vindas do proxy/Apps Script são normalizadas para texto legível, exibidas dentro da própria página e o botão é liberado para nova tentativa.
+Para produção/serverless, use a conexão do **Transaction Pooler** do Supabase para `DOOX_DATABASE_URL`.
 
+## Ações públicas
 
-## V68 — Termo empresarial
-- Cadastro de empresas exige leitura até o final e aceite do Termo de Ciência, Segurança e Autorização para Participação Empresarial na HOCCO.
-- Pessoa física não vê nem precisa aceitar esse termo.
-- O aceite do termo empresarial é gravado no PEDIDO com versão, data/hora do servidor e identificação da assinatura da produção HOCCO.
-- Assinatura eletrônica declarada no instrumento: Alex Hocc de D' Mello — Produtor & Showrunner do Reality Biográfico HOCCO.
+- `GET /api/doox?action=health`
+- `GET /api/doox?action=catalogo`
+- `GET|POST /api/doox?action=simular`
+- `POST /api/doox?action=registerRequest`
+- `GET /api/doox?action=pedido&token=...`
+- `POST /api/doox?action=informarPagamento`
+
+## Ações privadas do DOOX CONTROL
+
+Todas usam o header:
+
+`x-doox-admin-secret: <DOOX_ADMIN_SECRET>`
+
+A API já contempla confirmação de pagamento, materiais, aprovação, momento, posições, produção, programação, veiculação, finalização, cancelamento, dashboard, fila, disponibilidade e mapa operacional.
+
+## Segurança
+
+- service/database credentials ficam somente no servidor;
+- token de acompanhamento é assinado com HMAC;
+- pagamento informado pelo cliente não muda para RECEBIDO automaticamente;
+- preço é calculado no banco;
+- pedido usa chave de idempotência;
+- estado operacional, pagamento, material, produção e veiculação permanecem separados.
+
+A pasta `integracao/` do V68 é mantida apenas como referência histórica. Não é utilizada pela nova rota `/api/doox`.
