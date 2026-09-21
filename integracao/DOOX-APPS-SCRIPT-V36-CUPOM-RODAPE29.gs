@@ -35,7 +35,7 @@ const CONFIG = {
   MODALIDADES: {
 
     'Presença no Rodapé': {
-      min: 1, max: 50, pricing: { flat: 49.90 }
+      min: 1, max: 50, pricing: { flat: 29.90 }
     },
 
     'Sponsor Overlay': {
@@ -92,19 +92,19 @@ const CONFIG = {
   CLIENT_INSTRUCTIONS: {
     'Presença no Rodapé': {
       title: 'Materiais para Presença no Rodapé',
-      items: ['Logo da empresa em boa qualidade', 'Nome fantasia da empresa', 'Rede social que deseja destacar (ex.: @empresa)', 'Segmento da empresa']
+      items: ['Logo da empresa em boa qualidade, aplicada no quadrado de identificação da marca', 'Nome fantasia da empresa', 'Rede social que deseja destacar (ex.: @empresa)', 'Segmento da empresa']
     },
     'Sponsor Overlay': {
       title: 'Materiais para Sponsor Overlay',
-      items: ['Logo da empresa em boa qualidade', 'Nome da empresa', 'Rede social que deseja destacar', 'Texto curto da mensagem ou chamada', 'Imagem ou material visual que deseja utilizar', 'Observações importantes para a produção']
+      items: ['Logo da empresa em boa qualidade, aplicada no quadrado de identificação da marca', 'Nome da empresa', 'Rede social que deseja destacar', 'Texto curto da mensagem ou chamada', 'Imagem ou material visual que deseja utilizar', 'Observações importantes para a produção']
     },
     'Overlay + Áudio': {
       title: 'Materiais para Overlay + Áudio',
-      items: ['Logo da empresa em boa qualidade', 'Nome da empresa', 'Rede social que deseja destacar', 'Texto curto da mensagem ou chamada', 'Imagem ou material visual', 'Áudio ou roteiro curto para a locução', 'Observações importantes para a produção']
+      items: ['Logo da empresa em boa qualidade, aplicada no quadrado de identificação da marca', 'Nome da empresa', 'Rede social que deseja destacar', 'Texto curto da mensagem ou chamada', 'Imagem ou material visual', 'Áudio ou roteiro curto para a locução', 'Observações importantes para a produção']
     },
     'Empresa Patrocinadora do Episódio': {
       title: 'Materiais para Patrocínio do Episódio',
-      items: ['Logo da empresa em boa qualidade', 'Nome fantasia da empresa', 'Rede social que deseja destacar', 'Texto institucional curto', 'Imagem ou material visual da empresa']
+      items: ['Logo da empresa em boa qualidade, aplicada no quadrado de identificação da marca', 'Nome fantasia da empresa', 'Rede social que deseja destacar', 'Texto institucional curto', 'Imagem ou material visual da empresa']
     },
     'Apoiador Individual': {
       title: 'Dados para Apoiador Individual',
@@ -653,7 +653,7 @@ function informarPagamento_(raw, security) {
   const status = String(pedido.status || '').toUpperCase();
   const allowedStatuses = ['SOLICITADO', 'EM ANÁLISE', 'AGUARDANDO PAGAMENTO'];
   if (allowedStatuses.indexOf(status) === -1) {
-    return { ok: true, code: pedido.code, status: status, message: 'O pagamento não está disponível nesta etapa.' };
+    return { ok: true, code: pedido.code, status: status, message: 'O pagamento ainda não está disponível nesta etapa.' };
   }
   const sheet = getSheet_(ss, SHEETS.PAGAMENTOS.name);
   const found = findRowByFirstColumn_(sheet, pedido.code);
@@ -976,7 +976,7 @@ function registerRequest_(raw, security) {
 
 
   pedidoSheet.appendRow(row);
-  logSecurityEvent_(security || {}, 'PEDIDO CRIADO', 'INFO', code, r.clientRequestId, r.modality + ' | quantidade=' + r.quantity + ' | total=' + price.total);
+  logSecurityEvent_(security || {}, 'PEDIDO CRIADO', 'INFO', code, r.clientRequestId, r.modality + ' | quantidade=' + r.quantity + ' | total=' + price.total + ' | desconto_hocco=' + r.discount + '% | cupom=' + (r.coupon || ''));
 
   const newRow = pedidoSheet.getLastRow();
   applyStatusValidationToRow_(pedidoSheet, newRow, 'Status');
@@ -1161,6 +1161,9 @@ function normalizeRequest_(raw) {
     coupon:
       clean_(body.coupon),
 
+    couponSuffix:
+      clean_(body.couponSuffix),
+
     logoName:
       clean_(body.logoName || body.logo),
 
@@ -1234,19 +1237,27 @@ function validateRequest_(r) {
     if (r.discount < 0 || r.discount > 100) {
       throw new Error('Desconto inválido. Informe um percentual entre 0 e 100.');
     }
-    if (r.discount > 0 && !r.coupon) {
-      r.coupon = 'HOCCO' + r.discount;
-    }
-    if (r.discount === 0) {
+    // A oferta é definida e canonizada pelo servidor. O navegador não decide o texto nem o código.
+    if (r.discount > 0) {
+      r.couponSuffix = String(r.couponSuffix || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 12);
+      if (!r.couponSuffix) {
+        throw new Error('Informe o código do cupom HOCCO.');
+      }
+      r.benefit = r.discount + '% OFF para quem vier pela HOCCO';
+      r.coupon = 'HOCCO' + r.couponSuffix;
+    } else {
       r.benefit = '';
       r.coupon = '';
-    } else if (!r.benefit) {
-      r.benefit = r.discount + '% de desconto para quem vier pela HOCCO';
+      r.couponSuffix = '';
     }
   } else {
     r.discount = 0;
     r.benefit = '';
     r.coupon = '';
+    r.couponSuffix = '';
     r.logoName = '';
   }
 
@@ -1543,6 +1554,17 @@ function atualizarStatus(codigo, status) {
   const ss = getSpreadsheet_();
   ensureOperationalStructure_(ss);
   return atualizarStatusPedido_(ss, codigo, status, { action: 'ATUALIZAR STATUS' });
+}
+
+function buildWhatsAppStatusMessage_(pedido, status) {
+  const code = String(pedido && pedido.code || '').trim();
+  const name = String(pedido && pedido.nameOrCompany || '').trim();
+  const normalized = String(status || pedido && pedido.status || '').trim().toUpperCase();
+  if (!code) return '';
+  const greeting = name ? 'Olá, ' + name + '.' : 'Olá.';
+  if (normalized === 'FINALIZADO') return greeting + '\n\nA DOOX finalizou sua participação na HOCCO.\n\nCódigo DOOX: ' + code + '\nSua inserção foi finalizada e veiculada.\n\nO acompanhamento continua disponível pelo seu link privado.';
+  if (normalized === 'REJEITADO') return greeting + '\n\nA DOOX informou que sua participação não foi aprovada.\n\nCódigo DOOX: ' + code + '\nMotivo: ' + String(pedido.observationClient || pedido.observation || 'não informado') + '\n\nQuando houver valores a restituir, o reembolso será processado em até 24 horas, conforme a análise aplicável. Caso identifique algum engano, solicite uma revisão diretamente pelo WhatsApp oficial da DOOX Studios.';
+  return greeting + '\n\nAtualização da sua solicitação HOCCO.\n\nCódigo DOOX: ' + code + '\nStatus: ' + publicStatusLabel_(normalized) + '\n\nConsulte o acompanhamento pelo seu link privado.';
 }
 
 function nextActionForStatus_(status) {
@@ -3281,6 +3303,10 @@ function getPublicOrderStatus_(token, security) {
     observationClient: pedido.observationClient || '',
     rejectionReason: status === 'REJEITADO' ? (pedido.observationClient || '') : '',
     instructions: getClientInstructions_(pedido.modality),
+    // A condição HOCCO é uma oferta ao público e não reduz o valor da inserção contratada.
+    discount: Math.max(0, Math.min(100, Number(pedido.discount || 0))),
+    benefit: pedido.benefit || '',
+    coupon: pedido.coupon || '',
     progressPercent: publicProgressPercent_(status),
     payment: buildPublicPayment_(ss, pedido),
     receipt: {
@@ -3391,7 +3417,10 @@ function findPedidoByTrackingToken_(ss, token) {
         episode: String(values[i][map['Episódio'] - 1] || ''),
         status: String(values[i][map['Status'] - 1] || ''),
         updatedAt: values[i][map['Atualizado em'] - 1] || '',
-        observationClient: map['Observação Cliente'] ? String(values[i][map['Observação Cliente'] - 1] || '') : ''
+        observationClient: map['Observação Cliente'] ? String(values[i][map['Observação Cliente'] - 1] || '') : '',
+        discount: map['Desconto (%)'] ? Number(values[i][map['Desconto (%)'] - 1] || 0) : 0,
+        benefit: map['Benefício HOCCO'] ? String(values[i][map['Benefício HOCCO'] - 1] || '') : '',
+        coupon: map['Cupom HOCCO'] ? String(values[i][map['Cupom HOCCO'] - 1] || '') : ''
       };
 
     }
