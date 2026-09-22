@@ -53,14 +53,25 @@ const STATUS_PROGRESS = {
 
 function json(res, status, body) {
   res.statusCode = status;
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader(
+    'Content-Type',
+    'application/json; charset=utf-8'
+  );
+  res.setHeader(
+    'Cache-Control',
+    'no-store, max-age=0'
+  );
+  res.setHeader(
+    'X-Content-Type-Options',
+    'nosniff'
+  );
   res.end(JSON.stringify(body));
 }
 
 function normalizeBody(req) {
-  if (!req.body) return {};
+  if (!req.body) {
+    return {};
+  }
 
   if (typeof req.body === 'object') {
     return req.body;
@@ -76,8 +87,8 @@ function normalizeBody(req) {
 function getAction(url, body) {
   return String(
     url.searchParams.get('action') ||
-    body.action ||
-    'health'
+      body.action ||
+      'health'
   ).trim();
 }
 
@@ -96,7 +107,8 @@ function requireDb(res) {
 }
 
 function requireAdmin(req, res) {
-  const expected = process.env.DOOX_ADMIN_SECRET;
+  const expected =
+    process.env.DOOX_ADMIN_SECRET;
 
   if (!expected) {
     json(res, 503, {
@@ -112,10 +124,14 @@ function requireAdmin(req, res) {
     req.headers['x-doox-admin-secret'] || ''
   );
 
-  if (!provided || provided !== expected) {
+  if (
+    !provided ||
+    provided !== expected
+  ) {
     json(res, 401, {
       ok: false,
-      message: 'Autorização administrativa inválida.',
+      message:
+        'Autorização administrativa inválida.',
     });
 
     return false;
@@ -124,7 +140,10 @@ function requireAdmin(req, res) {
   return true;
 }
 
-function parsePositiveInt(value, fallback = 1) {
+function parsePositiveInt(
+  value,
+  fallback = 1
+) {
   const n = Number.parseInt(value, 10);
 
   return Number.isFinite(n) && n > 0
@@ -187,11 +206,14 @@ function mapRange(value) {
 }
 
 function b64url(input) {
-  return Buffer.from(input).toString('base64url');
+  return Buffer
+    .from(input)
+    .toString('base64url');
 }
 
 function sign(value) {
-  const secret = process.env.DOOX_TRACKING_SECRET;
+  const secret =
+    process.env.DOOX_TRACKING_SECRET;
 
   if (!secret) {
     throw new Error(
@@ -206,10 +228,11 @@ function sign(value) {
 }
 
 function makeTrackingToken(pedidoId) {
-  const ttlDays = parsePositiveInt(
-    process.env.DOOX_TRACKING_TTL_DAYS,
-    3650
-  );
+  const ttlDays =
+    parsePositiveInt(
+      process.env.DOOX_TRACKING_TTL_DAYS,
+      3650
+    );
 
   const expires =
     Date.now() +
@@ -219,22 +242,31 @@ function makeTrackingToken(pedidoId) {
       60 *
       1000;
 
-  const payload = `${pedidoId}.${expires}`;
+  const payload =
+    `${pedidoId}.${expires}`;
 
   return `${b64url(payload)}.${sign(payload)}`;
 }
 
 function verifyTrackingToken(token) {
-  if (!token || typeof token !== 'string') {
+  if (
+    !token ||
+    typeof token !== 'string'
+  ) {
     throw new Error(
       'Token de acompanhamento inválido.'
     );
   }
 
-  const [encoded, receivedSignature] =
-    token.split('.');
+  const [
+    encoded,
+    receivedSignature,
+  ] = token.split('.');
 
-  if (!encoded || !receivedSignature) {
+  if (
+    !encoded ||
+    !receivedSignature
+  ) {
     throw new Error(
       'Token de acompanhamento inválido.'
     );
@@ -244,13 +276,19 @@ function verifyTrackingToken(token) {
     .from(encoded, 'base64url')
     .toString('utf8');
 
-  const [pedidoId, expiresRaw] =
-    payload.split('.');
+  const [
+    pedidoId,
+    expiresRaw,
+  ] = payload.split('.');
 
-  const expectedSignature = sign(payload);
+  const expectedSignature =
+    sign(payload);
 
-  const a = Buffer.from(receivedSignature);
-  const b = Buffer.from(expectedSignature);
+  const a =
+    Buffer.from(receivedSignature);
+
+  const b =
+    Buffer.from(expectedSignature);
 
   if (
     a.length !== b.length ||
@@ -261,7 +299,8 @@ function verifyTrackingToken(token) {
     );
   }
 
-  const expires = Number(expiresRaw);
+  const expires =
+    Number(expiresRaw);
 
   if (
     !pedidoId ||
@@ -279,19 +318,20 @@ function verifyTrackingToken(token) {
 function modalityName(code) {
   return (
     Object.entries(MODE_MAP).find(
-      ([, v]) => v === code
+      ([, value]) =>
+        value === code
     )?.[0] || code
   );
 }
 
-function normalizeTracking(data, pedido) {
+function normalizeTracking(
+  data,
+  pedido
+) {
   const status =
     pedido?.status_operacional ||
     pedido?.status ||
     'SOLICITADO';
-
-  const pay =
-    pedido?.pagamentos?.[0] || {};
 
   const materiais =
     pedido?.materiais || [];
@@ -299,24 +339,31 @@ function normalizeTracking(data, pedido) {
   const allApproved =
     materiais.length === 0 ||
     materiais.every(
-      (m) => m.status === 'APROVADO'
+      (material) =>
+        material.status ===
+        'APROVADO'
     );
 
   const discount =
-    Number(pedido?.valor_desconto || 0);
+    Number(
+      pedido?.valor_desconto || 0
+    );
 
   return {
     ok: true,
 
-    code: pedido.codigo_doox,
+    code:
+      pedido.codigo_doox,
 
     status,
 
     statusLabel:
-      STATUS_LABELS[status] || status,
+      STATUS_LABELS[status] ||
+      status,
 
     progressPercent:
-      STATUS_PROGRESS[status] ?? 10,
+      STATUS_PROGRESS[status] ??
+      10,
 
     updatedAt:
       pedido.atualizado_em ||
@@ -331,7 +378,8 @@ function normalizeTracking(data, pedido) {
       data?.customerMessage || '',
 
     observationClient:
-      data?.observationClient || '',
+      data?.observationClient ||
+      '',
 
     payment: {
       available: false,
@@ -351,7 +399,8 @@ function normalizeTracking(data, pedido) {
 
     materials: materiais,
 
-    materialReady: allApproved,
+    materialReady:
+      allApproved,
 
     receipt: {
       eligible:
@@ -363,7 +412,9 @@ function normalizeTracking(data, pedido) {
   };
 }
 
-async function callJson(sqlQuery) {
+async function callJson(
+  sqlQuery
+) {
   const rows = await sqlQuery;
 
   if (!rows?.length) {
@@ -372,7 +423,8 @@ async function callJson(sqlQuery) {
     );
   }
 
-  const value = rows[0]?.data;
+  const value =
+    rows[0]?.data;
 
   if (
     value &&
@@ -388,42 +440,71 @@ async function callJson(sqlQuery) {
   return value;
 }
 
-async function registerRequest(body) {
+/* =========================================================
+   REGISTER REQUEST
+   ========================================================= */
+
+async function registerRequest(
+  body
+) {
+  /*
+   * ANTIFRAUDE / HONEYPOT
+   */
+
   if (body.website) {
     throw new Error(
       'Solicitação recusada.'
     );
   }
 
+  /*
+   * ACEITES PRINCIPAIS
+   */
+
   if (
-    body.termsAccepted !== true ||
+    body.termsAccepted !== true
+  ) {
+    throw new Error(
+      'Os Termos de Uso precisam ser aceitos.'
+    );
+  }
+
+  if (
     body.rulesAccepted !== true
   ) {
     throw new Error(
-      'Os Termos de Uso e as Regras de Participação precisam ser aceitos.'
+      'As Regras de Participação precisam ser aceitas.'
     );
   }
+
+  /*
+   * NORMALIZAÇÃO
+   */
 
   const type = mapType(
     body.type ||
       body.tipo_participacao
   );
 
-  const modality = mapModality(
-    body.modality ||
-      body.modalidade
-  );
+  const modality =
+    mapModality(
+      body.modality ||
+        body.modalidade
+    );
 
-  const range = mapRange(
-    body.moment ||
-      body.faixa
-  );
+  const range =
+    mapRange(
+      body.moment ||
+        body.momento ||
+        body.faixa
+    );
 
-  const quantity = parsePositiveInt(
-    body.quantity ??
-      body.quantidade,
-    1
-  );
+  const quantity =
+    parsePositiveInt(
+      body.quantity ??
+        body.quantidade,
+      1
+    );
 
   const name = String(
     body.name ||
@@ -447,16 +528,49 @@ async function registerRequest(body) {
     body.whatsapp || ''
   ).replace(/\D/g, '');
 
-  if (!name || !email || !whatsapp) {
+  const profile = String(
+    body.profile ||
+      body.perfil ||
+      ''
+  ).trim();
+
+  const segment = String(
+    body.segment ||
+      body.segmento ||
+      ''
+  ).trim();
+
+  const observation = String(
+    body.observation ||
+      body.observacoes ||
+      ''
+  ).trim();
+
+  /*
+   * VALIDAÇÕES
+   */
+
+  if (!name) {
     throw new Error(
-      'Nome, WhatsApp e E-mail são obrigatórios.'
+      'Nome é obrigatório.'
+    );
+  }
+
+  if (!email) {
+    throw new Error(
+      'E-mail é obrigatório.'
+    );
+  }
+
+  if (!whatsapp) {
+    throw new Error(
+      'WhatsApp é obrigatório.'
     );
   }
 
   if (
-    !['EMPRESA', 'PESSOA_FISICA'].includes(
-      type
-    )
+    !['EMPRESA', 'PESSOA_FISICA']
+      .includes(type)
   ) {
     throw new Error(
       'Tipo de participação inválido.'
@@ -480,7 +594,8 @@ async function registerRequest(body) {
 
   if (
     type === 'PESSOA_FISICA' &&
-    modality !== 'APOIADOR_INDIVIDUAL'
+    modality !==
+      'APOIADOR_INDIVIDUAL'
   ) {
     throw new Error(
       'Pessoa física participa somente como Apoiador Individual.'
@@ -489,7 +604,8 @@ async function registerRequest(body) {
 
   if (
     type === 'EMPRESA' &&
-    modality === 'APOIADOR_INDIVIDUAL'
+    modality ===
+      'APOIADOR_INDIVIDUAL'
   ) {
     throw new Error(
       'Apoiador Individual é exclusivo para pessoa física.'
@@ -498,69 +614,126 @@ async function registerRequest(body) {
 
   if (
     type === 'EMPRESA' &&
-    body.companyTermsAccepted !== true
+    body.companyTermsAccepted !==
+      true
   ) {
     throw new Error(
       'O Termo de Participação Empresarial precisa ser aceito.'
     );
   }
 
-  const idempotencyKey = String(
-    body.clientRequestId ||
-      body.idempotency_key ||
-      crypto.randomUUID()
-  ).trim();
+  /*
+   * MODALIDADES QUE NÃO POSSUEM FAIXA
+   */
+
+  const modalityWithoutRange = [
+    'RODAPE',
+    'PATROCINADOR_EPISODIO',
+    'APOIADOR_INDIVIDUAL',
+  ].includes(modality);
+
+  if (
+    !modalityWithoutRange &&
+    !range
+  ) {
+    throw new Error(
+      'Faixa é obrigatória para esta modalidade.'
+    );
+  }
+
+  /*
+   * IDEMPOTÊNCIA
+   *
+   * O mesmo clientRequestId não deve
+   * gerar vários pedidos.
+   */
+
+  const idempotencyKey =
+    String(
+      body.clientRequestId ||
+        body.idempotency_key ||
+        crypto.randomUUID()
+    ).trim();
+
+  if (!idempotencyKey) {
+    throw new Error(
+      'Identificador da solicitação inválido.'
+    );
+  }
+
+  /*
+   * BENEFÍCIO / CUPOM
+   */
+
+  const discountNumber =
+    Number(body.discount || 0);
+
+  const coupon =
+    String(
+      body.coupon || ''
+    ).trim();
+
+  const benefitDescription =
+    String(
+      body.benefit || ''
+    ).trim();
 
   const benefit =
-    Number(body.discount || 0) > 0
+    discountNumber > 0 || coupon
       ? {
           tipo: 'CONDICAO',
+
           codigo:
-            String(
-              body.coupon || ''
-            ).trim() || null,
+            coupon || null,
+
           descricao:
-            String(
-              body.benefit || ''
-            ).trim() ||
-            `${Number(
-              body.discount
-            )}% de desconto para quem vier pela HOCCO`,
+            benefitDescription ||
+            (
+              discountNumber > 0
+                ? `${discountNumber}% de desconto para quem vier pela HOCCO`
+                : 'Condição comercial informada pelo participante.'
+            ),
         }
       : null;
 
-  const payload = {
-    tipo_participacao: type,
-    modalidade: modality,
-    faixa: range,
-    quantidade: quantity,
+  /*
+   * PAYLOAD ENVIADO AO DOOX CORE
+   *
+   * O preço NÃO é recebido do navegador.
+   * O CORE calcula o preço oficial.
+   */
 
-    nome: name,
-    empresa: company || null,
+  const payload = {
+    tipo_participacao:
+      type,
+
+    modalidade:
+      modality,
+
+    faixa:
+      range,
+
+    quantidade:
+      quantity,
+
+    nome:
+      name,
+
+    empresa:
+      company || null,
 
     whatsapp,
+
     email,
 
     perfil:
-      String(
-        body.profile ||
-          body.perfil ||
-          ''
-      ).trim() || null,
+      profile || null,
 
     segmento:
-      String(
-        body.segment ||
-          body.segmento ||
-          ''
-      ).trim() || null,
+      segment || null,
 
     observacoes:
-      String(
-        body.observation ||
-          body.observacoes ||
-          ''
-      ).trim() || null,
+      observation || null,
 
     momento_preferencial:
       range,
@@ -568,39 +741,70 @@ async function registerRequest(body) {
     idempotency_key:
       idempotencyKey,
 
-    origem: 'SITE_1',
+    origem:
+      'SITE_1',
 
-    beneficio: benefit,
+    beneficio:
+      benefit,
   };
+
+  /*
+   * CRIAÇÃO REAL DO PEDIDO
+   */
 
   const created =
     await callJson(
       db`
         SELECT doox_core.criar_pedido(
-          ${JSON.stringify(payload)}::jsonb
+          ${JSON.stringify(
+            payload
+          )}::jsonb
         ) AS data
       `
     );
 
-  const pedidoId =
-    created.pedido_id ||
-    created.pedido?.id;
+  /*
+   * IDENTIFICADOR TÉCNICO
+   */
 
-  const pedido = pedidoId
-    ? await callJson(
-        db`
-          SELECT doox_core.resumo_pedido(
-            ${pedidoId}::uuid
-          ) AS data
-        `
-      )
-    : null;
+  const pedidoId =
+    created?.pedido_id ||
+    created?.pedido?.id ||
+    created?.id;
 
   if (!pedidoId) {
     throw new Error(
-      'O pedido foi criado sem identificador técnico.'
+      'O DOOX CORE não retornou o identificador técnico do pedido.'
     );
   }
+
+  /*
+   * RECUPERA PEDIDO DEFINITIVO
+   */
+
+  const pedido =
+    await callJson(
+      db`
+        SELECT doox_core.resumo_pedido(
+          ${pedidoId}::uuid
+        ) AS data
+      `
+    );
+
+  if (!pedido) {
+    throw new Error(
+      'O pedido foi criado, mas não foi possível recuperar seus dados.'
+    );
+  }
+
+  /*
+   * REGISTRA ACEITE ELETRÔNICO
+   */
+
+  const userAgent =
+    String(
+      body.userAgent || ''
+    ).slice(0, 500);
 
   await callJson(
     db`
@@ -611,17 +815,19 @@ async function registerRequest(body) {
         ${name},
         ${`ACEITE DIGITAL — ${name}`},
         NULL,
-        ${
-          String(
-            body.userAgent || ''
-          ).slice(0, 500) || null
-        }
+        ${userAgent || null}
       ) AS data
     `
   );
 
+  /*
+   * TOKEN DE ACOMPANHAMENTO
+   */
+
   const trackingToken =
-    makeTrackingToken(pedidoId);
+    makeTrackingToken(
+      pedidoId
+    );
 
   const baseUrl =
     process.env.DOOX_PUBLIC_BASE_URL ||
@@ -632,63 +838,170 @@ async function registerRequest(body) {
       trackingToken
     )}`;
 
+  /*
+   * VALORES DEFINITIVOS
+   *
+   * Sempre priorizamos os valores
+   * retornados pelo DOOX CORE.
+   */
+
+  const finalUnitPrice =
+    Number(
+      pedido?.valor_unitario ??
+        created?.valor_unitario ??
+        0
+    );
+
+  const finalGross =
+    Number(
+      pedido?.valor_bruto ??
+        created?.valor_bruto ??
+        finalUnitPrice *
+          quantity
+    );
+
+  const finalDiscount =
+    Number(
+      pedido?.valor_desconto ??
+        created?.valor_desconto ??
+        0
+    );
+
+  const finalTotal =
+    Number(
+      pedido?.valor_total ??
+        created?.valor_total ??
+        Math.max(
+          finalGross -
+            finalDiscount,
+          0
+        )
+    );
+
+  /*
+   * RESPOSTA DEFINITIVA
+   */
+
   return {
     ok: true,
 
-    code:
-      pedido?.codigo_doox ||
-      created.codigo_doox,
+    pedido: {
+      id:
+        pedidoId,
 
-    modality:
-      modalityName(
+      codigo_doox:
+        pedido?.codigo_doox ||
+        created?.codigo_doox ||
+        null,
+
+      tipo_participacao:
+        pedido?.tipo_participacao ||
+        type,
+
+      modalidade:
         pedido?.modalidade ||
-          modality
-      ),
+        modality,
 
-    modalityCode:
-      pedido?.modalidade ||
-      modality,
+      modalidade_nome:
+        modalityName(
+          pedido?.modalidade ||
+            modality
+        ),
 
-    quantity:
-      pedido?.quantidade ||
-      quantity,
+      faixa:
+        pedido?.faixa ||
+        range,
 
-    unitPrice:
-      Number(
-        pedido?.valor_unitario ??
-          created.valor_unitario ??
-          0
-      ),
+      quantidade:
+        Number(
+          pedido?.quantidade ??
+            quantity
+        ),
 
-    total:
-      Number(
-        pedido?.valor_total ??
-          created.valor_total ??
-          0
-      ),
+      valor_unitario:
+        finalUnitPrice,
 
-    discount:
-      Number(body.discount || 0) > 0
-        ? Number(body.discount)
-        : 0,
+      valor_bruto:
+        finalGross,
 
-    coupon:
-      benefit?.codigo || '',
+      valor_desconto:
+        finalDiscount,
 
-    trackingToken,
+      valor_total:
+        finalTotal,
 
-    trackingUrl,
+      moeda:
+        pedido?.moeda ||
+        'BRL',
+
+      status_operacional:
+        pedido?.status_operacional ||
+        'SOLICITADO',
+
+      status_pagamento:
+        pedido?.status_pagamento ||
+        'AGUARDANDO_PAGAMENTO',
+
+      status_material:
+        pedido?.status_material ||
+        'PENDENTE',
+
+      status_producao:
+        pedido?.status_producao ||
+        'NAO_INICIADA',
+
+      status_veiculacao:
+        pedido?.status_veiculacao ||
+        'NAO_PROGRAMADA',
+    },
+
+    participante: {
+      nome:
+        name,
+
+      empresa:
+        company || null,
+
+      email,
+
+      whatsapp,
+
+      perfil:
+        profile || null,
+
+      segmento:
+        segment || null,
+    },
+
+    aceite: {
+      registrado:
+        true,
+
+      documento:
+        'TERMO_EMPRESA_ACEITE',
+
+      versao:
+        '2026.09',
+    },
+
+    beneficio: {
+      desconto:
+        finalDiscount,
+
+      cupom:
+        coupon || '',
+    },
+
+    tracking: {
+      token:
+        trackingToken,
+
+      url:
+        trackingUrl,
+    },
 
     requestId:
       idempotencyKey,
-
-    status:
-      pedido?.status_operacional ||
-      'SOLICITADO',
-
-    paymentStatus:
-      pedido?.status_pagamento ||
-      'AGUARDANDO_PAGAMENTO',
   };
 }
 
@@ -698,13 +1011,17 @@ async function getTracking(
   body
 ) {
   const token = String(
-    url.searchParams.get('token') ||
+    url.searchParams.get(
+      'token'
+    ) ||
       body.token ||
       ''
   ).trim();
 
   const pedidoId =
-    verifyTrackingToken(token);
+    verifyTrackingToken(
+      token
+    );
 
   const pedido =
     await callJson(
@@ -735,13 +1052,17 @@ async function informPayment(
   body
 ) {
   const token = String(
-    url.searchParams.get('token') ||
+    url.searchParams.get(
+      'token'
+    ) ||
       body.token ||
       ''
   ).trim();
 
   const pedidoId =
-    verifyTrackingToken(token);
+    verifyTrackingToken(
+      token
+    );
 
   await callJson(
     db`
@@ -772,7 +1093,6 @@ async function informPayment(
 
   return {
     ok: true,
-
     message:
       'Pagamento informado. A confirmação do status depende da conferência pela DOOX.',
   };
@@ -938,40 +1258,49 @@ async function adminAction(
         db`
           SELECT
             COUNT(*) FILTER (
-              WHERE status_operacional = 'SOLICITADO'
+              WHERE status_operacional =
+                'SOLICITADO'
             ) AS novos,
 
             COUNT(*) FILTER (
-              WHERE status_operacional = 'EM_ANALISE'
+              WHERE status_operacional =
+                'EM_ANALISE'
             ) AS em_analise,
 
             COUNT(*) FILTER (
-              WHERE status_pagamento = 'AGUARDANDO_PAGAMENTO'
+              WHERE status_pagamento =
+                'AGUARDANDO_PAGAMENTO'
             ) AS aguardando_pagamento,
 
             COUNT(*) FILTER (
-              WHERE status_material = 'PENDENTE'
+              WHERE status_material =
+                'PENDENTE'
             ) AS material_pendente,
 
             COUNT(*) FILTER (
-              WHERE status_operacional = 'FILA_DE_ESPERA'
+              WHERE status_operacional =
+                'FILA_DE_ESPERA'
             ) AS fila,
 
             COUNT(*) FILTER (
-              WHERE status_producao = 'EM_PRODUCAO'
+              WHERE status_producao =
+                'EM_PRODUCAO'
             ) AS em_producao,
 
             COUNT(*) FILTER (
-              WHERE status_veiculacao = 'PROGRAMADA'
+              WHERE status_veiculacao =
+                'PROGRAMADA'
             ) AS programadas,
 
             COUNT(*) FILTER (
-              WHERE status_veiculacao = 'VEICULADA'
+              WHERE status_veiculacao =
+                'VEICULADA'
             ) AS veiculadas,
 
             COALESCE(
               SUM(valor_total) FILTER (
-                WHERE status_pagamento = 'RECEBIDO'
+                WHERE status_pagamento =
+                  'RECEBIDO'
               ),
               0
             ) AS valor_recebido
@@ -994,7 +1323,9 @@ async function adminAction(
         db`
           SELECT *
           FROM doox_core.v_disponibilidade
-          ORDER BY episodio_numero, inicio_segundos
+          ORDER BY
+            episodio_numero,
+            inicio_segundos
         `,
 
         db`
@@ -1028,13 +1359,14 @@ async function adminAction(
     }
 
     case 'listarPedidos': {
-      const limit = Math.min(
-        parsePositiveInt(
-          body.limit,
-          100
-        ),
-        500
-      );
+      const limit =
+        Math.min(
+          parsePositiveInt(
+            body.limit,
+            100
+          ),
+          500
+        );
 
       const result =
         await db`
@@ -1075,7 +1407,8 @@ async function adminAction(
 
       return {
         ok: true,
-        disponibilidade: result,
+        disponibilidade:
+          result,
       };
     }
 
@@ -1114,7 +1447,8 @@ export default async function handler(
   ) {
     return json(res, 405, {
       ok: false,
-      message: 'Método não permitido.',
+      message:
+        'Método não permitido.',
     });
   }
 
@@ -1133,6 +1467,7 @@ export default async function handler(
     /*
      * HEALTH
      */
+
     if (action === 'health') {
       return json(res, 200, {
         ok: true,
@@ -1148,6 +1483,7 @@ export default async function handler(
     /*
      * BANCO
      */
+
     if (!requireDb(res)) {
       return;
     }
@@ -1155,6 +1491,7 @@ export default async function handler(
     /*
      * CATÁLOGO
      */
+
     if (action === 'catalogo') {
       const catalogo =
         await callJson(
@@ -1172,21 +1509,8 @@ export default async function handler(
 
     /*
      * SIMULAÇÃO
-     *
-     * Aceita tanto:
-     *
-     * ?modalidade=SPONSOR_OVERLAY
-     * &faixa=F3
-     * &quantidade=2
-     *
-     * quanto:
-     *
-     * ?modality=SPONSOR_OVERLAY
-     * &range=F3
-     * &quantity=2
-     *
-     * e também POST JSON.
      */
+
     if (action === 'simular') {
       const modality =
         mapModality(
@@ -1233,16 +1557,11 @@ export default async function handler(
         });
       }
 
-      /*
-       * Estas modalidades não dependem
-       * de faixa comercial.
-       */
-      const modalityWithoutRange =
-        [
-          'RODAPE',
-          'PATROCINADOR_EPISODIO',
-          'APOIADOR_INDIVIDUAL',
-        ].includes(modality);
+      const modalityWithoutRange = [
+        'RODAPE',
+        'PATROCINADOR_EPISODIO',
+        'APOIADOR_INDIVIDUAL',
+      ].includes(modality);
 
       if (
         !range &&
@@ -1275,8 +1594,10 @@ export default async function handler(
     /*
      * CADASTRO / PEDIDO
      */
+
     if (
-      action === 'registerRequest'
+      action ===
+      'registerRequest'
     ) {
       if (req.method !== 'POST') {
         return json(res, 405, {
@@ -1308,6 +1629,7 @@ export default async function handler(
     /*
      * ACOMPANHAMENTO
      */
+
     if (action === 'pedido') {
       const result =
         await getTracking(
@@ -1326,6 +1648,7 @@ export default async function handler(
     /*
      * INFORMAR PAGAMENTO
      */
+
     if (
       action ===
       'informarPagamento'
@@ -1355,8 +1678,12 @@ export default async function handler(
     /*
      * OPERAÇÕES ADMINISTRATIVAS
      */
+
     if (
-      !requireAdmin(req, res)
+      !requireAdmin(
+        req,
+        res
+      )
     ) {
       return;
     }
@@ -1386,7 +1713,10 @@ export default async function handler(
       ok: false,
       message:
         message.length > 500
-          ? message.slice(0, 500)
+          ? message.slice(
+              0,
+              500
+            )
           : message,
     });
   }
