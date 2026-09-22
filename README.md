@@ -51,3 +51,7 @@ A API já contempla confirmação de pagamento, materiais, aprovação, momento,
 - estado operacional, pagamento, material, produção e veiculação permanecem separados.
 
 A pasta `integracao/` do V68 é mantida apenas como referência histórica. Não é utilizada pela nova rota `/api/doox`.
+
+
+## V70 — fluxo de materiais
+Materiais agora usam upload direto ao Supabase Storage por URL assinada, evitando que arquivos de até 15 MB passem pelo body da função Vercel. Depois do upload, o arquivo é registrado no DOOX CORE.

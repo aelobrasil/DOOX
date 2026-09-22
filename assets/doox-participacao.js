@@ -142,23 +142,45 @@
     return data;
   }
 
-  async function uploadMaterial(pedidoId, spec) {
+  async function uploadMaterial(pedidoId, trackingToken, spec) {
     const input = $(`material_${spec.type}`);
     const file = input?.files?.[0];
     if (!file) throw new Error(`Material obrigatório ausente: ${spec.label}.`);
 
-    const dataUrl = await fileToDataUrl(file);
-    const result = await postJson(`${MATERIALS_API}?action=upload`, {
+    const prepared = await postJson(`${MATERIALS_API}?action=prepare_upload`, {
       pedidoId,
+      trackingToken,
+      materialType: spec.type,
+      fileName: file.name,
+      mimeType: file.type,
+      size: file.size
+    });
+
+    const upload = prepared.upload;
+    if (!upload?.signed_url || !upload?.storage_path) throw new Error('O Storage não retornou os dados de upload.');
+
+    const put = await fetch(upload.signed_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file
+    });
+    if (!put.ok) {
+      const text = await put.text().catch(() => '');
+      throw new Error(`Falha no envio do ${spec.type}: ${text || `HTTP ${put.status}`}`);
+    }
+
+    const result = await postJson(`${MATERIALS_API}?action=register`, {
+      pedidoId,
+      trackingToken,
       materialType: spec.type,
       fileName: file.name,
       mimeType: file.type,
       size: file.size,
-      base64: dataUrl
+      storagePath: upload.storage_path
     });
 
     const status = $(`material_status_${spec.type}`);
-    if (status) status.textContent = `${file.name} · enviado com sucesso.`;
+    if (status) status.textContent = `${file.name} · enviado e registrado no DOOX CORE.`;
     return result;
   }
 
@@ -236,7 +258,7 @@
       const specs = requiredMaterials(payload.modality);
       for (const spec of specs) {
         button.textContent = `ENVIANDO ${spec.type}…`;
-        await uploadMaterial(pedidoId, spec);
+        await uploadMaterial(pedidoId, order.trackingToken, spec);
       }
 
       const tracking = order.trackingUrl || `${location.origin}/?token=${encodeURIComponent(order.trackingToken || '')}`;
