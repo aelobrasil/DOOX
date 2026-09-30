@@ -12,7 +12,9 @@ O navegador não recebe credenciais do banco. A conexão do servidor usa somente
 
 Configure:
 
-- `DOOX_DATABASE_URL`
+- `DOOX_DATABASE_URL` — conexão PostgreSQL/Transaction Pooler; não é a URL `https://...supabase.co`.
+- `SUPABASE_URL` — URL pública do projeto Supabase.
+- `SUPABASE_SERVICE_ROLE_KEY` — chave service_role, somente no backend/Vercel.
 - `DOOX_TRACKING_SECRET`
 - `DOOX_ADMIN_SECRET`
 - `DOOX_PUBLIC_BASE_URL`

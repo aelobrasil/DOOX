@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import postgres from 'postgres';
 
 const BUCKET = 'doox-v2-arquivos';
-const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SUPABASE_URL = String(process.env.SUPABASE_URL || 'https://txbowobtfiiqqatqjfpd.supabase.co').replace(/\/$/, '');
 const SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 const DATABASE_URL = String(process.env.DOOX_DATABASE_URL || '');
 

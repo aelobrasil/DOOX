@@ -1,15 +1,26 @@
 import postgres from 'postgres';
 import crypto from 'node:crypto';
 
-const db = process.env.DOOX_DATABASE_URL
-  ? postgres(process.env.DOOX_DATABASE_URL, {
-      ssl: 'require',
-      prepare: false,
-      max: 1,
-      idle_timeout: 20,
-      connect_timeout: 10,
-    })
-  : null;
+const RAW_DATABASE_URL = String(process.env.DOOX_DATABASE_URL || '').trim();
+let db = null;
+let dbConfigError = '';
+if (RAW_DATABASE_URL) {
+  if (!/^postgres(?:ql)?:\/\//i.test(RAW_DATABASE_URL)) {
+    dbConfigError = 'DOOX_DATABASE_URL inválida: use a conexão PostgreSQL/Transaction Pooler do Supabase, não a URL https://...supabase.co.';
+  } else {
+    try {
+      db = postgres(RAW_DATABASE_URL, {
+        ssl: 'require',
+        prepare: false,
+        max: 1,
+        idle_timeout: 20,
+        connect_timeout: 10,
+      });
+    } catch (error) {
+      dbConfigError = 'DOOX_DATABASE_URL inválida. Confira a string PostgreSQL do Supabase.';
+    }
+  }
+}
 
 const MODE_MAP = {
   'Presença no Rodapé': 'RODAPE',
@@ -72,10 +83,15 @@ function getAction(req, url, body) {
 }
 
 function requireDb(res) {
+  if (dbConfigError) {
+    json(res, 503, { ok: false, code: 'DATABASE_CONFIG_ERROR', message: dbConfigError });
+    return false;
+  }
   if (!db) {
     json(res, 503, {
       ok: false,
-      message: 'DOOX CORE ainda não está conectado ao banco. Configure DOOX_DATABASE_URL no Vercel.',
+      code: 'DATABASE_NOT_CONFIGURED',
+      message: 'DOOX CORE ainda não está conectado ao banco. Configure DOOX_DATABASE_URL no Vercel usando a conexão PostgreSQL/Transaction Pooler do Supabase.',
     });
     return false;
   }
@@ -634,11 +650,21 @@ export default async function handler(req, res) {
     }
 
     if (action === 'health') {
+      let database = { configured: Boolean(db), reachable: null, error: dbConfigError || null };
+      if (db) {
+        try {
+          await db`SELECT 1 AS ok`;
+          database.reachable = true;
+        } catch (error) {
+          database.reachable = false;
+          database.error = 'Não foi possível conectar ao PostgreSQL do Supabase. Verifique DOOX_DATABASE_URL, senha, região e Transaction Pooler.';
+        }
+      }
       return json(res, 200, {
         ok: true,
         service: 'DOOX CORE',
-        version: '2026.09.1',
-        databaseConfigured: Boolean(db),
+        version: '2026.09.2',
+        database,
         timestamp: new Date().toISOString(),
       });
     }
