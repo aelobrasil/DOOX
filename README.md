@@ -55,3 +55,17 @@ A pasta `integracao/` do V68 é mantida apenas como referência histórica. Não
 
 ## V70 — fluxo de materiais
 Materiais agora usam upload direto ao Supabase Storage por URL assinada, evitando que arquivos de até 15 MB passem pelo body da função Vercel. Depois do upload, o arquivo é registrado no DOOX CORE.
+
+## DOOX Core — área privada
+
+A área privada foi ampliada para funcionar como centro operacional: filtros de pedidos, ficha detalhada, fluxo de status, pagamento, materiais com aprovação/download, definição de momento, reserva de posições, produção, programação, publicação e finalização. O detalhe do pedido é carregado novamente pelo backend a partir de `doox_core.consultar_pedido()`, sem criar banco paralelo.
+
+
+O mesmo projeto V70 agora possui uma área administrativa dedicada em `/doox-core`. Ela não é exibida na navegação pública e utiliza autenticação server-side.
+
+Configure no ambiente do Vercel:
+
+- `DOOX_ADMIN_SECRET` — senha/chave administrativa longa e privada;
+- `DOOX_ADMIN_SESSION_HOURS` — duração da sessão, opcional (padrão: 12 horas).
+
+O navegador recebe somente uma sessão `HttpOnly`; a chave administrativa não é enviada ao frontend. Os endpoints administrativos continuam protegidos no backend.

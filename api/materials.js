@@ -46,6 +46,38 @@ function verifyTrackingToken(token) {
   if (!pedidoId || !Number.isFinite(expires) || Date.now() > expires) throw new Error('Token de acompanhamento expirado.');
   return pedidoId;
 }
+function parseCookies(req) {
+  const raw = String(req.headers.cookie || '');
+  return Object.fromEntries(raw.split(';').map(part => {
+    const i = part.indexOf('=');
+    if (i < 0) return ['', ''];
+    return [part.slice(0, i).trim(), decodeURIComponent(part.slice(i + 1).trim())];
+  }).filter(([k]) => k));
+}
+function verifyAdminSession(token) {
+  const secret = process.env.DOOX_ADMIN_SECRET;
+  if (!secret || !token) return false;
+  try {
+    const [encoded, received] = String(token).split('.');
+    if (!encoded || !received) return false;
+    const payload = Buffer.from(encoded, 'base64url').toString('utf8');
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+    const a = Buffer.from(received); const b = Buffer.from(expected);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+    const [kind, expiresRaw] = payload.split('.');
+    return kind === 'admin' && Number.isFinite(Number(expiresRaw)) && Date.now() < Number(expiresRaw);
+  } catch { return false; }
+}
+function requireAdmin(req, res) {
+  const secret = process.env.DOOX_ADMIN_SECRET;
+  if (!secret) return json(res, 503, { ok:false, message:'DOOX_ADMIN_SECRET não configurado no Vercel.' });
+  if (verifyAdminSession(parseCookies(req).doox_admin_session)) return true;
+  const legacy = String(req.headers['x-doox-admin-secret'] || '');
+  if (legacy && legacy === secret) return true;
+  json(res, 401, { ok:false, message:'Autorização administrativa necessária.' });
+  return false;
+}
+
 function assertConfig() {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) throw new Error('Storage DOOX não configurado no Vercel. Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.');
   if (!DATABASE_URL) throw new Error('DOOX_DATABASE_URL não configurada no Vercel.');
@@ -95,6 +127,7 @@ export default async function handler(req, res) {
   try {
     const action = clean(req.query?.action || (req.body && req.body.action)).toLowerCase();
     if (req.method === 'GET' && action === 'download_url') {
+      if (!requireAdmin(req, res)) return;
       const path = clean(req.query?.path); if (!path) return json(res, 400, { ok:false, message:'Informe o caminho do arquivo.' });
       return json(res, 200, { ok:true, download_url: await signedDownload(path), expires_in:3600 });
     }

@@ -28,9 +28,26 @@
           "value": "no-cache"
         }
       ]
+    },
+    {
+      "source": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive, nosnippet"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
+    {
+      "source": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
+      "destination": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"
+    },
     {
       "source": "/(empresas|pessoas|simulacao|participar|acompanhar|avisos|termos|privacidade)",
       "destination": "/index.html"

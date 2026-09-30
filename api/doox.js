@@ -82,23 +82,90 @@ function requireDb(res) {
   return true;
 }
 
+function parseCookies(req) {
+  const raw = String(req.headers.cookie || '');
+  return Object.fromEntries(raw.split(';').map(part => {
+    const i = part.indexOf('=');
+    if (i < 0) return ['', ''];
+    return [part.slice(0, i).trim(), decodeURIComponent(part.slice(i + 1).trim())];
+  }).filter(([k]) => k));
+}
+
+const DEFAULT_ADMIN_PASSWORD_HASH = 'scrypt$N=16384,r=8,p=1$6R2yxd0DTs7360wsZYo3xA$gyJHji-UBmYdT4_CkjQB3CwS0zg3O0WSiGDzfiBZM0U';
+
+function getAdminPasswordHash() {
+  return String(process.env.DOOX_ADMIN_PASSWORD_HASH || DEFAULT_ADMIN_PASSWORD_HASH);
+}
+
+function getAdminSessionSecret() {
+  return String(process.env.DOOX_ADMIN_SECRET || process.env.DOOX_ADMIN_SESSION_SECRET || DEFAULT_ADMIN_PASSWORD_HASH);
+}
+
+function verifyAdminPassword(password) {
+  try {
+    const raw = String(password || '');
+    const parts = getAdminPasswordHash().split('$');
+    if (parts.length !== 4 || parts[0] !== 'scrypt') return false;
+    const params = Object.fromEntries(parts[1].split(',').map(item => item.split('=')));
+    const N = Number(params.N), r = Number(params.r), p = Number(params.p);
+    if (![N, r, p].every(Number.isFinite)) return false;
+    const salt = Buffer.from(parts[2], 'base64url');
+    const expected = Buffer.from(parts[3], 'base64url');
+    const derived = crypto.scryptSync(raw, salt, expected.length, { N, r, p, maxmem: 64 * 1024 * 1024 });
+    return derived.length === expected.length && crypto.timingSafeEqual(derived, expected);
+  } catch {
+    return false;
+  }
+}
+
+function makeAdminSession() {
+  const secret = getAdminSessionSecret();
+  const ttlHours = Math.max(1, Number(process.env.DOOX_ADMIN_SESSION_HOURS || 12));
+  const expires = Date.now() + ttlHours * 60 * 60 * 1000;
+  const payload = `admin.${expires}`;
+  const signature = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  return `${Buffer.from(payload).toString('base64url')}.${signature}`;
+}
+
+function verifyAdminSession(token) {
+  const secret = getAdminSessionSecret();
+  if (!token) return false;
+  try {
+    const [encoded, received] = String(token).split('.');
+    if (!encoded || !received) return false;
+    const payload = Buffer.from(encoded, 'base64url').toString('utf8');
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+    const a = Buffer.from(received);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+    const [kind, expiresRaw] = payload.split('.');
+    return kind === 'admin' && Number.isFinite(Number(expiresRaw)) && Date.now() < Number(expiresRaw);
+  } catch {
+    return false;
+  }
+}
+
 function requireAdmin(req, res) {
-  const expected = process.env.DOOX_ADMIN_SECRET;
-  if (!expected) {
-    json(res, 503, {
-      ok: false,
-      message: 'Operação administrativa não configurada. Defina DOOX_ADMIN_SECRET no Vercel.',
-    });
+  const cookies = parseCookies(req);
+  const sessionOk = verifyAdminSession(cookies.doox_admin_session);
+  const legacyHeader = String(req.headers['x-doox-admin-secret'] || '');
+  const legacyOk = Boolean(process.env.DOOX_ADMIN_SECRET && legacyHeader && legacyHeader === process.env.DOOX_ADMIN_SECRET);
+
+  if (!sessionOk && !legacyOk) {
+    json(res, 401, { ok: false, message: 'Autorização administrativa necessária.' });
     return false;
   }
-
-  const provided = String(req.headers['x-doox-admin-secret'] || '');
-  if (!provided || provided !== expected) {
-    json(res, 401, { ok: false, message: 'Autorização administrativa inválida.' });
-    return false;
-  }
-
   return true;
+}
+
+function adminLogin(req, res, body) {
+  if (!verifyAdminPassword(body.password)) {
+    return json(res, 401, { ok: false, message: 'Senha administrativa incorreta.' });
+  }
+  const session = makeAdminSession();
+  const secure = String(req.headers['x-forwarded-proto'] || '').includes('https') || process.env.NODE_ENV === 'production';
+  res.setHeader('Set-Cookie', `doox_admin_session=${encodeURIComponent(session)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.max(3600, Number(process.env.DOOX_ADMIN_SESSION_HOURS || 12) * 3600)}${secure ? '; Secure' : ''}`);
+  return json(res, 200, { ok: true, authenticated: true });
 }
 
 function parsePositiveInt(value, fallback = 1) {
@@ -515,6 +582,29 @@ async function adminAction(action, body) {
       `;
       return { ok: true, mapa: result };
     }
+    case 'pedidoDetalhe': {
+      const pedidoId = body.pedidoId || body.pedido_id;
+      if (!pedidoId) throw new Error('pedidoId é obrigatório.');
+      const detail = await callJson(
+        db`SELECT doox_core.consultar_pedido(${pedidoId}::uuid) AS data`
+      );
+      let historico = [];
+      try {
+        historico = await db`
+          SELECT *
+          FROM doox_core.historico
+          WHERE pedido_id = ${pedidoId}::uuid
+          ORDER BY criado_em DESC
+          LIMIT 100
+        `;
+      } catch {
+        historico = [];
+      }
+      if (detail && typeof detail === 'object') {
+        return { ok: true, detail: { ...detail, historico } };
+      }
+      return { ok: true, detail: { data: detail, historico } };
+    }
     default:
       throw new Error(`Ação administrativa não reconhecida: ${action}`);
   }
@@ -530,6 +620,19 @@ export default async function handler(req, res) {
   const action = getAction(req, url, body);
 
   try {
+    if (action === 'adminLogin') {
+      if (req.method !== 'POST') return json(res, 405, { ok: false, message: 'adminLogin exige POST.' });
+      return adminLogin(req, res, body);
+    }
+
+    if (action === 'adminLogout') {
+      return adminLogout(req, res);
+    }
+
+    if (action === 'adminSession') {
+      return json(res, 200, { ok: true, authenticated: verifyAdminSession(parseCookies(req).doox_admin_session) });
+    }
+
     if (action === 'health') {
       return json(res, 200, {
         ok: true,
