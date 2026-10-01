@@ -42,6 +42,10 @@ const STATUS_LABELS = {
   SOLICITADO: 'SOLICITADO',
   EM_ANALISE: 'EM ANÁLISE',
   APROVADO: 'APROVADO',
+  AGUARDANDO_PAGAMENTO: 'AGUARDANDO PAGAMENTO',
+  PAGAMENTO_RECEBIDO: 'PAGAMENTO RECEBIDO',
+  MATERIAL_PENDENTE: 'MATERIAL PENDENTE',
+  MATERIAL_RECEBIDO: 'MATERIAL RECEBIDO',
   FILA_DE_ESPERA: 'FILA DE ESPERA',
   EM_PRODUCAO: 'EM PRODUÇÃO',
   PROGRAMADO: 'PROGRAMADO',
@@ -54,6 +58,10 @@ const STATUS_PROGRESS = {
   SOLICITADO: 10,
   EM_ANALISE: 20,
   APROVADO: 42,
+  AGUARDANDO_PAGAMENTO: 35,
+  PAGAMENTO_RECEBIDO: 45,
+  MATERIAL_PENDENTE: 55,
+  MATERIAL_RECEBIDO: 65,
   FILA_DE_ESPERA: 48,
   EM_PRODUCAO: 78,
   PROGRAMADO: 88,
@@ -191,11 +199,19 @@ function parsePositiveInt(value, fallback = 1) {
 
 function mapType(value) {
   const raw = String(value ?? '').trim();
-  const v = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[-]+/g, '_').replace(/\s+/g, '_');
-  if (v === 'empresa' || v === 'empresas') return 'EMPRESA';
-  if (v === 'pessoa' || v === 'pessoa_fisica' || v === 'pessoafisica') return 'PESSOA_FISICA';
-  if (v === 'EMPRESA'.toLowerCase()) return 'EMPRESA';
-  if (v === 'PESSOA_FISICA'.toLowerCase()) return 'PESSOA_FISICA';
+  const v = raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[-\/]+/g, '_')
+    .replace(/\s+/g, '_');
+
+  if (['empresa', 'empresas', 'pj', 'pessoa_juridica', 'pessoa_juridica_empresa'].includes(v)) {
+    return 'EMPRESA';
+  }
+  if (['pessoa', 'pessoa_fisica', 'pessoafisica', 'pf', 'individual', 'apoiador_individual'].includes(v)) {
+    return 'PESSOA_FISICA';
+  }
   return raw.toUpperCase();
 }
 
@@ -300,8 +316,9 @@ async function registerRequest(body) {
     throw new Error('Os Termos de Uso e as Regras de Participação precisam ser aceitos.');
   }
 
-  const type = mapType(body.type || body.tipo_participacao);
-  const modality = mapModality(body.modality || body.modalidade);
+  const rawType = body.type ?? body.tipo_participacao ?? body.participationType ?? body.tipoParticipacao ?? body.participacao ?? body.audience;
+  const type = mapType(rawType);
+  const modality = mapModality(body.modality ?? body.modalidade ?? body.mode);
   const range = mapRange(body.moment || body.faixa);
   const quantity = parsePositiveInt(body.quantity ?? body.quantidade, 1);
   const name = String(body.name || body.nome || '').trim();
@@ -364,19 +381,30 @@ async function registerRequest(body) {
 
   if (!pedidoId) throw new Error('O pedido foi criado sem identificador técnico.');
 
-  await callJson(
-    db`
-      SELECT doox_core.registrar_aceite(
-        ${pedidoId}::uuid,
-        'TERMO_EMPRESA_ACEITE',
-        '2026.09',
-        ${name},
-        ${`ACEITE DIGITAL — ${name}`},
-        NULL,
-        ${String(body.userAgent || '').slice(0, 500) || null}
-      ) AS data
-    `
-  );
+  // O aceite empresarial é específico para EMPRESA.
+  // Para PESSOA_FISICA, os Termos/Regras já são validados acima e não se deve
+  // registrar um aceite empresarial. Um erro de aceite nunca deve apagar/ocultar
+  // um pedido que já foi criado: o cliente precisa receber seu código e token.
+  let acceptanceWarning = '';
+  if (type === 'EMPRESA') {
+    try {
+      await callJson(
+        db`
+          SELECT doox_core.registrar_aceite(
+            ${pedidoId}::uuid,
+            'TERMO_EMPRESA_ACEITE',
+            '2026.09',
+            ${name},
+            ${`ACEITE DIGITAL — ${name}`},
+            NULL,
+            ${String(body.userAgent || '').slice(0, 500) || null}
+          ) AS data
+        `
+      );
+    } catch (error) {
+      acceptanceWarning = 'O pedido foi criado, mas o registro do aceite empresarial precisa ser conferido no DOOX CORE.';
+    }
+  }
 
   const trackingToken = makeTrackingToken(pedidoId);
   const baseUrl = process.env.DOOX_PUBLIC_BASE_URL || 'https://doox-omega.vercel.app';
@@ -384,6 +412,10 @@ async function registerRequest(body) {
 
   return {
     ok: true,
+    // Compatibilidade explícita com o frontend de materiais e com o DOOX Core.
+    technicalId: pedidoId,
+    pedidoId,
+    id: pedidoId,
     code: pedido?.codigo_doox || created.codigo_doox,
     modality: modalityName(pedido?.modalidade || modality),
     modalityCode: pedido?.modalidade || modality,
@@ -397,6 +429,7 @@ async function registerRequest(body) {
     requestId: idempotencyKey,
     status: pedido?.status_operacional || 'SOLICITADO',
     paymentStatus: pedido?.status_pagamento || 'AGUARDANDO_PAGAMENTO',
+    acceptanceWarning,
   };
 }
 

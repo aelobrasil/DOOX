@@ -72,6 +72,12 @@ Configure no ambiente do Vercel:
 
 O navegador recebe somente uma sessão `HttpOnly`; a chave administrativa não é enviada ao frontend. Os endpoints administrativos continuam protegidos no backend.
 
-## Correção V72 — normalização do tipo de participação
 
-O formulário envia `EMPRESA` ou `PESSOA_FISICA` diretamente ao `/api/doox`, e o backend mantém compatibilidade com as formas legadas (`Empresa`, `Pessoa`, `Pessoa Física`). Isso evita divergência entre o rótulo visual e o valor canônico usado no cadastro.
+## Correção do fechamento de pedidos — 2026-10-01
+- Fluxo único de fechamento no `assets/doox-participacao.js`.
+- Normalização robusta do tipo de participação no frontend/backend.
+- `registerRequest` agora retorna `technicalId`, `pedidoId` e `id` além do código/token.
+- Aceite empresarial somente para EMPRESA.
+- Código/token continuam sendo entregues mesmo se o registro do aceite empresarial falhar.
+- Falha posterior de upload não apaga nem esconde o pedido já criado; o cliente recebe código e acompanhamento.
+- Status adicionais de pagamento/material foram reconhecidos no acompanhamento.

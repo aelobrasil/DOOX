@@ -32,7 +32,9 @@
 
   function currentAudience() {
     const checked = document.querySelector('input[name="ptype"]:checked');
-    return checked?.value || 'empresa';
+    const raw = String(checked?.value || 'empresa').trim().toLowerCase();
+    if (['pessoa', 'pessoa_fisica', 'pessoa física', 'pf'].includes(raw)) return 'pessoa';
+    return 'empresa';
   }
 
   function currentMode() { return $('mode')?.value || ''; }
@@ -200,7 +202,7 @@
       clientRequestId,
       name: $('name')?.value.trim() || '',
       company: type === 'empresa' ? (($('fantasy')?.value.trim()) || ($('name')?.value.trim()) || '') : '',
-      type: type === 'empresa' ? 'EMPRESA' : 'PESSOA_FISICA',
+      type: type === 'empresa' ? 'Empresa' : 'Pessoa',
       whatsapp: ($('whatsapp')?.value || '').replace(/\D/g, ''),
       email: $('email')?.value.trim() || '',
       profile: $('profile')?.value.trim() || '',
@@ -248,32 +250,53 @@
     button.dataset.busy = '1';
     button.disabled = true;
     button.textContent = 'REGISTRANDO…';
-    if (success) { success.style.display = 'block'; success.innerHTML = '<b>Registrando solicitação…</b><br><span style="display:block;margin-top:7px;color:#666">O pedido será criado no DOOX CORE antes do envio dos materiais.</span>'; }
+    if (success) {
+      success.style.display = 'block';
+      success.innerHTML = '<b>Registrando solicitação…</b><br><span style="display:block;margin-top:7px;color:#666">O pedido será criado no DOOX CORE antes do envio dos materiais.</span>';
+    }
 
     try {
       const order = await postJson(API, { action: 'registerRequest', ...payload });
-      const pedidoId = order.technicalId || order.id || order.pedidoId;
-      if (!pedidoId) throw new Error('O DOOX CORE criou a solicitação, mas não retornou o identificador técnico do pedido.');
-
-      const specs = requiredMaterials(payload.modality);
-      for (const spec of specs) {
-        button.textContent = `ENVIANDO ${spec.type}…`;
-        await uploadMaterial(pedidoId, order.trackingToken, spec);
+      const pedidoId = order.technicalId || order.pedidoId || order.id;
+      const trackingToken = order.trackingToken || '';
+      if (!pedidoId || !trackingToken || !order.code) {
+        throw new Error('O DOOX CORE criou a solicitação, mas não retornou todos os dados de acompanhamento (código/token).');
       }
 
-      const tracking = order.trackingUrl || `${location.origin}/?token=${encodeURIComponent(order.trackingToken || '')}`;
+      const tracking = order.trackingUrl || `${location.origin}/?token=${encodeURIComponent(trackingToken)}`;
       const total = Number(order.total ?? order.valorTotal ?? 0);
       const unit = Number(order.unitPrice ?? order.valorUnitario ?? 0);
-      const code = order.code || order.codigoDoox || '—';
+      const code = order.code || '—';
+      const specs = requiredMaterials(payload.modality);
+      let materialWarning = '';
+
+      for (const spec of specs) {
+        button.textContent = `ENVIANDO ${spec.type}…`;
+        try {
+          await uploadMaterial(pedidoId, trackingToken, spec);
+        } catch (materialError) {
+          materialWarning = materialError?.message || String(materialError);
+          break;
+        }
+      }
 
       const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
         `Olá, DOOX. Minha solicitação foi registrada.\n\nCódigo DOOX: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}\n\nAcompanhamento: ${tracking}`
       );
 
       if (success) {
-        success.innerHTML = `<b>Solicitação registrada.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br><b>Materiais:</b> recebidos pelo DOOX CORE<div class="actions"><a class="pill orange" href="${escapeHtml(tracking)}">VER PAGAMENTO / ACOMPANHAMENTO</a><a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a></div>`;
+        const materialText = materialWarning
+          ? `<br><div style="margin-top:10px;padding:10px 12px;background:#fff4ea;border-radius:10px"><b>Material:</b> o pedido foi criado e seu código já está disponível. O envio de material ficou pendente: ${escapeHtml(materialWarning)}</div>`
+          : (specs.length ? '<br><b>Materiais:</b> recebidos pelo DOOX CORE' : '');
+        const acceptanceText = order.acceptanceWarning
+          ? `<br><div style="margin-top:8px;color:#8a5a00">${escapeHtml(order.acceptanceWarning)}</div>`
+          : '';
+        success.innerHTML = `<b>Solicitação registrada.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b>${materialText}${acceptanceText}<div class="actions"><a class="pill orange" href="${escapeHtml(tracking)}">VER PAGAMENTO / ACOMPANHAMENTO</a><a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a></div>`;
         success.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+
+      // O pedido já existe e possui código/token. Não perder o identificador por
+      // causa de um eventual erro posterior de material.
       sessionStorage.removeItem('dooxClientRequestId');
     } catch (error) {
       if (success) {
