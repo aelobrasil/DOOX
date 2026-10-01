@@ -29,10 +29,21 @@ function extension(name, mime) {
   if (raw && raw !== clean(name).toLowerCase()) return raw.replace(/[^a-z0-9]/g, '').slice(0, 8) || 'bin';
   return ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav','audio/x-wav':'wav','audio/wave':'wav'})[mime] || 'bin';
 }
+function getTrackingSecret() {
+  const explicit = String(
+    process.env.DOOX_TRACKING_SECRET ||
+    process.env.DOOX_ADMIN_SECRET ||
+    process.env.DOOX_ADMIN_SESSION_SECRET ||
+    ''
+  ).trim();
+  if (explicit) return explicit;
+  if (DATABASE_URL) {
+    return crypto.createHash('sha256').update(`doox-tracking-v1:${DATABASE_URL}`).digest('hex');
+  }
+  throw new Error('Serviço de acompanhamento não configurado.');
+}
 function sign(value) {
-  const secret = process.env.DOOX_TRACKING_SECRET;
-  if (!secret) throw new Error('DOOX_TRACKING_SECRET não configurado.');
-  return crypto.createHmac('sha256', secret).update(value).digest('base64url');
+  return crypto.createHmac('sha256', getTrackingSecret()).update(value).digest('base64url');
 }
 function verifyTrackingToken(token) {
   const parts = clean(token).split('.');
@@ -55,7 +66,7 @@ function parseCookies(req) {
   }).filter(([k]) => k));
 }
 function verifyAdminSession(token) {
-  const secret = process.env.DOOX_ADMIN_SECRET;
+  const secret = String(process.env.DOOX_ADMIN_SECRET || process.env.DOOX_ADMIN_SESSION_SECRET || '');
   if (!secret || !token) return false;
   try {
     const [encoded, received] = String(token).split('.');
@@ -69,8 +80,8 @@ function verifyAdminSession(token) {
   } catch { return false; }
 }
 function requireAdmin(req, res) {
-  const secret = process.env.DOOX_ADMIN_SECRET;
-  if (!secret) return json(res, 503, { ok:false, message:'DOOX_ADMIN_SECRET não configurado no Vercel.' });
+  const secret = String(process.env.DOOX_ADMIN_SECRET || process.env.DOOX_ADMIN_SESSION_SECRET || '');
+  if (!secret) return json(res, 503, { ok:false, message:'Autorização administrativa não configurada.' });
   if (verifyAdminSession(parseCookies(req).doox_admin_session)) return true;
   const legacy = String(req.headers['x-doox-admin-secret'] || '');
   if (legacy && legacy === secret) return true;
@@ -107,7 +118,18 @@ async function objectInfo(path) {
 async function registerMaterial(pedidoId, type, originalName, mime, size, storagePath) {
   const sql = postgres(DATABASE_URL, { ssl: 'require', prepare: false, max: 1, idle_timeout: 10, connect_timeout: 10 });
   try {
-    const rows = await sql`select * from doox_core.registrar_material(${pedidoId}::uuid, ${type}, ${originalName}, ${mime}, ${Number(size)}, ${storagePath})`;
+    // Mesma assinatura usada pela API administrativa: o sétimo argumento é o hash opcional.
+    const rows = await sql`
+      select * from doox_core.registrar_material(
+        ${pedidoId}::uuid,
+        ${type},
+        ${originalName},
+        ${mime},
+        ${Number(size)},
+        ${storagePath},
+        ${null}
+      )
+    `;
     return rows?.[0] || null;
   } finally { await sql.end({ timeout: 5 }).catch(() => {}); }
 }
@@ -121,6 +143,22 @@ async function signedDownload(path) {
   const signed = data.signedURL || data.signedUrl || data.path;
   if (!signed) throw new Error('O Storage não retornou o link assinado.');
   return signed.startsWith('http') ? signed : `${SUPABASE_URL}/storage/v1${signed}`;
+}
+
+function publicMaterialError(error) {
+  const raw = String(error?.message || '').trim();
+  const allowed = [
+    /Tipo de material inválido/i,
+    /Tamanho do material inválido/i,
+    /Arquivo excede o limite/i,
+    /Formato não permitido/i,
+    /Caminho de armazenamento inválido/i,
+    /Token de acompanhamento inválido/i,
+    /Token de acompanhamento expirado/i,
+    /Token não corresponde ao pedido/i,
+  ];
+  if (allowed.some(rx => rx.test(raw))) return raw;
+  return 'Não foi possível concluir o envio do material agora. Tente novamente.';
 }
 
 export default async function handler(req, res) {
@@ -168,5 +206,8 @@ export default async function handler(req, res) {
     }
 
     return json(res,400,{ok:false,message:'Ação de materiais inválida.'});
-  } catch (error) { return json(res,500,{ok:false,message:error?.message||String(error)}); }
+  } catch (error) {
+    console.error('DOOX materials:', error?.message || error);
+    return json(res,500,{ok:false,message:publicMaterialError(error)});
+  }
 }

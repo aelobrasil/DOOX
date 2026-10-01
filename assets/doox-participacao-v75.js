@@ -121,23 +121,31 @@
   }
 
   async function postJson(url, payload) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
     let response;
     try {
       response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: controller.signal
       });
-    } catch (_) {
-      throw new Error('Não foi possível conectar ao serviço DOOX.');
+    } catch (error) {
+      if (error?.name === 'AbortError') throw new Error('A solicitação demorou mais que o esperado. Tente novamente.');
+      throw new Error('Não foi possível conectar ao serviço de solicitações.');
+    } finally {
+      clearTimeout(timer);
     }
 
     const text = await response.text();
     let data;
-    try { data = JSON.parse(text); } catch (_) { throw new Error('O serviço DOOX retornou uma resposta inválida.'); }
+    try { data = JSON.parse(text); } catch (_) { throw new Error('O servidor retornou uma resposta inválida.'); }
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || data.error || data.details || `Erro HTTP ${response.status}.`);
+      const err = new Error(data.message || data.error || data.details || `Erro HTTP ${response.status}.`);
+      err.code = data.code || '';
+      throw err;
     }
     return data;
   }
@@ -227,36 +235,49 @@
 
   function validateForm(payload) {
     if (!payload.modality) return 'Selecione uma modalidade.';
-    if (payload.type === 'Pessoa' && payload.modality !== 'Apoiador Individual') return 'Pessoa física participa somente como Apoiador Individual.';
-    if (payload.type === 'Empresa' && payload.modality === 'Apoiador Individual') return 'Apoiador Individual é exclusivo para pessoa física.';
+    if (payload.type === 'PESSOA_FISICA' && payload.modality !== 'Apoiador Individual') return 'Pessoa física participa somente como Apoiador Individual.';
+    if (payload.type === 'EMPRESA' && payload.modality === 'Apoiador Individual') return 'Apoiador Individual é exclusivo para pessoa física.';
     if (!payload.name || !payload.whatsapp || !payload.email) return 'Preencha nome, WhatsApp e E-mail.';
-    if (payload.type === 'Empresa' && !payload.segment) return 'Informe o segmento da empresa.';
+    if (payload.type === 'EMPRESA' && !payload.segment) return 'Informe o segmento da empresa.';
     if (!payload.termsAccepted || !payload.rulesAccepted) return 'Aceite os Termos de Uso e as Regras de Participação para continuar.';
-    if (payload.type === 'Empresa' && !payload.companyTermsAccepted) return 'Leia até o final e aceite o Termo de Participação Empresarial para continuar.';
+    if (payload.type === 'EMPRESA' && !payload.companyTermsAccepted) return 'Leia até o final e aceite o Termo de Participação Empresarial para continuar.';
     if (payload.website) return 'Solicitação inválida.';
-    if (payload.type === 'Empresa' && payload.discount > 0 && !payload.couponSuffix) return 'Informe o código do cupom HOCCO.';
+    if (payload.type === 'EMPRESA' && payload.discount > 0 && !payload.couponSuffix) return 'Informe o código do cupom HOCCO.';
     return '';
   }
 
   function clientErrorMessage(error) {
     const raw = String(error?.message || error || '').trim();
     if (!raw) return 'Não foi possível concluir a solicitação agora. Tente novamente.';
-    const internal = [
-      'Tipo de participação inválido.',
-      'serviço interno',
-      'Storage DOOX',
-      'O Storage',
-      'identificador interno',
-      'Ação de materiais inválida.',
-      'Token não corresponde ao pedido.'
-    ];
-    if (internal.some((term) => raw.includes(term))) {
-      return 'Não foi possível concluir a solicitação agora. Confira os dados e tente novamente.';
-    }
-    if (/falha no envio do/i.test(raw) || /arquivo armazenado/i.test(raw) || /url de upload/i.test(raw)) {
+    if (/falha no envio do/i.test(raw) || /arquivo armazenado/i.test(raw) || /url de upload/i.test(raw) || /envio do material/i.test(raw)) {
       return 'Não foi possível concluir o envio dos materiais. Seu Código DOOX foi preservado para esta solicitação.';
     }
-    return raw;
+    const userFacing = [
+      /Selecione uma modalidade/i,
+      /Pessoa física participa somente/i,
+      /Apoiador Individual é exclusivo/i,
+      /Preencha nome, WhatsApp e E-mail/i,
+      /Informe o segmento da empresa/i,
+      /Aceite os Termos/i,
+      /Termo de Participação Empresarial/i,
+      /Informe o código do cupom/i,
+      /Material obrigatório ausente/i,
+      /Arquivo excede o limite/i,
+      /Formato não permitido/i,
+      /A solicitação demorou mais que o esperado/i,
+      /Não foi possível conectar ao serviço de solicitações/i
+    ];
+    if (userFacing.some((rx) => rx.test(raw))) return raw;
+    return 'Não foi possível concluir a solicitação agora. Confira os dados e tente novamente.';
+  }
+
+  function showStatus(html, tone = 'normal') {
+    const success = $('success');
+    if (!success) return;
+    success.style.display = 'block';
+    success.style.background = tone === 'error' ? '#fff5f3' : '#eff8f0';
+    success.style.borderColor = tone === 'error' ? '#f2c7bf' : '#cce8d0';
+    success.innerHTML = html;
   }
 
   function confirmationLinks(code, tracking) {
@@ -272,12 +293,17 @@
 
     const payload = buildPayload();
     const validation = validateForm(payload);
-    if (validation) return alert(validation);
+    if (validation) {
+      showStatus(`<b>Revise a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(validation)}</span>`, 'error');
+      success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     if (!validateMaterials()) return;
 
     button.dataset.busy = '1';
     button.disabled = true;
     button.textContent = 'FINALIZANDO…';
+    showStatus('<b>Enviando sua solicitação…</b><br><span style="display:block;margin-top:7px;color:#666">Não feche esta página até aparecer seu Código DOOX.</span>');
 
     let order = null;
     let pedidoId = '';
@@ -285,25 +311,23 @@
     let tracking = '';
 
     try {
-      // Primeiro registra a solicitação. O mesmo retorno já contém o Código DOOX
-      // e o acompanhamento que serão usados durante toda a operação.
       order = await postJson(API, { action: 'registerRequest', ...payload });
-      pedidoId = order.technicalId || order.id || order.pedidoId;
-      code = order.code || order.codigoDoox || '';
-      tracking = order.trackingUrl || `${location.origin}/?token=${encodeURIComponent(order.trackingToken || '')}`;
+      pedidoId = String(order.technicalId || order.id || order.pedidoId || '').trim();
+      code = String(order.code || order.codigoDoox || '').trim();
+      tracking = order.trackingUrl || (order.trackingToken ? `${location.origin}/?token=${encodeURIComponent(order.trackingToken)}` : '');
 
-      if (!pedidoId || !code || !order.trackingToken) {
-        throw new Error('A solicitação foi criada, mas não foi possível gerar o código de acompanhamento.');
+      if (!pedidoId || !code) {
+        throw new Error('A solicitação não retornou sua identificação completa.');
       }
 
-      // O cliente recebe o código imediatamente, antes do envio dos materiais.
-      if (success) {
-        success.style.display = 'block';
-        success.innerHTML = `<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:7px;color:#666">Agora estamos concluindo o envio dos materiais escolhidos.</span>`;
-        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:7px;color:#666">Estamos concluindo o envio dos materiais.</span>`);
+      success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       const specs = requiredMaterials(payload.modality);
+      if (specs.length && !order.trackingToken) {
+        throw new Error('Não foi possível autorizar o envio dos materiais desta solicitação.');
+      }
+
       for (const spec of specs) {
         button.textContent = `ENVIANDO ${spec.type === 'AUDIO' ? 'ÁUDIO' : 'LOGO'}…`;
         await uploadMaterial(pedidoId, order.trackingToken, spec);
@@ -312,39 +336,38 @@
       const total = Number(order.total ?? order.valorTotal ?? 0);
       const unit = Number(order.unitPrice ?? order.valorUnitario ?? 0);
       const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
-        `Olá, DOOX. Minha solicitação foi registrada.\n\nCódigo DOOX: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}\n\nAcompanhamento: ${tracking}`
+        `Olá, DOOX. Minha solicitação foi registrada.\n\nCódigo DOOX: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}${tracking ? `\n\nAcompanhamento: ${tracking}` : ''}`
       );
 
-      if (success) {
-        success.innerHTML = `<b>Solicitação concluída.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br><b>Materiais:</b> recebidos com sucesso.<br><span style="display:block;margin-top:8px;color:#666">Guarde seu Código DOOX. Ele identifica esta solicitação e será usado no acompanhamento.</span>${confirmationLinks(code, tracking)}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`;
-        const copyBtn = $('copyCodeButton');
-        copyBtn?.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(code);
-            $('copyCodeStatus').textContent = 'Código copiado.';
-          } catch (_) {
-            $('copyCodeStatus').textContent = `Código: ${code}`;
-          }
-        }, { once: true });
-      }
+      const trackingBlock = tracking ? confirmationLinks(code, tracking) : `<div class="actions"><button type="button" class="pill dark" id="copyCodeButton">COPIAR CÓDIGO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
+      showStatus(`<b>Solicitação concluída.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde seu Código DOOX. Ele identifica esta solicitação e será usado durante todo o atendimento.</span>${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
+
+      const copyBtn = $('copyCodeButton');
+      copyBtn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          if ($('copyCodeStatus')) $('copyCodeStatus').textContent = 'Código copiado.';
+        } catch (_) {
+          if ($('copyCodeStatus')) $('copyCodeStatus').textContent = `Código: ${code}`;
+        }
+      });
 
       sessionStorage.removeItem('dooxClientRequestId');
     } catch (error) {
       const message = clientErrorMessage(error);
-      if (success) {
-        if (code && tracking) {
-          const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
-            `Olá, DOOX. Minha solicitação foi criada e preciso concluir o envio dos materiais.\n\nCódigo DOOX: ${code}\nAcompanhamento: ${tracking}`
-          );
-          success.innerHTML = `<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions"><a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a><a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONCLUIR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não faça um novo pedido. Use este mesmo Código DOOX para esta solicitação.</div>`;
-        } else {
-          success.innerHTML = `<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions"><button type="button" class="pill light" id="retrySubmitCore">TENTAR NOVAMENTE</button></div>`;
-          $('retrySubmitCore')?.addEventListener('click', () => { success.innerHTML = ''; button.focus(); });
-        }
-        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (code) {
+        const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
+          `Olá, DOOX. Minha solicitação foi registrada e preciso concluir uma etapa.\n\nCódigo DOOX: ${code}${tracking ? `\nAcompanhamento: ${tracking}` : ''}`
+        );
+        showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions">${tracking ? `<a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a>` : ''}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONTINUAR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não envie uma nova solicitação. Use este mesmo Código DOOX.</div>`, 'error');
       } else {
-        alert(message);
+        showStatus(`<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions"><button type="button" class="pill light" id="retrySubmit">TENTAR NOVAMENTE</button></div>`, 'error');
+        $('retrySubmit')?.addEventListener('click', () => {
+          if (success) success.innerHTML = '';
+          button.focus();
+        });
       }
+      success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } finally {
       button.dataset.busy = '0';
       button.disabled = false;

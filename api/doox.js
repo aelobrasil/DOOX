@@ -84,15 +84,13 @@ function getAction(req, url, body) {
 
 function requireDb(res) {
   if (dbConfigError) {
-    json(res, 503, { ok: false, code: 'DATABASE_CONFIG_ERROR', message: dbConfigError });
+    console.error('DOOX database configuration:', dbConfigError);
+    json(res, 503, { ok: false, code: 'SERVICE_UNAVAILABLE', message: 'Serviço temporariamente indisponível.' });
     return false;
   }
   if (!db) {
-    json(res, 503, {
-      ok: false,
-      code: 'DATABASE_NOT_CONFIGURED',
-      message: 'DOOX CORE ainda não está conectado ao banco. Configure DOOX_DATABASE_URL no Vercel usando a conexão PostgreSQL/Transaction Pooler do Supabase.',
-    });
+    console.error('DOOX database configuration: DOOX_DATABASE_URL ausente.');
+    json(res, 503, { ok: false, code: 'SERVICE_UNAVAILABLE', message: 'Serviço temporariamente indisponível.' });
     return false;
   }
   return true;
@@ -251,10 +249,24 @@ function b64url(input) {
   return Buffer.from(input).toString('base64url');
 }
 
+function getTrackingSecret() {
+  const explicit = String(
+    process.env.DOOX_TRACKING_SECRET ||
+    process.env.DOOX_ADMIN_SECRET ||
+    process.env.DOOX_ADMIN_SESSION_SECRET ||
+    ''
+  ).trim();
+  if (explicit) return explicit;
+  // Compatibilidade segura: se o banco já está configurado, deriva uma chave HMAC
+  // estável sem expor a credencial. Em produção, DOOX_TRACKING_SECRET continua recomendado.
+  if (RAW_DATABASE_URL) {
+    return crypto.createHash('sha256').update(`doox-tracking-v1:${RAW_DATABASE_URL}`).digest('hex');
+  }
+  throw new Error('Serviço de acompanhamento não configurado.');
+}
+
 function sign(value) {
-  const secret = process.env.DOOX_TRACKING_SECRET;
-  if (!secret) throw new Error('DOOX_TRACKING_SECRET não configurado.');
-  return crypto.createHmac('sha256', secret).update(value).digest('base64url');
+  return crypto.createHmac('sha256', getTrackingSecret()).update(value).digest('base64url');
 }
 
 function makeTrackingToken(pedidoId) {
@@ -386,41 +398,83 @@ async function registerRequest(body) {
     idempotency_key: idempotencyKey,
     origem: 'SITE_1',
     beneficio: benefit,
+    aceite_empresa: type === 'EMPRESA' ? {
+      aceito: body.companyTermsAccepted === true,
+      versao: String(body.companyTermsVersion || '1.0-2026-09-20'),
+      nome: name,
+      assinatura: `ACEITE DIGITAL — ${name}`,
+      user_agent: String(body.userAgent || '').slice(0, 500) || null,
+    } : null,
   };
+
+  // Garante que a infraestrutura necessária ao acompanhamento está disponível
+  // antes de criar qualquer registro operacional.
+  getTrackingSecret();
 
   const created = await callJson(
     db`SELECT doox_core.criar_pedido(${JSON.stringify(payload)}::jsonb) AS data`
   );
 
-  const pedidoId = created.pedido_id || created.pedido?.id;
-  if (!pedidoId) throw new Error('O pedido foi criado sem identificador.');
+  const pedidoId = created?.pedido_id || created?.pedido?.id || created?.id;
+  if (!pedidoId) throw new Error('A solicitação foi registrada sem identificador operacional.');
 
   let pedido = null;
   try {
     pedido = await callJson(db`SELECT doox_core.resumo_pedido(${pedidoId}::uuid) AS data`);
   } catch (_) {
-    // O pedido e seu código já foram criados; o resumo é apenas uma leitura complementar.
-    pedido = null;
+    // Fallback direto: o registro principal é a fonte de verdade mesmo se a função de resumo
+    // estiver temporariamente indisponível ou tiver assinatura diferente.
+    try {
+      const rows = await db`
+        SELECT id, codigo_doox, modalidade, faixa, quantidade, valor_unitario, valor_total,
+               status_operacional, status_pagamento, criado_em, atualizado_em
+        FROM doox_core.pedidos
+        WHERE id = ${pedidoId}::uuid
+        LIMIT 1
+      `;
+      pedido = rows?.[0] || null;
+    } catch (_) {
+      pedido = null;
+    }
   }
 
+  let acceptanceRegistered = type !== 'EMPRESA';
   if (type === 'EMPRESA') {
-    await callJson(
-      db`
-        SELECT doox_core.registrar_aceite(
-          ${pedidoId}::uuid,
-          'TERMO_EMPRESA_ACEITE',
-          '2026.09',
-          ${name},
-          ${`ACEITE DIGITAL — ${name}`},
-          NULL,
-          ${String(body.userAgent || '').slice(0, 500) || null}
-        ) AS data
-      `
-    );
+    try {
+      await callJson(
+        db`
+          SELECT doox_core.registrar_aceite(
+            ${pedidoId}::uuid,
+            'TERMO_EMPRESA_ACEITE',
+            ${String(body.companyTermsVersion || '1.0-2026-09-20')},
+            ${name},
+            ${`ACEITE DIGITAL — ${name}`},
+            NULL,
+            ${String(body.userAgent || '').slice(0, 500) || null}
+          ) AS data
+        `
+      );
+      acceptanceRegistered = true;
+    } catch (error) {
+      // O pedido já existe e não pode ser perdido por uma falha acessória de auditoria.
+      // O aceite também foi enviado dentro do payload de criação para compatibilidade.
+      console.error('DOOX acceptance registration warning:', error?.message || error);
+    }
   }
 
-  const code = String(pedido?.codigo_doox || created.codigo_doox || created.pedido?.codigo_doox || '').trim();
-  if (!code) throw new Error('O pedido foi criado, mas o código não foi retornado pelo registro.');
+  let code = String(pedido?.codigo_doox || created?.codigo_doox || created?.pedido?.codigo_doox || '').trim();
+  if (!code) {
+    try {
+      const rows = await db`
+        SELECT codigo_doox
+        FROM doox_core.pedidos
+        WHERE id = ${pedidoId}::uuid
+        LIMIT 1
+      `;
+      code = String(rows?.[0]?.codigo_doox || '').trim();
+    } catch (_) {}
+  }
+  if (!code) throw new Error('A solicitação foi registrada, mas sua identificação não pôde ser lida.');
 
   const trackingToken = makeTrackingToken(pedidoId);
   const baseUrl = process.env.DOOX_PUBLIC_BASE_URL || 'https://doox-omega.vercel.app';
@@ -445,6 +499,7 @@ async function registerRequest(body) {
     requestId: idempotencyKey,
     status: pedido?.status_operacional || 'SOLICITADO',
     paymentStatus: pedido?.status_pagamento || 'AGUARDANDO_PAGAMENTO',
+    acceptanceRegistered,
   };
 }
 
@@ -677,6 +732,26 @@ async function adminAction(action, body) {
   }
 }
 
+function publicErrorMessage(error) {
+  const raw = String(error?.message || '').trim();
+  const allowed = [
+    /Termos de Uso/i,
+    /Regras de Participação/i,
+    /Nome, WhatsApp e E-mail/i,
+    /Tipo de participação inválido/i,
+    /Modalidade inválida/i,
+    /Nome da empresa é obrigatório/i,
+    /Pessoa física participa somente/i,
+    /Apoiador Individual é exclusivo/i,
+    /Termo de Participação Empresarial/i,
+    /Solicitação recusada/i,
+    /Token de acompanhamento inválido/i,
+    /Token de acompanhamento expirado/i,
+  ];
+  if (allowed.some(rx => rx.test(raw))) return raw;
+  return 'Não foi possível concluir a operação agora. Tente novamente.';
+}
+
 export default async function handler(req, res) {
   if (!['GET', 'POST'].includes(req.method)) {
     return json(res, 405, { ok: false, message: 'Método não permitido.' });
@@ -708,15 +783,25 @@ export default async function handler(req, res) {
           database.reachable = true;
         } catch (error) {
           database.reachable = false;
-          database.error = 'Não foi possível conectar ao PostgreSQL do Supabase. Verifique DOOX_DATABASE_URL, senha, região e Transaction Pooler.';
+          database.error = 'Falha de conexão com o banco.';
         }
       }
-      return json(res, 200, {
+      const authenticated = verifyAdminSession(parseCookies(req).doox_admin_session);
+      const basic = {
         ok: true,
-        service: 'DOOX CORE',
-        version: '2026.09.2',
-        database,
+        service: 'DOOX API',
+        version: '2026.10.1-v75',
+        available: database.reachable === true,
         timestamp: new Date().toISOString(),
+      };
+      if (!authenticated) return json(res, 200, basic);
+      return json(res, 200, {
+        ...basic,
+        database,
+        services: {
+          tracking: Boolean(process.env.DOOX_TRACKING_SECRET || process.env.DOOX_ADMIN_SECRET || process.env.DOOX_ADMIN_SESSION_SECRET || RAW_DATABASE_URL),
+          storage: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && (process.env.SUPABASE_URL || 'https://txbowobtfiiqqatqjfpd.supabase.co')),
+        },
       });
     }
 
@@ -765,10 +850,13 @@ export default async function handler(req, res) {
     return json(res, 200, result);
 
   } catch (error) {
-    const message = error?.message || 'Não foi possível concluir a operação.';
-    return json(res, 400, {
-      ok: false,
-      message: message.length > 500 ? message.slice(0, 500) : message,
-    });
+    const internalMessage = String(error?.message || 'Não foi possível concluir a operação.');
+    const publicActions = new Set(['registerRequest', 'pedido', 'informarPagamento', 'simular', 'catalogo']);
+    if (publicActions.has(action)) {
+      console.error(`DOOX public action ${action}:`, internalMessage);
+      return json(res, 400, { ok: false, message: publicErrorMessage(error) });
+    }
+    const message = internalMessage.length > 500 ? internalMessage.slice(0, 500) : internalMessage;
+    return json(res, 400, { ok: false, message });
   }
 }

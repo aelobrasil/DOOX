@@ -1,5 +1,17 @@
 # DOOX / HOCCO — Blueprint Master 2026
 
+## V75 — fluxo de finalização robusto
+
+- um único handler público controla o botão **FECHAR PEDIDO**;
+- o tipo de participação usa `EMPRESA` / `PESSOA_FISICA` em todo o fluxo;
+- erros da API são sempre mostrados ao usuário sem expor detalhes internos;
+- o Código DOOX retornado é lido do mesmo registro salvo em `doox_core.pedidos`;
+- o envio de materiais usa a mesma assinatura de `doox_core.registrar_material` da API administrativa;
+- o service worker não mantém HTML/JavaScript antigo em cache;
+- o backend usa idempotência para evitar duplicação em novas tentativas;
+- falhas acessórias após a criação do pedido não escondem o Código DOOX já criado.
+
+
 Site público HOCCO preparado para Vercel com DOOX CORE server-side.
 
 ## Arquitetura
