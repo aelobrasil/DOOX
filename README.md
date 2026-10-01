@@ -71,13 +71,3 @@ Configure no ambiente do Vercel:
 - `DOOX_ADMIN_SESSION_HOURS` — duração da sessão, opcional (padrão: 12 horas).
 
 O navegador recebe somente uma sessão `HttpOnly`; a chave administrativa não é enviada ao frontend. Os endpoints administrativos continuam protegidos no backend.
-
-
-## Correção do fechamento de pedidos — 2026-10-01
-- Fluxo único de fechamento no `assets/doox-participacao.js`.
-- Normalização robusta do tipo de participação no frontend/backend.
-- `registerRequest` agora retorna `technicalId`, `pedidoId` e `id` além do código/token.
-- Aceite empresarial somente para EMPRESA.
-- Código/token continuam sendo entregues mesmo se o registro do aceite empresarial falhar.
-- Falha posterior de upload não apaga nem esconde o pedido já criado; o cliente recebe código e acompanhamento.
-- Status adicionais de pagamento/material foram reconhecidos no acompanhamento.
