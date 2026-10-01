@@ -200,7 +200,7 @@
       clientRequestId,
       name: $('name')?.value.trim() || '',
       company: type === 'empresa' ? (($('fantasy')?.value.trim()) || ($('name')?.value.trim()) || '') : '',
-      type: type === 'empresa' ? 'Empresa' : 'Pessoa',
+      type: type === 'empresa' ? 'EMPRESA' : 'PESSOA_FISICA',
       whatsapp: ($('whatsapp')?.value || '').replace(/\D/g, ''),
       email: $('email')?.value.trim() || '',
       profile: $('profile')?.value.trim() || '',

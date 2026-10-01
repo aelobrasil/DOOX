@@ -190,10 +190,13 @@ function parsePositiveInt(value, fallback = 1) {
 }
 
 function mapType(value) {
-  const v = String(value || '').trim().toLowerCase();
-  if (v === 'empresa') return 'EMPRESA';
-  if (v === 'pessoa' || v === 'pessoa física' || v === 'pessoa_fisica') return 'PESSOA_FISICA';
-  return String(value || '').trim().toUpperCase();
+  const raw = String(value ?? '').trim();
+  const v = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[-]+/g, '_').replace(/\s+/g, '_');
+  if (v === 'empresa' || v === 'empresas') return 'EMPRESA';
+  if (v === 'pessoa' || v === 'pessoa_fisica' || v === 'pessoafisica') return 'PESSOA_FISICA';
+  if (v === 'EMPRESA'.toLowerCase()) return 'EMPRESA';
+  if (v === 'PESSOA_FISICA'.toLowerCase()) return 'PESSOA_FISICA';
+  return raw.toUpperCase();
 }
 
 function mapModality(value) {

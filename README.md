@@ -71,3 +71,7 @@ Configure no ambiente do Vercel:
 - `DOOX_ADMIN_SESSION_HOURS` — duração da sessão, opcional (padrão: 12 horas).
 
 O navegador recebe somente uma sessão `HttpOnly`; a chave administrativa não é enviada ao frontend. Os endpoints administrativos continuam protegidos no backend.
+
+## Correção V72 — normalização do tipo de participação
+
+O formulário envia `EMPRESA` ou `PESSOA_FISICA` diretamente ao `/api/doox`, e o backend mantém compatibilidade com as formas legadas (`Empresa`, `Pessoa`, `Pessoa Física`). Isso evita divergência entre o rótulo visual e o valor canônico usado no cadastro.
