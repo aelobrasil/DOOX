@@ -393,11 +393,15 @@ async function registerRequest(body) {
   );
 
   const pedidoId = created.pedido_id || created.pedido?.id;
-  const pedido = pedidoId
-    ? await callJson(db`SELECT doox_core.resumo_pedido(${pedidoId}::uuid) AS data`)
-    : null;
+  if (!pedidoId) throw new Error('O pedido foi criado sem identificador.');
 
-  if (!pedidoId) throw new Error('O pedido foi criado sem identificador técnico.');
+  let pedido = null;
+  try {
+    pedido = await callJson(db`SELECT doox_core.resumo_pedido(${pedidoId}::uuid) AS data`);
+  } catch (_) {
+    // O pedido e seu código já foram criados; o resumo é apenas uma leitura complementar.
+    pedido = null;
+  }
 
   if (type === 'EMPRESA') {
     await callJson(
@@ -415,13 +419,16 @@ async function registerRequest(body) {
     );
   }
 
+  const code = String(pedido?.codigo_doox || created.codigo_doox || created.pedido?.codigo_doox || '').trim();
+  if (!code) throw new Error('O pedido foi criado, mas o código não foi retornado pelo registro.');
+
   const trackingToken = makeTrackingToken(pedidoId);
   const baseUrl = process.env.DOOX_PUBLIC_BASE_URL || 'https://doox-omega.vercel.app';
   const trackingUrl = `${baseUrl.replace(/\/$/, '')}/?token=${encodeURIComponent(trackingToken)}`;
 
   return {
     ok: true,
-    code: pedido?.codigo_doox || created.codigo_doox,
+    code,
     modality: modalityName(pedido?.modalidade || modality),
     modalityCode: pedido?.modalidade || modality,
     quantity: pedido?.quantidade || quantity,
@@ -434,6 +441,7 @@ async function registerRequest(body) {
     technicalId: pedidoId,
     pedidoId,
     id: pedidoId,
+    codigoDoox: code,
     requestId: idempotencyKey,
     status: pedido?.status_operacional || 'SOLICITADO',
     paymentStatus: pedido?.status_pagamento || 'AGUARDANDO_PAGAMENTO',
@@ -733,7 +741,7 @@ export default async function handler(req, res) {
     }
 
     if (action === 'registerRequest') {
-      if (req.method !== 'POST') return json(res, 405, { ok: false, message: 'registerRequest exige POST.' });
+      if (req.method !== 'POST') return json(res, 405, { ok: false, message: 'Método não permitido.' });
       const result = await registerRequest({
         ...body,
         userAgent: String(req.headers['user-agent'] || '').slice(0, 500),

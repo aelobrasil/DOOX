@@ -1,6 +1,6 @@
-/* DOOX CORE — cadastro + materiais
-   Frontend bridge for the V68 Site 1.
-   Backend remains the source of truth.
+/* HOCCO — solicitação + materiais
+   Fluxo público de participação.
+   A operação interna permanece no servidor.
 */
 (function () {
   'use strict';
@@ -20,7 +20,7 @@
     'Sponsor Overlay': [{ type: 'LOGO', label: 'Logo da empresa', hint: 'JPG, PNG ou WebP · até 5 MB' }],
     'Overlay + Áudio': [
       { type: 'LOGO', label: 'Logo da empresa', hint: 'JPG, PNG ou WebP · até 5 MB' },
-      { type: 'AUDIO', label: 'Áudio da inserção', hint: 'MP3 ou WAV · até 15 MB' }
+      { type: 'AUDIO', label: 'Áudio da CTA', hint: 'MP3 ou WAV · até 15 MB' }
     ],
     'Empresa Patrocinadora do Episódio': [{ type: 'LOGO', label: 'Logo da empresa', hint: 'JPG, PNG ou WebP · até 5 MB' }],
     'Apoiador Individual': []
@@ -180,7 +180,7 @@
     });
 
     const status = $(`material_status_${spec.type}`);
-    if (status) status.textContent = `${file.name} · enviado e registrado no DOOX CORE.`;
+    if (status) status.textContent = `${file.name} · enviado com sucesso.`;
     return result;
   }
 
@@ -200,7 +200,10 @@
       clientRequestId,
       name: $('name')?.value.trim() || '',
       company: type === 'empresa' ? (($('fantasy')?.value.trim()) || ($('name')?.value.trim()) || '') : '',
-      type: type === 'empresa' ? 'Empresa' : 'Pessoa',
+      type: type === 'empresa' ? 'EMPRESA' : 'PESSOA_FISICA',
+      tipo_participacao: type === 'empresa' ? 'EMPRESA' : 'PESSOA_FISICA',
+      ptype: type,
+      audience: type,
       whatsapp: ($('whatsapp')?.value || '').replace(/\D/g, ''),
       email: $('email')?.value.trim() || '',
       profile: $('profile')?.value.trim() || '',
@@ -235,6 +238,33 @@
     return '';
   }
 
+  function clientErrorMessage(error) {
+    const raw = String(error?.message || error || '').trim();
+    if (!raw) return 'Não foi possível concluir a solicitação agora. Tente novamente.';
+    const internal = [
+      'Tipo de participação inválido.',
+      'serviço interno',
+      'Storage DOOX',
+      'O Storage',
+      'identificador interno',
+      'Ação de materiais inválida.',
+      'Token não corresponde ao pedido.'
+    ];
+    if (internal.some((term) => raw.includes(term))) {
+      return 'Não foi possível concluir a solicitação agora. Confira os dados e tente novamente.';
+    }
+    if (/falha no envio do/i.test(raw) || /arquivo armazenado/i.test(raw) || /url de upload/i.test(raw)) {
+      return 'Não foi possível concluir o envio dos materiais. Seu Código DOOX foi preservado para esta solicitação.';
+    }
+    return raw;
+  }
+
+  function confirmationLinks(code, tracking) {
+    const safeCode = escapeHtml(code || '—');
+    const safeTracking = escapeHtml(tracking || '#');
+    return `<div class="actions"><a class="pill orange" href="${safeTracking}">VER PAGAMENTO / ACOMPANHAMENTO</a><button type="button" class="pill dark" id="copyCodeButton">COPIAR CÓDIGO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
+  }
+
   async function registerAndUpload() {
     const button = $('submit');
     const success = $('success');
@@ -247,41 +277,73 @@
 
     button.dataset.busy = '1';
     button.disabled = true;
-    button.textContent = 'REGISTRANDO…';
-    if (success) { success.style.display = 'block'; success.innerHTML = '<b>Registrando solicitação…</b><br><span style="display:block;margin-top:7px;color:#666">O pedido será criado no DOOX CORE antes do envio dos materiais.</span>'; }
+    button.textContent = 'FINALIZANDO…';
+
+    let order = null;
+    let pedidoId = '';
+    let code = '';
+    let tracking = '';
 
     try {
-      const order = await postJson(API, { action: 'registerRequest', ...payload });
-      const pedidoId = order.technicalId || order.id || order.pedidoId;
-      if (!pedidoId) throw new Error('O DOOX CORE criou a solicitação, mas não retornou o identificador técnico do pedido.');
+      // Primeiro registra a solicitação. O mesmo retorno já contém o Código DOOX
+      // e o acompanhamento que serão usados durante toda a operação.
+      order = await postJson(API, { action: 'registerRequest', ...payload });
+      pedidoId = order.technicalId || order.id || order.pedidoId;
+      code = order.code || order.codigoDoox || '';
+      tracking = order.trackingUrl || `${location.origin}/?token=${encodeURIComponent(order.trackingToken || '')}`;
+
+      if (!pedidoId || !code || !order.trackingToken) {
+        throw new Error('A solicitação foi criada, mas não foi possível gerar o código de acompanhamento.');
+      }
+
+      // O cliente recebe o código imediatamente, antes do envio dos materiais.
+      if (success) {
+        success.style.display = 'block';
+        success.innerHTML = `<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:7px;color:#666">Agora estamos concluindo o envio dos materiais escolhidos.</span>`;
+        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
 
       const specs = requiredMaterials(payload.modality);
       for (const spec of specs) {
-        button.textContent = `ENVIANDO ${spec.type}…`;
+        button.textContent = `ENVIANDO ${spec.type === 'AUDIO' ? 'ÁUDIO' : 'LOGO'}…`;
         await uploadMaterial(pedidoId, order.trackingToken, spec);
       }
 
-      const tracking = order.trackingUrl || `${location.origin}/?token=${encodeURIComponent(order.trackingToken || '')}`;
       const total = Number(order.total ?? order.valorTotal ?? 0);
       const unit = Number(order.unitPrice ?? order.valorUnitario ?? 0);
-      const code = order.code || order.codigoDoox || '—';
-
       const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
         `Olá, DOOX. Minha solicitação foi registrada.\n\nCódigo DOOX: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}\n\nAcompanhamento: ${tracking}`
       );
 
       if (success) {
-        success.innerHTML = `<b>Solicitação registrada.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br><b>Materiais:</b> recebidos pelo DOOX CORE<div class="actions"><a class="pill orange" href="${escapeHtml(tracking)}">VER PAGAMENTO / ACOMPANHAMENTO</a><a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a></div>`;
-        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        success.innerHTML = `<b>Solicitação concluída.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br><b>Materiais:</b> recebidos com sucesso.<br><span style="display:block;margin-top:8px;color:#666">Guarde seu Código DOOX. Ele identifica esta solicitação e será usado no acompanhamento.</span>${confirmationLinks(code, tracking)}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`;
+        const copyBtn = $('copyCodeButton');
+        copyBtn?.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(code);
+            $('copyCodeStatus').textContent = 'Código copiado.';
+          } catch (_) {
+            $('copyCodeStatus').textContent = `Código: ${code}`;
+          }
+        }, { once: true });
       }
+
       sessionStorage.removeItem('dooxClientRequestId');
     } catch (error) {
+      const message = clientErrorMessage(error);
       if (success) {
-        success.innerHTML = `<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(error?.message || error)}</span><div class="actions"><button type="button" class="pill light" id="retrySubmitCore">TENTAR NOVAMENTE</button></div>`;
+        if (code && tracking) {
+          const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
+            `Olá, DOOX. Minha solicitação foi criada e preciso concluir o envio dos materiais.\n\nCódigo DOOX: ${code}\nAcompanhamento: ${tracking}`
+          );
+          success.innerHTML = `<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions"><a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a><a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONCLUIR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não faça um novo pedido. Use este mesmo Código DOOX para esta solicitação.</div>`;
+        } else {
+          success.innerHTML = `<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions"><button type="button" class="pill light" id="retrySubmitCore">TENTAR NOVAMENTE</button></div>`;
+          $('retrySubmitCore')?.addEventListener('click', () => { success.innerHTML = ''; button.focus(); });
+        }
         success.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        $('retrySubmitCore')?.addEventListener('click', () => { success.innerHTML = ''; button.focus(); });
       } else {
-        alert(error?.message || error);
+        alert(message);
       }
     } finally {
       button.dataset.busy = '0';
