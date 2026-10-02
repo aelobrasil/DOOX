@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const PUBLIC_FLOW_VERSION = '2026.10.01-v76';
+  const PUBLIC_FLOW_VERSION = '2026.10.01-v77';
   const API = '/api/doox';
   const MATERIALS_API = '/api/materials';
   const LIMITS = { LOGO: 5 * 1024 * 1024, AUDIO: 15 * 1024 * 1024, IMAGEM: 10 * 1024 * 1024, OUTRO: 10 * 1024 * 1024 };
@@ -156,6 +156,7 @@
     if (!response.ok || data.ok === false) {
       const err = new Error(data.message || data.error || data.details || `Erro HTTP ${response.status}.`);
       err.code = data.code || '';
+      err.reference = data.reference || '';
       throw err;
     }
     return data;
@@ -246,6 +247,7 @@
 
   function validateForm(payload) {
     if (!payload.modality) return 'Selecione uma modalidade.';
+    if (['Sponsor Overlay', 'Overlay + Áudio'].includes(payload.modality) && !payload.moment) return 'Selecione o momento/faixa da participação.';
     if (payload.type === 'PESSOA_FISICA' && payload.modality !== 'Apoiador Individual') return 'Pessoa física participa somente como Apoiador Individual.';
     if (payload.type === 'EMPRESA' && payload.modality === 'Apoiador Individual') return 'Apoiador Individual é exclusivo para pessoa física.';
     if (!payload.name || !payload.whatsapp || !payload.email) return 'Preencha nome, WhatsApp e E-mail.';
@@ -265,6 +267,13 @@
     }
     const userFacing = [
       /Selecione uma modalidade/i,
+      /momento\/faixa/i,
+      /faixa/i,
+      /quantidade/i,
+      /disponibilidade/i,
+      /vagas/i,
+      /preço/i,
+      /valor/i,
       /Pessoa física participa somente/i,
       /Apoiador Individual é exclusivo/i,
       /Preencha nome, WhatsApp e E-mail/i,
@@ -369,13 +378,15 @@
       button.textContent = 'PEDIDO REGISTRADO';
     } catch (error) {
       const message = clientErrorMessage(error);
+      const reference = String(error?.reference || error?.code || '').trim();
+      const referenceHtml = reference ? `<div class="sim-note" style="color:#777;margin-top:8px">Referência técnica: ${escapeHtml(reference)}</div>` : '';
       if (code) {
         const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
           `Olá, DOOX. Minha solicitação foi registrada e preciso concluir uma etapa.\n\nCódigo DOOX: ${code}${tracking ? `\nAcompanhamento: ${tracking}` : ''}`
         );
-        showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions">${tracking ? `<a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a>` : ''}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONTINUAR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não envie uma nova solicitação. Use este mesmo Código DOOX.</div>`, 'error');
+        showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span>${referenceHtml}<div class="actions">${tracking ? `<a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a>` : ''}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONTINUAR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não envie uma nova solicitação. Use este mesmo Código DOOX.</div>`, 'error');
       } else {
-        showStatus(`<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span><div class="actions"><button type="button" class="pill light" id="retrySubmit">TENTAR NOVAMENTE</button></div>`, 'error');
+        showStatus(`<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span>${referenceHtml}<div class="actions"><button type="button" class="pill light" id="retrySubmit">TENTAR NOVAMENTE</button></div>`, 'error');
         $('retrySubmit')?.addEventListener('click', () => {
           if (success) success.innerHTML = '';
           button.focus();
