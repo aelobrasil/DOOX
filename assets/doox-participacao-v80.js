@@ -382,7 +382,7 @@
       const referenceHtml = reference ? `<div class="sim-note" style="color:#777;margin-top:8px">Referência técnica: ${escapeHtml(reference)}</div>` : '';
       if (code) {
         const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
-          `Olá, DOOX. Minha solicitação foi registrada e preciso concluir uma etapa.\n\nCódigo DOOX: ${code}${tracking ? `\nAcompanhamento: ${tracking}` : ''}`
+          `Olá, DOOX. Minha solicitação foi registrada e preciso concluir uma etapa.\n\nSolicitação: ${code}${tracking ? `\nAcompanhamento: ${tracking}` : ''}`
         );
         showStatus(`<b>Solicitação registrada.</b><br>Sua solicitação é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span>${referenceHtml}<div class="actions">${tracking ? `<a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a>` : ''}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONTINUAR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não envie uma nova solicitação. Use este mesmo número.</div>`, 'error');
       } else {
