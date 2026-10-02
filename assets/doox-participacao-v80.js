@@ -1,13 +1,13 @@
-/* HOCCO — solicitação + materiais · DOOX V2
+/* HOCCO — solicitação + materiais · HOCCO API V1.3
    Fluxo público de participação.
    A operação interna permanece no servidor.
 */
 (function () {
   'use strict';
 
-  const PUBLIC_FLOW_VERSION = '2026.10.01-v80-doox-v2';
-  const API = '/api/doox-v2';
-  const MATERIALS_API = '/api/materials-v2';
+  const PUBLIC_FLOW_VERSION = '2026.10.02-v81-hocco-v1.3';
+  const API = '/api/hocco-v1';
+  const MATERIALS_API = '/api/hocco-materials-v1';
   const LIMITS = { LOGO: 5 * 1024 * 1024, AUDIO: 15 * 1024 * 1024, IMAGEM: 10 * 1024 * 1024, OUTRO: 10 * 1024 * 1024 };
   const ACCEPT = {
     LOGO: ['image/jpeg', 'image/png', 'image/webp'],
@@ -70,7 +70,7 @@
           <button type="button" class="pill dark material-upload-button" data-file-target="material_${m.type}">${buttonText}</button>
           <span id="material_status_${m.type}" class="material-upload-status">Nenhum arquivo selecionado.</span>
         </div>`;
-    }).join('') + '<div class="materials-help">Os arquivos são enviados somente depois que sua solicitação é registrada. O mesmo Código DOOX identifica o pedido e seus materiais.</div>';
+    }).join('') + '<div class="materials-help">Os arquivos são enviados somente depois que sua solicitação é registrada. O mesmo número da solicitação identifica o pedido e seus materiais.</div>';
 
     box.querySelectorAll('[data-file-target]').forEach((button) => {
       button.addEventListener('click', () => $(button.dataset.fileTarget)?.click());
@@ -213,8 +213,8 @@
     const discount = type === 'empresa' ? Math.max(0, Math.min(100, Math.round(rawDiscount || 0))) : 0;
     const couponSuffix = type === 'empresa' && discount > 0 ? String($('couponSuffix')?.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12) : '';
     const coupon = couponSuffix ? `HOCCO${couponSuffix}` : '';
-    const clientRequestId = sessionStorage.getItem('dooxClientRequestId') || crypto.randomUUID();
-    sessionStorage.setItem('dooxClientRequestId', clientRequestId);
+    const clientRequestId = sessionStorage.getItem('hoccoClientRequestId') || crypto.randomUUID();
+    sessionStorage.setItem('hoccoClientRequestId', clientRequestId);
 
     return {
       clientRequestId,
@@ -263,7 +263,7 @@
     const raw = String(error?.message || error || '').trim();
     if (!raw) return 'Não foi possível concluir a solicitação agora. Tente novamente.';
     if (/falha no envio do/i.test(raw) || /arquivo armazenado/i.test(raw) || /url de upload/i.test(raw) || /envio do material/i.test(raw)) {
-      return 'Não foi possível concluir o envio dos materiais. Seu Código DOOX foi preservado para esta solicitação.';
+      return 'Não foi possível concluir o envio dos materiais. O número da sua solicitação foi preservado.';
     }
     const userFacing = [
       /Selecione uma modalidade/i,
@@ -303,7 +303,7 @@
   function confirmationLinks(code, tracking) {
     const safeCode = escapeHtml(code || '—');
     const safeTracking = escapeHtml(tracking || '#');
-    return `<div class="actions"><a class="pill orange" href="${safeTracking}">VER PAGAMENTO / ACOMPANHAMENTO</a><button type="button" class="pill dark" id="copyCodeButton">COPIAR CÓDIGO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
+    return `<div class="actions"><a class="pill orange" href="${safeTracking}">VER PAGAMENTO / ACOMPANHAMENTO</a><button type="button" class="pill dark" id="copyCodeButton">COPIAR SOLICITAÇÃO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
   }
 
   async function registerAndUpload() {
@@ -323,7 +323,7 @@
     button.dataset.busy = '1';
     button.disabled = true;
     button.textContent = 'FINALIZANDO…';
-    showStatus('<b>Enviando sua solicitação…</b><br><span style="display:block;margin-top:7px;color:#666">Não feche esta página até aparecer seu Código DOOX.</span>');
+    showStatus('<b>Enviando sua solicitação…</b><br><span style="display:block;margin-top:7px;color:#666">Não feche esta página até aparecer o número da sua solicitação.</span>');
 
     let order = null;
     let pedidoId = '';
@@ -333,14 +333,14 @@
     try {
       order = await postJson(API, { action: 'registerRequest', ...payload });
       pedidoId = String(order.technicalId || order.id || order.pedidoId || '').trim();
-      code = String(order.code || order.codigoDoox || '').trim();
+      code = String(order.numeroExibicao || (order.numero ? `#${String(order.numero).padStart(6, '0')}` : '')).trim();
       tracking = order.trackingUrl || (order.trackingToken ? `${location.origin}/?token=${encodeURIComponent(order.trackingToken)}` : '');
 
       if (!pedidoId || !code) {
         throw new Error('A solicitação não retornou sua identificação completa.');
       }
 
-      showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <strong class="code">${escapeHtml(code)}</strong>.<br><span class="submit-progress">Estamos concluindo o envio dos materiais.</span>`);
+      showStatus(`<b>Solicitação registrada.</b><br>Sua solicitação é <strong class="code">${escapeHtml(code)}</strong>.<br><span class="submit-progress">Estamos concluindo o envio dos materiais.</span>`);
       success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       const specs = requiredMaterials(payload.modality);
@@ -356,11 +356,11 @@
       const total = Number(order.total ?? order.valorTotal ?? 0);
       const unit = Number(order.unitPrice ?? order.valorUnitario ?? 0);
       const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
-        `Olá, DOOX. Minha solicitação foi registrada.\n\nCódigo DOOX: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}${tracking ? `\n\nAcompanhamento: ${tracking}` : ''}`
+        `Olá, DOOX. Minha solicitação foi registrada.\n\nSolicitação: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}${tracking ? `\n\nAcompanhamento: ${tracking}` : ''}`
       );
 
       const trackingBlock = tracking ? confirmationLinks(code, tracking) : `<div class="actions"><button type="button" class="pill dark" id="copyCodeButton">COPIAR CÓDIGO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
-      showStatus(`<b>Solicitação concluída.</b><br>Código DOOX: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde seu Código DOOX. Ele identifica esta solicitação e será usado durante todo o atendimento.</span>${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
+      showStatus(`<b>Solicitação concluída.</b><br>Solicitação: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde o número da solicitação. Ele identifica este pedido durante todo o atendimento.</span>${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
 
       const copyBtn = $('copyCodeButton');
       copyBtn?.addEventListener('click', async () => {
@@ -372,7 +372,7 @@
         }
       });
 
-      sessionStorage.removeItem('dooxClientRequestId');
+      sessionStorage.removeItem('hoccoClientRequestId');
       button.dataset.completed = '1';
       button.disabled = true;
       button.textContent = 'PEDIDO REGISTRADO';
@@ -384,7 +384,7 @@
         const wa = 'https://wa.me/5514981150675?text=' + encodeURIComponent(
           `Olá, DOOX. Minha solicitação foi registrada e preciso concluir uma etapa.\n\nCódigo DOOX: ${code}${tracking ? `\nAcompanhamento: ${tracking}` : ''}`
         );
-        showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span>${referenceHtml}<div class="actions">${tracking ? `<a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a>` : ''}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONTINUAR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não envie uma nova solicitação. Use este mesmo Código DOOX.</div>`, 'error');
+        showStatus(`<b>Solicitação registrada.</b><br>Sua solicitação é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span>${referenceHtml}<div class="actions">${tracking ? `<a class="pill orange" href="${escapeHtml(tracking)}">ACOMPANHAR SOLICITAÇÃO</a>` : ''}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">CONTINUAR PELO WHATSAPP</a></div><div class="sim-note" style="color:#666;margin-top:8px">Não envie uma nova solicitação. Use este mesmo número.</div>`, 'error');
       } else {
         showStatus(`<b>Não foi possível concluir a solicitação.</b><br><span style="display:block;margin-top:8px">${escapeHtml(message)}</span>${referenceHtml}<div class="actions"><button type="button" class="pill light" id="retrySubmit">TENTAR NOVAMENTE</button></div>`, 'error');
         $('retrySubmit')?.addEventListener('click', () => {
