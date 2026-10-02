@@ -8,6 +8,7 @@
   const PUBLIC_FLOW_VERSION = '2026.10.02-v81-hocco-v1.3';
   const API = '/api/hocco-v1';
   const MATERIALS_API = '/api/hocco-materials-v1';
+  const PIX_KEY = 'c9316176-6f92-413e-9209-63ae6f661ba9';
   const LIMITS = { LOGO: 5 * 1024 * 1024, AUDIO: 15 * 1024 * 1024, IMAGEM: 10 * 1024 * 1024, OUTRO: 10 * 1024 * 1024 };
   const ACCEPT = {
     LOGO: ['image/jpeg', 'image/png', 'image/webp'],
@@ -359,8 +360,15 @@
         `Olá, DOOX. Minha solicitação foi registrada.\n\nSolicitação: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}${tracking ? `\n\nAcompanhamento: ${tracking}` : ''}`
       );
 
-      const trackingBlock = tracking ? confirmationLinks(code, tracking) : `<div class="actions"><button type="button" class="pill dark" id="copyCodeButton">COPIAR CÓDIGO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
-      showStatus(`<b>Solicitação concluída.</b><br>Solicitação: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde o número da solicitação. Ele identifica este pedido durante todo o atendimento.</span>${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
+      const trackingBlock = tracking ? confirmationLinks(code, tracking) : `<div class="actions"><button type="button" class="pill dark" id="copyCodeButton">COPIAR SOLICITAÇÃO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
+      const pixBlock = `<div style="margin-top:14px;padding:13px 14px;border:1px solid #ddd;border-radius:14px;background:#fff"><b>PAGAMENTO PIX</b><div style="font-size:12px;color:#666;margin-top:5px">Valor: <b>${brl(total)}</b></div><div style="font-size:11px;word-break:break-all;margin-top:8px">${PIX_KEY}</div><div class="actions" style="margin-top:9px"><button type="button" class="pill orange" id="copyPixKeyButton">COPIAR CHAVE PIX</button></div><div id="copyPixKeyStatus" class="sim-note" style="color:#666;margin-top:6px">A confirmação do pagamento é feita pela HOCCO após o recebimento.</div></div>`;
+      showStatus(`<b>Solicitação concluída.</b><br>Solicitação: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde o número da solicitação. Ele identifica este pedido durante todo o atendimento.</span>${pixBlock}${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
+
+      const pixBtn = $('copyPixKeyButton');
+      pixBtn?.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(PIX_KEY); if ($('copyPixKeyStatus')) $('copyPixKeyStatus').textContent = 'Chave Pix copiada.'; }
+        catch (_) { if ($('copyPixKeyStatus')) $('copyPixKeyStatus').textContent = `Chave Pix: ${PIX_KEY}`; }
+      });
 
       const copyBtn = $('copyCodeButton');
       copyBtn?.addEventListener('click', async () => {
