@@ -83,3 +83,11 @@ Configure no ambiente do Vercel:
 - `DOOX_ADMIN_SESSION_HOURS` — duração da sessão, opcional (padrão: 12 horas).
 
 O navegador recebe somente uma sessão `HttpOnly`; a chave administrativa não é enviada ao frontend. Os endpoints administrativos continuam protegidos no backend.
+
+
+## V76 — correção do fluxo público
+- A área de materiais tem um único controlador. O código legado não sobrescreve mais os inputs de arquivo.
+- Botões explícitos `ENVIAR LOGO` e, em `Overlay + Áudio`, `ENVIAR ÁUDIO CTA`.
+- O pedido só exibe Código DOOX retornado pelo registro persistido no banco.
+- Leitura robusta do retorno de `doox_core.criar_pedido`, com recuperação do mesmo pedido por código/idempotência quando necessário.
+- Falhas deixam mensagem visível e o botão passa para estado de nova tentativa; sucesso trava o botão como `PEDIDO REGISTRADO`.

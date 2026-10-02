@@ -1,10 +1,11 @@
-/* HOCCO — solicitação + materiais
+/* HOCCO — solicitação + materiais · V76
    Fluxo público de participação.
    A operação interna permanece no servidor.
 */
 (function () {
   'use strict';
 
+  const PUBLIC_FLOW_VERSION = '2026.10.01-v76';
   const API = '/api/doox';
   const MATERIALS_API = '/api/materials';
   const LIMITS = { LOGO: 5 * 1024 * 1024, AUDIO: 15 * 1024 * 1024, IMAGEM: 10 * 1024 * 1024, OUTRO: 10 * 1024 * 1024 };
@@ -49,7 +50,7 @@
     const list = requiredMaterials(currentMode());
 
     if (!currentMode()) {
-      box.innerHTML = '<div class="material">Selecione uma modalidade para visualizar os materiais.</div>';
+      box.innerHTML = '<div class="material">Selecione uma modalidade para visualizar os materiais obrigatórios.</div>';
       return;
     }
 
@@ -58,13 +59,22 @@
       return;
     }
 
-    box.innerHTML = list.map((m) => `
-      <label class="material" style="display:grid;gap:8px">
-        <span><b>${escapeHtml(m.label)}</b><br><small>${escapeHtml(m.hint)}</small></span>
-        <input type="file" id="material_${m.type}" data-material-type="${m.type}" accept="${ACCEPT[m.type].join(',')}" required>
-        <span id="material_status_${m.type}" class="sim-note" style="color:#666">Arquivo ainda não selecionado.</span>
-      </label>
-    `).join('');
+    box.innerHTML = list.map((m) => {
+      const buttonText = m.type === 'AUDIO' ? 'ENVIAR ÁUDIO CTA' : 'ENVIAR LOGO';
+      return `
+        <div class="material-upload" data-material-card="${m.type}">
+          <div class="material-upload-head">
+            <span><b>${escapeHtml(m.label)}</b><small>${escapeHtml(m.hint)}</small></span>
+          </div>
+          <input class="material-file-input" type="file" id="material_${m.type}" data-material-type="${m.type}" accept="${ACCEPT[m.type].join(',')}" required>
+          <button type="button" class="pill dark material-upload-button" data-file-target="material_${m.type}">${buttonText}</button>
+          <span id="material_status_${m.type}" class="material-upload-status">Nenhum arquivo selecionado.</span>
+        </div>`;
+    }).join('') + '<div class="materials-help">Os arquivos são enviados somente depois que sua solicitação é registrada. O mesmo Código DOOX identifica o pedido e seus materiais.</div>';
+
+    box.querySelectorAll('[data-file-target]').forEach((button) => {
+      button.addEventListener('click', () => $(button.dataset.fileTarget)?.click());
+    });
 
     list.forEach((m) => {
       const input = $(`material_${m.type}`);
@@ -77,24 +87,24 @@
     const status = $(`material_status_${spec.type}`);
     const file = input.files?.[0];
     if (!file) {
-      if (status) status.textContent = 'Arquivo ainda não selecionado.';
+      if (status) { status.textContent = 'Nenhum arquivo selecionado.'; status.className = 'material-upload-status'; }
       return false;
     }
 
     if (file.size > LIMITS[spec.type]) {
       input.value = '';
-      if (status) status.textContent = `Arquivo excede o limite de ${spec.type === 'AUDIO' ? '15 MB' : '5 MB'}.`;
+      if (status) { status.textContent = `Arquivo excede o limite de ${spec.type === 'AUDIO' ? '15 MB' : '5 MB'}.`; status.className = 'material-upload-status error'; }
       return false;
     }
 
     const allowed = ACCEPT[spec.type];
     if (allowed.length && !allowed.includes(file.type)) {
       input.value = '';
-      if (status) status.textContent = 'Formato não permitido para esta modalidade.';
+      if (status) { status.textContent = 'Formato não permitido para esta modalidade.'; status.className = 'material-upload-status error'; }
       return false;
     }
 
-    if (status) status.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB · pronto para envio.`;
+    if (status) { status.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB · pronto para envio.`; status.className = 'material-upload-status ready'; }
     return true;
   }
 
@@ -103,8 +113,9 @@
     for (const spec of specs) {
       const input = $(`material_${spec.type}`);
       if (!input?.files?.[0] || !validateMaterialInput(input, spec)) {
-        alert(`Envie o material obrigatório: ${spec.label}.`);
-        input?.focus();
+        showStatus(`<b>Material obrigatório.</b><br><span style="display:block;margin-top:8px">Selecione ${escapeHtml(spec.label)} antes de finalizar a solicitação.</span>`, 'error');
+        const card = document.querySelector(`[data-material-card="${spec.type}"]`);
+        card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return false;
       }
     }
@@ -188,7 +199,7 @@
     });
 
     const status = $(`material_status_${spec.type}`);
-    if (status) status.textContent = `${file.name} · enviado com sucesso.`;
+    if (status) { status.textContent = `${file.name} · enviado com sucesso.`; status.className = 'material-upload-status ready'; }
     return result;
   }
 
@@ -320,7 +331,7 @@
         throw new Error('A solicitação não retornou sua identificação completa.');
       }
 
-      showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <b>${escapeHtml(code)}</b>.<br><span style="display:block;margin-top:7px;color:#666">Estamos concluindo o envio dos materiais.</span>`);
+      showStatus(`<b>Solicitação registrada.</b><br>Seu Código DOOX é <strong class="code">${escapeHtml(code)}</strong>.<br><span class="submit-progress">Estamos concluindo o envio dos materiais.</span>`);
       success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       const specs = requiredMaterials(payload.modality);
@@ -353,6 +364,9 @@
       });
 
       sessionStorage.removeItem('dooxClientRequestId');
+      button.dataset.completed = '1';
+      button.disabled = true;
+      button.textContent = 'PEDIDO REGISTRADO';
     } catch (error) {
       const message = clientErrorMessage(error);
       if (code) {
@@ -370,8 +384,13 @@
       success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } finally {
       button.dataset.busy = '0';
-      button.disabled = false;
-      button.textContent = 'FECHAR PEDIDO';
+      if (button.dataset.completed === '1') {
+        button.disabled = true;
+        button.textContent = 'PEDIDO REGISTRADO';
+      } else {
+        button.disabled = false;
+        button.textContent = code ? 'PEDIDO REGISTRADO — CONCLUIR MATERIAIS' : 'TENTAR FINALIZAR NOVAMENTE';
+      }
     }
   }
 

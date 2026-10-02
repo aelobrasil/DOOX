@@ -341,6 +341,35 @@ async function callJson(sqlQuery) {
   return value;
 }
 
+function firstObjectCandidates(value) {
+  const out = [];
+  const push = (v) => { if (v && typeof v === 'object' && !Array.isArray(v) && !out.includes(v)) out.push(v); };
+  push(value);
+  push(value?.pedido);
+  push(value?.data);
+  push(value?.resultado);
+  push(value?.result);
+  push(value?.solicitacao);
+  push(value?.request);
+  if (Array.isArray(value) && value.length) push(value[0]);
+  return out;
+}
+
+function pickCreationIdentity(created) {
+  let pedidoId = '';
+  let code = '';
+  if (typeof created === 'string') {
+    const raw = created.trim();
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)) pedidoId = raw;
+    else if (raw) code = raw;
+  }
+  for (const item of firstObjectCandidates(created)) {
+    pedidoId ||= String(item.pedido_id || item.pedidoId || item.id || item.uuid || '').trim();
+    code ||= String(item.codigo_doox || item.codigoDoox || item.codigo || item.code || '').trim();
+  }
+  return { pedidoId, code };
+}
+
 async function registerRequest(body) {
   if (body.website) throw new Error('Solicitação recusada.');
   if (body.termsAccepted !== true || body.rulesAccepted !== true) {
@@ -415,7 +444,39 @@ async function registerRequest(body) {
     db`SELECT doox_core.criar_pedido(${JSON.stringify(payload)}::jsonb) AS data`
   );
 
-  const pedidoId = created?.pedido_id || created?.pedido?.id || created?.id;
+  let { pedidoId, code: createdCode } = pickCreationIdentity(created);
+
+  // Algumas versões da função SQL devolvem o código, mas não o UUID no primeiro nível.
+  // Recupera o mesmo registro já criado, sem gerar um segundo pedido.
+  if (!pedidoId && createdCode) {
+    try {
+      const rows = await db`
+        SELECT id, codigo_doox
+        FROM doox_core.pedidos
+        WHERE codigo_doox = ${createdCode}
+        ORDER BY criado_em DESC
+        LIMIT 1
+      `;
+      pedidoId = String(rows?.[0]?.id || '').trim();
+      createdCode ||= String(rows?.[0]?.codigo_doox || '').trim();
+    } catch (_) {}
+  }
+
+  // Fallback de idempotência: tenta localizar a solicitação que acabou de ser criada.
+  if (!pedidoId) {
+    try {
+      const rows = await db`
+        SELECT id, codigo_doox
+        FROM doox_core.pedidos
+        WHERE idempotency_key = ${idempotencyKey}
+        ORDER BY criado_em DESC
+        LIMIT 1
+      `;
+      pedidoId = String(rows?.[0]?.id || '').trim();
+      createdCode ||= String(rows?.[0]?.codigo_doox || '').trim();
+    } catch (_) {}
+  }
+
   if (!pedidoId) throw new Error('A solicitação foi registrada sem identificador operacional.');
 
   let pedido = null;
@@ -462,7 +523,18 @@ async function registerRequest(body) {
     }
   }
 
-  let code = String(pedido?.codigo_doox || created?.codigo_doox || created?.pedido?.codigo_doox || '').trim();
+  let code = String(
+    pedido?.codigo_doox ||
+    pedido?.codigo ||
+    createdCode ||
+    created?.codigo_doox ||
+    created?.codigoDoox ||
+    created?.codigo ||
+    created?.code ||
+    created?.pedido?.codigo_doox ||
+    created?.pedido?.codigo ||
+    ''
+  ).trim();
   if (!code) {
     try {
       const rows = await db`
@@ -745,6 +817,8 @@ function publicErrorMessage(error) {
     /Apoiador Individual é exclusivo/i,
     /Termo de Participação Empresarial/i,
     /Solicitação recusada/i,
+    /identificador operacional/i,
+    /identificação não pôde ser lida/i,
     /Token de acompanhamento inválido/i,
     /Token de acompanhamento expirado/i,
   ];
@@ -790,7 +864,7 @@ export default async function handler(req, res) {
       const basic = {
         ok: true,
         service: 'DOOX API',
-        version: '2026.10.1-v75',
+        version: '2026.10.1-v76',
         available: database.reachable === true,
         timestamp: new Date().toISOString(),
       };
