@@ -1,13 +1,13 @@
-/* HOCCO — solicitação + materiais · V76
+/* HOCCO — solicitação + materiais · DOOX V2
    Fluxo público de participação.
    A operação interna permanece no servidor.
 */
 (function () {
   'use strict';
 
-  const PUBLIC_FLOW_VERSION = '2026.10.01-v77';
-  const API = '/api/doox';
-  const MATERIALS_API = '/api/materials';
+  const PUBLIC_FLOW_VERSION = '2026.10.01-v80-doox-v2';
+  const API = '/api/doox-v2';
+  const MATERIALS_API = '/api/materials-v2';
   const LIMITS = { LOGO: 5 * 1024 * 1024, AUDIO: 15 * 1024 * 1024, IMAGEM: 10 * 1024 * 1024, OUTRO: 10 * 1024 * 1024 };
   const ACCEPT = {
     LOGO: ['image/jpeg', 'image/png', 'image/webp'],

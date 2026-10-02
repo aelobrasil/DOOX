@@ -1,4 +1,4 @@
-const CACHE='doox-media-v2026-10-01-v77';
+const CACHE='doox-media-v2026-10-01-v80';
 const MEDIA=['/assets/hocco-simulacao-modelo.mp4','/assets/hocco-simulacao-modelo-poster.jpg','/assets/overlay-audio-notificacao.mp3'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(MEDIA.map(a=>c.add(a)))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
