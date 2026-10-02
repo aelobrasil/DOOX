@@ -1,4 +1,4 @@
-import { isAdmin, clearCookie } from './_doox-v2-auth.js';
+import { isAdmin, clearCookie } from './_hocco-admin-auth.js';
 import { hoccoSupabase } from './_hocco-supabase.js';
 function json(res,status,body){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(body));}
 function bodyOf(req){if(req.body&&typeof req.body==='object')return req.body;try{return req.body?JSON.parse(req.body):{};}catch{return{};}}
