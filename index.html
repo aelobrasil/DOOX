@@ -121,23 +121,7 @@ button,.btn,a[class*="btn"]{transition:transform .22s ease,background .22s ease,
 .doox-stream-label{display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;color:#ff8a38}.doox-stream-label:before{content:"";width:18px;height:2px;background:var(--stream-orange)}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}main>section,.card,.v95-card,[class*="card"],[class*="modalidade"]{transition:none!important;transform:none!important}}
 </style></head>
-<body><div class="doox-intro" id="dooxIntro" aria-label="Bem-vindo ao universo DOOX Studios">
-  <div class="doox-intro-media" aria-hidden="true">
-    <video class="doox-intro-video is-active" id="dooxIntroVideoA" muted playsinline preload="auto"></video>
-    <video class="doox-intro-video" id="dooxIntroVideoB" muted playsinline preload="auto"></video>
-    <div class="doox-intro-shade"></div><div class="doox-intro-grain"></div>
-  </div>
-  <div class="doox-intro-content">
-    <div class="doox-intro-mark" aria-hidden="true"><span>D.</span></div>
-    <div class="doox-intro-studio">DOOX STUDIOS</div>
-    <h1>Bem-vindo ao universo<br>DOOX Studios.</h1>
-    <p>Histórias. Produção. Experiências.</p>
-    <button class="doox-intro-enter" id="dooxIntroEnter" type="button" disabled>ENTRAR NO UNIVERSO</button>
-    <button class="doox-intro-skip" id="dooxIntroSkip" type="button">Pular introdução</button>
-  </div>
-  <div class="doox-intro-progress" aria-hidden="true"><i id="dooxIntroProgress"></i></div>
-</div>
-<header><nav class="nav"><a href="#" class="brand" aria-label="Doox">D<span class="brand-dot"></span></a><div class="navlinks"><a href="#" aria-label="HOCCO">HOCCO</a><a href="#simulacao" data-scroll="simulacao">Como funciona</a><a href="#empresa-ho" data-scroll="empresa-ho">Para empresas</a><a href="#acompanhar" data-scroll="acompanhar">Acompanhar</a><button class="pill orange nav-cta" data-scroll="participar">PARTICIPAR DA HOCCO <span aria-hidden="true">→</span></button></div></nav></header>
+<body><header><nav class="nav"><a href="#" class="brand" aria-label="Doox">D<span class="brand-dot"></span></a><div class="navlinks"><a href="#" aria-label="HOCCO">HOCCO</a><a href="#simulacao" data-scroll="simulacao">Como funciona</a><a href="#empresa-ho" data-scroll="empresa-ho">Para empresas</a><a href="#acompanhar" data-scroll="acompanhar">Acompanhar</a><button class="pill orange nav-cta" data-scroll="participar">PARTICIPAR DA HOCCO <span aria-hidden="true">→</span></button></div></nav></header>
 <main>
 <section class="v95-home"><div class="container">
 <div class="v95-grid">
@@ -271,7 +255,7 @@ document.querySelectorAll('main>section').forEach(s=>s.classList.add('doox-revea
 document.querySelectorAll('[data-scroll]').forEach(a=>a.addEventListener('click',()=>document.body.classList.add('doox-navigating')));window.addEventListener('scroll',()=>document.body.classList.remove('doox-navigating'),{passive:true});
 })();
 </script><script id="doox-stream-v100-js">
-(()=>{document.documentElement.classList.remove('doox-intro-lock');document.body.classList.remove('doox-entered');const sections=[...document.querySelectorAll('main>section')];sections[0]?.classList.add('doox-section-visible');const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('doox-section-visible')}),{threshold:.08,rootMargin:'0px 0px -7% 0px'});sections.slice(1).forEach(s=>io.observe(s));const hero=sections[0];if(hero&&!hero.querySelector('.doox-stream-label')){const anchor=hero.querySelector('h1,h2');if(anchor){const l=document.createElement('div');l.className='doox-stream-label';l.textContent='DOOX STUDIOS · ORIGINAL';anchor.parentNode.insertBefore(l,anchor)}}})();
+(()=>{const sections=[...document.querySelectorAll('main>section')];sections[0]?.classList.add('doox-section-visible');const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('doox-section-visible')}),{threshold:.08,rootMargin:'0px 0px -7% 0px'});sections.slice(1).forEach(s=>io.observe(s));const hero=sections[0];if(hero&&!hero.querySelector('.doox-stream-label')){const anchor=hero.querySelector('h1,h2');if(anchor){const l=document.createElement('div');l.className='doox-stream-label';l.textContent='DOOX STUDIOS · ORIGINAL';anchor.parentNode.insertBefore(l,anchor)}}})();
 </script></body></html>`}
 function openReceipt(d){const w=window.open('','_blank','noopener,noreferrer');if(!w)return alert('Permita a abertura de uma nova janela para gerar o comprovante.');w.document.open();w.document.write(buildReceiptHtml(d));w.document.close()}
 const HOCCO_PIX_KEY='c9316176-6f92-413e-9209-63ae6f661ba9';
