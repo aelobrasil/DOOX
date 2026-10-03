@@ -365,3 +365,27 @@ img:not(.sim-logo-img){display:none!important}
 main > section img:not(.sim-logo-img) {
   display:none!important;
 }
+
+/* V99 — cinematic DOOX universe entry */
+.doox-intro{position:fixed;inset:0;z-index:99999;background:#070707;color:#fff;display:grid;place-items:center;overflow:hidden;isolation:isolate;transition:opacity .75s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1),filter .8s ease}
+.doox-intro.is-leaving{opacity:0;transform:scale(1.035);filter:blur(12px);pointer-events:none}
+.doox-intro-media,.doox-intro-video,.doox-intro-shade,.doox-intro-grain{position:absolute;inset:0;width:100%;height:100%}
+.doox-intro-video{object-fit:cover;opacity:0;transform:scale(1.06);filter:saturate(.82) contrast(1.05);transition:opacity 1.35s ease,transform 7s linear}
+.doox-intro-video.is-active{opacity:.46;transform:scale(1)}
+.doox-intro-shade{background:linear-gradient(180deg,rgba(0,0,0,.38),rgba(0,0,0,.64)),radial-gradient(circle at 50% 42%,rgba(255,111,0,.10),transparent 42%)}
+.doox-intro-grain{opacity:.09;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E")}
+.doox-intro-content{position:relative;z-index:2;text-align:center;padding:28px;max-width:900px;animation:dooxIntroIn 1.2s cubic-bezier(.2,.8,.2,1) both}
+.doox-intro-mark{width:92px;height:92px;border:1px solid rgba(255,255,255,.24);border-radius:26px;display:grid;place-items:center;margin:0 auto 18px;backdrop-filter:blur(16px);box-shadow:0 18px 80px rgba(0,0,0,.32);animation:dooxMark 2.8s cubic-bezier(.2,.8,.2,1) both}
+.doox-intro-mark span{font-size:42px;font-weight:950;letter-spacing:-.08em;color:#ff6b00;transform:translateX(-2px)}
+.doox-intro-studio{font-size:11px;letter-spacing:.32em;font-weight:900;margin-bottom:22px;color:rgba(255,255,255,.72)}
+.doox-intro h1{font-size:clamp(38px,7vw,86px);line-height:.94;letter-spacing:-.055em;margin:0;font-weight:950}
+.doox-intro p{font-size:clamp(14px,2vw,19px);letter-spacing:.08em;color:rgba(255,255,255,.66);margin:22px 0 30px}
+.doox-intro-enter{border:1px solid rgba(255,255,255,.26);background:#ff6b00;color:#fff;border-radius:999px;padding:15px 24px;font:900 12px/1 inherit;letter-spacing:.12em;cursor:pointer;opacity:0;transform:translateY(12px);transition:.5s ease;box-shadow:0 14px 50px rgba(255,107,0,.22)}
+.doox-intro-enter.is-ready{opacity:1;transform:none}.doox-intro-enter:disabled{pointer-events:none}.doox-intro-enter:hover{transform:translateY(-2px) scale(1.015)}
+.doox-intro-skip{display:block;margin:16px auto 0;border:0;background:transparent;color:rgba(255,255,255,.48);font:700 10px/1 inherit;letter-spacing:.1em;cursor:pointer}
+.doox-intro-progress{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.08);z-index:3}.doox-intro-progress i{display:block;width:0;height:100%;background:#ff6b00;transition:width 3s linear}.doox-intro-progress i:not(.is-ready){width:100%}
+.doox-reveal{opacity:0;transform:translateY(34px) scale(.992);filter:blur(8px);transition:opacity .75s ease,transform .85s cubic-bezier(.2,.8,.2,1),filter .75s ease}.doox-reveal.is-visible{opacity:1;transform:none;filter:none}
+body.doox-navigating main{transition:filter .25s ease,opacity .25s ease;filter:blur(2px);opacity:.78}
+@keyframes dooxIntroIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}@keyframes dooxMark{0%{opacity:0;transform:scale(.72) rotate(-8deg);filter:blur(12px)}55%{opacity:1;transform:scale(1.04) rotate(1deg);filter:none}100%{transform:scale(1)}}
+@media(max-width:700px){.doox-intro-mark{width:76px;height:76px;border-radius:22px}.doox-intro h1{font-size:clamp(38px,12vw,58px)}.doox-intro-content{padding:22px}.doox-intro-video{object-position:center}}
+@media(prefers-reduced-motion:reduce){.doox-intro *,.doox-reveal{animation:none!important;transition:none!important}.doox-reveal{opacity:1;transform:none;filter:none}}
