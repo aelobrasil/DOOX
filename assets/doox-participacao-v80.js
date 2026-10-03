@@ -35,7 +35,7 @@
   function saveLastRequest(order, payload, code, tracking) {
     try {
       localStorage.setItem(RETURN_KEY, JSON.stringify({
-        numero: Number(order?.numero || String(code || '').replace(/\D/g, '') || 0), code: code || '',
+        numero: Number(order?.numero || 0), code: code || order?.codigo_doox || '',
         token: String(order?.trackingToken || ''), tracking: tracking || '', modality: payload.modality || '',
         moment: payload.moment || '', quantity: payload.quantity || 1, audience: payload.audience || payload.ptype || 'empresa',
         name: payload.name || '', company: payload.company || '', profile: payload.profile || '', segment: payload.segment || '', savedAt: Date.now()
@@ -58,11 +58,11 @@
     },140);
   }
   function renderReturnPanel(){
-    const last=getLastRequest(); if(!last?.numero)return;
+    const last=getLastRequest(); if(!last?.code&&!last?.numero)return;
     const host=document.createElement('aside');host.className='hocco-return';host.innerHTML='<button class="hocco-return-close" type="button" aria-label="Fechar">×</button><small>BEM-VINDO DE VOLTA</small><strong>'+escapeHtml(last.name||last.company||'HOCCO')+'</strong><span>Última solicitação <b>'+escapeHtml(last.code||('#'+String(last.numero).padStart(6,'0')))+'</b></span><em>'+escapeHtml(last.modality||'Participação HOCCO')+'</em><div><button type="button" data-return="continue">CONTINUAR →</button><button type="button" data-return="repeat">SOLICITAR NOVAMENTE</button><button type="button" data-return="edit">EDITAR INSERÇÃO</button></div>';
     document.body.appendChild(host);
     host.querySelector('.hocco-return-close')?.addEventListener('click',()=>host.remove());
-    host.querySelector('[data-return="continue"]')?.addEventListener('click',()=>{if($('trackNumber'))$('trackNumber').value=String(last.numero).padStart(6,'0');if($('track'))$('track').value=last.token||'';$('acompanhar')?.scrollIntoView({behavior:'smooth'});if(last.token)setTimeout(()=>$('trackBtn')?.click(),350)});
+    host.querySelector('[data-return="continue"]')?.addEventListener('click',()=>{if($('trackNumber'))$('trackNumber').value=last.code||String(last.numero).padStart(6,'0');if($('track'))$('track').value=last.token||'';$('acompanhar')?.scrollIntoView({behavior:'smooth'});if(last.token)setTimeout(()=>$('trackBtn')?.click(),350)});
     host.querySelector('[data-return="repeat"]')?.addEventListener('click',()=>prefillFromLast(false));
     host.querySelector('[data-return="edit"]')?.addEventListener('click',()=>prefillFromLast(true));
   }
