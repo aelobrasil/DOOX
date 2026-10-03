@@ -605,3 +605,44 @@ button,.pill{box-shadow:none!important}
 .doox-footer-min .footer-links button:hover,.doox-footer-min .footer-links a:hover{background:var(--ess-orange)!important;border-color:var(--ess-orange)!important}
 @media(max-width:760px){.business-entry,.participation,.simulator,#acompanhar{padding-top:64px!important;padding-bottom:64px!important}}
 `;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply()})();
+
+/* V105 — full-site Essencia enforcement + official HOCCO motto */
+(()=>{const apply=()=>{if(document.getElementById('dooxV105Full'))return;
+const hero=document.querySelector('.v95-cinema-copy h2');if(hero)hero.innerHTML='Você chegou<br>no meio da história.';
+const s=document.createElement('style');s.id='dooxV105Full';s.textContent=`
+:root{--h-bg:#f5f0e7;--h-paper:#fffaf2;--h-ink:#090908;--h-muted:#625d55;--h-line:#d8d0c3;--h-orange:#ff5a16}
+html,body,main,main>section,.business-entry,.participation,.simulator,.formats,.tracking,.legal-body,.info-body,.company-term-scroll{background:var(--h-bg)!important;color:var(--h-ink)!important}
+main>section:nth-of-type(even){background:var(--h-paper)!important}
+body *{border-color:var(--h-line)}
+h1,h2,h3,h4,h5,h6,strong,b,label,.title,.section-title{color:var(--h-ink)!important}
+p,small,.muted,.hint,.sub,.desc{color:var(--h-muted)!important}
+.eyebrow,.section-kicker,.rule-kicker,[class*="kicker"]{color:var(--h-orange)!important}
+a{color:inherit}
+header{background:rgba(255,250,242,.94)!important;color:var(--h-ink)!important}
+header a{color:var(--h-ink)!important}
+.v95-home,.v95-home *{border-color:var(--h-line)}
+.v95-home{background:var(--h-bg)!important}
+.v95-cinema-copy h2{color:var(--h-ink)!important}
+.v95-cinema-copy p{color:var(--h-muted)!important}
+.v95-actions a{background:var(--h-ink)!important;color:#fff!important}
+.v95-actions button,.nav-cta,.orange,.primary{background:var(--h-orange)!important;color:#fff!important;border-color:var(--h-orange)!important}
+.v95-strip,.doox-d5-index,.doox-d5-row{background:transparent!important;color:var(--h-ink)!important}
+.v95-dashboard,.v95-episode,.v95-capacity,.v95-mini-grid article,.v95-control{background:var(--h-paper)!important;color:var(--h-ink)!important}
+.business-entry,.business-grid,.business-rule,.participation,.simulator,#simulacao,#participar,#formatos,#acompanhar{color:var(--h-ink)!important}
+.type-card,.mode-card,.format-card,.form-shell,.sim-shell,.tracking-result,.totalbox,.review,.company-term-wrap,.info-note,.request-summary,.step-card,.price-card{background:var(--h-paper)!important;color:var(--h-ink)!important;box-shadow:none!important}
+.type-card *, .mode-card *, .format-card *, .form-shell *, .sim-shell *, .tracking-result *, .totalbox *, .review *, .company-term-wrap *{color:inherit}
+input,select,textarea{background:#fff!important;color:var(--h-ink)!important;border-color:var(--h-line)!important}
+input::placeholder,textarea::placeholder{color:#8a8379!important}
+input:focus,select:focus,textarea:focus{border-color:var(--h-orange)!important;outline-color:rgba(255,90,22,.12)!important}
+button:not(.primary):not(.orange):not(.nav-cta):not(.legal-close):not(.company-term-close){color:var(--h-ink)}
+.info-modal.open,.company-term-modal.open,.legal-modal.open{background:rgba(12,10,8,.66)!important}
+.info-box,.company-term-box,.legal-box{background:var(--h-paper)!important;color:var(--h-ink)!important}
+.info-head,.company-term-headbar,.legal-head{background:var(--h-ink)!important;color:#fff!important}
+.info-head *,.company-term-headbar *,.legal-head *{color:#fff!important}
+.info-body,.company-term-scroll,.legal-body,.legal-content{background:var(--h-paper)!important;color:var(--h-ink)!important}
+.legal-tabs{background:#eee7dc!important}
+.doox-footer-min{background:var(--h-ink)!important;color:#fff!important}
+.doox-footer-min *{color:#fff!important}
+.doox-footer-min button,.doox-footer-min a{background:transparent!important}
+[style*="#10233f"],[style*="#183454"],[style*="#24486f"],[style*="#687487"],[style*="#5d6b7e"],[style*="#69778a"],[style*="#526176"]{color:var(--h-ink)!important}
+`;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply()})();
