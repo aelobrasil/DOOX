@@ -693,3 +693,44 @@ button:not(.primary):not(.orange):not(.nav-cta):not(.legal-close):not(.company-t
 @media(max-width:980px){#cards{grid-template-columns:repeat(2,1fr)!important}.business-grid,.sim-layout{grid-template-columns:1fr!important}.business-card{position:static!important}.context-grid{grid-template-columns:1fr!important}}
 @media(max-width:760px){.section-head{grid-template-columns:1fr!important;gap:14px!important}.business-rule{grid-template-columns:1fr!important}#cards{grid-template-columns:1fr!important}#participar .step{grid-template-columns:1fr!important;gap:14px!important}#acompanhar .track-grid{grid-template-columns:1fr!important}}
 `;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply()})();
+
+/* V107 — route-based multipage experience */
+(()=>{const run=()=>{if(document.getElementById('dooxV107Routes'))return;
+ const path=(location.pathname.replace(/\/+$/,'')||'/').toLowerCase();
+ const map={
+  '/empresas':['empresa-ho'],
+  '/insercoes':['formatos','publicidade-contextual'],
+  '/simulacao':['simulacao'],
+  '/participar':['participar'],
+  '/acompanhar':['acompanhar']
+ };
+ const titles={'/':'HOCCO — Você chegou no meio da história','/empresas':'Empresas — HOCCO','/insercoes':'Inserções — HOCCO','/simulacao':'Simulação — HOCCO','/participar':'Participar — HOCCO','/acompanhar':'Acompanhar — HOCCO'};
+ if(titles[path])document.title=titles[path];
+ const sections=[...document.querySelectorAll('main>section')];
+ if(map[path]) sections.forEach(x=>x.style.setProperty('display',map[path].includes(x.id)?'block':'none','important'));
+ else if(path==='/') sections.forEach((x,i)=>x.style.setProperty('display',i===0?'block':'none','important'));
+ const header=document.querySelector('header .nav'); if(header) header.innerHTML=`
+  <a href="/" class="brand route-link" aria-label="HOCCO">HOCCO<span class="brand-dot"></span></a>
+  <div class="navlinks">
+   <a class="route-link" href="/">01 SÉRIE</a>
+   <a class="route-link" href="/empresas">02 EMPRESAS</a>
+   <a class="route-link" href="/insercoes">03 INSERÇÕES</a>
+   <a class="route-link" href="/acompanhar">04 ACOMPANHAR</a>
+   <a class="pill orange nav-cta route-link" href="/participar">PARTICIPAR <span aria-hidden="true">→</span></a>
+  </div>`;
+ document.querySelectorAll('[data-scroll="empresa-ho"]').forEach(x=>{x.removeAttribute('data-scroll');x.addEventListener('click',e=>{e.preventDefault();go('/empresas')})});
+ document.querySelectorAll('[data-scroll="formatos"]').forEach(x=>{x.removeAttribute('data-scroll');x.addEventListener('click',e=>{e.preventDefault();go('/insercoes')})});
+ document.querySelectorAll('[data-scroll="simulacao"]').forEach(x=>{x.removeAttribute('data-scroll');x.addEventListener('click',e=>{e.preventDefault();go('/simulacao')})});
+ document.querySelectorAll('[data-scroll="participar"]').forEach(x=>{x.removeAttribute('data-scroll');x.addEventListener('click',e=>{e.preventDefault();go('/participar')})});
+ document.querySelectorAll('[data-scroll="acompanhar"]').forEach(x=>{x.removeAttribute('data-scroll');x.addEventListener('click',e=>{e.preventDefault();go('/acompanhar')})});
+ document.querySelectorAll('.doox-footer-min a[href^="#"]').forEach(x=>{if(x.getAttribute('href')==='#acompanhar')x.setAttribute('href','/acompanhar')});
+ const s=document.createElement('style');s.id='dooxV107Routes';s.textContent=`
+ body{opacity:1;transition:opacity .22s ease,transform .22s ease}body.route-leave{opacity:0;transform:translateY(5px)}
+ header .brand{font-size:18px!important;letter-spacing:.22em!important;font-weight:900!important;text-decoration:none!important}
+ header .brand-dot{display:inline-block!important;width:7px!important;height:7px!important;margin-left:5px!important}
+ main>section{min-height:calc(100vh - 180px)}
+ @media(max-width:760px){header .navlinks a:not(.nav-cta){display:none!important}}
+ `;document.head.appendChild(s);
+ document.querySelectorAll('a.route-link').forEach(a=>a.addEventListener('click',e=>{const u=new URL(a.href,location.href);if(u.origin===location.origin){e.preventDefault();go(u.pathname)}}));
+ function go(url){if(url===location.pathname)return;document.body.classList.add('route-leave');setTimeout(()=>location.href=url,180)}
+ }; if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run()})();
