@@ -8,6 +8,7 @@
   const PUBLIC_FLOW_VERSION = '2026.10.02-v81-hocco-v1.3';
   const API = '/api/hocco-v1';
   const MATERIALS_API = '/api/hocco-materials-v1';
+  const PIX_KEY = 'c9316176-6f92-413e-9209-63ae6f661ba9';
   const LIMITS = { LOGO: 5 * 1024 * 1024, AUDIO: 15 * 1024 * 1024, IMAGEM: 10 * 1024 * 1024, OUTRO: 10 * 1024 * 1024 };
   const ACCEPT = {
     LOGO: ['image/jpeg', 'image/png', 'image/webp'],
@@ -30,6 +31,41 @@
   const $ = (id) => document.getElementById(id);
   const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
+  const RETURN_KEY = 'hocco:lastRequest:v1';
+  function saveLastRequest(order, payload, code, tracking) {
+    try {
+      localStorage.setItem(RETURN_KEY, JSON.stringify({
+        numero: Number(order?.numero || String(code || '').replace(/\D/g, '') || 0), code: code || '',
+        token: String(order?.trackingToken || ''), tracking: tracking || '', modality: payload.modality || '',
+        moment: payload.moment || '', quantity: payload.quantity || 1, audience: payload.audience || payload.ptype || 'empresa',
+        name: payload.name || '', company: payload.company || '', profile: payload.profile || '', segment: payload.segment || '', savedAt: Date.now()
+      }));
+    } catch (_) {}
+  }
+  function getLastRequest(){ try{return JSON.parse(localStorage.getItem(RETURN_KEY)||'null')}catch(_){return null} }
+  function prefillFromLast(editMode){
+    const last=getLastRequest(); if(!last)return;
+    const audience=last.audience==='pessoa'?'pessoa':'empresa', radio=document.querySelector('input[name="ptype"][value="'+audience+'"]');
+    if(radio){radio.checked=true;radio.dispatchEvent(new Event('change',{bubbles:true}))}
+    setTimeout(()=>{
+      if($('mode')){$('mode').value=last.modality||'';$('mode').dispatchEvent(new Event('change',{bubbles:true}))}
+      setTimeout(()=>{if($('range')&&last.moment){$('range').value=last.moment;$('range').dispatchEvent(new Event('change',{bubbles:true}))}},100);
+      if($('qty')){$('qty').value=last.quantity||1;$('qty').dispatchEvent(new Event('input',{bubbles:true}))}
+      if($('name'))$('name').value=last.name||''; if($('fantasy'))$('fantasy').value=last.company||'';
+      if($('profile'))$('profile').value=last.profile||''; if($('segment'))$('segment').value=last.segment||'';
+      $('participar')?.scrollIntoView({behavior:'smooth',block:'start'});
+      if(editMode) showStatus('<b>Inserção carregada para edição.</b><br><span style="display:block;margin-top:6px">Revise os dados e envie uma nova solicitação. O pedido já registrado permanece preservado no histórico.</span>');
+    },140);
+  }
+  function renderReturnPanel(){
+    const last=getLastRequest(); if(!last?.numero)return;
+    const host=document.createElement('aside');host.className='hocco-return';host.innerHTML='<button class="hocco-return-close" type="button" aria-label="Fechar">×</button><small>BEM-VINDO DE VOLTA</small><strong>'+escapeHtml(last.name||last.company||'HOCCO')+'</strong><span>Última solicitação <b>'+escapeHtml(last.code||('#'+String(last.numero).padStart(6,'0')))+'</b></span><em>'+escapeHtml(last.modality||'Participação HOCCO')+'</em><div><button type="button" data-return="continue">CONTINUAR →</button><button type="button" data-return="repeat">SOLICITAR NOVAMENTE</button><button type="button" data-return="edit">EDITAR INSERÇÃO</button></div>';
+    document.body.appendChild(host);
+    host.querySelector('.hocco-return-close')?.addEventListener('click',()=>host.remove());
+    host.querySelector('[data-return="continue"]')?.addEventListener('click',()=>{if($('trackNumber'))$('trackNumber').value=String(last.numero).padStart(6,'0');if($('track'))$('track').value=last.token||'';$('acompanhar')?.scrollIntoView({behavior:'smooth'});if(last.token)setTimeout(()=>$('trackBtn')?.click(),350)});
+    host.querySelector('[data-return="repeat"]')?.addEventListener('click',()=>prefillFromLast(false));
+    host.querySelector('[data-return="edit"]')?.addEventListener('click',()=>prefillFromLast(true));
+  }
 
   function currentAudience() {
     const checked = document.querySelector('input[name="ptype"]:checked');
@@ -359,8 +395,15 @@
         `Olá, DOOX. Minha solicitação foi registrada.\n\nSolicitação: ${code}\nModalidade: ${payload.modality}\nQuantidade: ${payload.quantity}\nValor total: ${brl(total)}${tracking ? `\n\nAcompanhamento: ${tracking}` : ''}`
       );
 
-      const trackingBlock = tracking ? confirmationLinks(code, tracking) : `<div class="actions"><button type="button" class="pill dark" id="copyCodeButton">COPIAR CÓDIGO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
-      showStatus(`<b>Solicitação concluída.</b><br>Solicitação: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde o número da solicitação. Ele identifica este pedido durante todo o atendimento.</span>${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
+      const trackingBlock = tracking ? confirmationLinks(code, tracking) : `<div class="actions"><button type="button" class="pill dark" id="copyCodeButton">COPIAR SOLICITAÇÃO</button></div><div id="copyCodeStatus" class="sim-note" style="color:#666;margin-top:8px"></div>`;
+      const pixBlock = `<div style="margin-top:14px;padding:13px 14px;border:1px solid #ddd;border-radius:14px;background:#fff"><b>PAGAMENTO PIX</b><div style="font-size:12px;color:#666;margin-top:5px">Valor: <b>${brl(total)}</b></div><div style="font-size:11px;word-break:break-all;margin-top:8px">${PIX_KEY}</div><div class="actions" style="margin-top:9px"><button type="button" class="pill orange" id="copyPixKeyButton">COPIAR CHAVE PIX</button></div><div id="copyPixKeyStatus" class="sim-note" style="color:#666;margin-top:6px">A confirmação do pagamento é feita pela HOCCO após o recebimento.</div></div>`;
+      showStatus(`<b>Solicitação concluída.</b><br>Solicitação: <b>${escapeHtml(code)}</b><br>Modalidade: <b>${escapeHtml(payload.modality)}</b><br>Quantidade: <b>${payload.quantity}</b><br>Valor unitário: <b>${brl(unit)}</b><br>Valor total: <b>${brl(total)}</b><br>${specs.length ? '<b>Materiais:</b> recebidos com sucesso.<br>' : ''}<span style="display:block;margin-top:8px;color:#666">Guarde o número da solicitação. Ele identifica este pedido durante todo o atendimento.</span>${pixBlock}${trackingBlock}<a class="pill dark" target="_blank" rel="noopener" href="${escapeHtml(wa)}">WHATSAPP OFICIAL</a>`);
+
+      const pixBtn = $('copyPixKeyButton');
+      pixBtn?.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(PIX_KEY); if ($('copyPixKeyStatus')) $('copyPixKeyStatus').textContent = 'Chave Pix copiada.'; }
+        catch (_) { if ($('copyPixKeyStatus')) $('copyPixKeyStatus').textContent = `Chave Pix: ${PIX_KEY}`; }
+      });
 
       const copyBtn = $('copyCodeButton');
       copyBtn?.addEventListener('click', async () => {
@@ -372,6 +415,7 @@
         }
       });
 
+      saveLastRequest(order, payload, code, tracking);
       sessionStorage.removeItem('hoccoClientRequestId');
       button.dataset.completed = '1';
       button.disabled = true;
@@ -407,6 +451,7 @@
 
   function install() {
     renderMaterials();
+    setTimeout(renderReturnPanel, 650);
 
     $('mode')?.addEventListener('change', () => setTimeout(renderMaterials, 0));
     document.querySelectorAll('input[name="ptype"]').forEach((r) => r.addEventListener('change', () => setTimeout(renderMaterials, 0)));
@@ -419,4 +464,68 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
   else install();
+})();
+
+/* HOCCO V82 UI */
+(()=>{
+  const css=document.createElement('link'); css.rel='stylesheet'; css.href='/assets/hocco-v82.css?v=96.0.0'; document.head.appendChild(css);
+  const init=()=>{
+    document.body.classList.add('v82');
+    const nav=document.querySelector('.navlinks');
+    if(nav){
+      nav.innerHTML='<a href="#" data-v82-scroll="top">HOCCO</a><a href="#empresa-ho" data-v82-scroll="empresa-ho">Como funciona</a><a href="#simulacao" data-v82-scroll="simulacao">Para empresas</a><a href="#acompanhar" data-v82-scroll="acompanhar">Acompanhar</a><button class="pill orange" data-v82-scroll="participar">PARTICIPAR DA HOCCO →</button>';
+    }
+    document.querySelectorAll('[data-v82-scroll]').forEach(el=>el.addEventListener('click',e=>{
+      e.preventDefault(); const id=el.dataset.v82Scroll;
+      if(id==='top') return window.scrollTo({top:0,behavior:'smooth'});
+      document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});
+    }));
+    const hero=document.querySelector('.hero');
+    if(hero){
+      const eye=hero.querySelector('.eyebrow'), title=hero.querySelector('h1'), p=hero.querySelector('.hero-copy p'), actions=hero.querySelector('.hero-actions');
+      if(eye) eye.textContent='SÉRIE ORIGINAL DOOX';
+      if(title) title.innerHTML='HOCCO';
+      if(p) p.textContent='Uma série construída enquanto a história acontece. Vida real, empresas e projetos acompanhados de dentro, em POV.';
+      if(actions) actions.innerHTML='<a class="v82-link" href="https://www.youtube.com/@hoccpov" target="_blank" rel="noopener">ASSISTIR HOCCO ↗</a><button class="pill orange" data-v82-join>PARTICIPAR DA SÉRIE →</button>';
+      actions?.querySelector('[data-v82-join]')?.addEventListener('click',()=>document.getElementById('simulacao')?.scrollIntoView({behavior:'smooth'}));
+      if(!document.querySelector('.v82-context')){
+        const strip=document.createElement('div'); strip.className='v82-context';
+        strip.innerHTML='<div class="v82-context-inner"><b>HOCCO</b><span>SÉRIE BIOGRÁFICA</span><span>POV</span><span>VIDA REAL</span><span>EMPRESAS</span><span>PROJETOS</span></div>';
+        hero.insertAdjacentElement('afterend',strip);
+      }
+    }
+    const sim=document.getElementById('simulacao');
+    const simHead=sim?.querySelector('.section-head h2'); if(simHead) simHead.textContent='SUA EMPRESA DENTRO DA HISTÓRIA.';
+    const participar=document.getElementById('participar');
+    const partHead=participar?.querySelector('.section-head h2'); if(partHead) partHead.textContent='ENTRE NA HISTÓRIA.';
+    setupSteps();
+  };
+  function setupSteps(){
+    const shell=document.querySelector('#participar .form-shell'); if(!shell||shell.dataset.v82Steps) return;
+    const steps=[...shell.querySelectorAll(':scope > .step')]; if(steps.length<2) return;
+    shell.dataset.v82Steps='1';
+    const groups=[
+      {label:'01 Participação',from:0,to:Math.min(2,steps.length-1)},
+      {label:'02 Dados',from:Math.min(3,steps.length-1),to:Math.min(4,steps.length-1)},
+      {label:'03 Materiais',from:Math.min(5,steps.length-1),to:Math.min(5,steps.length-1)},
+      {label:'04 Revisão',from:Math.min(6,steps.length-1),to:steps.length-1}
+    ].filter((g,i,a)=>g.from<=g.to && !a.slice(0,i).some(x=>x.from===g.from&&x.to===g.to));
+    let page=0;
+    const progress=document.createElement('div'); progress.className='v82-form-progress';
+    const nav=document.createElement('div'); nav.className='v82-form-nav';
+    nav.innerHTML='<button type="button" class="v82-prev">← VOLTAR</button><button type="button" class="v82-next">CONTINUAR →</button>';
+    shell.prepend(progress); shell.append(nav);
+    const render=()=>{
+      steps.forEach(s=>s.classList.remove('v82-step-active'));
+      const g=groups[page]; for(let i=g.from;i<=g.to;i++) steps[i]?.classList.add('v82-step-active');
+      progress.innerHTML=groups.map((x,i)=>'<button type="button" data-page="'+i+'" class="'+(i===page?'active':'')+'">'+x.label+'</button>').join('');
+      progress.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=Number(b.dataset.page);render();shell.scrollIntoView({behavior:'smooth',block:'start'})});
+      nav.querySelector('.v82-prev').style.visibility=page===0?'hidden':'visible';
+      nav.querySelector('.v82-next').style.display=page===groups.length-1?'none':'inline-flex';
+    };
+    nav.querySelector('.v82-prev').onclick=()=>{if(page>0){page--;render();}};
+    nav.querySelector('.v82-next').onclick=()=>{if(page<groups.length-1){page++;render();}};
+    render();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();

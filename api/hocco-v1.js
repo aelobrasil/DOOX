@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import QRCode from 'qrcode';
+import { pixPayload, pixPublicInfo } from './_hocco-pix.js';
 import {
   HOCCO_API_VERSION,
   HOCCO_SOURCE_TAG,
@@ -86,9 +88,14 @@ async function track(req, body) {
   if (!Number.isInteger(numero) || numero <= 0 || !/^[0-9a-f-]{36}$/i.test(token)) {
     return {ok:false, erro:'DADOS_DE_ACOMPANHAMENTO_INVALIDOS'};
   }
-  return await hoccoSupabase('/rest/v1/rpc/acompanhar_solicitacao', {
+  const data = await hoccoSupabase('/rest/v1/rpc/acompanhar_solicitacao', {
     method:'POST', body:JSON.stringify({p_numero:numero,p_token:token})
   });
+  if (data?.ok && data?.status_pagamento === 'AGUARDANDO_PAGAMENTO') {
+    const payload = pixPayload({amount:Number(data.valor_total || 0),txid:'HOCCO'+String(numero).padStart(6,'0')});
+    data.pagamento_pix = {...pixPublicInfo,payload,qrDataUrl:await QRCode.toDataURL(payload,{width:320,margin:2,errorCorrectionLevel:'M'})};
+  }
+  return data;
 }
 function publicMessage(error) {
   const raw = String(error?.message || '');
