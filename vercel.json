@@ -93,7 +93,7 @@
       "destination": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"
     },
     {
-      "source": "/(empresas|pessoas|simulacao|participar|acompanhar|avisos|termos|privacidade)",
+      "source": "/(empresas|pessoas|insercoes|simulacao|participar|acompanhar|avisos|termos|privacidade)",
       "destination": "/index.html"
     }
   ]
