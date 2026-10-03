@@ -23,7 +23,7 @@ async function insertClient(p){
 }
 async function registerRequest(req,p){
  if(p.website)throw Error('Solicitação inválida.');
- const tipo=p.type==='PESSOA_FISICA'?'PESSOA_FISICA':'EMPRESA',modalidade=MODE[clean(p.modality)]||clean(p.modality).toUpperCase(),faixa=clean(p.moment,10).toUpperCase()||null,qty=Math.max(1,Math.min(50,Number(p.quantity)||1));
+ const tipo=p.type==='PESSOA_FISICA'?'PESSOA_FISICA':'EMPRESA',modalidade=MODE[clean(p.modality)]||clean(p.modality).toUpperCase(),faixa=(()=>{const x=clean(p.moment,40);if(/^F[1-5]$/i.test(x))return x.toUpperCase();const a=['00:30–02:00','02:00–04:00','04:00–06:30','06:30–09:00','09:00–11:00'];const i=a.indexOf(x);return i>=0?'F'+(i+1):null})(),qty=Math.max(1,Math.min(50,Number(p.quantity)||1));
  if(tipo==='PESSOA_FISICA'&&modalidade!=='APOIADOR_INDIVIDUAL')throw Error('Pessoa física participa somente como Apoiador Individual.');
  if(tipo==='EMPRESA'&&modalidade==='APOIADOR_INDIVIDUAL')throw Error('Apoiador Individual é exclusivo para pessoa física.');
  if(!p.termsAccepted||!p.rulesAccepted)throw Error('Aceite os Termos de Uso e as Regras de Participação.');
