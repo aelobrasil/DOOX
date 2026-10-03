@@ -345,3 +345,23 @@ body.v82 .business-card{box-shadow:none!important}
 body.v82 .card,body.v82 .context-card,body.v82 .business-rule>div,body.v82 .sim-shell,body.v82 .form-shell,body.v82 .track-shell{box-shadow:none!important}
 img:not(.sim-logo-img){display:none!important}
 @media(max-width:780px){.v95-grid{grid-template-columns:1fr!important}.v95-cinema{min-height:535px!important}}
+
+
+/* V97 — remove large editorial imagery; preserve only functional simulation/logo media */
+.v90-cover,
+.v90-image-break,
+.v90-ticket,
+.v93-photo-section,
+.v93-ticket,
+.v88-gallery,
+.v89-gallery,
+.v84-poster,
+.hero-poster,
+.v93-photo-card,
+.v93-photo-wide,
+.v93-production,
+.v93-production .v93-photo-card,
+.v95-home img:not(.sim-logo-img),
+main > section img:not(.sim-logo-img) {
+  display:none!important;
+}
