@@ -529,3 +529,20 @@
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
+
+/* V103 — rounded, bounded visual system */
+(()=>{const apply=()=>{if(document.getElementById('dooxV103Rounded'))return;const s=document.createElement('style');s.id='dooxV103Rounded';s.textContent=`
+header{top:12px!important;width:min(calc(100% - 24px),1440px)!important;margin:0 auto!important;left:0!important;right:0!important;border-radius:42px!important;overflow:hidden!important}
+header .nav{max-width:none!important;width:100%!important}
+main>section>.container{width:min(calc(100% - 32px),1240px)!important;margin-left:auto!important;margin-right:auto!important}
+.doox-footer-min{width:min(calc(100% - 24px),1440px)!important;margin:56px auto 12px!important;border-radius:42px!important;overflow:hidden!important}
+.pill,input,select{border-radius:999px!important}
+textarea{border-radius:24px!important}
+.type-card,.mode-card,.form-shell,.sim-shell,.tracking-result,.totalbox,.review,.company-term-wrap,.info-note,.info-grid article,#requestSummary{border-radius:28px!important}
+.info-box,.company-term-box,.legal-box{border-radius:42px!important}
+.legal-close,.company-term-close{border-radius:50%!important}
+.doox-d5-row{border-radius:22px!important;padding-left:18px!important;padding-right:18px!important;transition:background .22s ease,transform .22s ease!important}
+.doox-d5-row:hover{background:rgba(9,9,9,.045)!important;transform:translateX(4px)}
+.footer-links button,.footer-links a{border-radius:999px!important;padding:8px 12px!important}
+@media(max-width:760px){header{top:8px!important;width:calc(100% - 16px)!important}.doox-footer-min{width:calc(100% - 16px)!important;margin:36px auto 8px!important;border-radius:28px!important}main>section>.container{width:calc(100% - 20px)!important}.info-box,.company-term-box,.legal-box{border-radius:28px!important}}
+`;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply()})();
