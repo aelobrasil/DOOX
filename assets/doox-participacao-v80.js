@@ -567,3 +567,41 @@ textarea{border-radius:24px!important}
 .v95-home .v95-strip{background:transparent!important;color:#090909!important;border-top:1px solid #b9b5ab!important;border-bottom:1px solid #b9b5ab!important;border-radius:0!important;box-shadow:none!important}
 @media(max-width:760px){.v95-home{padding-top:100px!important}.v95-home .v95-cinema-copy h1{font-size:clamp(78px,27vw,150px)!important}.v95-home .v95-actions{align-items:stretch!important}.v95-home .v95-actions a,.v95-home .v95-actions button{width:100%!important}}
 `;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply()})();
+
+/* V104 — Concept 1 ESSENCIA, full-site visual system */
+(()=>{const apply=()=>{if(document.getElementById('dooxV104Essencia'))return;const s=document.createElement('style');s.id='dooxV104Essencia';s.textContent=`
+:root{--ess-bg:#f4f0e8;--ess-paper:#fbf8f1;--ess-ink:#0a0a09;--ess-muted:#676158;--ess-line:#d8d1c5;--ess-orange:#ff5a16;--ess-r:26px;--ess-r2:38px}
+html,body{background:var(--ess-bg)!important;color:var(--ess-ink)!important}
+body{font-family:Arial,Helvetica,sans-serif!important}
+header{background:rgba(251,248,241,.91)!important;color:var(--ess-ink)!important;border:1px solid rgba(10,10,9,.09)!important;box-shadow:0 10px 36px rgba(30,24,18,.06)!important;backdrop-filter:blur(18px)!important}
+header .brand,header a{color:var(--ess-ink)!important}.brand-dot{background:var(--ess-orange)!important}
+header .nav-cta{background:var(--ess-orange)!important;color:#fff!important;border-color:var(--ess-orange)!important}
+main>section{background:var(--ess-bg)!important;color:var(--ess-ink)!important;border:0!important}
+main>section:nth-of-type(even){background:var(--ess-paper)!important}
+.eyebrow,.section-kicker,.rule-kicker{color:var(--ess-orange)!important;letter-spacing:.14em!important}
+h1,h2,h3,h4,strong,b{color:var(--ess-ink)}
+p,.muted,.hint,small{color:var(--ess-muted)}
+.business-grid,.request-layout,.sim-grid,.tracking-grid{gap:clamp(24px,4vw,56px)!important}
+.business-entry,.participation,.simulator,#acompanhar{padding-top:clamp(70px,9vw,130px)!important;padding-bottom:clamp(70px,9vw,130px)!important}
+.business-entry h2,.participation h2,.simulator h2,#acompanhar h2{font-size:clamp(42px,6vw,86px)!important;line-height:.94!important;letter-spacing:-.055em!important}
+.business-rule,.type-card,.mode-card,.form-shell,.sim-shell,.tracking-result,.totalbox,.review,.company-term-wrap,.info-note,.request-summary{background:var(--ess-paper)!important;color:var(--ess-ink)!important;border:1px solid var(--ess-line)!important;box-shadow:none!important;border-radius:var(--ess-r)!important}
+.type-card:hover,.mode-card:hover{border-color:var(--ess-orange)!important;transform:translateY(-2px)!important}
+.type-card.selected,.mode-card.selected{border-color:var(--ess-ink)!important;background:#fff!important}
+input,select,textarea{background:#fff!important;color:var(--ess-ink)!important;border:1px solid var(--ess-line)!important;box-shadow:none!important}
+input:focus,select:focus,textarea:focus{border-color:var(--ess-orange)!important;outline:3px solid rgba(255,90,22,.10)!important}
+button,.pill{box-shadow:none!important}
+.orange,.primary,.cta-primary{background:var(--ess-orange)!important;color:#fff!important;border-color:var(--ess-orange)!important}
+.v95-strip{background:transparent!important;color:var(--ess-ink)!important;border-color:var(--ess-line)!important}
+.doox-d5-index{border-color:var(--ess-line)!important}
+.doox-d5-row{color:var(--ess-ink)!important;border-color:var(--ess-line)!important}
+.doox-d5-row b{color:var(--ess-orange)!important}
+.info-modal.open,.company-term-modal.open,.legal-modal.open{background:rgba(15,12,9,.62)!important}
+.info-box,.company-term-box,.legal-box{background:var(--ess-paper)!important;color:var(--ess-ink)!important;border-radius:var(--ess-r2)!important}
+.info-head,.company-term-headbar,.legal-head{background:var(--ess-ink)!important}
+.info-body,.company-term-scroll,.legal-body,.legal-content{background:var(--ess-paper)!important}
+.doox-footer-min{background:var(--ess-ink)!important;color:#fff!important;border:0!important}
+.doox-footer-min .footer-brand,.doox-footer-min a,.doox-footer-min button,.doox-footer-min span{color:#fff!important}
+.doox-footer-min .footer-links button,.doox-footer-min .footer-links a{background:transparent!important;border:1px solid rgba(255,255,255,.16)!important}
+.doox-footer-min .footer-links button:hover,.doox-footer-min .footer-links a:hover{background:var(--ess-orange)!important;border-color:var(--ess-orange)!important}
+@media(max-width:760px){.business-entry,.participation,.simulator,#acompanhar{padding-top:64px!important;padding-bottom:64px!important}}
+`;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply()})();
