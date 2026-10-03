@@ -347,7 +347,7 @@ img:not(.sim-logo-img){display:none!important}
 @media(max-width:780px){.v95-grid{grid-template-columns:1fr!important}.v95-cinema{min-height:535px!important}}
 
 
-/* V97 — remove large editorial imagery; preserve only functional simulation/logo media */
+/* V97.1 — remove large editorial imagery; preserve only functional simulation/logo media */
 .v90-cover,
 .v90-image-break,
 .v90-ticket,
