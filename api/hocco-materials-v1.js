@@ -11,13 +11,15 @@ function send(res,status,body){res.statusCode=status;res.setHeader('Content-Type
 function bodyOf(req){if(req.body&&typeof req.body==='object')return req.body;try{return req.body?JSON.parse(req.body):{}}catch{return {}}}
 function clean(v){return String(v??'').trim()}
 function mapType(v){const t=clean(v).toUpperCase();if(t==='AUDIO'||t==='AUDIO_CTA')return 'AUDIO_CTA';if(t==='LOGO')return 'LOGO';return ''}
-function bucketFor(t){if(t==='LOGO')return 'hocco-logos';if(t==='AUDIO_CTA')return 'hocco-audios';return ''}
+function bucketFor(){return 'doox-arquivos'}
 function safeName(name){return (clean(name).split(/[\\/]/).pop()||'arquivo').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').replace(/^[-.]+|[-.]+$/g,'').slice(0,120)||'arquivo'}
 function encodePath(path){return path.split('/').map(encodeURIComponent).join('/')}
 function validate(type,mime,size){if(!type||!LIMITS[type])throw new Error('Tipo de material inválido.');if(!Number.isFinite(size)||size<=0)throw new Error('Tamanho do material inválido.');if(size>LIMITS[type])throw new Error('Arquivo excede o limite permitido.');if(!MIME[type].includes(mime))throw new Error('Formato não permitido.')}
+function tokenFor(id){return crypto.createHmac('sha256',HOCCO_SUPABASE_SECRET_KEY).update('track:'+id).digest('base64url')}
 async function verifySolicitacao(id,token){
-  if(!/^[0-9a-f-]{36}$/i.test(id)||!/^[0-9a-f-]{36}$/i.test(token))throw new Error('Identificação da solicitação inválida.');
-  const rows=await hoccoSupabase(`/rest/v1/solicitacoes?select=id,numero&id=eq.${encodeURIComponent(id)}&token_acompanhamento=eq.${encodeURIComponent(token)}&limit=1`);
+  if(!/^[0-9a-f-]{36}$/i.test(id))throw new Error('Identificação da solicitação inválida.');
+  const a=Buffer.from(clean(token)),b=Buffer.from(tokenFor(id));if(a.length!==b.length||!crypto.timingSafeEqual(a,b))throw new Error('Identificação da solicitação inválida.');
+  const rows=await hoccoSupabase(`/rest/v1/pedidos?select=id,codigo_doox,modalidade&id=eq.${encodeURIComponent(id)}&limit=1`);
   if(!Array.isArray(rows)||!rows[0])throw new Error('Solicitação não encontrada.');return rows[0];
 }
 async function signedUpload(bucket,path){
@@ -32,9 +34,15 @@ async function objectInfo(bucket,path){
   return {size:Number(response.headers.get('content-length')||0),mime:clean(response.headers.get('content-type')).toLowerCase()};
 }
 async function registerMaterial(id,type,bucket,name,path,mime,size){
-  return await hoccoSupabase('/rest/v1/rpc/registrar_material',{method:'POST',body:JSON.stringify({
-    p_solicitacao_id:id,p_tipo:type,p_bucket:bucket,p_nome_original:name,p_storage_path:path,p_mime_type:mime,p_tamanho_bytes:size
-  })});
+  const rows=await hoccoSupabase('/rest/v1/materiais?select=id',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({pedido_id:id,tipo:type==='AUDIO_CTA'?'AUDIO':type,nome_arquivo:name,formato:mime,tamanho_bytes:size,storage_path:path,status:'RECEBIDO'})});
+  const materialId=rows?.[0]?.id;if(!materialId)throw new Error('Não foi possível registrar o material.');
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  await hoccoSupabase('/rest/v1/arquivos_doox',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({pedido_id:id,material_id:materialId,tipo:type,nome_original:name,nome_storage:path.split('/').pop(),caminho_storage:path,bucket,extensao:ext,mime_type:mime,tamanho_bytes:size,status:'RECEBIDO'})});
+  const p=(await hoccoSupabase(`/rest/v1/pedidos?select=modalidade&id=eq.${id}&limit=1`))?.[0];
+  const mats=await hoccoSupabase(`/rest/v1/materiais?select=tipo&pedido_id=eq.${id}&status=eq.RECEBIDO`);
+  const need=p?.modalidade==='OVERLAY_AUDIO'?2:(p?.modalidade==='APOIADOR_INDIVIDUAL'?0:1);
+  if((mats||[]).length>=need)await hoccoSupabase(`/rest/v1/pedidos?id=eq.${id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status_material:'RECEBIDO',atualizado_em:new Date().toISOString()})});
+  return {id:materialId,status:'RECEBIDO'};
 }
 export default async function handler(req,res){
   if(req.method!=='POST')return send(res,405,{ok:false,message:'Método não permitido.'});
