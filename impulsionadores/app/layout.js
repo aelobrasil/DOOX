@@ -1,0 +1,1 @@
+import './globals.css'; export const metadata={title:'Impulsionadores HOCCO',description:'Você não apenas assiste. Você impulsiona.'}; export default function RootLayout({children}){return <html lang="pt-BR"><body>{children}</body></html>}
