@@ -1,7 +1,428 @@
 'use client';
-import {useEffect,useState} from 'react';import {createClient} from '@supabase/supabase-js';import {Home,Target,HeartHandshake,Users,User,Bolt,CheckCircle2,Play,Download,ExternalLink,Camera,LogOut,ShieldCheck,Copy,Landmark,Building2,MapPin} from 'lucide-react';import {QRCodeSVG} from 'qrcode.react';
-const sb=createClient('https://vebqvedmhfaebvdantiu.supabase.co','sb_publishable_4qUcXYXNFDUc6UAw_nvpDw_M-9w3vuz');const PIX='c9316176-6f92-413e-9209-63ae6f661ba9';
-function tlv(i,v){return i+String(v.length).padStart(2,'0')+v}function crc(s){let x=65535;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++)x=(x&32768)?((x<<1)^4129)&65535:(x<<1)&65535}return x.toString(16).toUpperCase().padStart(4,'0')}function payload(a){const m=tlv('00','BR.GOV.BCB.PIX')+tlv('01',PIX);let s=tlv('00','01')+tlv('26',m)+tlv('52','0000')+tlv('53','986')+tlv('54',Number(a).toFixed(2))+tlv('58','BR')+tlv('59','ALEX SANDRO SOARES FERN')+tlv('60','BAURU')+tlv('62',tlv('05','***'))+'6304';return s+crc(s)}
-const missions=[['Motor Ligado','Impulsione a HOCCO 100 vezes.',100],['Presença','Marque sua presença hoje.',30],['HOCCO Hoje','Veja o conteúdo indicado do dia.',50],['Voz HOCCO','Responda à pergunta do dia.',70],['Escolha','Participe da votação HOCCO.',50],['Explore','Conheça um projeto HOCCO.',40],['Impulso Completo','Complete seus impulsos do dia.',100],['Descubra','Encontre o destaque do dia.',80],['Sequência','Mantenha sua sequência ativa.',60],['Comunidade','Participe da meta coletiva.',60]];
-export default function Member(){const [user,setUser]=useState(null),[p,setP]=useState(null),[tab,setTab]=useState('Início'),[today,setToday]=useState(0),[community,setCommunity]=useState([]),[amount,setAmount]=useState(10),[pay,setPay]=useState(false),[installPrompt,setInstallPrompt]=useState(null),[edit,setEdit]=useState(false);useEffect(()=>{sb.auth.getUser().then(({data})=>{if(!data.user)location.replace('/');else setUser(data.user)});const h=e=>{e.preventDefault();setInstallPrompt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);useEffect(()=>{if(user){load();loadToday();loadCommunity()}},[user?.id]);async function load(){let {data}=await sb.from('impulsionadores_perfis').select('*').eq('user_id',user.id).maybeSingle();if(!data){const r=await sb.from('impulsionadores_perfis').insert({user_id:user.id,nome_publico:user.user_metadata?.full_name||user.email.split('@')[0],avatar_url:user.user_metadata?.avatar_url||null}).select().single();data=r.data}setP(data)}async function loadToday(){const d=new Date();d.setHours(0,0,0,0);const {count}=await sb.from('impulsionadores_impulsos').select('*',{count:'exact',head:true}).gte('created_at',d.toISOString());setToday(Math.min(100,count||0))}async function loadCommunity(){const {data}=await sb.from('impulsionadores_perfis').select('user_id,nome_publico,avatar_url,xp,nivel').order('xp',{ascending:false}).limit(20);setCommunity(data||[])}async function impulse(){if(today>=100)return;const {data}=await sb.rpc('registrar_impulso');if(data){setToday(data.progresso);if(data.concluida)load()}}async function avatar(e){const f=e.target.files?.[0];if(!f||f.size>5242880)return;const ext=(f.name.split('.').pop()||'jpg').toLowerCase(),path=`${user.id}/avatar.${ext}`;const {error}=await sb.storage.from('impulsionadores-avatars').upload(path,f,{upsert:true});if(error)return;const {data}=sb.storage.from('impulsionadores-avatars').getPublicUrl(path);await sb.from('impulsionadores_perfis').update({avatar_url:data.publicUrl+'?v='+Date.now(),updated_at:new Date().toISOString()}).eq('user_id',user.id);load()}async function save(e){e.preventDefault();const f=new FormData(e.currentTarget);await sb.from('impulsionadores_perfis').update({nome_publico:String(f.get('nome')).trim().slice(0,40),username:String(f.get('username')).trim().replace(/^@/,'').slice(0,30)||null,bio:String(f.get('bio')).trim().slice(0,160)||null,updated_at:new Date().toISOString()}).eq('user_id',user.id);setEdit(false);load()}async function install(){if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null)}else alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.')}if(!p)return <div className="splash"><b>HOCCO</b><span>Preparando sua conta...</span></div>;const pct=(p.xp%500)/5,code=payload(amount),nav=[['Início',Home],['Missões',Target],['Impulsionar',HeartHandshake],['Comunidade',Users],['Perfil',User]];return <main><header><b className="logo">HOCCO</b><span className="pill">IMPULSIONADORES</span><button className="installMini" onClick={install}><Download/> Instalar</button><button className="avatarBtn" onClick={()=>setTab('Perfil')}>{p.avatar_url?<img src={p.avatar_url} alt="Perfil"/>:<span>{p.nome_publico[0]}</span>}</button></header><section className="shell">{tab==='Início'&&<><div className="hello"><div><small>COMUNIDADE HOCCO</small><h1>Olá, {p.nome_publico.split(' ')[0]}.</h1><p>Nível {p.nivel} · Impulsionador</p></div><div className="level">NÍVEL<br/><strong>{p.nivel}</strong></div></div><div className="progress"><div style={{width:pct+'%'}}/></div><div className="xp"><b>{p.xp} XP</b><span>{500-(p.xp%500)} XP para o próximo nível</span></div><article className="hero"><div className="eyebrow">MISSÃO DE HOJE</div><h2>Motor Ligado</h2><p>Impulsione a HOCCO 100 vezes.</p><div className="missionline"><span>{today}/100</span><div><i style={{width:today+'%'}}/></div></div><button onClick={impulse} disabled={today>=100}><Bolt/>{today>=100?'MISSÃO CONCLUÍDA':'IMPULSIONAR'}</button><small>+100 XP ao completar</small></article><Social/><button className="installCard" onClick={install}><Download/><div><b>Baixar HOCCO no celular</b><span>Instale o app na tela inicial. Sua conta continua a mesma em qualquer aparelho.</span></div></button></>}{tab==='Missões'&&<><Title s="CICLO HOCCO" t="Suas missões" x="Uma missão por dia. Seu progresso fica salvo na sua conta."/><div className="list">{missions.map((m,i)=><div className="row" key={m[0]}><span className="ico">{i===0&&today>=100?<CheckCircle2/>:<Target/>}</span><div><b>{m[0]}</b><small>{m[1]}</small></div><em>+{m[2]} XP</em></div>)}</div></>}{tab==='Impulsionar'&&<><Title s="APOIO À PRODUÇÃO" t="Impulsionar a HOCCO" x="Pagamento único via PIX. Sem assinatura e sem promessa de retorno financeiro."/>{!pay?<><div className="amounts">{[3,5,10,25,50,100].map(v=><button className={amount===v?'selected':''} onClick={()=>setAmount(v)} key={v}>R$ {v}</button>)}</div><label>Outro valor<input type="number" min="3" value={amount} onChange={e=>setAmount(Math.max(3,Number(e.target.value)||3))}/></label><div className="summary"><span>Valor da impulsão</span><strong>R$ {amount.toFixed(2).replace('.',',')}</strong><p>O apoio financeiro é separado do XP e não compra posição no ranking.</p></div><button className="primary" onClick={()=>setPay(true)}>GERAR PAGAMENTO PIX</button></>:<Payment a={amount} c={code} back={()=>setPay(false)}/>}</>}{tab==='Comunidade'&&<><Title s="MEMBROS" t="Comunidade" x="Ranking por participação e XP, nunca pelo valor financeiro apoiado."/><div className="rank">{community.map((r,i)=><div className="row" key={r.user_id}><span className="place">{i+1}</span>{r.avatar_url?<img className="miniAvatar" src={r.avatar_url} alt=""/>:<span className="miniAvatar fallback">{r.nome_publico[0]}</span>}<div><b>{r.nome_publico}{r.user_id===user.id?' (você)':''}</b><small>Nível {r.nivel} · {r.xp} XP</small></div></div>)}</div><Social/></>}{tab==='Perfil'&&<><div className="profile"><label className="photo">{p.avatar_url?<img src={p.avatar_url} alt="Foto"/>:<span>{p.nome_publico[0]}</span>}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={avatar}/><i><Camera/></i></label><h1>{p.nome_publico}</h1><p>{p.username?'@'+p.username:user.email}</p><b>NÍVEL {p.nivel} · IMPULSIONADOR</b></div><div className="stats"><div><strong>{p.impulsos}</strong><span>Impulsos</span></div><div><strong>{p.missoes_concluidas}</strong><span>Missões</span></div><div><strong>{p.ciclos}</strong><span>Ciclos</span></div><div><strong>{p.selos}</strong><span>Selos</span></div></div>{edit?<form className="edit" onSubmit={save}><label>Nome público<input name="nome" defaultValue={p.nome_publico} required/></label><label>@ na comunidade<input name="username" defaultValue={p.username||''}/></label><label>Sobre você<textarea name="bio" defaultValue={p.bio||''}/></label><button className="primary">SALVAR PERFIL</button></form>:<button className="outline" onClick={()=>setEdit(true)}>EDITAR PERFIL</button>}<Social/><button className="outline" onClick={install}><Download/> INSTALAR APP</button><button className="logout" onClick={async()=>{await sb.auth.signOut();location.replace('/')}}><LogOut/> Sair da conta</button></>}</section><nav>{nav.map(([n,I])=><button className={tab===n?'active':''} onClick={()=>setTab(n)} key={n}><I/><span>{n}</span></button>)}</nav></main>}
-function Title({s,t,x}){return <div className="title"><small>{s}</small><h1>{t}</h1><p>{x}</p></div>}function Social(){return <section className="social"><small>HOCCO NAS REDES</small><div><a href="https://www.youtube.com/@hoccpov" target="_blank" rel="noreferrer"><Play/> YouTube · @hoccpov <ExternalLink/></a><a href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noreferrer"><Bolt/> TikTok · @Hoccobrasil <ExternalLink/></a></div></section>}function Payment({a,c,back}){const cp=v=>navigator.clipboard?.writeText(v);return <div className="payment"><div className="payhead"><Landmark/><div><small>PAGAMENTO VIA PIX</small><h2>Dados para pagamento</h2></div></div><div className="payamount"><span>VALOR</span><strong>R$ {a.toFixed(2).replace('.',',')}</strong></div><div className="qrbox"><QRCodeSVG value={c} size={190}/></div><p className="scan">Escaneie pelo aplicativo da sua instituição financeira ou utilize o PIX Copia e Cola.</p><div className="copybox"><small>PIX COPIA E COLA</small><code>{c}</code><button onClick={()=>cp(c)}><Copy/> COPIAR CÓDIGO PIX</button></div><div className="receiver"><div><Building2/><span><small>RECEBEDOR</small><b>Alex Sandro Soares Fernandes</b></span></div><div><Landmark/><span><small>INSTITUIÇÃO</small><b>Nubank</b></span></div><div><MapPin/><span><small>CIDADE</small><b>Bauru — SP</b></span></div></div><div className="keyline"><span><small>CHAVE PIX</small><b>{PIX}</b></span><button onClick={()=>cp(PIX)}><Copy/></button></div><div className="notice"><ShieldCheck/><p><b>Confirmação</b><br/>Até a integração bancária ser ativada, a confirmação é feita após conferência financeira da HOCCO.</p></div><button className="secondary" onClick={back}>ALTERAR VALOR</button></div>}
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Award, Bolt, Building2, Camera, CheckCircle2, ChevronRight, Download, Flame,
+  Home, LogOut, MessageCircle, Play, Sparkles, Target, Trophy, User, Users, Zap,
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import {
+  HYPE_BOARDS, currentBoard, isBoardLive, todayBR, whatsappUrl,
+} from '../../lib/config';
+
+export default function MemberApp() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [daily, setDaily] = useState(null);
+  const [tab, setTab] = useState('inicio');
+  const [board, setBoard] = useState(currentBoard());
+  const [agenda, setAgenda] = useState([]);
+  const [votes, setVotes] = useState({});
+  const [results, setResults] = useState([]);
+  const [experiences, setExperiences] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [community, setCommunity] = useState([]);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [toast, setToast] = useState('');
+  const [busyVote, setBusyVote] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const sessionRef = useRef(null);
+  const sessionStartedRef = useRef(Date.now());
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) location.replace('/');
+      else setUser(data.user);
+    });
+    const installHandler = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    window.addEventListener('beforeinstallprompt', installHandler);
+    return () => window.removeEventListener('beforeinstallprompt', installHandler);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let timer;
+    (async () => {
+      await ensureIdentity();
+      const { data: session } = await supabase.from('impulsionadores_sessoes').insert({
+        user_id: user.id,
+        platform: navigator.userAgentData?.platform || navigator.platform || 'web',
+        user_agent: navigator.userAgent,
+        path: '/app',
+      }).select().single();
+      if (session) sessionRef.current = session.id;
+      await refreshAll();
+      timer = setInterval(async () => {
+        if (!sessionRef.current || document.visibilityState !== 'visible') return;
+        const seconds = Math.max(0, Math.floor((Date.now() - sessionStartedRef.current) / 1000));
+        await supabase.from('impulsionadores_sessoes').update({
+          last_seen_at: new Date().toISOString(),
+          active_seconds: seconds,
+        }).eq('id', sessionRef.current);
+      }, 60000);
+    })();
+    return () => clearInterval(timer);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user) loadHype(board);
+  }, [board, user?.id]);
+
+  async function ensureIdentity() {
+    let { data: p } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', user.id).maybeSingle();
+    if (!p) {
+      const created = await supabase.from('impulsionadores_perfis').insert({
+        user_id: user.id,
+        nome_publico: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Membro HOCCO',
+      }).select().single();
+      p = created.data;
+    }
+    const phone = String(user.user_metadata?.phone || '').replace(/\D/g, '');
+    if (phone) {
+      await supabase.from('impulsionadores_contatos').upsert({
+        user_id: user.id,
+        email: user.email,
+        telefone: phone,
+        updated_at: new Date().toISOString(),
+      });
+    }
+    setProfile(p);
+  }
+
+  async function refreshAll() {
+    await Promise.all([loadProfile(), loadDaily(), loadHype(board), loadResults(), loadExperiences(), loadCommunity()]);
+  }
+
+  async function loadProfile() {
+    const { data } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', user.id).single();
+    if (data) setProfile(data);
+  }
+
+  async function loadDaily() {
+    const { data } = await supabase.from('hc_diario').select('*').eq('user_id', user.id).eq('activity_date', todayBR()).maybeSingle();
+    setDaily(data || { hc_earned: 0, missions_completed: 1, boards_hyped: 0, streak_snapshot: profile?.ofensiva_dias || 0 });
+  }
+
+  async function loadHype(selectedBoard = board) {
+    const date = todayBR();
+    const [{ data: slots }, { data: ownVotes }] = await Promise.all([
+      supabase.from('hype_agenda').select('*,hype_empresas(*)').eq('hype_date', date).eq('quadro', selectedBoard).neq('status', 'cancelado'),
+      supabase.from('hype_votos').select('agenda_id,quadro').eq('user_id', user.id).eq('hype_date', date),
+    ]);
+    setAgenda(slots || []);
+    const map = {};
+    (ownVotes || []).forEach((v) => { map[v.quadro] = v.agenda_id; });
+    setVotes(map);
+  }
+
+  async function loadResults() {
+    const { data } = await supabase.from('hype_resultados').select('*,hype_empresas(*),hype_agenda(*)').order('hype_date', { ascending: false }).limit(12);
+    setResults(data || []);
+  }
+
+  async function loadExperiences() {
+    const [{ data: exp }, { data: apps }] = await Promise.all([
+      supabase.from('hocco_experiencias').select('*,hype_empresas(nome_fantasia)').in('status', ['publicada', 'inscricoes_encerradas']).order('created_at', { ascending: false }),
+      supabase.from('hocco_experiencia_inscricoes').select('*').eq('user_id', user.id),
+    ]);
+    setExperiences(exp || []);
+    setApplications(apps || []);
+  }
+
+  async function loadCommunity() {
+    const { data } = await supabase.from('impulsionadores_perfis').select('user_id,nome_publico,avatar_url,xp,nivel,hc,ofensiva_dias').order('xp', { ascending: false }).limit(8);
+    setCommunity(data || []);
+  }
+
+  async function logEvent(eventType, entityType, entityId, metadata = {}) {
+    if (!user) return;
+    await supabase.from('impulsionadores_eventos').insert({
+      user_id: user.id,
+      session_id: sessionRef.current,
+      event_type: eventType,
+      path: `/app/${tab}`,
+      entity_type: entityType,
+      entity_id: entityId ? String(entityId) : null,
+      metadata,
+    });
+  }
+
+  async function tapCompany(slot) {
+    if (!user) return;
+    await supabase.from('hype_interacoes').insert({ agenda_id: slot.id, user_id: user.id, event_type: 'tap' });
+  }
+
+  async function voteCompany(slot) {
+    if (busyVote || votes[board]) return;
+    if (!isBoardLive(board)) {
+      showToast(`O ${HYPE_BOARDS[board].label} funciona das ${HYPE_BOARDS[board].window}.`);
+      return;
+    }
+    setBusyVote(true);
+    const { error } = await supabase.from('hype_votos').insert({
+      agenda_id: slot.id,
+      user_id: user.id,
+      hype_date: todayBR(),
+      quadro: board,
+    });
+    setBusyVote(false);
+    if (error) {
+      showToast(error.message.includes('duplicate') ? 'Seu Hype válido deste quadro já foi usado.' : 'Não foi possível registrar este Hype agora.');
+      return;
+    }
+    await logEvent('hype_valid', 'empresa', slot.empresa_id, { quadro: board });
+    showToast('Hype válido registrado. Seu progresso foi atualizado.');
+    await Promise.all([loadHype(board), loadProfile(), loadDaily(), loadCommunity()]);
+  }
+
+  async function useBenefit(result) {
+    const company = result.hype_empresas;
+    if (!company?.whatsapp) return;
+    if (result.agenda_id) {
+      await supabase.from('hype_interacoes').insert({ agenda_id: result.agenda_id, user_id: user.id, event_type: 'whatsapp' });
+    }
+    await logEvent('benefit_whatsapp', 'empresa', company.id, { resultado: result.id });
+    window.open(whatsappUrl(company.whatsapp, `Olá! Vim pelo app HOCCO. Vi que a ${company.nome_fantasia} foi destaque no Hype e gostaria de utilizar o benefício HOCCO. Como faço para utilizar?`), '_blank', 'noopener,noreferrer');
+  }
+
+  async function applyExperience(exp) {
+    if ((profile?.hc || 0) < exp.hc_min) return showToast(`Você precisa de pelo menos ${exp.hc_min} HC para esta experiência.`);
+    const { error } = await supabase.from('hocco_experiencia_inscricoes').insert({ experiencia_id: exp.id, user_id: user.id });
+    if (error) {
+      showToast(error.message.includes('duplicate') ? 'Você já está inscrito nesta experiência.' : 'Não foi possível registrar sua inscrição.');
+      return;
+    }
+    await logEvent('experience_apply', 'experiencia', exp.id);
+    showToast('Inscrição recebida. Se houver mais candidatos que vagas, a Curadoria HOCCO fará a seleção.');
+    loadExperiences();
+  }
+
+  async function uploadAvatar(event) {
+    const file = event.target.files?.[0];
+    if (!file || file.size > 5 * 1024 * 1024) return;
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${user.id}/avatar.${ext}`;
+    const { error } = await supabase.storage.from('impulsionadores-avatars').upload(path, file, { upsert: true });
+    if (error) return showToast('Não foi possível enviar a foto.');
+    const { data } = supabase.storage.from('impulsionadores-avatars').getPublicUrl(path);
+    await supabase.from('impulsionadores_perfis').update({ avatar_url: `${data.publicUrl}?v=${Date.now()}`, updated_at: new Date().toISOString() }).eq('user_id', user.id);
+    loadProfile();
+  }
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const { error } = await supabase.from('impulsionadores_perfis').update({
+      nome_publico: String(form.get('nome')).trim().slice(0, 40),
+      username: String(form.get('username')).trim().replace(/^@/, '').slice(0, 30) || null,
+      bio: String(form.get('bio')).trim().slice(0, 160) || null,
+      updated_at: new Date().toISOString(),
+    }).eq('user_id', user.id);
+    if (!error) {
+      setEdit(false);
+      loadProfile();
+    }
+  }
+
+  async function install() {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      setInstallPrompt(null);
+    } else alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
+  }
+
+  function showToast(message) {
+    setToast(message);
+    setTimeout(() => setToast(''), 4200);
+  }
+
+  const overallWinner = useMemo(() => results.find((r) => r.quadro === 'dia'), [results]);
+  const boardWinner = useMemo(() => results.find((r) => r.quadro === board && r.hype_date === todayBR()) || results.find((r) => r.quadro === board), [results, board]);
+  const hc = profile?.hc || 0;
+  const dailyHC = daily?.hc_earned || 0;
+  const boardsHyped = daily?.boards_hyped || 0;
+
+  if (!profile) return <div className="splash"><b>HOCCO</b><span>Ativando sua célula...</span></div>;
+
+  const nav = [
+    ['inicio', Home, 'Início'],
+    ['hype', Zap, 'Hype'],
+    ['missoes', Target, 'Missões'],
+    ['experiencias', Award, 'Experiências'],
+    ['perfil', User, 'Perfil'],
+  ];
+
+  return (
+    <main className="memberApp">
+      <header>
+        <b className="logo">HOCCO</b>
+        <span className="pill">IMPULSIONADORES</span>
+        <div className="hcHeader"><Sparkles/> <strong>{hc} HC</strong></div>
+        <button className="avatarBtn" onClick={() => setTab('perfil')}>{profile.avatar_url ? <img src={profile.avatar_url} alt="Perfil" /> : <span>{profile.nome_publico[0]}</span>}</button>
+      </header>
+
+      <section className="shell liveShell">
+        {tab === 'inicio' && (
+          <>
+            <section className="livingHero">
+              <div>
+                <small>CÉLULA HOCCO ATIVA</small>
+                <h1>Olá, {profile.nome_publico.split(' ')[0]}.</h1>
+                <p>Entre, participe, construa sua ofensiva e transforme presença em acesso.</p>
+              </div>
+              <div className="pulseCore"><Bolt/><span>ATIVO</span></div>
+            </section>
+
+            <div className="valueGrid">
+              <Metric icon={Sparkles} value={`${hc} HC`} label="Saldo HC" note="máx. 2 por dia" />
+              <Metric icon={Flame} value={`${profile.ofensiva_dias} dias`} label="Ofensiva" note="constância ativa" />
+              <Metric icon={Target} value={`${dailyHC}/2`} label="HC de hoje" note={`${boardsHyped}/3 quadros`} />
+              <Metric icon={Award} value={`Nível ${profile.nivel}`} label="Progressão" note={`${profile.xp} XP`} />
+            </div>
+
+            <section className="nowCard" onClick={() => setTab('hype')}>
+              <div><small>AGORA / PRÓXIMO QUADRO</small><h2>{HYPE_BOARDS[currentBoard()].label}</h2><p>{HYPE_BOARDS[currentBoard()].window} · até 10 empresas</p></div>
+              <div className={isBoardLive(currentBoard()) ? 'liveDot on' : 'liveDot'}>{isBoardLive(currentBoard()) ? 'AO VIVO' : 'EM BREVE'}</div>
+              <ChevronRight/>
+            </section>
+
+            <section className="missionPulse">
+              <div className="sectionHead"><div><small>MISSÕES AUTOMÁTICAS</small><h2>Seu dia está sendo contado.</h2></div><strong>{Math.min(100, 25 + boardsHyped * 25)}%</strong></div>
+              <div className="progress"><div style={{ width: `${Math.min(100, 25 + boardsHyped * 25)}%` }} /></div>
+              <div className="microMissions">
+                <Mission done title="Entrou no app" reward="XP" />
+                <Mission done={boardsHyped >= 1} title="Participou de 1 quadro" reward="+1 HC" />
+                <Mission done={boardsHyped >= 2} title="Participou de 2 quadros" reward="+1 HC" />
+                <Mission done={boardsHyped >= 3} title="Fechou os 3 quadros" reward="XP" />
+              </div>
+            </section>
+
+            {overallWinner && <WinnerCard result={overallWinner} onBenefit={() => useBenefit(overallWinner)} />}
+
+            <button className="businessCTA" onClick={() => location.href = '/empresa'}>
+              <Building2/><div><b>Quer colocar sua empresa no Hype?</b><span>Cadastre CNPJ, benefício, quadro e solicite sua participação.</span></div><ChevronRight/>
+            </button>
+
+            <button className="installCard" onClick={install}><Download/><div><b>Instalar HOCCO no celular</b><span>Abra mais rápido e mantenha sua conta e sua ofensiva em qualquer aparelho.</span></div></button>
+          </>
+        )}
+
+        {tab === 'hype' && (
+          <>
+            <Title eyebrow="HYPE DO DIA" title="A comunidade escolhe." text="Os tamanhos variam conforme o plano comercial. O resultado depende apenas dos Hypes válidos dos membros." />
+            <div className="boardTabs">
+              {Object.entries(HYPE_BOARDS).map(([key, info]) => <button key={key} className={board === key ? 'active' : ''} onClick={() => setBoard(key)}><b>{info.label.replace('Hype ', '')}</b><span>{info.window}</span></button>)}
+            </div>
+            <div className="boardStatus"><span>{isBoardLive(board) ? '● QUADRO AO VIVO' : '○ FORA DO HORÁRIO'}</span><b>{agenda.length}/10 empresas</b></div>
+            {agenda.length ? (
+              <div className="hypeField">
+                {agenda.map((slot, index) => {
+                  const company = slot.hype_empresas;
+                  const chosen = votes[board] === slot.id;
+                  const locked = Boolean(votes[board]) && !chosen;
+                  return (
+                    <article key={slot.id} className={`floatingCompany size-${slot.tamanho} ${chosen ? 'chosen' : ''}`} style={{ '--delay': `${(index % 5) * .55}s` }} onClick={() => tapCompany(slot)}>
+                      <div className="companyGlow" />
+                      {company?.logo_url ? <img src={company.logo_url} alt={company.nome_fantasia} /> : <div className="companyInitial">{company?.nome_fantasia?.[0] || 'H'}</div>}
+                      <small>{company?.segmento || 'Empresa HOCCO'}</small>
+                      <h3>{company?.nome_fantasia}</h3>
+                      <span className="discount">até {Number(slot.desconto ?? company?.desconto_padrao ?? 0).toFixed(0)}% OFF</span>
+                      <button disabled={locked || chosen || busyVote} onClick={(e) => { e.stopPropagation(); voteCompany(slot); }}><Zap/>{chosen ? 'SEU HYPE' : locked ? 'HYPE USADO' : 'HYPAR'}</button>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : <Empty icon={Building2} title="Quadro em preparação" text="As empresas aprovadas aparecerão aqui automaticamente." />}
+            <div className="hypeRule"><Zap/><p><b>1 Hype válido por quadro.</b> Toques adicionais fazem a marca reagir e contam como interação, mas não compram nem multiplicam votos.</p></div>
+            {boardWinner && <WinnerCard result={boardWinner} onBenefit={() => useBenefit(boardWinner)} />}
+            <button className="businessCTA" onClick={() => location.href = '/empresa'}><Building2/><div><b>Hypar minha empresa</b><span>Participações a partir de R$ 29,90.</span></div><ChevronRight/></button>
+          </>
+        )}
+
+        {tab === 'missoes' && (
+          <>
+            <Title eyebrow="OFENSIVA HOCCO" title={`${profile.ofensiva_dias} dias de constância`} text="As missões são concluídas automaticamente pelas ações reais dentro do app. Você nunca precisa marcar uma missão manualmente." />
+            <div className="hcCap"><Sparkles/><div><small>LIMITE DIÁRIO</small><h2>{dailyHC}/2 HC conquistados hoje</h2><p>Mesmo completando tudo, o máximo diário é 2 HC. Isso mantém o HC raro.</p></div></div>
+            <div className="missionList">
+              <MissionRow done title="Presença HOCCO" text="Entrar no app hoje." reward="+5 XP" />
+              <MissionRow done={boardsHyped >= 1} title="Primeiro Hype" text="Escolher uma empresa em um quadro válido." reward="+1 HC · +25 XP" />
+              <MissionRow done={boardsHyped >= 2} title="Dois momentos" text="Participar de dois quadros diferentes." reward="+1 HC · +25 XP" />
+              <MissionRow done={boardsHyped >= 3} title="Dia completo" text="Participar de Almoço, Tarde e Noite." reward="XP + ofensiva" />
+            </div>
+            <div className="unlockCard"><Award/><div><small>PORTA DE ENTRADA</small><h2>100 HC desbloqueiam experiências.</h2><p>HC não compra uma vaga. Ele torna você elegível. Quando houver mais interessados que vagas, a Curadoria HOCCO seleciona os participantes.</p></div><strong>{hc}/100</strong></div>
+          </>
+        )}
+
+        {tab === 'experiencias' && (
+          <>
+            <Title eyebrow="EXPERIÊNCIAS HOCCO" title="Acesso que não está à venda." text="A partir de 100 HC você começa a disputar experiências com a HOCCO e empresas parceiras." />
+            {hc < 100 && <div className="lockedExperience"><Award/><div><b>Faltam {100 - hc} HC</b><span>Mantenha sua ofensiva. O limite continua sendo 2 HC por dia.</span></div></div>}
+            <div className="experienceList">
+              {experiences.map((exp) => {
+                const own = applications.find((a) => a.experiencia_id === exp.id);
+                const eligible = hc >= exp.hc_min;
+                return <article className="experienceCard" key={exp.id}>
+                  <div className="experienceTop"><span>{exp.hype_empresas?.nome_fantasia || 'HOCCO'}</span><b>{exp.vagas} vagas</b></div>
+                  <h2>{exp.titulo}</h2><p>{exp.descricao}</p>
+                  <div className="experienceMeta"><span><Sparkles/> mínimo {exp.hc_min} HC</span>{exp.evento_at && <span>{new Date(exp.evento_at).toLocaleDateString('pt-BR')}</span>}</div>
+                  {exp.regras && <small>{exp.regras}</small>}
+                  <button disabled={!eligible || Boolean(own) || exp.status !== 'publicada'} onClick={() => applyExperience(exp)}>{own ? statusLabel(own.status) : eligible ? 'QUERO PARTICIPAR' : `PRECISA DE ${exp.hc_min} HC`}</button>
+                </article>;
+              })}
+              {!experiences.length && <Empty icon={Award} title="Novas experiências em preparação" text="Eventos, bastidores, reuniões e benefícios de empresas aparecerão aqui." />}
+            </div>
+          </>
+        )}
+
+        {tab === 'perfil' && (
+          <>
+            <div className="profile">
+              <label className="photo">{profile.avatar_url ? <img src={profile.avatar_url} alt="Foto" /> : <span>{profile.nome_publico[0]}</span>}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar}/><i><Camera/></i></label>
+              <h1>{profile.nome_publico}</h1><p>{profile.username ? `@${profile.username}` : user.email}</p>
+              <b>NÍVEL {profile.nivel} · IMPULSIONADOR</b>
+            </div>
+            <div className="profileStats">
+              <div><strong>{profile.hc}</strong><span>HC</span></div><div><strong>{profile.ofensiva_dias}</strong><span>Ofensiva</span></div><div><strong>{profile.xp}</strong><span>XP</span></div><div><strong>{profile.impulsos}</strong><span>Hypes/impulsos</span></div>
+            </div>
+            {edit ? <form className="edit" onSubmit={saveProfile}><label>Nome público<input name="nome" defaultValue={profile.nome_publico} required /></label><label>@ na comunidade<input name="username" defaultValue={profile.username || ''} /></label><label>Sobre você<textarea name="bio" defaultValue={profile.bio || ''} /></label><button className="primary">SALVAR PERFIL</button></form> : <button className="outline" onClick={() => setEdit(true)}>EDITAR PERFIL</button>}
+            <section className="communityMini"><div className="sectionHead"><div><small>COMUNIDADE</small><h2>Mais ativos</h2></div></div>{community.map((r, i) => <div className="rankMini" key={r.user_id}><span>{i + 1}</span><div><b>{r.nome_publico}{r.user_id === user.id ? ' · você' : ''}</b><small>Nível {r.nivel} · {r.xp} XP · 🔥 {r.ofensiva_dias}</small></div></div>)}</section>
+            <button className="outline" onClick={install}><Download/> INSTALAR APP</button>
+            <button className="logout" onClick={async () => { await supabase.auth.signOut(); location.replace('/'); }}><LogOut/> Sair da conta</button>
+          </>
+        )}
+      </section>
+
+      {toast && <div className="toast">{toast}</div>}
+      <nav>{nav.map(([key, Icon, label]) => <button className={tab === key ? 'active' : ''} onClick={() => setTab(key)} key={key}><Icon/><span>{label}</span></button>)}</nav>
+    </main>
+  );
+}
+
+function Metric({ icon: Icon, value, label, note }) {
+  return <article className="metricCard"><Icon/><strong>{value}</strong><b>{label}</b><span>{note}</span></article>;
+}
+function Mission({ done, title, reward }) {
+  return <div className={done ? 'microMission done' : 'microMission'}>{done ? <CheckCircle2/> : <Target/>}<span>{title}</span><b>{reward}</b></div>;
+}
+function MissionRow({ done, title, text, reward }) {
+  return <article className={done ? 'missionRow done' : 'missionRow'}><span>{done ? <CheckCircle2/> : <Target/>}</span><div><b>{title}</b><small>{text}</small></div><em>{reward}</em></article>;
+}
+function Title({ eyebrow, title, text }) {
+  return <div className="title"><small>{eyebrow}</small><h1>{title}</h1><p>{text}</p></div>;
+}
+function Empty({ icon: Icon, title, text }) {
+  return <div className="emptyState"><Icon/><b>{title}</b><p>{text}</p></div>;
+}
+function WinnerCard({ result, onBenefit }) {
+  const company = result.hype_empresas;
+  if (!company) return null;
+  return <section className="winnerCard"><Trophy/><div><small>{result.quadro === 'dia' ? 'MAIS HYPADA DO DIA' : `VENCEDORA · ${String(result.quadro).toUpperCase()}`}</small><h2>{company.nome_fantasia}</h2><p>{result.hypes_validos} Hypes válidos · benefício HOCCO disponível.</p></div><button onClick={onBenefit}><MessageCircle/> USAR BENEFÍCIO</button></section>;
+}
+function statusLabel(status) {
+  const labels = { candidato: 'INSCRIÇÃO RECEBIDA', selecionado: 'VOCÊ FOI SELECIONADO', lista_espera: 'LISTA DE ESPERA', confirmado: 'PARTICIPAÇÃO CONFIRMADA', recusado: 'NÃO SELECIONADO', desistiu: 'INSCRIÇÃO ENCERRADA' };
+  return labels[status] || status;
+}
