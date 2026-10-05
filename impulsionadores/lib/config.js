@@ -41,12 +41,27 @@ export function currentBoard() {
   return hour < 11 ? 'almoco' : 'noite';
 }
 
+export function isBoardLive(board) {
+  const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value || 0);
+  if (board === 'almoco') return hour >= 11 && hour < 14;
+  if (board === 'tarde') return hour >= 14 && hour < 18;
+  if (board === 'noite') return hour >= 18 && hour < 22;
+  return false;
+}
+
 export function onlyDigits(value = '') {
   return String(value).replace(/\D/g, '');
 }
 
+export function normalizeBrazilWhatsapp(number) {
+  let digits = onlyDigits(number);
+  if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) digits = `55${digits}`;
+  return digits;
+}
+
 export function whatsappUrl(number, message) {
-  return `https://wa.me/${onlyDigits(number)}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${normalizeBrazilWhatsapp(number)}?text=${encodeURIComponent(message)}`;
 }
 
 export function validateCNPJ(raw) {
