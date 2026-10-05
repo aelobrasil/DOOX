@@ -3,25 +3,25 @@
   "cleanUrls":true,
   "headers":[
     {"source":"/","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
-    {"source":"/portal.html","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
-    {"source":"/index.html","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
+    {"source":"/portal","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
+    {"source":"/index","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
     {"source":"/assets/doox-participacao-v80.js","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
     {"source":"/assets/(.*)\\.(mp4|mp3|webm|png|jpg|jpeg|svg|ico)$","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]},
     {"source":"/manifest.webmanifest","headers":[{"key":"Cache-Control","value":"public, max-age=86400"}]},
     {"source":"/sw.js","headers":[{"key":"Cache-Control","value":"no-cache"}]},
     {"source":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive, nosnippet"},{"key":"Cache-Control","value":"no-store"}]},
-    {"source":"/hocco-controle","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive, nosnippet"},{"key":"Cache-Control","value":"no-store"}]}
+    {"source":"/hocco-controle","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow,noarchive,nosnippet"},{"key":"Cache-Control","value":"no-store"}]}
   ],
   "rewrites":[
-    {"source":"/hocco-controle","destination":"/hocco-controle.html"},
-    {"source":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt","destination":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"},
-    {"source":"/","destination":"/portal.html"},
-    {"source":"/serie","destination":"/portal.html"},
-    {"source":"/empresas","destination":"/portal.html"},
-    {"source":"/insercoes","destination":"/portal.html"},
-    {"source":"/simulacao","destination":"/portal.html"},
-    {"source":"/participar","destination":"/portal.html"},
-    {"source":"/acompanhar","destination":"/portal.html"},
-    {"source":"/(pessoas|avisos|termos|privacidade)","destination":"/index.html"}
+    {"source":"/hocco-controle","destination":"/hocco-controle"},
+    {"source":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt","destination":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt"},
+    {"source":"/","destination":"/portal"},
+    {"source":"/serie","destination":"/portal"},
+    {"source":"/empresas","destination":"/portal"},
+    {"source":"/insercoes","destination":"/portal"},
+    {"source":"/simulacao","destination":"/portal"},
+    {"source":"/participar","destination":"/portal"},
+    {"source":"/acompanhar","destination":"/portal"},
+    {"source":"/(pessoas|avisos|termos|privacidade)","destination":"/index"}
   ]
 }
