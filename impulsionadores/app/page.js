@@ -1,6 +1,118 @@
 'use client';
-import {useEffect,useState} from 'react';
-import {createClient} from '@supabase/supabase-js';
-import {Chrome,Mail,Lock,Download,Play,Bolt,ExternalLink} from 'lucide-react';
-const supabase=createClient('https://vebqvedmhfaebvdantiu.supabase.co','sb_publishable_4qUcXYXNFDUc6UAw_nvpDw_M-9w3vuz');
-export default function Login(){const [mode,setMode]=useState('signup'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[name,setName]=useState(''),[msg,setMsg]=useState(''),[installPrompt,setInstallPrompt]=useState(null);useEffect(()=>{supabase.auth.getSession().then(({data})=>{if(data.session)location.replace('/app')});const h=e=>{e.preventDefault();setInstallPrompt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);async function submit(e){e.preventDefault();setMsg('');if(password.length<6)return setMsg('Use uma senha com pelo menos 6 caracteres.');if(mode==='signup'){const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name.trim()},emailRedirectTo:location.origin+'/app'}});if(error)return setMsg(error.message);if(data.session)location.replace('/app');else setMsg('Cadastro criado. Confirme seu e-mail para ativar a conta.')}else{const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error)return setMsg('E-mail ou senha inválidos.');if(data.session)location.replace('/app')}}async function google(){const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/app'}});if(error)setMsg('O acesso Google ainda precisa ser habilitado no provedor.')}async function install(){if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null)}else alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.')}return <div className="auth"><div className="authBrand"><b>HOCCO</b><span>IMPULSIONADORES</span></div><div className="authCard"><small>COMUNIDADE OFICIAL</small><h1>{mode==='signup'?'Faça parte da HOCCO':'Bem-vindo de volta'}</h1><p>Sua conta guarda perfil, XP, missões e trajetória em qualquer celular ou computador.</p><button className="google" onClick={google}><Chrome/> Continuar com Google</button><div className="or"><span/>ou<span/></div><form onSubmit={submit}>{mode==='signup'&&<label>Nome ou apelido<input value={name} onChange={e=>setName(e.target.value)} placeholder="Como você quer aparecer" required minLength="2"/></label>}<label>E-mail<div className="inputIcon"><Mail/><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="voce@email.com" required/></div></label><label>Senha<div className="inputIcon"><Lock/><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength="6"/></div></label>{msg&&<div className="authMsg">{msg}</div>}<button className="primary">{mode==='signup'?'CRIAR MINHA CONTA':'ENTRAR'}</button></form><button className="switch" onClick={()=>setMode(mode==='signup'?'login':'signup')}>{mode==='signup'?'Já tenho uma conta · Entrar':'Ainda não sou membro · Criar conta'}</button></div><button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button><section className="social"><small>HOCCO NAS REDES</small><div><a href="https://www.youtube.com/@hoccpov" target="_blank" rel="noreferrer"><Play/> YouTube · @hoccpov <ExternalLink/></a><a href="https://www.tiktok.com/@hoccobrasil" target="_blank" rel="noreferrer"><Bolt/> TikTok · @Hoccobrasil <ExternalLink/></a></div></section></div>}
+
+import { useEffect, useState } from 'react';
+import { Download, Lock, Mail, Phone, UserRound } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { onlyDigits } from '../lib/config';
+
+export default function Login() {
+  const [mode, setMode] = useState('signup');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) location.replace('/app');
+    });
+    const handler = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  async function saveContact(user) {
+    if (!user) return;
+    const metadataPhone = onlyDigits(phone || user.user_metadata?.phone || '');
+    if (!metadataPhone) return;
+    await supabase.from('impulsionadores_contatos').upsert({
+      user_id: user.id,
+      email: user.email,
+      telefone: metadataPhone,
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    setMsg('');
+    if (password.length < 6) return setMsg('Use uma senha com pelo menos 6 caracteres.');
+    if (mode === 'signup' && onlyDigits(phone).length < 10) return setMsg('Informe um telefone/WhatsApp válido.');
+    setBusy(true);
+
+    if (mode === 'signup') {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: { full_name: name.trim(), phone: onlyDigits(phone) },
+          emailRedirectTo: `${location.origin}/app`,
+        },
+      });
+      if (error) {
+        setBusy(false);
+        return setMsg(error.message);
+      }
+      if (data.session) {
+        await saveContact(data.user);
+        location.replace('/app');
+        return;
+      }
+      setBusy(false);
+      setMsg('Conta criada. Se a confirmação de e-mail estiver ativa, confirme o e-mail e depois entre.');
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error) {
+      setBusy(false);
+      return setMsg('E-mail ou senha inválidos.');
+    }
+    await saveContact(data.user);
+    location.replace('/app');
+  }
+
+  async function install() {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      setInstallPrompt(null);
+    } else {
+      alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
+    }
+  }
+
+  return (
+    <div className="auth authSimple">
+      <div className="authBrand"><b>HOCCO</b><span>IMPULSIONADORES</span></div>
+      <div className="authCard">
+        <small>COMUNIDADE HOCCO</small>
+        <h1>{mode === 'signup' ? 'Entre em poucos segundos.' : 'Entre na sua conta.'}</h1>
+        <p>{mode === 'signup' ? 'Quatro dados. Sua conta fica pronta para Hype, HC, missões e experiências.' : 'Continue sua ofensiva, seu HC e seus Hypes.'}</p>
+        <form onSubmit={submit}>
+          {mode === 'signup' && (
+            <>
+              <label>Nome<div className="inputIcon"><UserRound/><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" required minLength="2" maxLength="40" /></div></label>
+              <label>Telefone / WhatsApp<div className="inputIcon"><Phone/><input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(14) 99999-9999" required /></div></label>
+            </>
+          )}
+          <label>E-mail<div className="inputIcon"><Mail/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required /></div></label>
+          <label>Senha<div className="inputIcon"><Lock/><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength="6" /></div></label>
+          {msg && <div className="authMsg">{msg}</div>}
+          <button className="primary" disabled={busy}>{busy ? 'AGUARDE...' : mode === 'signup' ? 'CRIAR CONTA E ENTRAR' : 'ENTRAR'}</button>
+        </form>
+        <button className="switch" onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setMsg(''); }}>
+          {mode === 'signup' ? 'Já tenho conta · Entrar' : 'Criar minha conta'}
+        </button>
+      </div>
+      <button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>
+      <p className="authFoot">HOCCO · participação, Hype e experiências em uma única conta.</p>
+    </div>
+  );
+}
