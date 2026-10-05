@@ -6,7 +6,6 @@ export const metadata={
   title:'Impulsionadores HOCCO',
   description:'Você não apenas assiste. Você impulsiona.',
   manifest:'/manifest.webmanifest',
-  themeColor:'#075eea',
   appleWebApp:{capable:true,statusBarStyle:'default',title:'HOCCO'}
 };
 export const viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#075eea'};
