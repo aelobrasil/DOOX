@@ -2,355 +2,162 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Activity, Award, BarChart3, Building2, CheckCircle2, Clock3, FileText, Flame,
-  LayoutDashboard, LogOut, MessageCircle, RefreshCw, Search, ShieldCheck, Sparkles,
-  Target, Trophy, UserRound, Users, WalletCards, XCircle, Zap,
+  Activity, AlertTriangle, Award, Building2, CheckCircle2, CircleDollarSign, Clock3,
+  Database, FileText, HeartHandshake, LayoutDashboard, LogOut, MessageCircle,
+  ReceiptText, RefreshCw, Search, Server, ShieldCheck, Sparkles, Target, Trophy,
+  Users, WalletCards, XCircle, Zap,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { HYPE_BOARDS, HYPE_PRICES, brl, normalizeBrazilWhatsapp, todayBR, whatsappUrl } from '../../lib/config';
+import { HYPE_BOARDS, HYPE_PRICES, brl, todayBR, whatsappUrl } from '../../lib/config';
 import './controle.css';
 
 const NAV = [
   ['dashboard', LayoutDashboard, 'Visão geral'],
   ['membros', Users, 'Membros'],
+  ['hype', Zap, 'Hype'],
   ['solicitacoes', WalletCards, 'Solicitações'],
   ['empresas', Building2, 'Empresas'],
-  ['hype', Zap, 'Hype hoje'],
+  ['financeiro', CircleDollarSign, 'Financeiro'],
+  ['impulsoes', HeartHandshake, 'Impulsões'],
   ['experiencias', Award, 'Experiências'],
   ['relatorios', FileText, 'Relatórios'],
+  ['auditoria', ReceiptText, 'Auditoria'],
+  ['saude', Server, 'Saúde'],
 ];
 
 export default function Controle() {
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('dashboard');
-  const [metrics, setMetrics] = useState({});
-  const [profiles, setProfiles] = useState([]);
-  const [contacts, setContacts] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [companies, setCompanies] = useState([]);
-  const [agenda, setAgenda] = useState([]);
-  const [votes, setVotes] = useState([]);
-  const [interactions, setInteractions] = useState([]);
-  const [experiences, setExperiences] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [reports, setReports] = useState([]);
-  const [notice, setNotice] = useState('');
-  const [search, setSearch] = useState('');
+  const [user,setUser]=useState(null);
+  const [isAdmin,setIsAdmin]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [tab,setTab]=useState('dashboard');
+  const [metrics,setMetrics]=useState({});
+  const [profiles,setProfiles]=useState([]);
+  const [contacts,setContacts]=useState([]);
+  const [sessions,setSessions]=useState([]);
+  const [events,setEvents]=useState([]);
+  const [requests,setRequests]=useState([]);
+  const [companies,setCompanies]=useState([]);
+  const [agenda,setAgenda]=useState([]);
+  const [votes,setVotes]=useState([]);
+  const [interactions,setInteractions]=useState([]);
+  const [experiences,setExperiences]=useState([]);
+  const [applications,setApplications]=useState([]);
+  const [reports,setReports]=useState([]);
+  const [impulsions,setImpulsions]=useState([]);
+  const [audits,setAudits]=useState([]);
+  const [health,setHealth]=useState({database:'checking',auth:'checking',lastSync:null,errors:[]});
+  const [notice,setNotice]=useState('');
+  const [search,setSearch]=useState('');
+  const [companySearch,setCompanySearch]=useState('');
 
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) {
-        location.replace('/');
-        return;
-      }
+  useEffect(()=>{
+    let mounted=true;
+    supabase.auth.getUser().then(async({data})=>{
+      if(!data.user){location.replace('/');return}
+      if(!mounted)return;
       setUser(data.user);
-      const { data: admin } = await supabase.from('hocco_admins').select('*').eq('user_id', data.user.id).maybeSingle();
-      setIsAdmin(Boolean(admin));
-      setLoading(false);
-      if (admin) await loadAll();
+      const {data:admin,error}=await supabase.from('hocco_admins').select('*').eq('user_id',data.user.id).maybeSingle();
+      setIsAdmin(Boolean(admin));setLoading(false);
+      setHealth((h)=>({...h,auth:error?'error':'ok'}));
+      if(admin)await loadAll();
     });
-  }, []);
+    const {data}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||!session?.user)location.replace('/')});
+    return()=>{mounted=false;data.subscription.unsubscribe()};
+  },[]);
 
-  async function loadAll() {
-    const date = todayBR();
-    const todayStart = `${date}T00:00:00-03:00`;
-    const [
-      p, c, s, ev, req, comp, ag, vo, inter, exp, apps, rep,
-    ] = await Promise.all([
-      supabase.from('impulsionadores_perfis').select('*').order('created_at', { ascending: false }),
-      supabase.from('impulsionadores_contatos').select('*'),
-      supabase.from('impulsionadores_sessoes').select('*').gte('started_at', todayStart).order('started_at', { ascending: false }),
-      supabase.from('impulsionadores_eventos').select('*').gte('created_at', todayStart).order('created_at', { ascending: false }).limit(500),
-      supabase.from('hype_solicitacoes').select('*').order('created_at', { ascending: false }),
-      supabase.from('hype_empresas').select('*').order('created_at', { ascending: false }),
-      supabase.from('hype_agenda').select('*,hype_empresas(*)').eq('hype_date', date).order('quadro'),
-      supabase.from('hype_votos').select('*').eq('hype_date', date),
-      supabase.from('hype_interacoes').select('*').gte('created_at', todayStart).limit(5000),
-      supabase.from('hocco_experiencias').select('*').order('created_at', { ascending: false }),
-      supabase.from('hocco_experiencia_inscricoes').select('*').order('created_at', { ascending: false }),
-      supabase.from('hype_relatorios').select('*,hype_empresas(*)').order('created_at', { ascending: false }).limit(100),
+  async function loadAll(){
+    const date=todayBR();const todayStart=`${date}T00:00:00-03:00`;
+    setHealth((h)=>({...h,database:'checking'}));
+    const r=await Promise.all([
+      supabase.from('impulsionadores_perfis').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(250),
+      supabase.from('impulsionadores_contatos').select('*').limit(250),
+      supabase.from('impulsionadores_sessoes').select('*').gte('started_at',todayStart).order('started_at',{ascending:false}).limit(1000),
+      supabase.from('impulsionadores_eventos').select('*').gte('created_at',todayStart).order('created_at',{ascending:false}).limit(1000),
+      supabase.from('hype_solicitacoes').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(300),
+      supabase.from('hype_empresas').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(300),
+      supabase.from('hype_agenda').select('*,hype_empresas(*)').eq('hype_date',date).order('quadro'),
+      supabase.from('hype_votos').select('*').eq('hype_date',date).limit(10000),
+      supabase.from('hype_interacoes').select('*').gte('created_at',todayStart).limit(10000),
+      supabase.from('hocco_experiencias').select('*').order('created_at',{ascending:false}).limit(100),
+      supabase.from('hocco_experiencia_inscricoes').select('*').order('created_at',{ascending:false}).limit(1000),
+      supabase.from('hype_relatorios').select('*,hype_empresas(*)').order('created_at',{ascending:false}).limit(300),
+      supabase.from('impulsionadores_impulsoes').select('*').order('created_at',{ascending:false}).limit(500),
+      supabase.from('hocco_admin_audit').select('*').order('created_at',{ascending:false}).limit(300),
     ]);
-    setProfiles(p.data || []); setContacts(c.data || []); setSessions(s.data || []); setEvents(ev.data || []);
-    setRequests(req.data || []); setCompanies(comp.data || []); setAgenda(ag.data || []); setVotes(vo.data || []);
-    setInteractions(inter.data || []); setExperiences(exp.data || []); setApplications(apps.data || []); setReports(rep.data || []);
-    const activeSeconds = (s.data || []).reduce((acc, item) => acc + Number(item.active_seconds || 0), 0);
-    setMetrics({
-      members: (p.data || []).length,
-      sessions: (s.data || []).length,
-      activeSeconds,
-      actions: (ev.data || []).length + (inter.data || []).length,
-      hypes: (vo.data || []).length,
-      companies: (comp.data || []).length,
-      pending: (req.data || []).filter((r) => !['programado','recusado','reembolsado','cancelado'].includes(r.status)).length,
-      hc: (p.data || []).reduce((acc, item) => acc + Number(item.hc || 0), 0),
-    });
+    const errors=r.map((x,i)=>x.error?`${i}:${x.error.message}`:null).filter(Boolean);
+    const [p,c,s,ev,req,comp,ag,vo,inter,exp,apps,rep,imp,aud]=r;
+    setProfiles(p.data||[]);setContacts(c.data||[]);setSessions(s.data||[]);setEvents(ev.data||[]);
+    setRequests(req.data||[]);setCompanies(comp.data||[]);setAgenda(ag.data||[]);setVotes(vo.data||[]);setInteractions(inter.data||[]);
+    setExperiences(exp.data||[]);setApplications(apps.data||[]);setReports(rep.data||[]);setImpulsions(imp.data||[]);setAudits(aud.data||[]);
+    const activeSeconds=(s.data||[]).reduce((a,x)=>a+Number(x.active_seconds||0),0);
+    const todayImp=(imp.data||[]).filter((x)=>String(x.created_at).startsWith(date));
+    setMetrics({members:p.count??(p.data||[]).length,sessions:(s.data||[]).length,activeSeconds,actions:(ev.data||[]).length+(inter.data||[]).length,hypes:(vo.data||[]).length,companies:comp.count??(comp.data||[]).length,pending:(req.data||[]).filter((x)=>!['programado','recusado','reembolsado','cancelado'].includes(x.status)).length,hc:(p.data||[]).reduce((a,x)=>a+Number(x.hc||0),0),impulseToday:todayImp.filter((x)=>x.status==='confirmada').reduce((a,x)=>a+Number(x.amount||0),0),impulsePending:todayImp.filter((x)=>x.status==='pagamento_informado').length});
+    setHealth((h)=>({...h,database:errors.length?'warning':'ok',lastSync:new Date(),errors}));
   }
 
-  function flash(text) {
-    setNotice(text);
-    setTimeout(() => setNotice(''), 4500);
+  function flash(text){setNotice(text);setTimeout(()=>setNotice(''),4800)}
+  async function audit(action,entityType,entityId,metadata={}){if(!user)return;await supabase.from('hocco_admin_audit').insert({admin_user_id:user.id,action,entity_type:entityType,entity_id:String(entityId||''),metadata})}
+
+  async function confirmPayment(request){
+    const {error}=await supabase.from('hype_solicitacoes').update({payment_status:'confirmado',status:'em_analise',pagamento_confirmado_at:new Date().toISOString(),valor_recebido:request.valor,updated_at:new Date().toISOString()}).eq('id',request.id);
+    if(error)return flash('Não foi possível confirmar este pagamento.');
+    await audit('confirm_payment','hype_solicitacao',request.id,{valor:request.valor});flash('Pagamento confirmado. Solicitação pronta para análise.');loadAll();
   }
-
-  async function audit(action, entityType, entityId, metadata = {}) {
-    if (!user) return;
-    await supabase.from('hocco_admin_audit').insert({ admin_user_id: user.id, action, entity_type: entityType, entity_id: String(entityId || ''), metadata });
+  async function confirmImpulse(item){
+    const {error}=await supabase.from('impulsionadores_impulsoes').update({status:'confirmada',confirmed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',item.id);
+    if(error)return flash('Não foi possível confirmar esta Impulsão.');
+    await audit('confirm_impulsao','impulsao',item.id,{valor:item.amount});flash(`Impulsão ${item.reference_code} confirmada.`);loadAll();
   }
-
-  async function confirmPayment(request) {
-    const { error } = await supabase.from('hype_solicitacoes').update({
-      payment_status: 'confirmado', status: 'em_analise', pagamento_confirmado_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    }).eq('id', request.id);
-    if (error) return flash(error.message);
-    await audit('confirm_payment', 'hype_solicitacao', request.id, { valor: request.valor });
-    flash('Pagamento confirmado. Solicitação pronta para análise.');
-    loadAll();
+  async function ensureCompany(request){
+    const existing=companies.find((c)=>c.cnpj===request.cnpj);if(existing)return existing;
+    const {data,error}=await supabase.from('hype_empresas').insert({razao_social:request.razao_social,nome_fantasia:request.nome_fantasia,cnpj:request.cnpj,whatsapp:request.whatsapp,email:request.email,cidade:request.cidade,uf:request.uf,segmento:request.segmento,logo_url:request.logo_url,instagram:request.instagram,site_url:request.site_url,desconto_padrao:request.desconto,condicoes:request.condicoes,beneficio_validade:request.beneficio_validade}).select().single();
+    if(error)throw error;return data;
   }
-
-  async function ensureCompany(request) {
-    const existing = companies.find((c) => c.cnpj === request.cnpj);
-    if (existing) return existing;
-    const { data, error } = await supabase.from('hype_empresas').insert({
-      razao_social: request.razao_social,
-      nome_fantasia: request.nome_fantasia,
-      cnpj: request.cnpj,
-      whatsapp: request.whatsapp,
-      email: request.email,
-      cidade: request.cidade,
-      uf: request.uf,
-      segmento: request.segmento,
-      logo_url: request.logo_url,
-      instagram: request.instagram,
-      site_url: request.site_url,
-      desconto_padrao: request.desconto,
-      condicoes: request.condicoes,
-    }).select().single();
-    if (error) throw error;
-    return data;
+  function frameStarted(date,board){if(date!==todayBR())return false;const hour=Number(new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',hour12:false}).format(new Date()));return board==='almoco'?hour>=11:board==='tarde'?hour>=14:hour>=18}
+  async function findNextDate(period,preferred){
+    const {data:future}=await supabase.from('hype_agenda').select('hype_date,quadro,status').gte('hype_date',preferred||todayBR()).neq('status','cancelado').limit(3000);const rows=future||[];let base=new Date(`${preferred||todayBR()}T12:00:00-03:00`);
+    for(let i=0;i<60;i+=1){const date=base.toISOString().slice(0,10);const needed=period==='dia'?['almoco','tarde','noite']:[period];const ok=needed.every((b)=>rows.filter((r)=>r.hype_date===date&&r.quadro===b).length<10&&!frameStarted(date,b));if(ok)return date;base=new Date(base.getTime()+86400000)}throw new Error('Nenhuma vaga encontrada nos próximos 60 dias.');
   }
-
-  function frameStarted(date, board) {
-    if (date !== todayBR()) return false;
-    const hour = Number(new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }).format(new Date()));
-    if (board === 'almoco') return hour >= 11;
-    if (board === 'tarde') return hour >= 14;
-    return hour >= 18;
+  async function approveAndSchedule(request){
+    if(request.payment_status!=='confirmado')return flash('Confirme o pagamento antes de aprovar.');
+    try{const company=await ensureCompany(request);const date=await findNextDate(request.periodo,request.data_preferida||todayBR());const boards=request.periodo==='dia'?['almoco','tarde','noite']:[request.periodo];const rows=boards.map((quadro)=>({empresa_id:company.id,solicitacao_id:request.id,hype_date:date,quadro,tamanho:request.tamanho,valor_pago:request.valor,valor_tabela:request.valor_tabela||request.valor,valor_cobrado:request.valor_cobrado||request.valor,valor_recebido:request.valor_recebido||request.valor,tipo_comercial:request.tipo_comercial||'pix',financeiro_status:'recebido',desconto:request.desconto,status:'pre_hype',created_by:user.id}));const {error}=await supabase.from('hype_agenda').insert(rows);if(error)throw error;await supabase.from('hype_solicitacoes').update({empresa_id:company.id,status:'programado',updated_at:new Date().toISOString()}).eq('id',request.id);await audit('approve_schedule','hype_solicitacao',request.id,{company_id:company.id,date,boards});flash(`Aprovada e programada para ${date}.`);loadAll()}catch(error){flash(humanError(error.message))}
   }
+  async function rejectRequest(request){const reason=window.prompt('Motivo da recusa. Ele ficará registrado no pedido:');if(!reason?.trim())return;const paid=request.payment_status==='confirmado';const status=paid?'reembolso_pendente':'recusado';const {error}=await supabase.from('hype_solicitacoes').update({status,refund_status:paid?'pendente':'nao_aplicavel',motivo_recusa:reason.trim(),updated_at:new Date().toISOString()}).eq('id',request.id);if(error)return flash('Não foi possível registrar a recusa.');await audit('reject_request','hype_solicitacao',request.id,{paid,reason});window.open(whatsappUrl(request.whatsapp,paid?`Olá! A solicitação ${request.payment_reference} da ${request.nome_fantasia} não foi aprovada. Motivo: ${reason}. O pedido entrou em processo de reembolso PIX.`:`Olá! A solicitação ${request.payment_reference} da ${request.nome_fantasia} não foi aprovada. Motivo: ${reason}.`),'_blank','noopener,noreferrer');loadAll()}
+  async function markRefunded(request){const {error}=await supabase.from('hype_solicitacoes').update({status:'reembolsado',refund_status:'reembolsado',updated_at:new Date().toISOString()}).eq('id',request.id);if(error)return flash('Não foi possível marcar o reembolso.');await audit('refund_confirmed','hype_solicitacao',request.id,{valor:request.valor});window.open(whatsappUrl(request.whatsapp,`Olá! O reembolso PIX da solicitação ${request.payment_reference} foi concluído pela HOCCO.`),'_blank','noopener,noreferrer');loadAll()}
 
-  async function findNextDate(period, preferred) {
-    const { data: future } = await supabase.from('hype_agenda').select('hype_date,quadro,status').gte('hype_date', preferred || todayBR()).neq('status', 'cancelado').limit(2000);
-    const rows = future || [];
-    let base = new Date(`${preferred || todayBR()}T12:00:00-03:00`);
-    for (let i = 0; i < 45; i += 1) {
-      const date = base.toISOString().slice(0, 10);
-      const needed = period === 'dia' ? ['almoco','tarde','noite'] : [period];
-      const available = needed.every((board) => rows.filter((r) => r.hype_date === date && r.quadro === board).length < 10 && !frameStarted(date, board));
-      if (available) return date;
-      base = new Date(base.getTime() + 86400000);
-    }
-    throw new Error('Nenhuma vaga encontrada nos próximos 45 dias.');
-  }
+  async function quickSchedule(event){event.preventDefault();const form=new FormData(event.currentTarget);const company=companies.find((c)=>c.id===form.get('empresa'));if(!company)return flash('Selecione uma empresa já cadastrada.');const size=String(form.get('tamanho'));const period=String(form.get('periodo'));const discount=Number(form.get('desconto')||company.desconto_padrao||0);const type=String(form.get('tipo_comercial')||'cortesia');const tableValue=HYPE_PRICES[size][period==='dia'?'dia':'quadro'];const charged=type==='cortesia'||type==='bonus'?0:Number(form.get('valor_cobrado')||tableValue);try{const date=await findNextDate(period,todayBR());const boards=period==='dia'?['almoco','tarde','noite']:[period];const status=type==='pix'?'pendente':type==='permuta'?'permuta':'cortesia';const {error}=await supabase.from('hype_agenda').insert(boards.map((quadro)=>({empresa_id:company.id,hype_date:date,quadro,tamanho:size,valor_pago:charged,valor_tabela:tableValue,valor_cobrado:charged,valor_recebido:0,tipo_comercial:type,financeiro_status:status,desconto:discount,status:'pre_hype',created_by:user.id,observacoes:'Inclusão interna pelo HOCCO Control'})));if(error)throw error;await audit('quick_schedule','hype_empresa',company.id,{date,boards,size,tableValue,charged,type});flash(`${company.nome_fantasia} entrou no Pré-Hype de ${date}.`);event.currentTarget.reset();loadAll()}catch(error){flash(humanError(error.message))}}
 
-  async function approveAndSchedule(request) {
-    if (request.payment_status !== 'confirmado') return flash('Confirme o pagamento antes de aprovar.');
-    try {
-      const company = await ensureCompany(request);
-      const date = await findNextDate(request.periodo, request.data_preferida || todayBR());
-      const boards = request.periodo === 'dia' ? ['almoco','tarde','noite'] : [request.periodo];
-      const rows = boards.map((quadro) => ({
-        empresa_id: company.id,
-        solicitacao_id: request.id,
-        hype_date: date,
-        quadro,
-        tamanho: request.tamanho,
-        valor_pago: request.valor,
-        desconto: request.desconto,
-        status: 'pre_hype',
-        created_by: user.id,
-      }));
-      const { error } = await supabase.from('hype_agenda').insert(rows);
-      if (error) throw error;
-      await supabase.from('hype_solicitacoes').update({ empresa_id: company.id, status: 'programado', updated_at: new Date().toISOString() }).eq('id', request.id);
-      await audit('approve_schedule', 'hype_solicitacao', request.id, { company_id: company.id, date, boards });
-      flash(`Aprovada e programada para ${date}.`);
-      loadAll();
-    } catch (error) {
-      flash(`Falha ao programar: ${error.message}`);
-    }
-  }
+  async function finalizeToday(){const date=todayBR();const {data,error}=await supabase.rpc('finalizar_hype_dia',{p_date:date});if(error)return flash(humanError(error.message));await audit('finalize_hype_day','hype_day',date,data||{});flash(data?.empate?'Hype finalizado com empate registrado de forma transparente.':'Hype finalizado. Índice diário normalizado e relatórios congelados.');loadAll()}
 
-  async function rejectRequest(request) {
-    const reason = window.prompt('Motivo da recusa. Ele ficará registrado no pedido:');
-    if (!reason?.trim()) return;
-    const paid = request.payment_status === 'confirmado';
-    const status = paid ? 'reembolso_pendente' : 'recusado';
-    const { error } = await supabase.from('hype_solicitacoes').update({
-      status,
-      refund_status: paid ? 'pendente' : 'nao_aplicavel',
-      motivo_recusa: reason.trim(),
-      updated_at: new Date().toISOString(),
-    }).eq('id', request.id);
-    if (error) return flash(error.message);
-    await audit('reject_request', 'hype_solicitacao', request.id, { paid, reason });
-    const message = paid
-      ? `Olá! A solicitação ${request.payment_reference} da ${request.nome_fantasia} não foi aprovada. Motivo: ${reason}. O pedido foi colocado em reembolso PIX pela HOCCO.`
-      : `Olá! A solicitação ${request.payment_reference} da ${request.nome_fantasia} não foi aprovada. Motivo: ${reason}. Nenhuma participação será publicada.`;
-    window.open(whatsappUrl(request.whatsapp, message), '_blank', 'noopener,noreferrer');
-    loadAll();
-  }
+  async function createExperience(event){event.preventDefault();const form=new FormData(event.currentTarget);const payload={titulo:String(form.get('titulo')).trim(),descricao:String(form.get('descricao')).trim(),empresa_id:form.get('empresa_id')||null,hc_min:Math.max(100,Number(form.get('hc_min')||100)),hc_cost:Math.max(0,Number(form.get('hc_cost')||0)),vagas:Math.max(1,Number(form.get('vagas')||5)),regras:String(form.get('regras')).trim()||null,local_evento:String(form.get('local_evento')).trim()||null,evento_at:form.get('evento_at')?new Date(String(form.get('evento_at'))).toISOString():null,confirmar_ate:form.get('confirmar_ate')?new Date(String(form.get('confirmar_ate'))).toISOString():null,status:'publicada',created_by:user.id};const {data,error}=await supabase.from('hocco_experiencias').insert(payload).select().single();if(error)return flash('Não foi possível publicar a experiência.');await audit('create_experience','experiencia',data.id,payload);flash('Experiência publicada no app.');event.currentTarget.reset();loadAll()}
+  async function setApplicationStatus(app,status){const exp=experiences.find((e)=>e.id===app.experiencia_id);if(status==='selecionado'){const already=applications.filter((a)=>a.experiencia_id===app.experiencia_id&&['selecionado','confirmado'].includes(a.status)).length;if(already>=Number(exp?.vagas||0))return flash('Todas as vagas desta experiência já foram preenchidas.')}const {error}=await supabase.from('hocco_experiencia_inscricoes').update({status,updated_at:new Date().toISOString(),participou_at:status==='confirmado'?new Date().toISOString():undefined}).eq('id',app.id);if(error)return flash('Não foi possível alterar o candidato.');await audit('experience_curate','experiencia_inscricao',app.id,{status});loadAll()}
 
-  async function markRefunded(request) {
-    await supabase.from('hype_solicitacoes').update({ status: 'reembolsado', refund_status: 'reembolsado', updated_at: new Date().toISOString() }).eq('id', request.id);
-    await audit('refund_confirmed', 'hype_solicitacao', request.id, { valor: request.valor });
-    window.open(whatsappUrl(request.whatsapp, `Olá! O reembolso PIX da solicitação ${request.payment_reference} foi marcado como concluído pela HOCCO.`), '_blank', 'noopener,noreferrer');
-    loadAll();
-  }
+  const memberRows=useMemo(()=>profiles.map((p)=>({...p,contact:contacts.find((c)=>c.user_id===p.user_id),seconds:sessions.filter((s)=>s.user_id===p.user_id).reduce((a,s)=>a+Number(s.active_seconds||0),0),sessions:sessions.filter((s)=>s.user_id===p.user_id).length,impulsed:impulsions.filter((i)=>i.user_id===p.user_id&&i.status==='confirmada').reduce((a,i)=>a+Number(i.amount||0),0)})).filter((p)=>`${p.nome_publico} ${p.contact?.email||''} ${p.contact?.telefone||''}`.toLowerCase().includes(search.toLowerCase())),[profiles,contacts,sessions,impulsions,search]);
+  const companyRows=useMemo(()=>companies.filter((c)=>`${c.codigo} ${c.nome_fantasia} ${c.cnpj||''} ${c.whatsapp||''}`.toLowerCase().includes(companySearch.toLowerCase())),[companies,companySearch]);
+  const confirmedBusiness=requests.filter((r)=>r.payment_status==='confirmado').reduce((a,r)=>a+Number(r.valor_recebido||r.valor||0),0);
+  const quickRevenue=agenda.filter((a)=>!a.solicitacao_id).reduce((sum,a)=>sum+Number(a.valor_recebido||0),0);
+  const confirmedImpulsions=impulsions.filter((i)=>i.status==='confirmada').reduce((a,i)=>a+Number(i.amount||0),0);
 
-  async function quickSchedule(event) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const company = companies.find((c) => c.id === form.get('empresa'));
-    if (!company) return flash('Selecione uma empresa já cadastrada.');
-    const size = String(form.get('tamanho'));
-    const period = String(form.get('periodo'));
-    const discount = Number(form.get('desconto') || company.desconto_padrao || 0);
-    try {
-      const date = await findNextDate(period, todayBR());
-      const boards = period === 'dia' ? ['almoco','tarde','noite'] : [period];
-      const total = HYPE_PRICES[size][period === 'dia' ? 'dia' : 'quadro'];
-      const { error } = await supabase.from('hype_agenda').insert(boards.map((quadro) => ({
-        empresa_id: company.id, hype_date: date, quadro, tamanho: size, valor_pago: total, desconto: discount, status: 'pre_hype', created_by: user.id, observacoes: 'Inclusão interna pelo HOCCO Control',
-      })));
-      if (error) throw error;
-      await audit('quick_schedule', 'hype_empresa', company.id, { date, boards, size, total });
-      flash(`${company.nome_fantasia} entrou no Pré-Hype de ${date}.`);
-      event.currentTarget.reset();
-      loadAll();
-    } catch (error) { flash(error.message); }
-  }
+  if(loading)return <div className="adminGate"><ShieldCheck/><b>Validando HOCCO Control...</b></div>;
+  if(!isAdmin)return <div className="adminGate"><XCircle/><b>Acesso não autorizado.</b><p>Esta conta não possui permissão administrativa HOCCO.</p><button onClick={()=>location.href='/app'}>Voltar ao app</button></div>;
 
-  async function finalizeToday() {
-    if (!agenda.length) return flash('Não existem empresas no Hype de hoje.');
-    const date = todayBR();
-    const byAgendaVotes = {};
-    votes.forEach((v) => { byAgendaVotes[v.agenda_id] = (byAgendaVotes[v.agenda_id] || 0) + 1; });
-    const overall = {};
-    agenda.forEach((slot) => { overall[slot.empresa_id] = (overall[slot.empresa_id] || 0) + (byAgendaVotes[slot.id] || 0); });
-
-    for (const board of ['almoco','tarde','noite']) {
-      const slots = agenda.filter((a) => a.quadro === board && a.status !== 'cancelado');
-      if (!slots.length) continue;
-      const ranked = [...slots].sort((a, b) => (byAgendaVotes[b.id] || 0) - (byAgendaVotes[a.id] || 0));
-      const winner = ranked[0];
-      await supabase.from('hype_resultados').upsert({
-        hype_date: date, quadro: board, empresa_id: winner.empresa_id, agenda_id: winner.id,
-        hypes_validos: byAgendaVotes[winner.id] || 0,
-        participantes_unicos: votes.filter((v) => v.quadro === board).length,
-        finalized_at: new Date().toISOString(),
-      }, { onConflict: 'hype_date,quadro' });
-
-      for (let i = 0; i < ranked.length; i += 1) {
-        const slot = ranked[i];
-        const ints = interactions.filter((x) => x.agenda_id === slot.id);
-        const company = slot.hype_empresas;
-        const metricsRow = {
-          agenda_id: slot.id, empresa_id: slot.empresa_id, hype_date: date, quadro: board,
-          hypes_validos: byAgendaVotes[slot.id] || 0,
-          interacoes: ints.length,
-          visitas_detalhe: ints.filter((x) => x.event_type === 'detail').length,
-          beneficios_abertos: ints.filter((x) => x.event_type === 'benefit').length,
-          whatsapp_clicks: ints.filter((x) => x.event_type === 'whatsapp').length,
-          posicao: i + 1,
-        };
-        metricsRow.message_text = `HOCCO HYPE — RELATÓRIO\n\nEmpresa: ${company?.nome_fantasia || ''}\nData: ${date}\nQuadro: ${HYPE_BOARDS[board].label}\n\n⚡ ${metricsRow.hypes_validos} Hypes válidos\n✨ ${metricsRow.interacoes} interações\n🏪 ${metricsRow.visitas_detalhe} visitas aos detalhes\n🎁 ${metricsRow.beneficios_abertos} aberturas de benefício\n💬 ${metricsRow.whatsapp_clicks} direcionamentos ao WhatsApp\n🏆 Posição: ${metricsRow.posicao}º\n\nObrigado por participar do HOCCO Hype.`;
-        await supabase.from('hype_relatorios').upsert(metricsRow, { onConflict: 'agenda_id' });
-      }
-    }
-
-    const overallRank = Object.entries(overall).sort((a, b) => b[1] - a[1]);
-    if (overallRank.length) {
-      const [winnerCompanyId, score] = overallRank[0];
-      const winnerAgenda = agenda.find((a) => a.empresa_id === winnerCompanyId);
-      await supabase.from('hype_resultados').upsert({
-        hype_date: date, quadro: 'dia', empresa_id: winnerCompanyId, agenda_id: winnerAgenda?.id || null,
-        hypes_validos: score, participantes_unicos: new Set(votes.map((v) => v.user_id)).size, finalized_at: new Date().toISOString(),
-      }, { onConflict: 'hype_date,quadro' });
-    }
-    await supabase.from('hype_agenda').update({ status: 'finalizado', updated_at: new Date().toISOString() }).eq('hype_date', date).neq('status', 'cancelado');
-    await audit('finalize_hype_day', 'hype_day', date, { agenda: agenda.length, votes: votes.length });
-    flash('Hype do dia finalizado. Vencedores e relatórios foram congelados.');
-    loadAll();
-  }
-
-  async function createExperience(event) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const payload = {
-      titulo: String(form.get('titulo')).trim(), descricao: String(form.get('descricao')).trim(),
-      hc_min: Math.max(100, Number(form.get('hc_min') || 100)), vagas: Math.max(1, Number(form.get('vagas') || 5)),
-      regras: String(form.get('regras')).trim() || null,
-      evento_at: form.get('evento_at') ? new Date(String(form.get('evento_at'))).toISOString() : null,
-      status: 'publicada', created_by: user.id,
-    };
-    const { data, error } = await supabase.from('hocco_experiencias').insert(payload).select().single();
-    if (error) return flash(error.message);
-    await audit('create_experience', 'experiencia', data.id, payload);
-    flash('Experiência publicada no app.');
-    event.currentTarget.reset();
-    loadAll();
-  }
-
-  async function setApplicationStatus(app, status) {
-    const exp = experiences.find((e) => e.id === app.experiencia_id);
-    if (status === 'selecionado') {
-      const already = applications.filter((a) => a.experiencia_id === app.experiencia_id && ['selecionado','confirmado'].includes(a.status)).length;
-      if (already >= Number(exp?.vagas || 0)) return flash('Todas as vagas desta experiência já foram preenchidas.');
-    }
-    await supabase.from('hocco_experiencia_inscricoes').update({ status, updated_at: new Date().toISOString() }).eq('id', app.id);
-    await audit('experience_curate', 'experiencia_inscricao', app.id, { status });
-    loadAll();
-  }
-
-  const memberRows = useMemo(() => profiles.map((p) => ({
-    ...p,
-    contact: contacts.find((c) => c.user_id === p.user_id),
-    seconds: sessions.filter((s) => s.user_id === p.user_id).reduce((a, s) => a + Number(s.active_seconds || 0), 0),
-    sessions: sessions.filter((s) => s.user_id === p.user_id).length,
-  })).filter((p) => `${p.nome_publico} ${p.contact?.email || ''} ${p.contact?.telefone || ''}`.toLowerCase().includes(search.toLowerCase())), [profiles, contacts, sessions, search]);
-
-  if (loading) return <div className="adminGate"><ShieldCheck/><b>Validando HOCCO Control...</b></div>;
-  if (!isAdmin) return <div className="adminGate"><XCircle/><b>Acesso não autorizado.</b><p>Esta conta não possui permissão administrativa HOCCO.</p><button onClick={() => location.href='/app'}>Voltar ao app</button></div>;
-
-  return <main className="controlApp">
-    <aside className="controlSide"><div className="controlBrand"><b>HOCCO</b><span>CONTROL</span></div><nav>{NAV.map(([key, Icon, label]) => <button key={key} className={tab===key?'active':''} onClick={()=>setTab(key)}><Icon/><span>{label}</span>{key==='solicitacoes'&&metrics.pending>0?<em>{metrics.pending}</em>:null}</button>)}</nav><button className="controlLogout" onClick={async()=>{await supabase.auth.signOut();location.replace('/')}}><LogOut/> Sair</button></aside>
-    <section className="controlMain">
-      <header className="controlTop"><div><small>CÉLULA OPERACIONAL</small><h1>{NAV.find((n)=>n[0]===tab)?.[2]}</h1></div><div className="controlTopRight"><span className="onlineDot">● ONLINE</span><button onClick={loadAll}><RefreshCw/> Atualizar</button></div></header>
-      {notice && <div className="controlNotice">{notice}</div>}
-
-      {tab==='dashboard' && <Dashboard metrics={metrics} requests={requests} agenda={agenda} sessions={sessions} events={events} />}
-
-      {tab==='membros' && <section><div className="toolRow"><label className="controlSearch"><Search/><input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Buscar nome, e-mail ou telefone"/></label><span>{memberRows.length} membros</span></div><div className="dataTable"><div className="thead"><span>Membro</span><span>Contato</span><span>HC / ofensiva</span><span>Hoje</span></div>{memberRows.map((m)=><div className="trow" key={m.user_id}><span><b>{m.nome_publico}</b><small>Nível {m.nivel} · {m.xp} XP</small></span><span><b>{m.contact?.email||'—'}</b><small>{m.contact?.telefone||'telefone pendente'}</small></span><span><b>{m.hc} HC</b><small>🔥 {m.ofensiva_dias} dias</small></span><span><b>{m.sessions} sessões</b><small>{formatDuration(m.seconds)}</small></span></div>)}</div></section>}
-
-      {tab==='solicitacoes' && <section className="stack"><div className="sectionTitle"><div><small>PIPELINE EMPRESARIAL</small><h2>Pagamentos, análise e fila</h2></div></div>{requests.map((r)=><article className="requestCard" key={r.id}><div className="requestMain"><div><small>{r.payment_reference}</small><h3>{r.nome_fantasia}</h3><p>{r.cnpj} · {r.segmento} · {r.cidade}/{r.uf}</p></div><div className="requestPrice"><b>{brl(r.valor)}</b><span>{r.tamanho} · {r.periodo}</span></div></div><div className="requestFacts"><span>Desconto <b>{r.desconto}%</b></span><span>Pagamento <b>{r.payment_status}</b></span><span>Status <b>{r.status.replaceAll('_',' ')}</b></span></div>{r.motivo_recusa&&<div className="rejectReason">Motivo: {r.motivo_recusa}</div>}<div className="actions">{r.payment_status!=='confirmado'&&r.pagamento_informado_at&&<button onClick={()=>confirmPayment(r)}><CheckCircle2/> Confirmar pagamento</button>}{r.payment_status==='confirmado'&&!['programado','recusado','reembolso_pendente','reembolsado'].includes(r.status)&&<button className="positive" onClick={()=>approveAndSchedule(r)}><Zap/> Aprovar e colocar na fila</button>}{!['programado','recusado','reembolso_pendente','reembolsado'].includes(r.status)&&<button className="danger" onClick={()=>rejectRequest(r)}><XCircle/> Recusar</button>}{r.status==='reembolso_pendente'&&<button onClick={()=>markRefunded(r)}><WalletCards/> Marcar PIX reembolsado</button>}<a href={whatsappUrl(r.whatsapp,`Olá! Aqui é a equipe HOCCO sobre a solicitação ${r.payment_reference} da ${r.nome_fantasia}.`)} target="_blank" rel="noreferrer"><MessageCircle/> WhatsApp</a></div></article>)}</section>}
-
-      {tab==='empresas' && <section className="controlGrid"><div className="controlPanel"><small>ENTRADA RÁPIDA</small><h2>Empresa já cadastrada</h2><p>Nome/código, quadro e tamanho. Materiais existentes são reutilizados.</p><form className="quickForm" onSubmit={quickSchedule}><label>Empresa<select name="empresa" required defaultValue=""><option value="" disabled>Selecione...</option>{companies.map((c)=><option value={c.id} key={c.id}>{c.codigo} · {c.nome_fantasia}</option>)}</select></label><div className="two"><label>Tamanho<select name="tamanho" defaultValue="medio"><option value="compacto">Compacto</option><option value="medio">Médio</option><option value="grande">Grande</option><option value="max">Max</option></select></label><label>Período<select name="periodo" defaultValue="tarde"><option value="almoco">Almoço</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="dia">Dia inteiro</option></select></label></div><label>Desconto do Hype (%)<input name="desconto" type="number" min="0" max="30" defaultValue="10"/></label><button><Zap/> COLOCAR NO PRÉ-HYPE</button></form></div><div className="controlPanel"><small>BASE MESTRE</small><h2>{companies.length} empresas</h2><div className="companyAdminList">{companies.map((c)=><article key={c.id}>{c.logo_url?<img src={c.logo_url} alt=""/>:<span>{c.nome_fantasia[0]}</span>}<div><b>{c.nome_fantasia}</b><small>{c.codigo} · {c.segmento} · {c.desconto_padrao}% OFF</small></div><a href={whatsappUrl(c.whatsapp,`Olá, ${c.nome_fantasia}! Aqui é a equipe HOCCO.`)} target="_blank" rel="noreferrer"><MessageCircle/></a></article>)}</div></div></section>}
-
-      {tab==='hype' && <section><div className="hypeControlHead"><div><small>{todayBR()}</small><h2>Operação dos três quadros</h2><p>Almoço 11–14 · Tarde 14–18 · Noite 18–22</p></div><button className="finishDay" onClick={finalizeToday}><Trophy/> FINALIZAR HYPE DO DIA</button></div><div className="boardControlGrid">{Object.entries(HYPE_BOARDS).map(([key,info])=>{const slots=agenda.filter((a)=>a.quadro===key&&a.status!=='cancelado');return <div className="boardControl" key={key}><div className="boardControlTitle"><div><b>{info.label}</b><span>{info.window}</span></div><strong>{slots.length}/10</strong></div>{slots.map((slot)=>{const count=votes.filter((v)=>v.agenda_id===slot.id).length;const ints=interactions.filter((i)=>i.agenda_id===slot.id).length;return <article key={slot.id}><div className={`adminLogo size-${slot.tamanho}`}>{slot.hype_empresas?.logo_url?<img src={slot.hype_empresas.logo_url} alt=""/>:slot.hype_empresas?.nome_fantasia?.[0]}</div><div><b>{slot.hype_empresas?.nome_fantasia}</b><small>{slot.tamanho} · {slot.desconto}% OFF</small></div><span><b>{count}</b><small>Hypes</small></span><span><b>{ints}</b><small>ações</small></span></article>})}{!slots.length&&<div className="miniEmpty">Nenhuma empresa programada.</div>}</div>})}</div></section>}
-
-      {tab==='experiencias' && <section className="controlGrid"><div className="controlPanel"><small>NOVA EXPERIÊNCIA</small><h2>Criar oportunidade</h2><form className="quickForm" onSubmit={createExperience}><label>Título<input name="titulo" required placeholder="Dia de gravação HOCCO"/></label><label>Descrição<textarea name="descricao" required/></label><div className="two"><label>HC mínimo<input name="hc_min" type="number" min="100" defaultValue="100" required/></label><label>Vagas<input name="vagas" type="number" min="1" defaultValue="5" required/></label></div><label>Data/hora<input name="evento_at" type="datetime-local"/></label><label>Regras<textarea name="regras" placeholder="Critérios, duração, local..."/></label><button><Award/> PUBLICAR EXPERIÊNCIA</button></form></div><div className="controlPanel"><small>CURADORIA</small><h2>Candidatos e vagas</h2>{experiences.map((exp)=><article className="curation" key={exp.id}><div className="curationHead"><div><b>{exp.titulo}</b><small>{exp.hc_min} HC · {exp.vagas} vagas</small></div><span>{applications.filter((a)=>a.experiencia_id===exp.id).length} inscritos</span></div>{applications.filter((a)=>a.experiencia_id===exp.id).map((app)=>{const p=profiles.find((x)=>x.user_id===app.user_id);return <div className="candidate" key={app.id}><div><b>{p?.nome_publico||'Membro'}</b><small>{p?.hc||0} HC · 🔥 {p?.ofensiva_dias||0} · {p?.total_dias_ativos||0} dias ativos</small></div><em>{app.status}</em><button disabled={app.status==='selecionado'} onClick={()=>setApplicationStatus(app,'selecionado')}>Selecionar</button><button onClick={()=>setApplicationStatus(app,'lista_espera')}>Espera</button></div>})}</article>)}</div></section>}
-
-      {tab==='relatorios' && <section><div className="sectionTitle"><div><small>PÓS-HYPE</small><h2>Relatórios individuais</h2><p>O texto é gerado no fechamento. O envio automático por WhatsApp fica preparado para integração oficial; enquanto isso, o botão abre a mensagem pronta.</p></div></div><div className="reportGrid">{reports.map((r)=><article className="reportCard" key={r.id}><div><small>{r.hype_date} · {r.quadro}</small><h3>{r.hype_empresas?.nome_fantasia}</h3></div><div className="reportMetrics"><span><b>{r.hypes_validos}</b> Hypes</span><span><b>{r.interacoes}</b> interações</span><span><b>{r.whatsapp_clicks}</b> WhatsApp</span><span><b>{r.posicao||'—'}º</b> posição</span></div><a href={whatsappUrl(r.hype_empresas?.whatsapp||'',r.message_text||'Relatório HOCCO Hype')} target="_blank" rel="noreferrer"><MessageCircle/> ENVIAR RELATÓRIO</a></article>)}</div></section>}
-    </section>
-  </main>;
+  return <main className="controlApp"><aside className="controlSide"><div className="controlBrand"><b>HOCCO</b><span>CONTROL · V1.0</span></div><nav>{NAV.map(([key,Icon,label])=><button key={key} className={tab===key?'active':''} onClick={()=>setTab(key)}><Icon/><span>{label}</span>{key==='solicitacoes'&&metrics.pending>0?<em>{metrics.pending}</em>:key==='impulsoes'&&metrics.impulsePending>0?<em>{metrics.impulsePending}</em>:null}</button>)}</nav><button className="controlLogout" onClick={async()=>{await supabase.auth.signOut();location.replace('/')}}><LogOut/> Sair</button></aside><section className="controlMain"><header className="controlTop"><div><small>CÉLULA OPERACIONAL</small><h1>{NAV.find((n)=>n[0]===tab)?.[2]}</h1></div><div className="controlTopRight"><span className={`onlineDot ${health.database==='ok'?'':'warn'}`}>● {health.database==='ok'?'OPERACIONAL':'ATENÇÃO'}</span><button onClick={loadAll}><RefreshCw/> Atualizar</button></div></header>{notice&&<div className="controlNotice">{notice}</div>}
+    {tab==='dashboard'&&<Dashboard metrics={metrics} requests={requests} agenda={agenda} sessions={sessions} events={events} health={health}/>} 
+    {tab==='membros'&&<section><div className="toolRow"><label className="controlSearch"><Search/><input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Buscar nome, e-mail ou telefone"/></label><span>{metrics.members||0} membros</span></div><div className="dataTable"><div className="thead"><span>Membro</span><span>Contato</span><span>HC / ofensiva</span><span>Atividade</span></div>{memberRows.map((m)=><div className="trow" key={m.user_id}><span><b>{m.nome_publico}</b><small>Nível {m.nivel} · {m.xp} XP</small></span><span><b>{m.contact?.email||'—'}</b><small>{m.contact?.telefone||'telefone pendente'}</small></span><span><b>{m.hc} HC</b><small>🔥 {m.ofensiva_dias} · recorde {m.maior_ofensiva||m.ofensiva_dias}</small></span><span><b>{m.sessions} sessões · {formatDuration(m.seconds)}</b><small>Impulsões confirmadas {brl(m.impulsed)}</small></span></div>)}</div></section>}
+    {tab==='hype'&&<section><div className="hypeControlHead"><div><small>{todayBR()}</small><h2>Operação dos três quadros</h2><p>Almoço 11–14 · Tarde 14–18 · Noite 18–22 · máximo 10 empresas por quadro.</p></div><button className="finishDay" onClick={finalizeToday}><Trophy/> FINALIZAR DIA APÓS 22H</button></div><div className="boardControlGrid">{Object.entries(HYPE_BOARDS).map(([key,info])=>{const slots=agenda.filter((a)=>a.quadro===key&&a.status!=='cancelado');return <div className="boardControl" key={key}><div className="boardControlTitle"><div><b>{info.label}</b><span>{info.window}</span></div><strong>{slots.length}/10</strong></div>{slots.map((slot)=>{const count=votes.filter((v)=>v.agenda_id===slot.id).length;const unique=new Set(interactions.filter((i)=>i.agenda_id===slot.id).map((i)=>i.user_id)).size;return <article key={slot.id}><div className={`adminLogo size-${slot.tamanho}`}>{slot.hype_empresas?.logo_url?<img src={slot.hype_empresas.logo_url} alt=""/>:slot.hype_empresas?.nome_fantasia?.[0]}</div><div><b>{slot.hype_empresas?.nome_fantasia}</b><small>{slot.tamanho} · {slot.desconto}% OFF · {slot.tipo_comercial}</small></div><span><b>{count}</b><small>Hypes</small></span><span><b>{unique}</b><small>pessoas</small></span></article>})}{!slots.length&&<div className="miniEmpty">Nenhuma empresa programada.</div>}</div>})}</div></section>}
+    {tab==='solicitacoes'&&<section className="stack"><div className="sectionTitle"><div><small>PIPELINE EMPRESARIAL</small><h2>Pagamentos, análise e fila</h2></div></div>{requests.map((r)=><article className="requestCard" key={r.id}><div className="requestMain"><div><small>{r.payment_reference}</small><h3>{r.nome_fantasia}</h3><p>{r.cnpj} · {r.segmento} · {r.cidade}/{r.uf}</p></div><div className="requestPrice"><b>{brl(r.valor)}</b><span>{r.tamanho} · {r.periodo}</span></div></div><div className="requestFacts"><span>Benefício <b>{r.desconto}%</b></span><span>Pagamento <b>{r.payment_status}</b></span><span>Status <b>{String(r.status).replaceAll('_',' ')}</b></span></div>{r.motivo_recusa&&<div className="rejectReason">Motivo: {r.motivo_recusa}</div>}<div className="actions">{r.payment_status!=='confirmado'&&r.pagamento_informado_at&&<button onClick={()=>confirmPayment(r)}><CheckCircle2/> Confirmar pagamento</button>}{r.payment_status==='confirmado'&&!['programado','recusado','reembolso_pendente','reembolsado'].includes(r.status)&&<button className="positive" onClick={()=>approveAndSchedule(r)}><Zap/> Aprovar e programar</button>}{!['programado','recusado','reembolso_pendente','reembolsado'].includes(r.status)&&<button className="danger" onClick={()=>rejectRequest(r)}><XCircle/> Recusar</button>}{r.status==='reembolso_pendente'&&<button onClick={()=>markRefunded(r)}><WalletCards/> Marcar PIX reembolsado</button>}<a href={whatsappUrl(r.whatsapp,`Olá! Aqui é a equipe HOCCO sobre a solicitação ${r.payment_reference} da ${r.nome_fantasia}.`)} target="_blank" rel="noreferrer"><MessageCircle/> WhatsApp</a></div></article>)}</section>}
+    {tab==='empresas'&&<section className="controlGrid"><div className="controlPanel"><small>ENTRADA RÁPIDA</small><h2>Empresa já cadastrada</h2><p>Reutiliza dados e materiais existentes. A natureza financeira fica explícita.</p><form className="quickForm" onSubmit={quickSchedule}><label>Empresa<select name="empresa" required defaultValue=""><option value="" disabled>Selecione...</option>{companyRows.map((c)=><option value={c.id} key={c.id}>{c.codigo} · {c.nome_fantasia}</option>)}</select></label><div className="two"><label>Tamanho<select name="tamanho" defaultValue="medio"><option value="compacto">Compacto</option><option value="medio">Médio</option><option value="grande">Grande</option><option value="max">Max</option></select></label><label>Período<select name="periodo" defaultValue="tarde"><option value="almoco">Almoço</option><option value="tarde">Tarde</option><option value="noite">Noite</option><option value="dia">Dia inteiro</option></select></label></div><div className="two"><label>Tipo comercial<select name="tipo_comercial" defaultValue="cortesia"><option value="pix">PIX</option><option value="cortesia">Cortesia</option><option value="parceria">Parceria</option><option value="permuta">Permuta</option><option value="bonus">Bônus</option><option value="outro">Outro</option></select></label><label>Valor cobrado<input name="valor_cobrado" type="number" min="0" step="0.01"/></label></div><label>Benefício (%)<input name="desconto" type="number" min="0" max="30" defaultValue="10"/></label><button><Zap/> COLOCAR NO PRÉ-HYPE</button></form></div><div className="controlPanel"><small>BASE MESTRE</small><h2>{metrics.companies||0} empresas</h2><label className="controlSearch companySearch"><Search/><input value={companySearch} onChange={(e)=>setCompanySearch(e.target.value)} placeholder="Código, nome, CNPJ ou WhatsApp"/></label><div className="companyAdminList">{companyRows.map((c)=><article key={c.id}>{c.logo_url?<img src={c.logo_url} alt=""/>:<span>{c.nome_fantasia[0]}</span>}<div><b>{c.nome_fantasia}</b><small>{c.codigo} · {c.segmento} · {c.desconto_padrao}% OFF</small></div><a href={whatsappUrl(c.whatsapp,`Olá, ${c.nome_fantasia}! Aqui é a equipe HOCCO.`)} target="_blank" rel="noreferrer"><MessageCircle/></a></article>)}</div></div></section>}
+    {tab==='financeiro'&&<section><div className="controlStats financeStats"><Stat icon={CircleDollarSign} label="Hype confirmado" value={brl(confirmedBusiness)} note="solicitações empresariais"/><Stat icon={WalletCards} label="Entradas internas" value={brl(quickRevenue)} note="receita efetivamente marcada"/><Stat icon={HeartHandshake} label="Impulsões" value={brl(confirmedImpulsions)} note="apoio da comunidade, separado"/><Stat icon={AlertTriangle} label="Reembolsos" value={requests.filter((r)=>r.status==='reembolso_pendente').length} note="pendentes"/></div><div className="controlPanel"><small>PRINCÍPIO FINANCEIRO</small><h2>Receita comercial e Impulsão não se misturam.</h2><p>O Control separa valor de tabela, valor cobrado, recebido, cortesia, parceria, permuta e apoio voluntário da comunidade. Uma posição gratuita nunca deve aparecer como receita.</p></div></section>}
+    {tab==='impulsoes'&&<section className="stack"><div className="sectionTitle"><div><small>APOIO DA COMUNIDADE</small><h2>Impulsões</h2><p>Impulsão não compra HC, voto ou prioridade.</p></div></div>{impulsions.map((i)=>{const p=profiles.find((x)=>x.user_id===i.user_id);return <article className="requestCard" key={i.id}><div className="requestMain"><div><small>{i.reference_code}</small><h3>{p?.nome_publico||'Impulsionador'}</h3><p>{new Date(i.created_at).toLocaleString('pt-BR')} · créditos {i.creditos_publicos?'autorizados':'privados'}</p></div><div className="requestPrice"><b>{brl(i.amount)}</b><span>{String(i.status).replaceAll('_',' ')}</span></div></div><div className="actions">{i.status==='pagamento_informado'&&<button className="positive" onClick={()=>confirmImpulse(i)}><CheckCircle2/> Confirmar Impulsão</button>}</div></article>})}</section>}
+    {tab==='experiencias'&&<section className="controlGrid"><div className="controlPanel"><small>NOVA EXPERIÊNCIA</small><h2>Criar oportunidade</h2><form className="quickForm" onSubmit={createExperience}><label>Parceiro<select name="empresa_id" defaultValue=""><option value="">HOCCO</option>{companies.map((c)=><option key={c.id} value={c.id}>{c.codigo} · {c.nome_fantasia}</option>)}</select></label><label>Título<input name="titulo" required placeholder="Dia de gravação HOCCO"/></label><label>Descrição<textarea name="descricao" required/></label><div className="two"><label>HC mínimo<input name="hc_min" type="number" min="100" defaultValue="100" required/></label><label>HC consumido<input name="hc_cost" type="number" min="0" defaultValue="0"/></label></div><div className="two"><label>Vagas<input name="vagas" type="number" min="1" defaultValue="5" required/></label><label>Local<input name="local_evento"/></label></div><div className="two"><label>Data/hora<input name="evento_at" type="datetime-local"/></label><label>Confirmar até<input name="confirmar_ate" type="datetime-local"/></label></div><label>Regras<textarea name="regras" placeholder="Critérios, duração, orientações..."/></label><button><Award/> PUBLICAR EXPERIÊNCIA</button></form></div><div className="controlPanel"><small>CURADORIA</small><h2>Candidatos e vagas</h2>{experiences.map((exp)=><article className="curation" key={exp.id}><div className="curationHead"><div><b>{exp.titulo}</b><small>{exp.hc_min} HC · {exp.vagas} vagas · custo {exp.hc_cost||0} HC</small></div><span>{applications.filter((a)=>a.experiencia_id===exp.id).length} inscritos</span></div>{applications.filter((a)=>a.experiencia_id===exp.id).map((app)=>{const p=profiles.find((x)=>x.user_id===app.user_id);return <div className="candidate" key={app.id}><div><b>{p?.nome_publico||'Membro'}</b><small>{p?.hc||0} HC · 🔥 {p?.ofensiva_dias||0} · recorde {p?.maior_ofensiva||0} · {p?.total_dias_ativos||0} dias ativos</small></div><em>{app.status}</em><button disabled={['selecionado','confirmado'].includes(app.status)} onClick={()=>setApplicationStatus(app,'selecionado')}>Selecionar</button><button onClick={()=>setApplicationStatus(app,'lista_espera')}>Espera</button></div>})}</article>)}</div></section>}
+    {tab==='relatorios'&&<section><div className="sectionTitle"><div><small>PÓS-HYPE</small><h2>Relatórios individuais</h2><p>As métricas únicas evitam inflar resultado por cliques repetidos.</p></div></div><div className="reportGrid">{reports.map((r)=><article className="reportCard" key={r.id}><div><small>{r.hype_date} · {r.quadro}</small><h3>{r.hype_empresas?.nome_fantasia}</h3></div><div className="reportMetrics"><span><b>{r.hypes_validos}</b> Hypes</span><span><b>{r.pessoas_interagiram}</b> pessoas</span><span><b>{r.beneficios_unicos}</b> benefícios</span><span><b>{r.whatsapp_unicos}</b> WhatsApp</span></div><a href={whatsappUrl(r.hype_empresas?.whatsapp||'',r.message_text||'Relatório HOCCO Hype')} target="_blank" rel="noreferrer"><MessageCircle/> ENVIAR RELATÓRIO</a></article>)}</div></section>}
+    {tab==='auditoria'&&<section><div className="sectionTitle"><div><small>TRILHA IMUTÁVEL</small><h2>Atividade administrativa</h2></div></div><div className="dataTable auditTable">{audits.map((a)=><div className="auditRow" key={a.id}><span><b>{a.action}</b><small>{a.entity_type} · {a.entity_id}</small></span><span>{new Date(a.created_at).toLocaleString('pt-BR')}</span></div>)}</div></section>}
+    {tab==='saude'&&<section><div className="healthGrid"><Health label="Autenticação" ok={health.auth==='ok'} detail={health.auth==='ok'?'Sessão administrativa validada':'Falha de autenticação'}/><Health label="Banco / RLS" ok={health.database==='ok'} detail={health.database==='ok'?'Consultas principais responderam':'Há consultas que precisam de atenção'}/><Health label="Hype Engine" ok detail="Limite 10/quadro + voto server-side + fechamento normalizado"/><Health label="Progressão" ok detail="HC limitado a 2/dia e perfil inicial blindado"/></div>{health.errors.length>0&&<div className="healthErrors"><AlertTriangle/><div><b>Falhas detectadas na última sincronização</b>{health.errors.map((e)=><small key={e}>{e}</small>)}</div></div>}<div className="controlPanel"><small>ÚLTIMA SINCRONIZAÇÃO</small><h2>{health.lastSync?health.lastSync.toLocaleString('pt-BR'):'—'}</h2><p>O indicador OPERACIONAL só aparece quando as consultas centrais do Supabase respondem sem erro.</p></div></section>}
+  </section></main>;
 }
 
-function Dashboard({ metrics, requests, agenda, sessions, events }) {
-  const avg = metrics.sessions ? Math.round(metrics.activeSeconds / metrics.sessions) : 0;
-  const pendingRefund = requests.filter((r)=>r.status==='reembolso_pendente').length;
-  return <section><div className="controlStats"><Stat icon={Users} label="Membros" value={metrics.members||0} note="cadastros totais"/><Stat icon={Activity} label="Acessos hoje" value={metrics.sessions||0} note={`${formatDuration(metrics.activeSeconds||0)} no app`}/><Stat icon={Zap} label="Hypes hoje" value={metrics.hypes||0} note={`${agenda.length}/30 posições ocupadas`}/><Stat icon={Sparkles} label="HC emitidos" value={metrics.hc||0} note="saldo total da comunidade"/><Stat icon={Clock3} label="Sessão média" value={formatDuration(avg)} note="tempo ativo por acesso"/><Stat icon={Target} label="Ações hoje" value={metrics.actions||0} note="eventos + interações"/><Stat icon={Building2} label="Empresas" value={metrics.companies||0} note={`${metrics.pending||0} no pipeline`}/><Stat icon={WalletCards} label="Reembolsos" value={pendingRefund} note="pendentes de confirmação"/></div><div className="controlGrid"><div className="controlPanel"><small>FLUXO HOJE</small><h2>Atividade recente</h2><div className="activityList">{events.slice(0,12).map((e)=><div key={e.id}><span>{String(e.event_type).replaceAll('_',' ')}</span><small>{new Date(e.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small></div>)}{!events.length&&<p>Nenhuma ação registrada ainda.</p>}</div></div><div className="controlPanel"><small>SAÚDE DA CÉLULA</small><h2>Sinais operacionais</h2><div className="healthRows"><p><span>Quadros ocupados hoje</span><b>{agenda.length}/30</b></p><p><span>Sessões abertas hoje</span><b>{sessions.length}</b></p><p><span>Tempo ativo acumulado</span><b>{formatDuration(metrics.activeSeconds||0)}</b></p><p><span>Solicitações em andamento</span><b>{metrics.pending||0}</b></p></div></div></div></section>;
-}
+function Dashboard({metrics,requests,agenda,sessions,events,health}){const avg=metrics.sessions?Math.round(metrics.activeSeconds/metrics.sessions):0;const refunds=requests.filter((r)=>r.status==='reembolso_pendente').length;return <section><div className="controlStats"><Stat icon={Users} label="Membros" value={metrics.members||0} note="cadastros totais"/><Stat icon={Activity} label="Acessos hoje" value={metrics.sessions||0} note={`${formatDuration(metrics.activeSeconds||0)} ativos`}/><Stat icon={Zap} label="Hypes hoje" value={metrics.hypes||0} note={`${agenda.length}/30 posições`}/><Stat icon={Sparkles} label="HC em circulação" value={metrics.hc||0} note="saldo carregado"/><Stat icon={Clock3} label="Sessão média" value={formatDuration(avg)} note="tempo ativo"/><Stat icon={Target} label="Ações hoje" value={metrics.actions||0} note="eventos + interações"/><Stat icon={Building2} label="Empresas" value={metrics.companies||0} note={`${metrics.pending||0} no pipeline`}/><Stat icon={HeartHandshake} label="Impulsão hoje" value={brl(metrics.impulseToday||0)} note={`${metrics.impulsePending||0} para conferir`}/></div><div className="controlGrid"><div className="controlPanel"><small>FLUXO HOJE</small><h2>Atividade recente</h2><div className="activityList">{events.slice(0,12).map((e)=><div key={e.id}><span>{String(e.event_type).replaceAll('_',' ')}</span><small>{new Date(e.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small></div>)}{!events.length&&<p>Nenhuma ação registrada ainda.</p>}</div></div><div className="controlPanel"><small>SAÚDE DA CÉLULA</small><h2>{health.database==='ok'?'Operação estável':'Atenção necessária'}</h2><div className="healthRows"><p><span>Quadros ocupados hoje</span><b>{agenda.length}/30</b></p><p><span>Sessões hoje</span><b>{sessions.length}</b></p><p><span>Tempo ativo acumulado</span><b>{formatDuration(metrics.activeSeconds||0)}</b></p><p><span>Reembolsos pendentes</span><b>{refunds}</b></p></div></div></div></section>}
 function Stat({icon:Icon,label,value,note}){return <article className="controlStat"><Icon/><small>{label}</small><strong>{value}</strong><span>{note}</span></article>}
+function Health({label,ok,detail}){return <article className={`healthCard ${ok?'ok':'bad'}`}>{ok?<CheckCircle2/>:<XCircle/>}<div><b>{label}</b><span>{detail}</span></div></article>}
 function formatDuration(seconds){const s=Math.max(0,Number(seconds||0));if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}min`;const h=Math.floor(m/60),rm=m%60;return `${h}h ${rm}min`}
+function humanError(message=''){if(message.includes('hype_day_not_finished'))return'O Hype do dia só pode ser finalizado após 22h.';if(message.includes('hype_board_full'))return'Este quadro já atingiu o limite de 10 empresas.';if(message.includes('experience_full'))return'As vagas desta experiência já foram preenchidas.';if(message.includes('not_authorized'))return'Esta conta não possui autorização para esta ação.';return'Não foi possível concluir a operação. Verifique os dados e a Saúde da célula.'}

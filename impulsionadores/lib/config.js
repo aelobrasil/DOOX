@@ -3,11 +3,12 @@ export const PIX_KEY = 'c9316176-6f92-413e-9209-63ae6f661ba9';
 export const PIX_RECEIVER = 'Alex Sandro Soares Fernandes';
 export const PIX_BANK = 'Nubank';
 export const PIX_CITY = 'Bauru';
+export const TERMS_VERSION = '1.0-2026-10-05';
 
 export const HYPE_BOARDS = {
-  almoco: { label: 'Hype Almoço', window: '11h–14h' },
-  tarde: { label: 'Hype Tarde', window: '14h–18h' },
-  noite: { label: 'Hype Noite', window: '18h–22h' },
+  almoco: { label: 'Hype Almoço', window: '11h–14h', start: 11, end: 14 },
+  tarde: { label: 'Hype Tarde', window: '14h–18h', start: 14, end: 18 },
+  noite: { label: 'Hype Noite', window: '18h–22h', start: 18, end: 22 },
 };
 
 export const HYPE_SIZES = {
@@ -28,26 +29,37 @@ export function brl(value) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export function todayBR() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+export function todayBR(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
-export function currentBoard() {
-  const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
-  const hour = Number(parts.find((p) => p.type === 'hour')?.value || 0);
+function saoPauloTime(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).formatToParts(date);
+  const get = (type) => Number(parts.find((p) => p.type === type)?.value || 0);
+  return { hour: get('hour'), minute: get('minute'), second: get('second') };
+}
+
+export function currentBoard(date = new Date()) {
+  const { hour } = saoPauloTime(date);
   if (hour >= 11 && hour < 14) return 'almoco';
   if (hour >= 14 && hour < 18) return 'tarde';
   if (hour >= 18 && hour < 22) return 'noite';
   return hour < 11 ? 'almoco' : 'noite';
 }
 
-export function isBoardLive(board) {
-  const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
-  const hour = Number(parts.find((p) => p.type === 'hour')?.value || 0);
-  if (board === 'almoco') return hour >= 11 && hour < 14;
-  if (board === 'tarde') return hour >= 14 && hour < 18;
-  if (board === 'noite') return hour >= 18 && hour < 22;
-  return false;
+export function isBoardLive(board, date = new Date()) {
+  const { hour } = saoPauloTime(date);
+  const info = HYPE_BOARDS[board];
+  return Boolean(info && hour >= info.start && hour < info.end);
+}
+
+export function hypeMoment(date = new Date()) {
+  const { hour } = saoPauloTime(date);
+  if (hour < 11) return { board: 'almoco', live: false, closed: false };
+  if (hour < 14) return { board: 'almoco', live: true, closed: false };
+  if (hour < 18) return { board: 'tarde', live: true, closed: false };
+  if (hour < 22) return { board: 'noite', live: true, closed: false };
+  return { board: null, live: false, closed: true };
 }
 
 export function onlyDigits(value = '') {
