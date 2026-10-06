@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Award, Bolt, Building2, Camera, CheckCircle2, ChevronRight, Download, Flame,
   HeartHandshake, Home, LogOut, MessageCircle, QrCode, Sparkles, Target, Trophy,
-  User, WalletCards, X, Zap,
+  User, WalletCards, X, Youtube, Zap,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../lib/supabase';
@@ -20,6 +20,7 @@ export default function MemberApp() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [daily, setDaily] = useState(null);
+  const [youtubeVisited, setYoutubeVisited] = useState(false);
   const [tab, setTab] = useState('inicio');
   const [board, setBoard] = useState(currentBoard());
   const [agenda, setAgenda] = useState([]);
@@ -139,8 +140,13 @@ export default function MemberApp() {
     if (data) setProfile(data);
   }
   async function loadDaily(currentUser = user) {
-    const { data } = await supabase.from('hc_diario').select('*').eq('user_id', currentUser.id).eq('activity_date', todayBR()).maybeSingle();
-    setDaily(data || { hc_earned: 0, missions_completed: 1, boards_hyped: 0 });
+    const date = todayBR();
+    const [{ data: hcData }, { data: youtubeMission }] = await Promise.all([
+      supabase.from('hc_diario').select('*').eq('user_id', currentUser.id).eq('activity_date', date).maybeSingle(),
+      supabase.from('impulsionadores_missoes_diarias').select('mission_key').eq('user_id', currentUser.id).eq('mission_date', date).eq('mission_key', 'youtube_channel_visit').maybeSingle(),
+    ]);
+    setDaily(hcData || { hc_earned: 0, missions_completed: 1, boards_hyped: 0 });
+    setYoutubeVisited(Boolean(youtubeMission));
   }
   async function loadHype(selectedBoard = board, currentUser = user) {
     if (!currentUser) return;
@@ -186,6 +192,18 @@ export default function MemberApp() {
       user_id: user.id, session_id: sessionRef.current, event_type: eventType,
       path: `/app/${tab}`, entity_type: entityType, entity_id: entityId ? String(entityId) : null, metadata,
     });
+  }
+  async function visitYoutube() {
+    if (!user) return;
+    window.open('https://www.youtube.com/@hoccpov', '_blank', 'noopener,noreferrer');
+    if (youtubeVisited) return;
+    const { error } = await supabase.from('impulsionadores_missoes_diarias').insert({
+      user_id: user.id, mission_date: todayBR(), mission_key: 'youtube_channel_visit', metadata: { channel: '@hoccpov' },
+    });
+    if (error && !String(error.message || '').toLowerCase().includes('duplicate')) return showToast('O canal foi aberto, mas a missão não pôde ser registrada agora.');
+    setYoutubeVisited(true);
+    showToast('Missão concluída: visita ao canal oficial @hoccpov. +5 XP.');
+    await Promise.all([loadDaily(), loadProfile()]);
   }
   async function openCompany(slot) {
     await supabase.from('hype_interacoes').insert([
@@ -289,6 +307,8 @@ export default function MemberApp() {
   const hc = profile?.hc || 0;
   const dailyHC = daily?.hc_earned || 0;
   const boardsHyped = daily?.boards_hyped || 0;
+  const dailyMissions = 1 + Math.min(3, boardsHyped) + (youtubeVisited ? 1 : 0);
+  const missionProgress = Math.min(100, dailyMissions * 20);
   const totalImpulsed = impulsions.filter((i) => i.status === 'confirmada').reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
   if (!profile) return <div className="splash"><b>HOCCO</b><span>Ativando sua célula...</span></div>;
@@ -301,7 +321,7 @@ export default function MemberApp() {
         <section className="livingHero"><div><small>CÉLULA HOCCO ATIVA</small><h1>Olá, {profile.nome_publico.split(' ')[0]}.</h1><p>Participe dos Hypes, mantenha sua ofensiva, conquiste HC e desbloqueie experiências.</p></div><div className="pulseCore"><Bolt/><span>ATIVO</span></div></section>
         <div className="valueGrid"><Metric icon={Sparkles} value={`${hc} HC`} label="Saldo HC" note="máx. 2 por dia"/><Metric icon={Flame} value={`${profile.ofensiva_dias} dias`} label="Ofensiva" note={`recorde ${profile.maior_ofensiva || profile.ofensiva_dias}`}/><Metric icon={Target} value={`${dailyHC}/2`} label="HC de hoje" note={`${boardsHyped}/3 quadros`}/><Metric icon={Award} value={`Nível ${profile.nivel}`} label="Progressão" note={`${profile.xp} XP`}/></div>
         <section className="nowCard" onClick={()=>{if(moment.board)setBoard(moment.board);setTab('hype')}}><div><small>{moment.closed?'HYPE DE HOJE ENCERRADO':moment.live?'AO VIVO':'PRÓXIMO QUADRO'}</small><h2>{moment.closed?'Hype Almoço · amanhã':HYPE_BOARDS[moment.board]?.label}</h2><p>{moment.closed?'11h–14h':`${HYPE_BOARDS[moment.board]?.window} · até 10 empresas`}</p></div><div className={moment.live?'liveDot on':'liveDot'}>{moment.live?'AO VIVO':moment.closed?'ENCERRADO':'EM BREVE'}</div><ChevronRight/></section>
-        <section className="missionPulse"><div className="sectionHead"><div><small>MISSÕES AUTOMÁTICAS</small><h2>Seu dia é validado pelo sistema.</h2></div><strong>{Math.min(100,25+boardsHyped*25)}%</strong></div><div className="progress"><div style={{width:`${Math.min(100,25+boardsHyped*25)}%`}}/></div><div className="microMissions"><Mission done title="Entrou no app" reward="+5 XP"/><Mission done={boardsHyped>=1} title="Primeiro quadro" reward="+1 HC · +25 XP"/><Mission done={boardsHyped>=2} title="Segundo quadro" reward="+1 HC · +25 XP"/><Mission done={boardsHyped>=3} title="Dia completo" reward="+25 XP"/></div></section>
+        <section className="missionPulse"><div className="sectionHead"><div><small>MISSÕES DIÁRIAS</small><h2>Seu dia é validado pelo sistema.</h2></div><strong>{missionProgress}%</strong></div><div className="progress"><div style={{width:`${missionProgress}%`}}/></div><div className="microMissions"><Mission done title="Entrou no app" reward="+5 XP"/><button type="button" className={youtubeVisited?'microMission done':'microMission'} style={{background:youtubeVisited?'#f4f9ff':'#fff',width:'100%',textAlign:'left'}} onClick={visitYoutube}><Youtube style={{color:'#ff0000'}}/><span>Visitar @hoccpov</span><b>{youtubeVisited?'+5 XP · FEITO':'+5 XP'}</b></button><Mission done={boardsHyped>=1} title="Primeiro quadro" reward="+1 HC · +25 XP"/><Mission done={boardsHyped>=2} title="Segundo quadro" reward="+1 HC · +25 XP"/><Mission done={boardsHyped>=3} title="Dia completo" reward="+25 XP"/></div></section>
         {overallWinner&&<WinnerCard result={overallWinner} results={results}/>} 
         <button className="impulseCTA" onClick={()=>{setActiveImpulse(null);setImpulseOpen(true)}}><HeartHandshake/><div><b>Fazer uma Impulsão</b><span>Apoio voluntário à HOCCO a partir de R$ 3. Não compra HC, Hypes ou prioridade.</span></div><ChevronRight/></button>
         <button className="businessCTA" onClick={()=>location.href='/empresa'}><Building2/><div><b>Quer colocar sua empresa no Hype?</b><span>Cadastro, benefício, quadro e pagamento em um fluxo profissional.</span></div><ChevronRight/></button>
@@ -318,9 +338,9 @@ export default function MemberApp() {
         <button className="businessCTA" onClick={()=>location.href='/empresa'}><Building2/><div><b>Hypar minha empresa</b><span>Participações a partir de R$ 29,90.</span></div><ChevronRight/></button>
       </>}
 
-      {tab==='missoes' && <><Title eyebrow="OFENSIVA HOCCO" title={`${profile.ofensiva_dias} dias de constância`} text="Entrar em um novo dia mantém sua ofensiva. As missões são concluídas automaticamente pelas ações reais dentro do app."/><div className="hcCap"><Sparkles/><div><small>LIMITE DIÁRIO</small><h2>{dailyHC}/2 HC conquistados hoje</h2><p>Mesmo completando tudo, o máximo é 2 HC por dia.</p></div></div><div className="missionList"><MissionRow done title="Presença HOCCO" text="Entrar no app hoje mantém sua ofensiva." reward="+5 XP"/><MissionRow done={boardsHyped>=1} title="Primeiro Hype" text="Escolher uma empresa em um quadro válido." reward="+1 HC · +25 XP"/><MissionRow done={boardsHyped>=2} title="Dois momentos" text="Participar de dois quadros diferentes." reward="+1 HC · +25 XP"/><MissionRow done={boardsHyped>=3} title="Dia completo" text="Participar de Almoço, Tarde e Noite." reward="+25 XP"/></div><div className="unlockCard"><Award/><div><small>PORTA DE ENTRADA</small><h2>100 HC desbloqueiam experiências.</h2><p>HC torna você elegível; não compra automaticamente uma vaga.</p></div><strong>{hc}/100</strong></div></>}
+      {tab==='missoes' && <><Title eyebrow="OFENSIVA HOCCO" title={`${profile.ofensiva_dias} dias de constância`} text="Entrar em um novo dia mantém sua ofensiva. Missões extras podem render XP, mas o teto continua sendo 2 HC por dia."/><div className="hcCap"><Sparkles/><div><small>LIMITE DIÁRIO</small><h2>{dailyHC}/2 HC conquistados hoje</h2><p>Mesmo completando todas as missões, o máximo absoluto é 2 HC por dia.</p></div></div><div className="missionList"><MissionRow done title="Presença HOCCO" text="Entrar no app hoje mantém sua ofensiva." reward="+5 XP"/><button type="button" className={youtubeVisited?'missionRow done':'missionRow'} style={{width:'100%',textAlign:'left',background:youtubeVisited?'#fbfdff':'#fff'}} onClick={visitYoutube}><span style={{color:'#ff0000'}}><Youtube/></span><div><b>Canal oficial HOCCO</b><small>Visite @hoccpov no YouTube uma vez por dia.</small></div><em>{youtubeVisited?'+5 XP · FEITO':'+5 XP'}</em></button><MissionRow done={boardsHyped>=1} title="Primeiro Hype" text="Escolher uma empresa em um quadro válido." reward="+1 HC · +25 XP"/><MissionRow done={boardsHyped>=2} title="Dois momentos" text="Participar de dois quadros diferentes." reward="+1 HC · +25 XP"/><MissionRow done={boardsHyped>=3} title="Dia completo" text="Participar de Almoço, Tarde e Noite." reward="+25 XP"/></div><div className="unlockCard"><Award/><div><small>PORTA DE ENTRADA</small><h2>150 HC desbloqueiam experiências.</h2><p>HC torna você elegível; não compra automaticamente uma vaga.</p></div><strong>{hc}/150</strong></div></>}
 
-      {tab==='experiencias' && <><Title eyebrow="EXPERIÊNCIAS HOCCO" title="Acesso que não está à venda." text="A partir de 100 HC você pode se candidatar a experiências HOCCO e de empresas parceiras."/>{hc<100&&<div className="lockedExperience"><Award/><div><b>Faltam {100-hc} HC</b><span>O limite continua sendo 2 HC por dia.</span></div></div>}<div className="experienceList">{experiences.map((exp)=>{const own=applications.find((a)=>a.experiencia_id===exp.id);const eligible=hc>=exp.hc_min;return <article className="experienceCard" key={exp.id}><div className="experienceTop"><span>{exp.hype_empresas?.nome_fantasia||'HOCCO'}</span><b>{exp.vagas} vagas</b></div><h2>{exp.titulo}</h2><p>{exp.descricao}</p><div className="experienceMeta"><span><Sparkles/> mínimo {exp.hc_min} HC</span>{exp.evento_at&&<span>{new Date(exp.evento_at).toLocaleDateString('pt-BR')}</span>}</div>{exp.local_evento&&<small>Local: {exp.local_evento}</small>}{exp.regras&&<small>{exp.regras}</small>}{own?.status==='selecionado'?<button onClick={()=>confirmExperience(own)}>CONFIRMAR PARTICIPAÇÃO</button>:<button disabled={!eligible||Boolean(own)||exp.status!=='publicada'} onClick={()=>applyExperience(exp)}>{own?statusLabel(own.status):eligible?'QUERO PARTICIPAR':`PRECISA DE ${exp.hc_min} HC`}</button>}</article>})}{!experiences.length&&<Empty icon={Award} title="Novas experiências em preparação" text="Eventos, bastidores, reuniões e benefícios de empresas aparecerão aqui."/>}</div></>}
+      {tab==='experiencias' && <><Title eyebrow="EXPERIÊNCIAS HOCCO" title="Acesso que não está à venda." text="A partir de 150 HC você pode se candidatar a experiências HOCCO e de empresas parceiras."/>{hc<150&&<div className="lockedExperience"><Award/><div><b>Faltam {150-hc} HC</b><span>O limite continua sendo 2 HC por dia.</span></div></div>}<div className="experienceList">{experiences.map((exp)=>{const own=applications.find((a)=>a.experiencia_id===exp.id);const eligible=hc>=exp.hc_min;return <article className="experienceCard" key={exp.id}><div className="experienceTop"><span>{exp.hype_empresas?.nome_fantasia||'HOCCO'}</span><b>{exp.vagas} vagas</b></div><h2>{exp.titulo}</h2><p>{exp.descricao}</p><div className="experienceMeta"><span><Sparkles/> mínimo {exp.hc_min} HC</span>{exp.evento_at&&<span>{new Date(exp.evento_at).toLocaleDateString('pt-BR')}</span>}</div>{exp.local_evento&&<small>Local: {exp.local_evento}</small>}{exp.regras&&<small>{exp.regras}</small>}{own?.status==='selecionado'?<button onClick={()=>confirmExperience(own)}>CONFIRMAR PARTICIPAÇÃO</button>:<button disabled={!eligible||Boolean(own)||exp.status!=='publicada'} onClick={()=>applyExperience(exp)}>{own?statusLabel(own.status):eligible?'QUERO PARTICIPAR':`PRECISA DE ${exp.hc_min} HC`}</button>}</article>})}{!experiences.length&&<Empty icon={Award} title="Novas experiências em preparação" text="Eventos, bastidores, reuniões e benefícios de empresas aparecerão aqui."/>}</div></>}
 
       {tab==='perfil' && <><div className="profile"><label className="photo">{profile.avatar_url?<img src={profile.avatar_url} alt="Foto"/>:<span>{profile.nome_publico[0]}</span>}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar}/><i><Camera/></i></label><h1>{profile.nome_publico}</h1><p>{profile.username?`@${profile.username}`:user.email}</p><b>NÍVEL {profile.nivel} · IMPULSIONADOR</b></div><div className="profileStats"><div><strong>{profile.hc}</strong><span>HC</span></div><div><strong>{profile.ofensiva_dias}</strong><span>Ofensiva</span></div><div><strong>{profile.xp}</strong><span>XP</span></div><div><strong>{profile.impulsos}</strong><span>Hypes</span></div></div>{edit?<form className="edit" onSubmit={saveProfile}><label>Nome público<input name="nome" defaultValue={profile.nome_publico} required/></label><label>@ na comunidade<input name="username" defaultValue={profile.username||''}/></label><label>Sobre você<textarea name="bio" defaultValue={profile.bio||''}/></label><button className="primary">SALVAR PERFIL</button></form>:<button className="outline" onClick={()=>setEdit(true)}>EDITAR PERFIL</button>}
         <section className="impulseHistory"><div className="sectionHead"><div><small>MINHAS IMPULSÕES</small><h2>{brl(totalImpulsed)} confirmados</h2></div><button onClick={()=>{setActiveImpulse(null);setImpulseOpen(true)}}>NOVA IMPULSÃO</button></div>{impulsions.slice(0,6).map((i)=><div className="impulseRow" key={i.id}><span><b>{i.reference_code}</b><small>{new Date(i.created_at).toLocaleDateString('pt-BR')} · {String(i.status).replaceAll('_',' ')}</small></span><strong>{brl(i.amount)}</strong></div>)}{!impulsions.length&&<p>Nenhuma Impulsão registrada ainda.</p>}</section>
