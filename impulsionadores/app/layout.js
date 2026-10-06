@@ -1,6 +1,7 @@
 import './globals.css';
 import './living.css';
 import './enhancements.css';
+import './pwa.css';
 import PwaExperience from './PwaExperience';
 
 export const metadata={
