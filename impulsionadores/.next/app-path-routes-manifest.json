@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/app/page": "/app",
+  "/controle/page": "/controle",
+  "/empresa/page": "/empresa",
+  "/offline/page": "/offline",
+  "/page": "/",
+  "/privacidade/page": "/privacidade",
+  "/redefinir-senha/page": "/redefinir-senha",
+  "/regras-hc/page": "/regras-hc",
+  "/regras-hype/page": "/regras-hype",
+  "/termos-empresa/page": "/termos-empresa",
+  "/termos/page": "/termos"
+}

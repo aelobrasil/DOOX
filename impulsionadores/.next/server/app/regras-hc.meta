@@ -1,0 +1,34 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/regras-hc/layout,_N_T_/regras-hc/page,_N_T_/regras-hc"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/regras-hc/__PAGE__"
+  ],
+  "prefetchHints": {
+    "hints": 64,
+    "slots": {
+      "children": {
+        "hints": 96,
+        "slots": {
+          "children": {
+            "hints": 160,
+            "slots": null
+          }
+        }
+      }
+    }
+  },
+  "routeCache": {
+    "key": "/route-cache/APP_PAGE/0b3cae0238cb3ef870d45ad1e9f426c2d1a5a544e58460d747df0c2aedb71d29/$/regras-hc",
+    "owner": {
+      "kind": "APP_PAGE",
+      "sourceRoute": "/regras-hc/page"
+    },
+    "isFallback": false
+  }
+}

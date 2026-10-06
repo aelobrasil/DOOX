@@ -20,12 +20,17 @@ export default function Login() {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [appInstalled, setAppInstalled] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { if (data.session) location.replace('/app'); });
-    const handler = (event) => { event.preventDefault(); setInstallPrompt(event); };
+    const installedNow = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('hocco_app_installed') === '1';
+    if (installedNow) { setAppInstalled(true); localStorage.setItem('hocco_app_installed', '1'); }
+    const handler = (event) => { event.preventDefault(); if (!installedNow) setInstallPrompt(event); };
+    const installedHandler = () => { localStorage.setItem('hocco_app_installed', '1'); setAppInstalled(true); setInstallPrompt(null); };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
+    return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', installedHandler); };
   }, []);
 
   async function saveContact(user) {
@@ -88,8 +93,11 @@ export default function Login() {
   }
 
   async function install() {
-    if (installPrompt) { installPrompt.prompt(); await installPrompt.userChoice; setInstallPrompt(null); }
-    else alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
+    if (appInstalled) return;
+    if (installPrompt) {
+      installPrompt.prompt(); const choice = await installPrompt.userChoice; setInstallPrompt(null);
+      if (choice?.outcome === 'accepted') { localStorage.setItem('hocco_app_installed', '1'); setAppInstalled(true); }
+    } else alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
   }
 
   return <div className="auth authSimple">
@@ -110,7 +118,7 @@ export default function Login() {
       {mode === 'login' && <button className="forgotLink" onClick={forgotPassword} disabled={busy}>Esqueci minha senha</button>}
       <button className="switch" onClick={()=>{setMode(mode==='signup'?'login':'signup');setMsg('');setConfirmPassword('');setAccepted(false);setShowPassword(false);setShowConfirmPassword(false)}}>{mode==='signup'?'Já tenho conta · Entrar':'Criar minha conta'}</button>
     </div>
-    <button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>
+    {!appInstalled&&<button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>}
     <p className="authFoot">HOCCO · participação, Hype, HC, Impulsão e experiências em uma única conta.</p>
   </div>;
 }
