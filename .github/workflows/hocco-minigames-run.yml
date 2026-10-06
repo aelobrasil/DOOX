@@ -1,0 +1,31 @@
+name: HOCCO minigames release
+
+on:
+  push:
+    paths:
+      - '.github/workflows/hocco-minigames-run.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Aplicar patch
+        run: python .github/scripts/patch_minigames.py
+      - name: Validar build
+        working-directory: impulsionadores
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Publicar
+        run: |
+          git config user.name "HOCCO Release Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "impulsionadores: cinco minigames, missão diária e instalador persistente"
+          git push origin HEAD:main
