@@ -18,6 +18,16 @@ function isStandalone() {
   return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
+async function registerPeriodicReminder(registration) {
+  if (!('periodicSync' in registration)) return false;
+  try {
+    await registration.periodicSync.register('hocco-daily-reminder', { minInterval: 24 * 60 * 60 * 1000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function PwaExperience() {
   const [installed, setInstalled] = useState(false);
   const [permission, setPermission] = useState('unsupported');
@@ -85,6 +95,8 @@ export default function PwaExperience() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return;
       const registration = await navigator.serviceWorker.ready;
+      await registerPeriodicReminder(registration);
+
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
@@ -104,7 +116,7 @@ export default function PwaExperience() {
       setMessage('Lembretes HOCCO ativados.');
       setTimeout(() => setMessage(''), 3500);
     } catch (error) {
-      console.error('HOCCO push registration failed', error);
+      console.error('HOCCO notification registration failed', error);
       setMessage('Não foi possível ativar os lembretes neste aparelho.');
     } finally {
       setBusy(false);
