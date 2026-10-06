@@ -1,6 +1,7 @@
 import './globals.css';
 import './living.css';
 import './enhancements.css';
+import PwaExperience from './PwaExperience';
 
 export const metadata={
   title:'Impulsionadores HOCCO',
@@ -9,4 +10,4 @@ export const metadata={
   appleWebApp:{capable:true,statusBarStyle:'default',title:'HOCCO'}
 };
 export const viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#075eea'};
-export default function RootLayout({children}){return <html lang="pt-BR"><body>{children}<script dangerouslySetInnerHTML={{__html:`if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}`}}/></body></html>}
+export default function RootLayout({children}){return <html lang="pt-BR"><body>{children}<PwaExperience/><script dangerouslySetInnerHTML={{__html:`if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}`}}/></body></html>}
