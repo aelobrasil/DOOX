@@ -15,6 +15,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
+      - name: Corrigir sintaxe
+        run: python .github/scripts/fix_minigame_syntax.py
       - name: Aplicar patch
         run: python .github/scripts/patch_minigames.py
       - name: Validar build
