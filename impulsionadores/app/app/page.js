@@ -128,6 +128,14 @@ export default function MemberApp() {
     else if (pending === 0 && 'clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
   }, [daily, youtubeVisited, miniGameDone]);
 
+  useEffect(() => {
+    if (!user || !appInstalled) return;
+    localStorage.setItem('hocco_app_installed', '1');
+    supabase.from('impulsionadores_pwa_status').insert({ user_id: user.id }).then(({ error }) => {
+      if (error && error.code !== '23505') console.warn('PWA status não persistido', error.code);
+    });
+  }, [user?.id, appInstalled]);
+
   async function ensureIdentity(currentUser) {
     let { data: p } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', currentUser.id).maybeSingle();
     if (!p) {
@@ -148,7 +156,7 @@ export default function MemberApp() {
     if (!currentUser) return;
     await Promise.all([
       loadProfile(currentUser), loadDaily(currentUser), loadHype(board, currentUser), loadResults(),
-      loadExperiences(currentUser), loadCommunity(), loadImpulsions(currentUser),
+      loadExperiences(currentUser), loadCommunity(), loadImpulsions(currentUser), loadPwaStatus(currentUser),
     ]);
   }
 
@@ -203,8 +211,18 @@ export default function MemberApp() {
     setCommunity(data || []);
   }
   async function loadImpulsions(currentUser = user) {
-    const { data } = await supabase.from('impulsionadores_impulsoes').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20);
+    const { data } = await supabase.from('impulsionadores_impulsoes').select('id,reference_code,status,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20);
     setImpulsions(data || []);
+  }
+  async function loadPwaStatus(currentUser = user) {
+    if (!currentUser) return;
+    const localInstalled = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('hocco_app_installed') === '1');
+    const { data } = await supabase.from('impulsionadores_pwa_status').select('installed_at').eq('user_id', currentUser.id).maybeSingle();
+    if (localInstalled || data?.installed_at) {
+      localStorage.setItem('hocco_app_installed', '1');
+      setAppInstalled(true);
+      if (localInstalled && !data?.installed_at) await supabase.from('impulsionadores_pwa_status').insert({ user_id: currentUser.id });
+    }
   }
 
   async function logEvent(eventType, entityType, entityId, metadata = {}) {
@@ -224,11 +242,19 @@ export default function MemberApp() {
     await logEvent('minigame_play', 'minigame', gameKey, result);
     if (gameKey !== dailyGame) return showToast(`${MINIGAMES[gameKey]?.name || 'Minigame'} concluído: ${result.score} pontos. Hoje a missão é ${MINIGAMES[dailyGame]?.name || 'outro jogo'}.`);
     if (miniGameDone) return showToast(`Missão diária já concluída. Resultado: ${result.score} pontos.`);
-    const { data: awarded, error } = await supabase.rpc('complete_daily_minigame', { p_game_key: gameKey, p_result: result });
-    if (error) return showToast('Partida concluída, mas o XP não pôde ser registrado. Tente novamente.');
-    setMiniGameDone(true);
+    const { error } = await supabase.from('impulsionadores_missoes_diarias').insert({
+      user_id: user.id,
+      mission_date: todayBR(),
+      mission_key: 'minigame_daily',
+      metadata: { game_key: gameKey, result },
+    });
+    if (error && error.code !== '23505') {
+      await loadDaily();
+      return showToast('A partida terminou, mas a missão não pôde ser validada. Confira o jogo marcado como missão de hoje e tente novamente.');
+    }
     await Promise.all([loadDaily(), loadProfile(), loadCommunity()]);
-    showToast(awarded ? `${MINIGAMES[gameKey]?.name}: missão concluída. +5 XP.` : 'Missão diária já estava concluída.');
+    setMiniGameDone(true);
+    showToast(error?.code === '23505' ? 'Missão diária já estava concluída.' : `${MINIGAMES[gameKey]?.name}: missão concluída. +5 XP.`);
   }
   async function visitYoutube() {
     if (!user) return;
@@ -353,7 +379,7 @@ export default function MemberApp() {
   const boardsHyped = daily?.boards_hyped || 0;
   const dailyMissions = 1 + Math.min(3, boardsHyped) + (youtubeVisited ? 1 : 0) + (miniGameDone ? 1 : 0);
   const missionProgress = Math.min(100, Math.round((dailyMissions / 6) * 100));
-  const totalImpulsed = impulsions.filter((i) => i.status === 'confirmada').reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  const confirmedImpulsions = impulsions.filter((i) => i.status === 'confirmada').length;
 
   if (!profile) return <div className="splash"><b>HOCCO</b><span>Ativando sua célula...</span></div>;
   const nav = [['inicio', Home, 'Início'],['hype', Zap, 'Hype'],['missoes', Target, 'Missões'],['experiencias', Award, 'Experiências'],['perfil', User, 'Perfil']];
@@ -368,7 +394,7 @@ export default function MemberApp() {
         <section className="missionPulse"><div className="sectionHead"><div><small>MISSÕES DIÁRIAS</small><h2>Seu dia é validado pelo sistema.</h2></div><strong>{missionProgress}%</strong></div><div className="progress"><div style={{width:`${missionProgress}%`}}/></div><div className="microMissions"><Mission done title="Entrou no app" reward="+5 XP"/><button type="button" className={youtubeVisited?'microMission done':'microMission'} style={{background:youtubeVisited?'#f4f9ff':'#fff',width:'100%',textAlign:'left'}} onClick={visitYoutube}><Youtube style={{color:'#ff0000'}}/><span>Visitar @hoccpov</span><b>{youtubeVisited?'+5 XP · FEITO':'+5 XP'}</b></button><button type="button" className={miniGameDone?'microMission done':'microMission'} onClick={()=>setGameOpen(true)}><Gamepad2/><span>{MINIGAMES[dailyGame]?.name||'Minigame HOCCO'}</span><b>{miniGameDone?'MISSÃO FEITA':'+5 XP'}</b></button><Mission done={boardsHyped>=1} title="Primeiro quadro" reward="+1 HC · +25 XP"/><Mission done={boardsHyped>=2} title="Segundo quadro" reward="+1 HC · +25 XP"/><Mission done={boardsHyped>=3} title="Dia completo" reward="+25 XP"/></div></section>
         <div className="phoneFeatureRow"><button className="pulsoCTA" onClick={()=>setGameOpen(true)}><Gamepad2/><div><b>Minigames HOCCO</b><span>5 jogos · missão de hoje: {MINIGAMES[dailyGame]?.short||'Pulso'} · sem gastar HC</span></div><ChevronRight/></button><button className="shareCTA" onClick={shareHocco}><Share2/><span>Compartilhar</span></button></div>
         {overallWinner&&<WinnerCard result={overallWinner} results={results}/>} 
-        <button className="impulseCTA" onClick={()=>{setActiveImpulse(null);setImpulseOpen(true)}}><HeartHandshake/><div><b>Fazer uma Impulsão</b><span>Apoio voluntário à HOCCO a partir de R$ 3. Não compra HC, Hypes ou prioridade.</span></div><ChevronRight/></button>
+        <button className="impulseCTA" onClick={()=>{setActiveImpulse(null);setImpulseOpen(true)}}><HeartHandshake/><div><b>Fazer uma Impulsão</b><span>Apoio voluntário à HOCCO a partir de R$ 3. Após confirmação, registra +5 XP fixos — o valor não aumenta a recompensa e não compra HC, Hypes ou prioridade.</span></div><ChevronRight/></button>
         <button className="businessCTA" onClick={()=>location.href='/empresa'}><Building2/><div><b>Quer colocar sua empresa no Hype?</b><span>Cadastro, benefício, quadro e pagamento em um fluxo profissional.</span></div><ChevronRight/></button>
         {!appInstalled&&<button className="installCard" onClick={install}><Download/><div><b>Instalar HOCCO no celular</b><span>Abra mais rápido e mantenha sua conta sincronizada.</span></div></button>}
       </>}
@@ -388,7 +414,7 @@ export default function MemberApp() {
       {tab==='experiencias' && <><Title eyebrow="EXPERIÊNCIAS HOCCO" title="Acesso que não está à venda." text="A partir de 150 HC você pode se candidatar a experiências HOCCO e de empresas parceiras."/>{hc<150&&<div className="lockedExperience"><Award/><div><b>Faltam {150-hc} HC</b><span>O limite continua sendo 2 HC por dia.</span></div></div>}<div className="experienceList">{experiences.map((exp)=>{const own=applications.find((a)=>a.experiencia_id===exp.id);const eligible=hc>=exp.hc_min;return <article className="experienceCard" key={exp.id}><div className="experienceTop"><span>{exp.hype_empresas?.nome_fantasia||'HOCCO'}</span><b>{exp.vagas} vagas</b></div><h2>{exp.titulo}</h2><p>{exp.descricao}</p><div className="experienceMeta"><span><Sparkles/> mínimo {exp.hc_min} HC</span>{exp.evento_at&&<span>{new Date(exp.evento_at).toLocaleDateString('pt-BR')}</span>}</div>{exp.local_evento&&<small>Local: {exp.local_evento}</small>}{exp.regras&&<small>{exp.regras}</small>}{own?.status==='selecionado'?<button onClick={()=>confirmExperience(own)}>CONFIRMAR PARTICIPAÇÃO</button>:<button disabled={!eligible||Boolean(own)||exp.status!=='publicada'} onClick={()=>applyExperience(exp)}>{own?statusLabel(own.status):eligible?'QUERO PARTICIPAR':`PRECISA DE ${exp.hc_min} HC`}</button>}</article>})}{!experiences.length&&<Empty icon={Award} title="Novas experiências em preparação" text="Eventos, bastidores, reuniões e benefícios de empresas aparecerão aqui."/>}</div></>}
 
       {tab==='perfil' && <><div className="profile"><label className="photo">{profile.avatar_url?<img src={profile.avatar_url} alt="Foto"/>:<span>{profile.nome_publico[0]}</span>}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar}/><i><Camera/></i></label><h1>{profile.nome_publico}</h1><p>{profile.username?`@${profile.username}`:user.email}</p><b>NÍVEL {profile.nivel} · IMPULSIONADOR</b></div><div className="profileStats"><div><strong>{profile.hc}</strong><span>HC</span></div><div><strong>{profile.ofensiva_dias}</strong><span>Ofensiva</span></div><div><strong>{profile.xp}</strong><span>XP</span></div><div><strong>{profile.impulsos}</strong><span>Hypes</span></div></div>{edit?<form className="edit" onSubmit={saveProfile}><label>Nome público<input name="nome" defaultValue={profile.nome_publico} required/></label><label>@ na comunidade<input name="username" defaultValue={profile.username||''}/></label><label>Sobre você<textarea name="bio" defaultValue={profile.bio||''}/></label><button className="primary">SALVAR PERFIL</button></form>:<button className="outline" onClick={()=>setEdit(true)}>EDITAR PERFIL</button>}
-        <section className="impulseHistory"><div className="sectionHead"><div><small>MINHAS IMPULSÕES</small><h2>{brl(totalImpulsed)} confirmados</h2></div><button onClick={()=>{setActiveImpulse(null);setImpulseOpen(true)}}>NOVA IMPULSÃO</button></div>{impulsions.slice(0,6).map((i)=><div className="impulseRow" key={i.id}><span><b>{i.reference_code}</b><small>{new Date(i.created_at).toLocaleDateString('pt-BR')} · {String(i.status).replaceAll('_',' ')}</small></span><strong>{brl(i.amount)}</strong></div>)}{!impulsions.length&&<p>Nenhuma Impulsão registrada ainda.</p>}</section>
+        <section className="impulseHistory"><div className="sectionHead"><div><small>MINHAS IMPULSÕES</small><h2>{confirmedImpulsions} apoios confirmados</h2></div><button onClick={()=>{setActiveImpulse(null);setImpulseOpen(true)}}>NOVA IMPULSÃO</button></div><p className="fieldHelp">Por privacidade financeira e para evitar associação entre valor e benefício, o histórico do membro não exibe valores. O valor aparece somente durante o pagamento atual.</p>{impulsions.slice(0,6).map((i)=><div className="impulseRow" key={i.id}><span><b>{i.reference_code}</b><small>{new Date(i.created_at).toLocaleDateString('pt-BR')} · {String(i.status).replaceAll('_',' ')}</small></span><strong>APOIO</strong></div>)}{!impulsions.length&&<p>Nenhuma Impulsão registrada ainda.</p>}</section>
         <section className="communityMini"><div className="sectionHead"><div><small>COMUNIDADE</small><h2>Mais ativos</h2></div></div>{community.map((r,i)=><div className="rankMini" key={r.user_id}><span>{i+1}</span><div><b>{r.nome_publico}{r.user_id===user.id?' · você':''}</b><small>Nível {r.nivel} · {r.xp} XP · 🔥 {r.ofensiva_dias}</small></div></div>)}</section><div className="legalLinks"><a href="/termos">Termos</a><a href="/privacidade">Privacidade</a></div><button className="outline" onClick={shareHocco}><Share2/> COMPARTILHAR HOCCO</button>{!appInstalled&&<button className="outline" onClick={install}><Download/> INSTALAR APP</button>}<button className="logout" onClick={async()=>{await supabase.auth.signOut();location.replace('/')}}><LogOut/> Sair da conta</button></>}
     </section>
 
@@ -401,7 +427,7 @@ export default function MemberApp() {
 }
 
 function CompanyModal({slot,onClose,onBenefit,onWhatsapp}){const c=slot.hype_empresas;return <div className="modalBackdrop" onClick={onClose}><section className="companyModal" onClick={(e)=>e.stopPropagation()}><button className="modalClose" onClick={onClose}><X/></button>{c.logo_url?<img className="modalLogo" src={c.logo_url} alt={c.nome_fantasia}/>:<div className="modalLogo initial">{c.nome_fantasia?.[0]}</div>}<small>{c.segmento} · {c.cidade||''}{c.uf?`/${c.uf}`:''}</small><h2>{c.nome_fantasia}</h2><div className="benefitBox"><span>BENEFÍCIO HOCCO</span><strong>{Number(slot.desconto??c.desconto_padrao??0).toFixed(0)}% OFF</strong><p>{c.condicoes||'Consulte a empresa para as condições de utilização.'}</p>{c.beneficio_validade&&<small>Válido até {new Date(`${c.beneficio_validade}T12:00:00`).toLocaleDateString('pt-BR')}</small>}</div><button className="outline" onClick={onBenefit}>VER / REGISTRAR BENEFÍCIO</button><button className="primary" onClick={onWhatsapp}><MessageCircle/> FALAR COM A EMPRESA</button></section></div>}
-function ImpulseModal({active,amount,setAmount,custom,setCustom,credits,setCredits,onCreate,onReport,busy,onClose}){const value=active?Number(active.amount):(custom?Number(String(custom).replace(',','.')):amount);const code=active?pixPayload(active.amount,active.reference_code):null;return <div className="modalBackdrop" onClick={onClose}><section className="impulseModal" onClick={(e)=>e.stopPropagation()}><button className="modalClose" onClick={onClose}><X/></button><HeartHandshake/><small>IMPULSÃO HOCCO</small><h2>{active?'Sua Impulsão está criada.':'Apoie diretamente a HOCCO.'}</h2><p>A Impulsão é um apoio voluntário e não compra HC, Hypes, ranking ou prioridade em experiências.</p>{!active?<><div className="impulsePresets">{IMPULSE_PRESETS.map((v)=><button key={v} className={!custom&&amount===v?'active':''} onClick={()=>setAmount(v)}>{brl(v)}</button>)}</div><label>Outro valor (mínimo R$ 3)<input inputMode="decimal" value={custom} onChange={(e)=>setCustom(e.target.value)} placeholder="3,00"/></label><label className="checkLine"><input type="checkbox" checked={credits} onChange={(e)=>setCredits(e.target.checked)}/> Quero autorizar meu nome público nos créditos HOCCO.</label><button className="primary" disabled={busy||!Number.isFinite(value)||value<3} onClick={onCreate}>{busy?'CRIANDO...':`GERAR PIX · ${brl(value)}`}</button></>:<><div className="impulsePix"><QRCodeSVG value={code} size={190}/><div className="pixIdentity"><span><small>RECEBEDOR</small><b>{PIX_RECEIVER}</b></span><span><small>INSTITUIÇÃO</small><b>{PIX_BANK}</b></span><span><small>CIDADE</small><b>{PIX_CITY} - SP</b></span><span><small>REFERÊNCIA</small><b>{active.reference_code}</b></span></div><button className="outline" onClick={()=>navigator.clipboard?.writeText(code)}><QrCode/> COPIAR PIX COPIA E COLA</button><p className="pixCheck">Confira o recebedor e a instituição antes de concluir o PIX.</p></div><button className="primary" disabled={active.status!=='aguardando_pagamento'} onClick={onReport}>{active.status==='aguardando_pagamento'?'JÁ FIZ O PIX · INFORMAR PAGAMENTO':'PAGAMENTO INFORMADO'}</button></>}</section></div>}
+function ImpulseModal({active,amount,setAmount,custom,setCustom,credits,setCredits,onCreate,onReport,busy,onClose}){const value=active?Number(active.amount):(custom?Number(String(custom).replace(',','.')):amount);const code=active?pixPayload(active.amount,active.reference_code):null;return <div className="modalBackdrop" onClick={onClose}><section className="impulseModal" onClick={(e)=>e.stopPropagation()}><button className="modalClose" onClick={onClose}><X/></button><HeartHandshake/><small>IMPULSÃO HOCCO</small><h2>{active?'Sua Impulsão está criada.':'Apoie diretamente a HOCCO.'}</h2><p>A Impulsão é apoio voluntário. Depois da confirmação, registra +5 XP fixos, independentemente do valor. Não compra HC, Hypes, votos nem prioridade em experiências.</p>{!active?<><div className="impulsePresets">{IMPULSE_PRESETS.map((v)=><button key={v} className={!custom&&amount===v?'active':''} onClick={()=>setAmount(v)}>{brl(v)}</button>)}</div><label>Outro valor (mínimo R$ 3)<input inputMode="decimal" value={custom} onChange={(e)=>setCustom(e.target.value)} placeholder="3,00"/></label><label className="checkLine"><input type="checkbox" checked={credits} onChange={(e)=>setCredits(e.target.checked)}/> Quero autorizar meu nome público nos créditos HOCCO.</label><button className="primary" disabled={busy||!Number.isFinite(value)||value<3} onClick={onCreate}>{busy?'CRIANDO...':`GERAR PIX · ${brl(value)}`}</button></>:<><div className="impulsePix"><QRCodeSVG value={code} size={190}/><div className="pixIdentity"><span><small>RECEBEDOR</small><b>{PIX_RECEIVER}</b></span><span><small>INSTITUIÇÃO</small><b>{PIX_BANK}</b></span><span><small>CIDADE</small><b>{PIX_CITY} - SP</b></span><span><small>REFERÊNCIA</small><b>{active.reference_code}</b></span></div><button className="outline" onClick={()=>navigator.clipboard?.writeText(code)}><QrCode/> COPIAR PIX COPIA E COLA</button><p className="pixCheck">Confira o recebedor e a instituição antes de concluir o PIX.</p></div><button className="primary" disabled={active.status!=='aguardando_pagamento'} onClick={onReport}>{active.status==='aguardando_pagamento'?'JÁ FIZ O PIX · INFORMAR PAGAMENTO':'PAGAMENTO INFORMADO'}</button></>}</section></div>}
 function WinnerCard({result}){const c=result.hype_empresas;if(!c)return null;const ties=result.empate?(result.detalhes?.vencedores||[]):[];return <section className="winnerCard"><Trophy/><div><small>{result.quadro==='dia'?'MAIS HYPADA DO DIA':`VENCEDORA · ${String(result.quadro).toUpperCase()}`} · {new Date(`${result.hype_date}T12:00:00`).toLocaleDateString('pt-BR')}</small><h2>{result.empate?`Empate · ${ties.map((x)=>x.nome).join(' + ')}`:c.nome_fantasia}</h2><p>{result.quadro==='dia'?`${Number(result.score_percent||0).toFixed(1)}% de índice diário normalizado`:`${result.hypes_validos} Hypes válidos`}</p></div></section>}
 function Metric({icon:Icon,value,label,note}){return <article className="metricCard"><Icon/><strong>{value}</strong><b>{label}</b><span>{note}</span></article>}
 function Mission({done,title,reward}){return <div className={done?'microMission done':'microMission'}>{done?<CheckCircle2/>:<Target/>}<span>{title}</span><b>{reward}</b></div>}
