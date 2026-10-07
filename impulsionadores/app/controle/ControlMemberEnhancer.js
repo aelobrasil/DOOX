@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Activity, BarChart3, CheckCircle2, Clock3, Flame, HeartHandshake, MessageCircle, RefreshCw, ShieldCheck, Sparkles, Target, UserRound, X, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './member-detail.css';
@@ -49,16 +50,39 @@ export default function ControlMemberEnhancer(){
         row.dataset.memberBound='1';
         row.classList.add('memberClickable');
         row.title='Abrir análise completa deste membro';
-        row.addEventListener('click',()=>openMember(profile));
+        const handler=()=>openMember(profile);
+        row.__hoccoMemberHandler=handler;
+        row.addEventListener('click',handler);
       });
     };
     bind();
     const observer=new MutationObserver(bind);
     observer.observe(document.body,{childList:true,subtree:true});
-    return()=>observer.disconnect();
+    return()=>{
+      observer.disconnect();
+      document.querySelectorAll('.dataTable .trow').forEach((row)=>{
+        if(row.__hoccoMemberHandler)row.removeEventListener('click',row.__hoccoMemberHandler);
+        delete row.__hoccoMemberHandler;
+        delete row.dataset.memberBound;
+      });
+    };
   },[profiles,contacts]);
 
-  async function openMember(profile){setSelected(profile);setStreak(Number(profile.ofensiva_dias||0));setDetail(null);await loadMember(profile.user_id)}
+  useEffect(()=>{
+    if(!selected)return;
+    const previous=document.body.style.overflow;
+    document.body.style.overflow='hidden';
+    const onKey=(event)=>{if(event.key==='Escape')setSelected(null)};
+    window.addEventListener('keydown',onKey);
+    return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',onKey)};
+  },[selected]);
+
+  async function openMember(profile){
+    setSelected(profile);
+    setStreak(Number(profile.ofensiva_dias||0));
+    setDetail(null);
+    await loadMember(profile.user_id);
+  }
 
   async function loadMember(userId){
     setLoading(true);
@@ -98,11 +122,11 @@ export default function ControlMemberEnhancer(){
   }
 
   const analytics=useMemo(()=>detail?buildAnalytics(detail):null,[detail]);
-  if(!selected)return null;
+  if(!selected||typeof document==='undefined')return null;
 
-  return <div className="memberOverlay" onClick={()=>setSelected(null)}>
-    <aside className="memberDrawer" onClick={(e)=>e.stopPropagation()}>
-      <header className="memberDrawerHead"><div><small>MEMBRO · ANÁLISE 360°</small><h2>{selected.nome_publico}</h2><p>{detail?.contact?.email||selected.username||selected.user_id}</p></div><button onClick={()=>setSelected(null)}><X/></button></header>
+  return createPortal(<div className="memberOverlay" role="dialog" aria-modal="true" aria-label={`Análise do membro ${selected.nome_publico}`} onMouseDown={(e)=>{if(e.target===e.currentTarget)setSelected(null)}}>
+    <aside className="memberDrawer">
+      <header className="memberDrawerHead"><div><small>MEMBRO · ANÁLISE 360°</small><h2>{selected.nome_publico}</h2><p>{detail?.contact?.email||selected.username||selected.user_id}</p></div><button type="button" aria-label="Fechar análise" onClick={()=>setSelected(null)}><X/></button></header>
       {loading||!detail?<div className="memberLoading"><RefreshCw className="spin"/> Carregando histórico completo...</div>:<>
         <section className="memberHeroStats">
           <Mini icon={Clock3} label="Tempo ativo" value={formatDuration(analytics.totalSeconds)} note={`${detail.sessions.length} sessões`}/>
@@ -126,7 +150,7 @@ export default function ControlMemberEnhancer(){
         {detail.errors.length>0&&<div className="memberErrors">Algumas consultas não responderam: {detail.errors.join(' · ')}</div>}
       </>}
     </aside>
-  </div>;
+  </div>,document.body);
 }
 
 function buildAnalytics(d){
