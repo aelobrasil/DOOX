@@ -2,196 +2,24 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "headers": [
-    {
-      "source": "/",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/hocco-v108.css",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/hocco-v108.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/hocco-v108-patch.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/doox-control-v108.css",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/doox-control-v108-views.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/doox-control-v108-core.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*)\\.(mp4|mp3|webm|png|jpg|jpeg|svg|ico)$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/manifest.webmanifest",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache"
-        }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store"
-        }
-      ]
-    },
-    {
-      "source": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive, nosnippet"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/hocco-controle",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive, nosnippet"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    }
+    {"source": "/", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/index.html", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/hocco-v108.css", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/hocco-v108.js", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/hocco-v108-patch.js", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/doox-control-v108.css", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/doox-control-v108-views.js", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/doox-control-v108-core.js", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
+    {"source": "/assets/(.*)\\.(mp4|mp3|webm|png|jpg|jpeg|svg|ico)$", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
+    {"source": "/manifest.webmanifest", "headers": [{"key": "Cache-Control", "value": "no-cache"}]},
+    {"source": "/sw.js", "headers": [{"key": "Cache-Control", "value": "no-cache, no-store"}]},
+    {"source": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt", "headers": [{"key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet"}, {"key": "Cache-Control", "value": "no-store"}]},
+    {"source": "/hocco-controle", "headers": [{"key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet"}, {"key": "Cache-Control", "value": "no-store, max-age=0"}]}
   ],
-  "rewrites": [
-    {
-      "source": "/hocco-controle",
-      "destination": "/doox-control-v108.html"
-    },
-    {
-      "source": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
-      "destination": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"
-    },
-    {
-      "source": "/portal",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/serie",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/empresas",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/insercoes",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/simulacao",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/participar",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/posicao",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/cadastro",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/materiais",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/revisao",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/acompanhar",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/termos",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/privacidade",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/regras",
-      "destination": "/index.html"
-    }
+  "routes": [
+    {"src": "^/hocco-controle/?$", "dest": "/doox-control-v108.html"},
+    {"src": "^/doox-access-fRiqxdGcydxi5UvdiW89JcVt/?$", "dest": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"},
+    {"src": "^/portal/?$", "dest": "/index.html"},
+    {"src": "^/(serie|empresas|insercoes|simulacao|participar|posicao|cadastro|materiais|revisao|acompanhar|termos|privacidade|regras)/?$", "dest": "/index.html"}
   ]
 }
