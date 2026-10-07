@@ -130,67 +130,67 @@
   ],
   "routes": [
     {
-      "src": "^/hocco-controle/?$",
+      "src": "/hocco-controle/?",
       "dest": "/doox-control-v108.html"
     },
     {
-      "src": "^/doox-access-fRiqxdGcydxi5UvdiW89JcVt/?$",
+      "src": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt/?",
       "dest": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"
     },
     {
-      "src": "^/portal/?$",
+      "src": "/portal",
       "dest": "/"
     },
     {
-      "src": "^/serie/?$",
+      "src": "/serie",
       "dest": "/"
     },
     {
-      "src": "^/empresas/?$",
+      "src": "/empresas",
       "dest": "/"
     },
     {
-      "src": "^/insercoes/?$",
+      "src": "/insercoes",
       "dest": "/"
     },
     {
-      "src": "^/simulacao/?$",
+      "src": "/simulacao",
       "dest": "/"
     },
     {
-      "src": "^/participar/?$",
+      "src": "/participar",
       "dest": "/"
     },
     {
-      "src": "^/posicao/?$",
+      "src": "/posicao",
       "dest": "/"
     },
     {
-      "src": "^/cadastro/?$",
+      "src": "/cadastro",
       "dest": "/"
     },
     {
-      "src": "^/materiais/?$",
+      "src": "/materiais",
       "dest": "/"
     },
     {
-      "src": "^/revisao/?$",
+      "src": "/revisao",
       "dest": "/"
     },
     {
-      "src": "^/acompanhar/?$",
+      "src": "/acompanhar",
       "dest": "/"
     },
     {
-      "src": "^/termos/?$",
+      "src": "/termos",
       "dest": "/"
     },
     {
-      "src": "^/privacidade/?$",
+      "src": "/privacidade",
       "dest": "/"
     },
     {
-      "src": "^/regras/?$",
+      "src": "/regras",
       "dest": "/"
     }
   ]
