@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 
-const SUPPORT='5514991808104';
+const SUPPORT='5514991088104';
 
 export default function SupportShortcut(){
   const pathname=usePathname();
