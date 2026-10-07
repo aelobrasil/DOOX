@@ -20,6 +20,6 @@
     {"source":"/hocco-controle","destination":"/doox-control-v108.html"},
     {"source":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt","destination":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"},
     {"source":"/portal","destination":"/index.html"},
-    {"source":"/(serie|empresas|insercoes|simulacao|participar|acompanhar|termos|privacidade|regras)","destination":"/index.html"}
+    {"source":"/(serie|empresas|insercoes|simulacao|participar|posicao|cadastro|materiais|revisao|acompanhar|termos|privacidade|regras)","destination":"/index.html"}
   ]
 }
