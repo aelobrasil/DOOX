@@ -130,11 +130,11 @@
   ],
   "routes": [
     {
-      "src": "/hocco-controle/?",
+      "src": "/hocco-controle",
       "dest": "/doox-control-v108.html"
     },
     {
-      "src": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt/?",
+      "src": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
       "dest": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"
     },
     {
