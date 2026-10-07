@@ -5,7 +5,7 @@ import { Activity, BarChart3, CheckCircle2, Clock3, Flame, HeartHandshake, Messa
 import { supabase } from '../../lib/supabase';
 import './member-detail.css';
 
-const SUPPORT_NUMBER='5514991808104';
+const SUPPORT_NUMBER='5514991088104';
 const MISSION_LABELS={youtube_channel_visit:'Visita ao @hoccpov',minigame_daily:'Minigame diário',pulso_daily:'Pulso diário'};
 
 export default function ControlMemberEnhancer(){
