@@ -139,59 +139,59 @@
     },
     {
       "src": "^/portal/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/serie/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/empresas/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/insercoes/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/simulacao/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/participar/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/posicao/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/cadastro/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/materiais/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/revisao/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/acompanhar/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/termos/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/privacidade/?$",
-      "dest": "/index.html"
+      "dest": "/"
     },
     {
       "src": "^/regras/?$",
-      "dest": "/index.html"
+      "dest": "/"
     }
   ]
 }
