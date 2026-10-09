@@ -5,6 +5,7 @@ import { CheckCircle2, Copy, LockKeyhole, MessageCircle, Trophy, X, Zap } from '
 import { supabase } from '../../lib/supabase';
 
 const BOARD_LABELS={almoco:'Almoço',tarde:'Tarde',noite:'Noite'};
+const LOCK_TITLE='O benefício só é liberado se a empresa vencer o Hype.';
 
 function fmtDate(value){
   if(!value)return '—';
@@ -47,40 +48,70 @@ export default function HypeBenefitExperience(){
 
   useEffect(()=>{
     if(!user)return;
+    let raf=0;
+
+    function enhanceCard(card){
+      if(card.dataset.hoccoBenefitEnhanced==='1')return;
+      card.dataset.hoccoBenefitEnhanced='1';
+      card.style.cursor='default';
+
+      const discount=card.querySelector('.discount');
+      if(discount){
+        const raw=(discount.dataset.hoccoPotential||discount.textContent||'').replace(/[^0-9,.]/g,'')||'0';
+        discount.dataset.hoccoPotential=raw;
+        const desired=`🔒 LIBERE ATÉ ${raw}%`;
+        if(discount.textContent!==desired)discount.textContent=desired;
+        if(discount.getAttribute('title')!==LOCK_TITLE)discount.setAttribute('title',LOCK_TITLE);
+      }
+
+      const vote=card.querySelector('button');
+      if(vote&&vote.textContent?.trim()==='HYPAR'){
+        vote.innerHTML='<span aria-hidden="true">⚡</span> HYPAR PARA LIBERAR';
+      }
+    }
+
     function apply(){
-      document.querySelectorAll('.floatingCompany').forEach((card)=>{
-        card.style.cursor='default';
-        const discount=card.querySelector('.discount');
-        if(discount){
-          const raw=(discount.dataset.hoccoPotential||discount.textContent||'').replace(/[^0-9,.]/g,'');
-          if(raw&&!discount.dataset.hoccoPotential)discount.dataset.hoccoPotential=raw;
-          const value=discount.dataset.hoccoPotential||raw||'0';
-          discount.textContent=`🔒 LIBERE ATÉ ${value}%`;
-          discount.setAttribute('title','O benefício só é liberado se a empresa vencer o Hype.');
-        }
-        const vote=card.querySelector('button');
-        if(vote&&vote.textContent?.trim()==='HYPAR')vote.innerHTML='<span aria-hidden="true">⚡</span> HYPAR PARA LIBERAR';
-      });
+      raf=0;
+      document.querySelectorAll('.floatingCompany').forEach(enhanceCard);
       const rule=document.querySelector('.hypeRule p');
       if(rule&&!rule.dataset.unlockRule){
         rule.dataset.unlockRule='1';
         rule.innerHTML='<b>1 Hype válido por quadro.</b> Seu Hype ajuda a desbloquear o benefício das vencedoras. Até 3 empresas podem liberar benefícios por dia.';
       }
     }
+
+    function scheduleApply(){
+      if(raf)return;
+      raf=requestAnimationFrame(apply);
+    }
+
     function capture(event){
       const card=event.target.closest?.('.floatingCompany');
       if(!card||event.target.closest('button'))return;
       event.preventDefault();
       event.stopPropagation();
       const name=card.querySelector('h3')?.textContent?.trim()||'Empresa HOCCO';
-      const raw=card.querySelector('.discount')?.dataset?.hoccoPotential||card.querySelector('.discount')?.textContent?.replace(/[^0-9,.]/g,'')||'0';
+      const raw=card.querySelector('.discount')?.dataset?.hoccoPotential||'0';
       setLocked({name,discount:raw});
     }
+
     apply();
-    const observer=new MutationObserver(apply);
-    observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+    const observer=new MutationObserver((mutations)=>{
+      const needsApply=mutations.some((mutation)=>
+        Array.from(mutation.addedNodes||[]).some((node)=>
+          node?.nodeType===1 && (node.matches?.('.floatingCompany,.hypeRule') || node.querySelector?.('.floatingCompany,.hypeRule'))
+        )
+      );
+      if(needsApply)scheduleApply();
+    });
+    observer.observe(document.body,{subtree:true,childList:true});
     document.addEventListener('click',capture,true);
-    return()=>{observer.disconnect();document.removeEventListener('click',capture,true)};
+
+    return()=>{
+      observer.disconnect();
+      if(raf)cancelAnimationFrame(raf);
+      document.removeEventListener('click',capture,true);
+    };
   },[user?.id]);
 
   const latestDate=useMemo(()=>winners[0]?.hype_date||null,[winners]);
