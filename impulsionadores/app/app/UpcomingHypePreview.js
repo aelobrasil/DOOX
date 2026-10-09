@@ -6,12 +6,15 @@ import { supabase } from '../../lib/supabase';
 
 const NOTICE_MS=5*60*1000;
 
-function todayBR(){
-  return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+function dayBR(date=new Date()){
+  return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 }
-function formatDate(value){
-  return new Date(`${value}T12:00:00-03:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+function addDays(value,days){
+  const d=new Date(`${value}T12:00:00-03:00`);
+  d.setDate(d.getDate()+days);
+  return dayBR(d);
 }
+function formatDate(value){return new Date(`${value}T12:00:00-03:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
 
 export default function UpcomingHypePreview(){
   const [future,setFuture]=useState([]);
@@ -22,17 +25,8 @@ export default function UpcomingHypePreview(){
   const updateTimerRef=useRef(null);
   const previewTimerRef=useRef(null);
 
-  function showUpdateNotice(){
-    setUpdateVisible(true);
-    clearTimeout(updateTimerRef.current);
-    updateTimerRef.current=setTimeout(()=>setUpdateVisible(false),NOTICE_MS);
-  }
-
-  function showPreviewNotice(){
-    setPreviewVisible(true);
-    clearTimeout(previewTimerRef.current);
-    previewTimerRef.current=setTimeout(()=>setPreviewVisible(false),NOTICE_MS);
-  }
+  function showUpdateNotice(){setUpdateVisible(true);clearTimeout(updateTimerRef.current);updateTimerRef.current=setTimeout(()=>setUpdateVisible(false),NOTICE_MS);}
+  function showPreviewNotice(){setPreviewVisible(true);clearTimeout(previewTimerRef.current);previewTimerRef.current=setTimeout(()=>setPreviewVisible(false),NOTICE_MS);}
 
   useEffect(()=>{
     let active=true;
@@ -40,29 +34,28 @@ export default function UpcomingHypePreview(){
     async function load(){
       const {data:{user}}=await supabase.auth.getUser();
       if(!user||!active)return;
-      const today=todayBR();
-      const [{data:todayRows},{data:futureRows}]=await Promise.all([
-        supabase.from('hype_agenda').select('id,updated_at,status').eq('hype_date',today).neq('status','cancelado').order('id'),
-        supabase.from('hype_agenda').select('id,hype_date,quadro,tamanho,desconto,status,hype_empresas(id,nome_fantasia,logo_url,segmento)').gt('hype_date',today).neq('status','cancelado').order('hype_date',{ascending:true}).order('quadro',{ascending:true}).limit(60),
+      const today=dayBR();
+      const tomorrow=addDays(today,1);
+      const until=addDays(today,31);
+      const [todayRes,futureRes]=await Promise.all([
+        supabase.rpc('hype_slots_publicos',{p_from_date:today,p_to_date:today,p_quadro:null}),
+        supabase.rpc('hype_slots_publicos',{p_from_date:tomorrow,p_to_date:until,p_quadro:null}),
       ]);
       if(!active)return;
+      if(todayRes.error||futureRes.error){
+        setFuture([]);
+        return;
+      }
 
-      const todayFingerprint=(todayRows||[]).map((r)=>`${r.id}:${r.updated_at}:${r.status}`).join('|');
+      const todayRows=todayRes.data||[];
+      const todayFingerprint=todayRows.map((r)=>`${r.agenda_id}:${r.updated_at}:${r.status}`).join('|');
       if(initialTodayRef.current===null)initialTodayRef.current=todayFingerprint;
-      else if(initialTodayRef.current!==todayFingerprint){
-        initialTodayRef.current=todayFingerprint;
-        showUpdateNotice();
-      }
+      else if(initialTodayRef.current!==todayFingerprint){initialTodayRef.current=todayFingerprint;showUpdateNotice();}
 
-      const nextFuture=futureRows||[];
-      const futureFingerprint=nextFuture.map((r)=>`${r.id}:${r.hype_date}:${r.quadro}:${r.status}`).join('|');
-      if(lastFutureFingerprintRef.current===null){
-        lastFutureFingerprintRef.current=futureFingerprint;
-        if(futureFingerprint)showPreviewNotice();
-      }else if(lastFutureFingerprintRef.current!==futureFingerprint){
-        lastFutureFingerprintRef.current=futureFingerprint;
-        if(futureFingerprint)showPreviewNotice();
-      }
+      const nextFuture=futureRes.data||[];
+      const futureFingerprint=nextFuture.map((r)=>`${r.agenda_id}:${r.hype_date}:${r.quadro}:${r.status}`).join('|');
+      if(lastFutureFingerprintRef.current===null){lastFutureFingerprintRef.current=futureFingerprint;if(futureFingerprint)showPreviewNotice();}
+      else if(lastFutureFingerprintRef.current!==futureFingerprint){lastFutureFingerprintRef.current=futureFingerprint;if(futureFingerprint)showPreviewNotice();}
       setFuture(nextFuture);
     }
 
@@ -70,13 +63,7 @@ export default function UpcomingHypePreview(){
     timer=setInterval(load,30000);
     const onVisible=()=>{if(document.visibilityState==='visible')load()};
     document.addEventListener('visibilitychange',onVisible);
-    return()=>{
-      active=false;
-      clearInterval(timer);
-      clearTimeout(updateTimerRef.current);
-      clearTimeout(previewTimerRef.current);
-      document.removeEventListener('visibilitychange',onVisible);
-    };
+    return()=>{active=false;clearInterval(timer);clearTimeout(updateTimerRef.current);clearTimeout(previewTimerRef.current);document.removeEventListener('visibilitychange',onVisible)};
   },[]);
 
   const next=useMemo(()=>{
@@ -86,10 +73,9 @@ export default function UpcomingHypePreview(){
     const companies=[];
     const seen=new Set();
     rows.forEach((r)=>{
-      const c=r.hype_empresas;
-      if(c&&!seen.has(c.id)){
-        seen.add(c.id);
-        companies.push({...c,tamanho:r.tamanho,desconto:r.desconto,quadros:rows.filter((x)=>x.hype_empresas?.id===c.id).map((x)=>x.quadro)});
+      if(!seen.has(r.empresa_id)){
+        seen.add(r.empresa_id);
+        companies.push({id:r.empresa_id,nome_fantasia:r.nome_fantasia,logo_url:r.logo_url,segmento:r.segmento,tamanho:r.tamanho,desconto:r.desconto,quadros:rows.filter((x)=>x.empresa_id===r.empresa_id).map((x)=>x.quadro)});
       }
     });
     return {date,companies};
