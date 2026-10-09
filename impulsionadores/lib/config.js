@@ -78,5 +78,15 @@ export function whatsappUrl(number, message) {
 
 export function validateCNPJ(raw) {
   const cnpj = onlyDigits(raw);
-  return cnpj.length === 14 && !/^(\d)\1+$/.test(cnpj);
+  if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
+  const digits = cnpj.split('').map(Number);
+  const calculate = (length, weights) => {
+    const sum = weights.reduce((total, weight, index) => total + digits[index] * weight, 0);
+    const remainder = sum % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+  const first = calculate(12, [5,4,3,2,9,8,7,6,5,4,3,2]);
+  if (digits[12] !== first) return false;
+  const second = calculate(13, [6,5,4,3,2,9,8,7,6,5,4,3,2]);
+  return digits[13] === second;
 }
