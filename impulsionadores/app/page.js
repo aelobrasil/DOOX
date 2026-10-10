@@ -30,56 +30,62 @@ export default function Login() {
     const installedHandler = () => { localStorage.setItem('hocco_app_installed', '1'); setAppInstalled(true); setInstallPrompt(null); };
     window.addEventListener('beforeinstallprompt', handler);
     window.addEventListener('appinstalled', installedHandler);
-    return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', installedHandler); };
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
   }, []);
 
-  async function saveContact(user) {
-    if (!user) return;
-    const metadataPhone = onlyDigits(phone || user.user_metadata?.phone || '');
-    if (!metadataPhone) return;
-    await supabase.from('impulsionadores_contatos').upsert({
-      user_id: user.id, email: user.email, telefone: metadataPhone, updated_at: new Date().toISOString(),
-    });
-  }
-
-  async function saveLegalAcceptances(user) {
-    if (!user) return;
-    await supabase.from('impulsionadores_aceites').upsert([
-      { user_id: user.id, documento: 'termos_uso', versao: TERMS_VERSION },
-      { user_id: user.id, documento: 'privacidade', versao: TERMS_VERSION },
-    ], { onConflict: 'user_id,documento,versao' });
-  }
-
   async function submit(event) {
-    event.preventDefault(); setMsg('');
+    event.preventDefault();
+    setMsg('');
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPhone = onlyDigits(phone);
-    if (password.length < 6) return setMsg('Use uma senha com pelo menos 6 caracteres.');
-    if (mode === 'signup' && password !== confirmPassword) return setMsg('As senhas não coincidem.');
-    if (mode === 'signup' && normalizedPhone.length < 10) return setMsg('Informe um telefone/WhatsApp válido.');
-    if (mode === 'signup' && !accepted) return setMsg('Leia e aceite os Termos de Uso e a Política de Privacidade para continuar.');
-    setBusy(true);
+    let normalizedPhone = onlyDigits(phone);
+    if ((normalizedPhone.length === 12 || normalizedPhone.length === 13) && normalizedPhone.startsWith('55')) normalizedPhone = normalizedPhone.slice(2);
 
+    if (password.length < 8) return setMsg('Use uma senha com pelo menos 8 caracteres.');
+    if (mode === 'signup' && password !== confirmPassword) return setMsg('As senhas não coincidem.');
+    if (mode === 'signup' && (normalizedPhone.length < 10 || normalizedPhone.length > 11)) return setMsg('Informe um telefone/WhatsApp válido com DDD.');
+    if (mode === 'signup' && !accepted) return setMsg('Leia e aceite os Termos de Uso e a Política de Privacidade para continuar.');
+
+    setBusy(true);
     if (mode === 'signup') {
       try {
         const response = await fetch(FAST_SIGNUP_URL, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name.trim(), email: normalizedEmail, phone: normalizedPhone, password }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim(),
+            email: normalizedEmail,
+            phone: normalizedPhone,
+            password,
+            accepted: true,
+            terms_version: TERMS_VERSION,
+          }),
         });
-        let result = {}; try { result = await response.json(); } catch { result = {}; }
-        if (!response.ok) { setBusy(false); return setMsg(result.error || 'Não foi possível criar sua conta agora.'); }
+        let result = {};
+        try { result = await response.json(); } catch {}
+        if (!response.ok) {
+          setBusy(false);
+          return setMsg(result.error || 'Não foi possível criar sua conta agora.');
+        }
         const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-        if (error || !data.session) { setBusy(false); return setMsg('Conta criada. Toque em Entrar e use seu e-mail e senha.'); }
-        await Promise.all([saveContact(data.user), saveLegalAcceptances(data.user)]);
-        location.replace('/app'); return;
+        if (error || !data.session) {
+          setBusy(false);
+          return setMsg('Conta criada. Toque em Entrar e use seu e-mail e senha.');
+        }
+        location.replace('/app');
+        return;
       } catch {
-        setBusy(false); return setMsg('Não foi possível concluir o cadastro. Verifique sua conexão e tente novamente.');
+        setBusy(false);
+        return setMsg('Não foi possível concluir o cadastro. Verifique sua conexão e tente novamente.');
       }
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-    if (error) { setBusy(false); return setMsg('E-mail ou senha inválidos.'); }
-    await saveContact(data.user); location.replace('/app');
+    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+    setBusy(false);
+    if (error) return setMsg('E-mail ou senha inválidos.');
+    location.replace('/app');
   }
 
   async function forgotPassword() {
@@ -95,9 +101,25 @@ export default function Login() {
   async function install() {
     if (appInstalled) return;
     if (installPrompt) {
-      installPrompt.prompt(); const choice = await installPrompt.userChoice; setInstallPrompt(null);
-      if (choice?.outcome === 'accepted') { localStorage.setItem('hocco_app_installed', '1'); setAppInstalled(true); }
-    } else alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
+      installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      setInstallPrompt(null);
+      if (choice?.outcome === 'accepted') {
+        localStorage.setItem('hocco_app_installed', '1');
+        setAppInstalled(true);
+      }
+      return;
+    }
+    alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
+  }
+
+  function switchMode() {
+    setMode(mode === 'signup' ? 'login' : 'signup');
+    setMsg('');
+    setConfirmPassword('');
+    setAccepted(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   }
 
   return <div className="auth authSimple">
@@ -107,18 +129,21 @@ export default function Login() {
       <h1>{mode === 'signup' ? 'Entre em poucos segundos.' : 'Entre na sua conta.'}</h1>
       <p>{mode === 'signup' ? 'Nome, telefone, e-mail e senha. Criou a conta, já entra no app.' : 'Continue sua ofensiva, seu HC, seus Hypes e suas experiências.'}</p>
       <form onSubmit={submit}>
-        {mode === 'signup' && <><label>Nome<div className="inputIcon"><UserRound/><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Seu nome" required minLength="2" maxLength="40"/></div></label><label>Telefone / WhatsApp<div className="inputIcon"><Phone/><input inputMode="tel" value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="(14) 99999-9999" required/></div></label></>}
-        <label>E-mail<div className="inputIcon"><Mail/><input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="voce@email.com" required/></div></label>
-        <label>Senha<div className="inputIcon"><Lock/><input className="passwordField" type={showPassword?'text':'password'} value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength="6"/><button type="button" className="passwordToggle" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Ocultar senha':'Ver senha'}>{showPassword?<EyeOff/>:<Eye/>}<span>{showPassword?'OCULTAR':'VER'}</span></button></div></label>
-        {mode === 'signup' && <label>Confirmar senha<div className="inputIcon"><Lock/><input className="passwordField" type={showConfirmPassword?'text':'password'} value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Digite a senha novamente" required minLength="6"/><button type="button" className="passwordToggle" onClick={()=>setShowConfirmPassword(v=>!v)} aria-label={showConfirmPassword?'Ocultar confirmação':'Ver confirmação'}>{showConfirmPassword?<EyeOff/>:<Eye/>}<span>{showConfirmPassword?'OCULTAR':'VER'}</span></button></div></label>}
-        {mode === 'signup' && <label className="legalCheck"><input type="checkbox" checked={accepted} onChange={(e)=>setAccepted(e.target.checked)}/><span>Li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e a <a href="/privacidade" target="_blank">Política de Privacidade</a>.</span></label>}
+        {mode === 'signup' && <>
+          <label>Nome<div className="inputIcon"><UserRound/><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" required minLength="2" maxLength="40"/></div></label>
+          <label>Telefone / WhatsApp<div className="inputIcon"><Phone/><input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(14) 99999-9999" required/></div></label>
+        </>}
+        <label>E-mail<div className="inputIcon"><Mail/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required/></div></label>
+        <label>Senha<div className="inputIcon"><Lock/><input className="passwordField" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" required minLength="8"/><button type="button" className="passwordToggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'}>{showPassword ? <EyeOff/> : <Eye/>}<span>{showPassword ? 'OCULTAR' : 'VER'}</span></button></div></label>
+        {mode === 'signup' && <label>Confirmar senha<div className="inputIcon"><Lock/><input className="passwordField" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Digite a senha novamente" required minLength="8"/><button type="button" className="passwordToggle" onClick={() => setShowConfirmPassword((v) => !v)} aria-label={showConfirmPassword ? 'Ocultar confirmação' : 'Ver confirmação'}>{showConfirmPassword ? <EyeOff/> : <Eye/>}<span>{showConfirmPassword ? 'OCULTAR' : 'VER'}</span></button></div></label>}
+        {mode === 'signup' && <label className="legalCheck"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)}/><span>Li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e a <a href="/privacidade" target="_blank">Política de Privacidade</a>.</span></label>}
         {msg && <div className="authMsg">{msg}</div>}
-        <button className="primary" disabled={busy}>{busy?'PROCESSANDO...':mode==='signup'?'CRIAR CONTA E ENTRAR':'ENTRAR'}</button>
+        <button className="primary" disabled={busy}>{busy ? 'PROCESSANDO...' : mode === 'signup' ? 'CRIAR CONTA E ENTRAR' : 'ENTRAR'}</button>
       </form>
       {mode === 'login' && <button className="forgotLink" onClick={forgotPassword} disabled={busy}>Esqueci minha senha</button>}
-      <button className="switch" onClick={()=>{setMode(mode==='signup'?'login':'signup');setMsg('');setConfirmPassword('');setAccepted(false);setShowPassword(false);setShowConfirmPassword(false)}}>{mode==='signup'?'Já tenho conta · Entrar':'Criar minha conta'}</button>
+      <button className="switch" onClick={switchMode}>{mode === 'signup' ? 'Já tenho conta · Entrar' : 'Criar minha conta'}</button>
     </div>
-    {!appInstalled&&<button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>}
+    {!appInstalled && <button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>}
     <p className="authFoot">HOCCO · participação, Hype, HC, Impulsão e experiências em uma única conta.</p>
   </div>;
 }
