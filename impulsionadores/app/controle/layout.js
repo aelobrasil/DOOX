@@ -1,5 +1,6 @@
 import ControlMemberEnhancer from './ControlMemberEnhancer';
 import ControlDrops from './ControlDrops';
+import ControlSponsors from './ControlSponsors';
 
 export const metadata = {
   title: 'HOCCO Control',
@@ -12,6 +13,7 @@ export default function ControlLayout({ children }) {
       {children}
       <ControlMemberEnhancer />
       <ControlDrops />
+      <ControlSponsors />
     </>
   );
 }
