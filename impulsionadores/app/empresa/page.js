@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, CheckCircle2, Copy, Image as ImageIcon, MessageCircle, Upload, Zap } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, Image as ImageIcon, MessageCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../lib/supabase';
 import { HYPE_BOARDS, HYPE_PRICES, PIX_RECEIVER, PIX_BANK, PIX_CITY, brl, onlyDigits, validateCNPJ } from '../../lib/config';
@@ -10,6 +10,7 @@ import { pixPayload } from '../../lib/pix';
 const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 const MEDIA_LIMITS = { logo: 500 * 1024, cover: 900 * 1024 };
 const CLOSED = new Set(['recusado','reembolsado','cancelado']);
+const BUSINESS_TERMS_VERSION = '1.1-2026-10-11';
 
 async function compressMedia(file, kind) {
   const bitmap = await createImageBitmap(file);
@@ -108,14 +109,15 @@ export default function CompanyHype() {
     const cnpj = onlyDigits(form.get('cnpj'));
     const whatsapp = onlyDigits(form.get('whatsapp'));
     const discount = Number(form.get('desconto'));
+    const accepted = form.get('termsAccepted') === 'on';
     if (!validateCNPJ(cnpj)) return setMsg('CNPJ inválido. Revise os 14 dígitos.');
     if (whatsapp.length < 10) return setMsg('Informe um WhatsApp empresarial válido.');
     if (discount < 0 || discount > 30) return setMsg('O benefício pode ser de 0% a 30%.');
     if (!coverUrl || !logoUrl) return setMsg('Envie a foto de capa e o perfil/logo antes de continuar.');
+    if (!accepted) return setMsg('Leia e aceite os Termos Comerciais antes de continuar.');
 
     setBusy(true);
     const payload = {
-      user_id: user.id,
       cnpj,
       razao_social: String(form.get('razao_social')).trim(),
       nome_fantasia: String(form.get('nome_fantasia')).trim(),
@@ -136,10 +138,16 @@ export default function CompanyHype() {
       periodo: period,
       data_preferida: String(form.get('data_preferida')) || null,
     };
-    const { data, error } = await supabase.from('hype_solicitacoes').insert(payload).select().single();
+    const { data, error } = await supabase.rpc('create_hype_business_request', {
+      p_payload: payload,
+      p_accepted: accepted,
+      p_terms_version: BUSINESS_TERMS_VERSION,
+    });
     setBusy(false);
     if (error) return setMsg(humanError(error.message));
-    setRequest(data);
+    const created = Array.isArray(data) ? data[0] : data;
+    if (!created?.id) return setMsg('A solicitação foi recebida, mas não pôde ser carregada. Atualize a página e confira seu histórico.');
+    setRequest(created);
     draftRef.current = newDraftId();
     setLogoUrl('');
     setCoverUrl('');
@@ -200,7 +208,7 @@ export default function CompanyHype() {
         </fieldset>
 
         <div className="commercialSummary"><div><span>Participação selecionada</span><b>{period==='dia'?`DIA INTEIRO · ${size.toUpperCase()}`:`${HYPE_BOARDS[period].label.toUpperCase()} · ${size.toUpperCase()}`}</b></div><strong>{brl(amount)}</strong></div>
-        <label className="legalCheck"><input type="checkbox" required/><span>Li e aceito os <a href="/termos-empresa" target="_blank">Termos Comerciais do Hype</a>.</span></label>
+        <label className="legalCheck"><input name="termsAccepted" type="checkbox" required/><span>Li e aceito os <a href="/termos-empresa" target="_blank">Termos Comerciais do Hype</a> · versão 1.1.</span></label>
         {msg && <div className="authMsg">{msg}</div>}
         <button className="primary" disabled={busy || Boolean(uploading)}>{busy ? 'CRIANDO SOLICITAÇÃO...' : 'CRIAR SOLICITAÇÃO E IR PARA O PIX'}</button>
       </form>
@@ -245,8 +253,12 @@ function StatusTimeline({ request }) {
 function human(value='') { return String(value || '—').replaceAll('_',' ').replace(/\b\w/g,(c) => c.toUpperCase()); }
 function humanError(message='') {
   const text = String(message || '');
+  if (text.includes('business_terms_not_accepted')) return 'O aceite dos Termos Comerciais não foi validado. Marque o aceite e tente novamente.';
+  if (text.includes('invalid_cnpj')) return 'CNPJ inválido. Revise os 14 dígitos.';
+  if (text.includes('invalid_whatsapp')) return 'Informe um WhatsApp empresarial válido.';
+  if (text.includes('invalid_business_request')) return 'Há dados obrigatórios incompletos ou inválidos. Revise o cadastro e os materiais.';
   if (text.includes('hype_solicitacoes_cnpj') || text.includes('duplicate')) return 'Já existe uma solicitação incompatível com estes dados. Revise ou fale com a HOCCO.';
-  if (text.includes('invalid_hype_plan')) return 'Este plano não está disponível no momento.';
-  if (text.includes('violates row-level security')) return 'Sua sessão expirou. Entre novamente e tente de novo.';
+  if (text.includes('invalid_hype_plan') || text.includes('invalid_hype_size') || text.includes('invalid_hype_period')) return 'Este plano não está disponível no momento.';
+  if (text.includes('violates row-level security') || text.includes('not_authenticated')) return 'Sua sessão expirou. Entre novamente e tente de novo.';
   return 'Não foi possível criar a solicitação. Revise os dados e tente novamente.';
 }
