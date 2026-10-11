@@ -1,0 +1,18 @@
+/* HYPAR feedback — visual response only; ranking/validation stay server-side */
+.floatingCompany{isolation:isolate;overflow:visible}
+.floatingCompany button{position:relative;overflow:visible;transform:translateZ(0);transition:transform .14s ease,box-shadow .22s ease,background .22s ease}
+.floatingCompany button:active:not(:disabled){transform:scale(.96)}
+.floatingCompany.chosen{animation:hype-card-pulse .72s cubic-bezier(.2,.8,.2,1) both}
+.floatingCompany.chosen .companyGlow{animation:hype-glow-ring .9s ease-out both}
+.floatingCompany.chosen img,.floatingCompany.chosen .companyInitial{animation:hype-logo-flash .7s ease-out both}
+.floatingCompany.chosen button{background:linear-gradient(135deg,#075eea,#187dff)!important;color:#fff!important;box-shadow:0 0 0 4px rgba(7,94,234,.12),0 0 28px rgba(24,125,255,.4);animation:hype-button-pop .55s cubic-bezier(.2,.85,.3,1.2) both}
+.floatingCompany.chosen button::before,.floatingCompany.chosen button::after{content:'✦';position:absolute;pointer-events:none;color:#68a7ff;text-shadow:0 0 9px #fff,0 0 16px #3b8cff;opacity:0;z-index:6}
+.floatingCompany.chosen button::before{font-size:18px;left:13%;top:-8px;animation:hype-star-a .78s ease-out .03s both}
+.floatingCompany.chosen button::after{font-size:12px;right:12%;top:-3px;animation:hype-star-b .82s ease-out .1s both}
+@keyframes hype-card-pulse{0%{transform:scale(1)}34%{transform:scale(1.035)}62%{transform:scale(.992)}100%{transform:scale(1)}}
+@keyframes hype-glow-ring{0%{opacity:.15;transform:scale(.88);filter:blur(3px)}45%{opacity:1;transform:scale(1.08);filter:blur(0)}100%{opacity:.35;transform:scale(1);filter:blur(4px)}}
+@keyframes hype-logo-flash{0%{filter:none;transform:scale(1)}38%{filter:drop-shadow(0 0 12px rgba(24,125,255,.75));transform:scale(1.06)}100%{filter:none;transform:scale(1)}}
+@keyframes hype-button-pop{0%{transform:scale(.94)}48%{transform:scale(1.055)}100%{transform:scale(1)}}
+@keyframes hype-star-a{0%{opacity:0;transform:translate(0,8px) scale(.3) rotate(0)}30%{opacity:1}100%{opacity:0;transform:translate(-20px,-28px) scale(1.25) rotate(120deg)}}
+@keyframes hype-star-b{0%{opacity:0;transform:translate(0,7px) scale(.3) rotate(0)}32%{opacity:1}100%{opacity:0;transform:translate(22px,-24px) scale(1.05) rotate(-110deg)}}
+@media(prefers-reduced-motion:reduce){.floatingCompany.chosen,.floatingCompany.chosen .companyGlow,.floatingCompany.chosen img,.floatingCompany.chosen .companyInitial,.floatingCompany.chosen button,.floatingCompany.chosen button::before,.floatingCompany.chosen button::after{animation:none!important}.floatingCompany.chosen button{box-shadow:0 0 0 3px rgba(7,94,234,.14)}}
