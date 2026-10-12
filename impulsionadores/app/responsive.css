@@ -1,0 +1,130 @@
+/* Responsive layout layer — member-facing app */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+img,svg{max-width:100%}
+.memberApp{width:min(100%,1280px);max-width:1280px!important;min-width:0;position:relative}
+.memberApp header,.memberApp .shell,.memberApp section,.memberApp article,.memberApp div{min-width:0}
+.memberApp .shell.liveShell{width:100%;max-width:1180px;margin:0 auto;padding:32px 40px calc(104px + env(safe-area-inset-bottom))}
+.memberApp .livingHero{min-height:190px}
+.memberApp .experienceList{grid-template-columns:repeat(2,minmax(0,1fr))}
+.memberApp .missionList{grid-template-columns:repeat(2,minmax(0,1fr))}
+.memberApp .missionRow{min-height:72px}
+.memberApp .hypeField{padding:30px;gap:22px}
+.memberApp .companyModal,.memberApp .impulseModal{width:min(560px,calc(100vw - 32px));max-height:min(90vh,760px);max-height:min(90dvh,760px);overflow:auto;overscroll-behavior:contain}
+.memberApp .impulsePix{max-width:100%}
+.memberApp .impulsePix svg{display:block;max-width:min(190px,70vw);height:auto;margin-inline:auto}
+.memberApp input,.memberApp textarea,.memberApp select,.memberApp button{max-width:100%}
+.memberApp .pixIdentity b,.memberApp .fieldHelp,.memberApp .requestFacts,.memberApp .experienceCard p{overflow-wrap:anywhere}
+
+@media (min-width:1100px){
+  body{background:#eef4ff}
+  .memberApp{margin:22px auto!important;min-height:calc(100dvh - 44px)!important;border-radius:28px!important;overflow:visible!important;box-shadow:0 24px 70px rgba(15,52,105,.10)!important;padding-left:92px!important}
+  .memberApp>header{border-radius:0 28px 0 0;padding-inline:34px}
+  .memberApp .shell.liveShell{padding:36px 42px 54px}
+  .memberApp nav{left:max(18px,calc(50vw - 640px + 14px))!important;bottom:50%!important;transform:translateY(50%)!important;width:70px!important;height:auto!important;max-height:calc(100dvh - 44px);padding:9px!important;display:flex!important;flex-direction:column!important;gap:5px!important;border:1px solid #dce5f1!important;border-radius:20px!important;box-shadow:0 18px 50px rgba(15,52,105,.14);background:#fffffff2!important}
+  .memberApp nav button{width:52px;min-height:56px;flex:0 0 auto!important;border-radius:13px!important;padding:7px 4px!important}
+  .memberApp nav button.active{background:#edf5ff}
+  .memberApp nav button span{font-size:9px;line-height:1.1}
+  .memberApp .livingHero{padding:34px 38px}
+  .memberApp .livingHero h1{font-size:clamp(34px,3vw,46px)}
+  .memberApp .livingHero p{max-width:720px;font-size:14px}
+  .memberApp .valueGrid{gap:16px}
+  .memberApp .metricCard{padding:20px}
+  .memberApp .hypeField{min-height:560px;padding:40px;gap:26px}
+  .memberApp .experienceList{gap:16px}
+  .memberApp .experienceCard{padding:24px}
+  .memberApp .communityMini{padding:20px}
+}
+
+@media (min-width:1500px){
+  .memberApp{max-width:1380px!important}
+  .memberApp .shell.liveShell{max-width:1260px}
+  .memberApp nav{left:max(20px,calc(50vw - 690px + 14px))!important}
+}
+
+@media (min-width:768px) and (max-width:1099px){
+  .memberApp{max-width:980px!important;margin:0 auto!important}
+  .memberApp .shell.liveShell{padding:30px 30px calc(96px + env(safe-area-inset-bottom))}
+  .memberApp .livingHero{padding:30px}
+  .memberApp .hypeField{padding:24px;gap:18px}
+  .memberApp .floatingCompany.size-max{width:205px}
+  .memberApp .floatingCompany.size-grande{width:188px}
+  .memberApp nav{width:min(980px,100%)!important}
+}
+
+@media (max-width:767px){
+  body{background:#fff}
+  .memberApp{width:100%;max-width:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;min-height:100dvh!important;padding-bottom:0!important}
+  .memberApp>header{height:64px;padding:env(safe-area-inset-top) 14px 0;min-height:calc(64px + env(safe-area-inset-top));gap:6px}
+  .memberApp .logo{font-size:22px}
+  .memberApp .hcHeader{margin-left:auto;padding:7px 9px;font-size:11px}
+  .memberApp .avatarBtn{width:36px;height:36px}
+  .memberApp .shell.liveShell{padding:16px 14px calc(92px + env(safe-area-inset-bottom))}
+  .memberApp .livingHero{padding:20px;border-radius:20px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+  .memberApp .livingHero h1{font-size:clamp(25px,8vw,32px);line-height:1.05}
+  .memberApp .livingHero p{font-size:12px;line-height:1.45}
+  .memberApp .pulseCore{width:72px;height:72px;box-shadow:0 0 0 8px #075eea12,0 0 0 16px #075eea08}
+  .memberApp .valueGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+  .memberApp .metricCard{padding:13px;border-radius:15px}
+  .memberApp .metricCard strong{font-size:20px;margin-top:9px}
+  .memberApp .nowCard{grid-template-columns:1fr auto;padding:16px;gap:10px}
+  .memberApp .nowCard>svg:last-child{display:none}
+  .memberApp .microMissions{grid-template-columns:1fr}
+  .memberApp .businessCTA{padding:15px;border-radius:16px}
+  .memberApp .boardTabs{gap:6px;margin:14px 0}
+  .memberApp .boardTabs button{padding:11px 6px;border-radius:12px;min-width:0}
+  .memberApp .boardTabs button b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .memberApp .hypeField{min-height:auto;padding:12px;gap:10px;border-radius:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;align-content:start}
+  .memberApp .floatingCompany,.memberApp .floatingCompany.size-medio,.memberApp .floatingCompany.size-grande,.memberApp .floatingCompany.size-max{width:100%;min-width:0;min-height:172px;padding:13px;border-radius:18px}
+  .memberApp .floatingCompany>img,.memberApp .companyInitial{width:52px;height:52px}
+  .memberApp .floatingCompany h3{font-size:13px;overflow-wrap:anywhere}
+  .memberApp .winnerCard{grid-template-columns:auto 1fr;padding:16px}
+  .memberApp .winnerCard button{grid-column:1/-1;width:100%;justify-content:center}
+  .memberApp .missionList,.memberApp .experienceList{grid-template-columns:1fr}
+  .memberApp .missionRow{min-height:0;padding:12px;align-items:flex-start}
+  .memberApp .missionRow em{margin-left:auto;text-align:right;max-width:90px}
+  .memberApp .hcCap,.memberApp .unlockCard{padding:15px;gap:12px}
+  .memberApp .unlockCard strong{font-size:17px}
+  .memberApp .experienceCard{padding:16px}
+  .memberApp .experienceTop,.memberApp .experienceMeta{flex-wrap:wrap}
+  .memberApp .profileStats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .memberApp .profileStats div:nth-child(2){border-right:0}
+  .memberApp .profileStats div:nth-child(-n+2){border-bottom:1px solid #e8edf3}
+  .memberApp .sectionHead{align-items:flex-start;flex-direction:column;gap:8px}
+  .memberApp .sectionHead>button{width:100%}
+  .memberApp .communityMini{padding:14px}
+  .memberApp .rankMini b,.memberApp .rankMini small{overflow-wrap:anywhere}
+  .memberApp .companyForm fieldset{padding:15px;border-radius:16px}
+  .memberApp .companyShell{padding:18px 14px calc(90px + env(safe-area-inset-bottom))}
+  .memberApp .formGrid,.memberApp .quickForm .two{grid-template-columns:1fr}
+  .memberApp .periodPicker,.memberApp .sizePicker{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .memberApp .commercialSummary{align-items:flex-start;gap:12px;flex-direction:column}
+  .memberApp .payPanel,.memberApp .payment{padding:16px;border-radius:18px}
+  .memberApp .qrbox{width:min(222px,72vw);height:min(222px,72vw)}
+  .memberApp .companyModal,.memberApp .impulseModal{width:calc(100vw - 18px);max-height:calc(100dvh - 18px);border-radius:20px;padding:18px}
+  .memberApp nav{left:0!important;transform:none!important;bottom:0!important;width:100%!important;height:calc(68px + env(safe-area-inset-bottom))!important;padding:0 4px env(safe-area-inset-bottom)!important;border-radius:0!important}
+  .memberApp nav button{min-width:0;min-height:48px}
+  .memberApp nav button span{max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .memberApp .toast{bottom:calc(78px + env(safe-area-inset-bottom))}
+}
+
+@media (max-width:420px){
+  .memberApp .shell.liveShell{padding-inline:12px}
+  .memberApp .livingHero{grid-template-columns:1fr}
+  .memberApp .pulseCore{width:64px;height:64px;justify-self:end;margin-top:-54px}
+  .memberApp .livingHero>div:first-child{padding-right:48px}
+  .memberApp .hypeField{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:8px}
+  .memberApp .floatingCompany,.memberApp .floatingCompany.size-medio,.memberApp .floatingCompany.size-grande,.memberApp .floatingCompany.size-max{padding:11px;min-height:164px}
+  .memberApp .floatingCompany button{padding:9px 6px}
+  .memberApp .boardTabs button span{display:none}
+  .memberApp .hcHeader span{display:none}
+  .memberApp .missionRow{gap:9px}
+  .memberApp .missionRow>span{width:30px;height:30px;flex:none}
+  .memberApp .impulsePresets{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media (max-width:350px){
+  .memberApp .hypeField{grid-template-columns:1fr}
+  .memberApp .valueGrid{grid-template-columns:1fr 1fr}
+  .memberApp .livingHero>div:first-child{padding-right:0}
+  .memberApp .pulseCore{margin-top:0;justify-self:start}
+}
