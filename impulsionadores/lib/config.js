@@ -1,7 +1,7 @@
 export const HOCCO_WHATSAPP = '5514991088104';
 export const PIX_KEY = 'c9316176-6f92-413e-9209-63ae6f661ba9';
 export const PIX_RECEIVER = 'Alex Sandro Soares Fernandes';
-export const PIX_BANK = 'Nubank';
+export const PIX_BANK = 'Nu Pagamentos S.A. – Instituição de Pagamento';
 export const PIX_CITY = 'Bauru';
 export const TERMS_VERSION = '2.0-2026-10-12';
 
