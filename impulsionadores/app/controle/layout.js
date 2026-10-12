@@ -2,6 +2,7 @@ import ControlMemberEnhancer from './ControlMemberEnhancer';
 import ControlDrops from './ControlDrops';
 import ControlSponsors from './ControlSponsors';
 import ControlDataManager from './ControlDataManager';
+import ControlPush from './ControlPush';
 
 export const metadata = {
   title: 'HOCCO Control',
@@ -15,6 +16,7 @@ export default function ControlLayout({ children }) {
       <ControlMemberEnhancer />
       <ControlDrops />
       <ControlSponsors />
+      <ControlPush />
       <ControlDataManager />
     </>
   );
