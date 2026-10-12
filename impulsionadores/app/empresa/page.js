@@ -10,7 +10,7 @@ import { pixPayload } from '../../lib/pix';
 const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 const MEDIA_LIMITS = { logo: 500 * 1024, cover: 900 * 1024 };
 const CLOSED = new Set(['recusado','reembolsado','cancelado']);
-const BUSINESS_TERMS_VERSION = '1.1-2026-10-11';
+const BUSINESS_TERMS_VERSION = '1.2-2026-10-12';
 
 async function compressMedia(file, kind) {
   const bitmap = await createImageBitmap(file);
@@ -208,7 +208,7 @@ export default function CompanyHype() {
         </fieldset>
 
         <div className="commercialSummary"><div><span>Participação selecionada</span><b>{period==='dia'?`DIA INTEIRO · ${size.toUpperCase()}`:`${HYPE_BOARDS[period].label.toUpperCase()} · ${size.toUpperCase()}`}</b></div><strong>{brl(amount)}</strong></div>
-        <label className="legalCheck"><input name="termsAccepted" type="checkbox" required/><span>Li e aceito os <a href="/termos-empresa" target="_blank">Termos Comerciais do Hype</a> · versão 1.1.</span></label>
+        <label className="legalCheck"><input name="termsAccepted" type="checkbox" required/><span>Li e aceito os <a href="/termos-empresa" target="_blank">Termos Comerciais do Hype</a> · versão 1.2.</span></label>
         {msg && <div className="authMsg">{msg}</div>}
         <button className="primary" disabled={busy || Boolean(uploading)}>{busy ? 'CRIANDO SOLICITAÇÃO...' : 'CRIAR SOLICITAÇÃO E IR PARA O PIX'}</button>
       </form>
