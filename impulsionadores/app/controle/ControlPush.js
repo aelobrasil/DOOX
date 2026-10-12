@@ -158,8 +158,8 @@ export default function ControlPush() {
             <input style={S.input} type="datetime-local" required value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
           </label>}
 
-          <button style={S.primary} disabled={busy || !enabledUsers && form.audience !== 'user'}><Send size={17} /> {busy ? 'ENVIANDO...' : form.mode === 'now' ? 'ENVIAR NOTIFICAÇÃO' : 'PROGRAMAR NOTIFICAÇÃO'}</button>
-          {!enabledUsers && <small style={S.muted}>Ainda não há aparelhos inscritos. O envio poderá ser programado, mas só alcançará quem permitir notificações.</small>}
+          <button style={S.primary} disabled={busy}><Send size={17} /> {busy ? 'ENVIANDO...' : form.mode === 'now' ? 'ENVIAR NOTIFICAÇÃO' : 'PROGRAMAR NOTIFICAÇÃO'}</button>
+          {!enabledUsers && <small style={S.muted}>Ainda não há aparelhos inscritos. Você pode programar uma campanha; no momento do envio, ela alcançará somente quem tiver permitido notificações.</small>}
         </form>
 
         <aside style={S.card}>
@@ -197,8 +197,8 @@ const S = {
   notice: { display: 'grid', gap: 4, background: '#eef5ff', border: '1px solid #d7e6ff', padding: 14, borderRadius: 14, margin: '15px 0' },
   stats: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(135px,1fr))', gap: 9, marginBottom: 14 },
   stat: { background: '#fff', border: '1px solid #e1e8f0', borderRadius: 15, padding: 14, display: 'grid', gap: 4 },
-  grid: { display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(260px,.8fr)', gap: 12 },
-  card: { background: '#fff', border: '1px solid #e1e8f0', borderRadius: 18, padding: 17, display: 'grid', gap: 12, alignContent: 'start' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 12 },
+  card: { background: '#fff', border: '1px solid #e1e8f0', borderRadius: 18, padding: 17, display: 'grid', gap: 12, alignContent: 'start', minWidth: 0 },
   cardTitle: { margin: 0, fontSize: 18 },
   label: { display: 'grid', gap: 6, fontSize: 12, fontWeight: 800 },
   input: { width: '100%', boxSizing: 'border-box', border: '1px solid #d7e0eb', borderRadius: 11, padding: '11px 12px', background: '#fff', color: '#10213b', font: 'inherit' },
