@@ -3,6 +3,7 @@ import './living.css';
 import './enhancements.css';
 import './hype-effects.css';
 import './pwa.css';
+import './responsive.css';
 import PwaExperience from './PwaExperience';
 import SupportShortcut from './SupportShortcut';
 import CompanyDateGuard from './CompanyDateGuard';
