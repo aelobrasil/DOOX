@@ -6,7 +6,6 @@ import { supabase } from '../../lib/supabase';
 import { TERMS_VERSION } from '../../lib/config';
 
 export default function LegalReacceptGuard(){
-  const [user,setUser]=useState(null);
   const [open,setOpen]=useState(false);
   const [accepted,setAccepted]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -17,13 +16,12 @@ export default function LegalReacceptGuard(){
     (async()=>{
       const {data}=await supabase.auth.getUser();
       if(!alive||!data.user)return;
-      setUser(data.user);
       const {data:rows,error}=await supabase.from('impulsionadores_aceites')
         .select('documento')
         .eq('user_id',data.user.id)
         .eq('versao',TERMS_VERSION)
         .in('documento',['termos_uso','privacidade']);
-      if(error){ setMsg('Não foi possível validar os termos atuais.'); setOpen(true); return; }
+      if(error){ setMsg('Não foi possível validar seu aceite atual.'); setOpen(true); return; }
       const docs=new Set((rows||[]).map((r)=>r.documento));
       if(!docs.has('termos_uso')||!docs.has('privacidade'))setOpen(true);
     })();
@@ -31,15 +29,11 @@ export default function LegalReacceptGuard(){
   },[]);
 
   async function confirm(){
-    if(!accepted)return setMsg('Confirme que tem 18 anos ou mais e que leu os documentos atuais.');
-    if(!user)return;
+    if(!accepted)return setMsg('Marque a caixa para confirmar o aceite e continuar.');
     setBusy(true); setMsg('');
-    const {error}=await supabase.from('impulsionadores_aceites').upsert([
-      {user_id:user.id,documento:'termos_uso',versao:TERMS_VERSION},
-      {user_id:user.id,documento:'privacidade',versao:TERMS_VERSION},
-    ],{onConflict:'user_id,documento,versao'});
+    const {data,error}=await supabase.rpc('accept_current_hocco_legal');
     setBusy(false);
-    if(error)return setMsg('Não foi possível registrar o aceite. Tente novamente.');
+    if(error||data?.ok!==true)return setMsg('Não foi possível registrar o aceite. Tente novamente.');
     setOpen(false);
   }
 
@@ -49,11 +43,11 @@ export default function LegalReacceptGuard(){
   return <div style={S.backdrop}>
     <section style={S.card}>
       <div style={S.icon}><ShieldCheck/></div>
-      <small style={S.kicker}>ATUALIZAÇÃO LEGAL · HOCCO HYPE</small>
-      <h2 style={S.title}>Termos e Privacidade foram atualizados.</h2>
-      <p style={S.text}>A versão 2.0 organiza regras de Hype, HC, Impulsão, experiências, notificações e o ciclo de vida dos dados. Para continuar, revise os documentos e registre seu aceite.</p>
-      <div style={S.links}><a href="/termos" target="_blank">Termos de Uso</a><a href="/privacidade" target="_blank">Privacidade e Ciclo de Vida</a><a href="/regras-hype" target="_blank">Regras do Hype</a></div>
-      <label style={S.check}><input type="checkbox" checked={accepted} onChange={(e)=>setAccepted(e.target.checked)}/><span>Declaro ter <b>18 anos ou mais</b>, li e aceito os Termos de Uso v2.0 e estou ciente da Política de Privacidade e Ciclo de Vida.</span></label>
+      <small style={S.kicker}>ATUALIZAÇÃO · HOCCO HYPE</small>
+      <h2 style={S.title}>Confirme os Termos e a Privacidade.</h2>
+      <p style={S.text}>Os documentos explicam as regras de uso, participação, pagamentos, benefícios e tratamento dos seus dados. Informações internas de operação não fazem parte dos documentos públicos.</p>
+      <div style={S.links}><a href="/termos" target="_blank" rel="noreferrer">Termos de Uso</a><a href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a><a href="/regras-hype" target="_blank" rel="noreferrer">Regras do Hype</a></div>
+      <label style={S.check}><input type="checkbox" checked={accepted} onChange={(e)=>setAccepted(e.target.checked)}/><span>Declaro ter <b>18 anos ou mais</b>, li e aceito os Termos de Uso e estou ciente da Política de Privacidade.</span></label>
       {msg&&<div style={S.msg}>{msg}</div>}
       <button style={S.primary} disabled={busy} onClick={confirm}>{busy?'REGISTRANDO...':'ACEITAR E CONTINUAR'}</button>
       <button style={S.exit} disabled={busy} onClick={exit}>Sair da conta</button>
