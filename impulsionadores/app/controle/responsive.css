@@ -1,0 +1,120 @@
+/* Responsive layout layer — HOCCO Control */
+.controlApp,.controlApp *{min-width:0}
+.controlMain{width:100%;max-width:1600px;margin:0 auto}
+.controlPanel,.requestCard,.dataTable,.boardControl,.reportCard{min-width:0}
+.controlPanel img,.requestCard img,.boardControl img,.reportCard img{max-width:100%;height:auto}
+.controlSearch input,.quickForm input,.quickForm textarea,.quickForm select{min-width:0}
+.trow span,.requestMain div,.companyAdminList article>div,.candidate>div{overflow-wrap:anywhere}
+
+@media (min-width:1280px){
+  .controlApp{grid-template-columns:250px minmax(0,1fr)}
+  .controlSide{padding:24px 16px}
+  .controlMain{padding:0 38px 56px}
+  .controlTop{height:92px}
+  .controlStats{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+  .controlGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  .boardControlGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .reportGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .controlPanel{padding:20px}
+  .requestCard{padding:19px}
+  .dataTable{overflow:hidden}
+}
+
+@media (min-width:901px) and (max-width:1279px){
+  .controlApp{grid-template-columns:210px minmax(0,1fr)}
+  .controlSide{padding:18px 12px}
+  .controlMain{padding:0 24px 48px}
+  .controlStats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .controlGrid,.reportGrid{grid-template-columns:1fr}
+  .boardControlGrid{grid-template-columns:1fr}
+  .controlTop{height:82px}
+  .thead,.trow{grid-template-columns:1.1fr 1.35fr .9fr .9fr}
+}
+
+@media (max-width:900px){
+  .controlApp{display:block!important;min-height:100dvh}
+  .controlSide{position:sticky!important;top:0!important;z-index:70!important;height:auto!important;padding:8px 10px!important;background:#07182ff7!important;backdrop-filter:blur(14px)}
+  .controlBrand{display:none}
+  .controlSide nav{display:flex!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain;scroll-snap-type:x proximity;gap:6px!important;padding:4px 0!important;margin:0!important;scrollbar-width:none}
+  .controlSide nav::-webkit-scrollbar{display:none}
+  .controlSide nav button{scroll-snap-align:start;min-width:max-content!important;min-height:44px!important;padding:9px 11px!important;border-radius:10px!important;flex:0 0 auto!important}
+  .controlSide nav button svg{width:16px!important;height:16px!important}
+  .controlSide nav button em{position:static;min-width:20px;height:20px}
+  .controlLogout{display:none!important}
+  .controlMain{padding:0 14px calc(42px + env(safe-area-inset-bottom))!important;max-width:none}
+  .controlTop{top:60px!important;height:68px!important;z-index:60!important;margin:0 -14px;padding:0 14px;background:#f3f6fbf4!important}
+  .controlTop h1{font-size:20px!important;line-height:1.1}
+  .controlTop small{font-size:8px}
+  .controlTopRight{gap:6px}
+  .onlineDot{display:none!important}
+  .controlTopRight button{min-height:40px;padding:8px 10px}
+  .controlNotice{margin:12px 0}
+  .controlStats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin:14px 0!important}
+  .controlStat{padding:13px!important;border-radius:14px!important}
+  .controlStat small{margin-top:9px!important}
+  .controlStat strong{font-size:21px!important}
+  .controlGrid,.boardControlGrid,.reportGrid{grid-template-columns:1fr!important;gap:12px!important}
+  .controlPanel{padding:15px!important;border-radius:15px!important}
+  .toolRow{align-items:stretch!important;flex-direction:column!important;gap:8px!important;margin:15px 0 11px!important}
+  .controlSearch{width:100%!important}
+  .toolRow>span{text-align:left}
+  .sectionTitle,.hypeControlHead{align-items:flex-start!important;flex-direction:column!important;gap:8px!important}
+  .finishDay{width:100%;min-height:44px;justify-content:center}
+  .requestCard{padding:14px!important;border-radius:15px!important}
+  .requestMain{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:10px!important;align-items:start}
+  .requestPrice{text-align:right!important;margin:0!important;min-width:80px}
+  .requestPrice b{font-size:18px!important}
+  .requestFacts{gap:6px!important;margin:10px 0!important}
+  .requestFacts span{max-width:100%;overflow-wrap:anywhere}
+  .actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important}
+  .actions button,.actions a{min-height:42px;justify-content:center;text-align:center;padding:8px!important}
+  .quickForm .two{grid-template-columns:1fr!important}
+  .companyAdminList{max-height:none!important;overflow:visible!important}
+  .companyAdminList article{align-items:center;gap:9px;padding:12px 0}
+  .companyAdminList article>button,.companyAdminList article>a{flex:none;min-height:40px}
+  .boardControl{padding:12px!important;border-radius:15px!important}
+  .boardControl article{grid-template-columns:auto minmax(0,1fr) auto!important;gap:8px!important}
+  .boardControl article>span:last-child{display:none}
+  .candidate{grid-template-columns:minmax(0,1fr) auto!important}
+  .candidate em{grid-column:1/-1}
+  .dataTable{overflow:visible!important;border:0!important;background:transparent!important;display:grid;gap:9px}
+  .thead{display:none!important}
+  .trow{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:13px!important;border:1px solid #dfe6ef!important;border-radius:14px!important;background:#fff!important;align-items:start!important}
+  .trow>span{padding:2px 0}
+  .trow>span:nth-child(3),.trow>span:nth-child(4){font-size:10px;color:#5f7188}
+}
+
+@media (max-width:560px){
+  .controlMain{padding-inline:10px!important}
+  .controlTop{margin-inline:-10px;padding-inline:10px;top:58px!important}
+  .controlTopRight button{font-size:0!important;width:40px;height:40px;padding:0!important;justify-content:center}
+  .controlTopRight button svg{width:17px!important;height:17px!important;margin:0}
+  .controlStats{grid-template-columns:1fr 1fr!important;gap:7px!important}
+  .controlStat{padding:11px!important}
+  .controlStat strong{font-size:19px!important}
+  .controlStat span{font-size:8px!important}
+  .controlPanel h2,.sectionTitle h2,.hypeControlHead h2{font-size:18px!important}
+  .requestMain{grid-template-columns:1fr!important}
+  .requestPrice{text-align:left!important;min-width:0}
+  .actions{grid-template-columns:1fr!important}
+  .companyAdminList article{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important}
+  .companyAdminList article>button{font-size:8px;padding:8px}
+  .boardControl article{grid-template-columns:auto minmax(0,1fr) auto!important}
+  .trow{grid-template-columns:1fr!important}
+  .controlSearch input{font-size:16px}
+  .quickForm input,.quickForm textarea,.quickForm select{font-size:16px}
+  .curationHead{flex-direction:column}
+  .candidate{grid-template-columns:1fr!important}
+  .candidate button{grid-row:auto!important;width:100%;min-height:40px}
+  .reportMetrics{grid-template-columns:1fr 1fr}
+}
+
+@media (max-width:380px){
+  .controlStats{grid-template-columns:1fr!important}
+  .controlSide nav button span{font-size:10px}
+  .controlTop h1{font-size:18px!important}
+  .companyAdminList article{grid-template-columns:auto minmax(0,1fr)!important}
+  .companyAdminList article>button{grid-column:1/-1;width:100%}
+  .boardControl article{grid-template-columns:auto minmax(0,1fr)!important}
+  .boardControl article>span{grid-column:2;text-align:left!important}
+}
