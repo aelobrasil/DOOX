@@ -4,6 +4,13 @@ function tlv(id, value) {
   return id + String(value.length).padStart(2, '0') + value;
 }
 
+function normalizeTxid(value) {
+  const raw = String(value ?? '').trim();
+  if (raw === '***') return '***';
+  const clean = raw.replace(/[^A-Za-z0-9]/g, '').slice(0, 25);
+  return clean || '***';
+}
+
 function crc16(input) {
   let crc = 0xffff;
   for (let i = 0; i < input.length; i += 1) {
@@ -26,7 +33,7 @@ export function pixPayload(amount, reference = '***') {
   payload += tlv('58', 'BR');
   payload += tlv('59', 'ALEX SANDRO SOARES FERN');
   payload += tlv('60', PIX_CITY.toUpperCase());
-  payload += tlv('62', tlv('05', String(reference || '***').slice(0, 25)));
+  payload += tlv('62', tlv('05', normalizeTxid(reference)));
   payload += '6304';
   return payload + crc16(payload);
 }
