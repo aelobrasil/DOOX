@@ -45,7 +45,7 @@ export default function LegalReacceptGuard(){
       <div style={S.icon}><ShieldCheck/></div>
       <small style={S.kicker}>ATUALIZAÇÃO · HOCCO HYPE</small>
       <h2 style={S.title}>Confirme os Termos e a Privacidade.</h2>
-      <p style={S.text}>Os documentos explicam as regras de uso, participação, pagamentos, benefícios e tratamento dos seus dados. Informações internas de operação não fazem parte dos documentos públicos.</p>
+      <p style={S.text}>Os documentos explicam as regras de uso, participação, pagamentos, benefícios e tratamento dos seus dados.</p>
       <div style={S.links}><a href="/termos" target="_blank" rel="noreferrer">Termos de Uso</a><a href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a><a href="/regras-hype" target="_blank" rel="noreferrer">Regras do Hype</a></div>
       <label style={S.check}><input type="checkbox" checked={accepted} onChange={(e)=>setAccepted(e.target.checked)}/><span>Declaro ter <b>18 anos ou mais</b>, li e aceito os Termos de Uso e estou ciente da Política de Privacidade.</span></label>
       {msg&&<div style={S.msg}>{msg}</div>}
