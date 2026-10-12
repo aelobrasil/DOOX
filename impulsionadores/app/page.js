@@ -46,7 +46,7 @@ export default function Login() {
     if (password.length < 8) return setMsg('Use uma senha com pelo menos 8 caracteres.');
     if (mode === 'signup' && password !== confirmPassword) return setMsg('As senhas não coincidem.');
     if (mode === 'signup' && (normalizedPhone.length < 10 || normalizedPhone.length > 11)) return setMsg('Informe um telefone/WhatsApp válido com DDD.');
-    if (mode === 'signup' && !accepted) return setMsg('Leia e aceite os Termos de Uso e a Política de Privacidade para continuar.');
+    if (mode === 'signup' && !accepted) return setMsg('Para criar a conta, declare que tem 18 anos ou mais e aceite os Termos de Uso atuais.');
 
     setBusy(true);
     if (mode === 'signup') {
@@ -60,6 +60,7 @@ export default function Login() {
             phone: normalizedPhone,
             password,
             accepted: true,
+            adult: true,
             terms_version: TERMS_VERSION,
           }),
         });
@@ -136,7 +137,7 @@ export default function Login() {
         <label>E-mail<div className="inputIcon"><Mail/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required/></div></label>
         <label>Senha<div className="inputIcon"><Lock/><input className="passwordField" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" required minLength="8"/><button type="button" className="passwordToggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'}>{showPassword ? <EyeOff/> : <Eye/>}<span>{showPassword ? 'OCULTAR' : 'VER'}</span></button></div></label>
         {mode === 'signup' && <label>Confirmar senha<div className="inputIcon"><Lock/><input className="passwordField" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Digite a senha novamente" required minLength="8"/><button type="button" className="passwordToggle" onClick={() => setShowConfirmPassword((v) => !v)} aria-label={showConfirmPassword ? 'Ocultar confirmação' : 'Ver confirmação'}>{showConfirmPassword ? <EyeOff/> : <Eye/>}<span>{showConfirmPassword ? 'OCULTAR' : 'VER'}</span></button></div></label>}
-        {mode === 'signup' && <label className="legalCheck"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)}/><span>Li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e a <a href="/privacidade" target="_blank">Política de Privacidade</a>.</span></label>}
+        {mode === 'signup' && <label className="legalCheck"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)}/><span>Declaro ter <b>18 anos ou mais</b>, li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e estou ciente da <a href="/privacidade" target="_blank">Política de Privacidade e Ciclo de Vida de Dados</a>.</span></label>}
         {msg && <div className="authMsg">{msg}</div>}
         <button className="primary" disabled={busy}>{busy ? 'PROCESSANDO...' : mode === 'signup' ? 'CRIAR CONTA E ENTRAR' : 'ENTRAR'}</button>
       </form>
