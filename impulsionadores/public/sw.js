@@ -1,6 +1,6 @@
-const CACHE='hocco-shell-v4';
+const CACHE='hocco-shell-v5';
 const META='hocco-meta-v1';
-const CORE=['/offline','/manifest.webmanifest','/icon.svg'];
+const CORE=['/offline','/manifest.webmanifest','/icon.svg','/hocco-192.png','/hocco-512.png','/hocco-badge-96.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)));
@@ -18,7 +18,7 @@ self.addEventListener('fetch',event=>{
   const url=new URL(request.url);
   if(url.origin!==location.origin)return;
   if(url.pathname.startsWith('/api/')||url.pathname==='/controle')return;
-  const isStatic=url.pathname.startsWith('/_next/static/')||url.pathname==='/manifest.webmanifest'||url.pathname==='/icon.svg';
+  const isStatic=url.pathname.startsWith('/_next/static/')||['/manifest.webmanifest','/icon.svg','/hocco-192.png','/hocco-512.png','/hocco-badge-96.png'].includes(url.pathname);
   if(isStatic){
     event.respondWith(caches.match(request).then(hit=>hit||fetch(request).then(response=>{
       if(response.ok){const clone=response.clone();caches.open(CACHE).then(cache=>cache.put(request,clone))}
@@ -33,9 +33,10 @@ async function showHoccoNotification(data={}){
   const title=data.title||'HOCCO · mantenha sua ofensiva';
   const options={
     body:data.body||'Entre hoje, mantenha sua sequência e acompanhe os Hypes e benefícios HOCCO.',
-    icon:'/icon.svg',
-    badge:'/icon.svg',
+    icon:'/hocco-192.png',
+    badge:'/hocco-badge-96.png',
     tag:data.tag||'hocco-daily',
+    lang:'pt-BR',
     renotify:false,
     data:{url:data.url||'/app'},
   };
