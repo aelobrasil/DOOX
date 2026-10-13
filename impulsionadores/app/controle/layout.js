@@ -2,6 +2,7 @@ import './responsive.css';
 import ControlMemberEnhancer from './ControlMemberEnhancer';
 import ControlDrops from './ControlDrops';
 import ControlSponsors from './ControlSponsors';
+import ControlSponsorAccess from './ControlSponsorAccess';
 import ControlDataManager from './ControlDataManager';
 import ControlPush from './ControlPush';
 import ControlDataHealth from './ControlDataHealth';
@@ -21,6 +22,7 @@ export default function ControlLayout({ children }) {
       <ControlMemberEnhancer />
       <ControlDrops />
       <ControlSponsors />
+      <ControlSponsorAccess />
       <ControlPush />
       <ControlDataHealth />
       <ControlGovernance />
