@@ -124,11 +124,11 @@ export default function Login() {
   }
 
   return <div className="auth authSimple">
-    <div className="authBrand"><b>HOCCO</b><span>IMPULSIONADORES</span></div>
+    <div className="authBrand"><b>HOCCO</b><span>HYPE</span></div>
     <div className="authCard">
       <small>COMUNIDADE HOCCO</small>
       <h1>{mode === 'signup' ? 'Entre em poucos segundos.' : 'Entre na sua conta.'}</h1>
-      <p>{mode === 'signup' ? 'Nome, telefone, e-mail e senha. Criou a conta, já entra no app.' : 'Continue sua ofensiva, seu HC, seus Hypes e suas experiências.'}</p>
+      <p>{mode === 'signup' ? 'Ofertas do Momento, missões, HC, Drops e benefícios em uma única comunidade.' : 'Continue sua frequência, ganhe HC e acompanhe Ofertas do Momento, missões e Drops.'}</p>
       <form onSubmit={submit}>
         {mode === 'signup' && <>
           <label>Nome<div className="inputIcon"><UserRound/><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" required minLength="2" maxLength="40"/></div></label>
@@ -137,7 +137,7 @@ export default function Login() {
         <label>E-mail<div className="inputIcon"><Mail/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required/></div></label>
         <label>Senha<div className="inputIcon"><Lock/><input className="passwordField" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" required minLength="8"/><button type="button" className="passwordToggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'}>{showPassword ? <EyeOff/> : <Eye/>}<span>{showPassword ? 'OCULTAR' : 'VER'}</span></button></div></label>
         {mode === 'signup' && <label>Confirmar senha<div className="inputIcon"><Lock/><input className="passwordField" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Digite a senha novamente" required minLength="8"/><button type="button" className="passwordToggle" onClick={() => setShowConfirmPassword((v) => !v)} aria-label={showConfirmPassword ? 'Ocultar confirmação' : 'Ver confirmação'}>{showConfirmPassword ? <EyeOff/> : <Eye/>}<span>{showConfirmPassword ? 'OCULTAR' : 'VER'}</span></button></div></label>}
-        {mode === 'signup' && <label className="legalCheck"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)}/><span>Declaro ter <b>18 anos ou mais</b>, li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e estou ciente da <a href="/privacidade" target="_blank">Política de Privacidade e Ciclo de Vida de Dados</a>.</span></label>}
+        {mode === 'signup' && <label className="legalCheck"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)}/><span>Declaro ter <b>18 anos ou mais</b>, li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e estou ciente da <a href="/privacidade" target="_blank">Política de Privacidade</a>.</span></label>}
         {msg && <div className="authMsg">{msg}</div>}
         <button className="primary" disabled={busy}>{busy ? 'PROCESSANDO...' : mode === 'signup' ? 'CRIAR CONTA E ENTRAR' : 'ENTRAR'}</button>
       </form>
@@ -145,6 +145,6 @@ export default function Login() {
       <button className="switch" onClick={switchMode}>{mode === 'signup' ? 'Já tenho conta · Entrar' : 'Criar minha conta'}</button>
     </div>
     {!appInstalled && <button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>}
-    <p className="authFoot">HOCCO · participação, Hype, HC, Impulsão e experiências em uma única conta.</p>
+    <p className="authFoot">HOCCO Hype · ofertas, missões, HC, Drops, Impulsão e benefícios em uma única conta.</p>
   </div>;
 }
