@@ -1,4 +1,5 @@
 import './responsive.css';
+import './control-v3.css';
 import ControlMemberEnhancer from './ControlMemberEnhancer';
 import ControlDrops from './ControlDrops';
 import ControlSponsors from './ControlSponsors';
