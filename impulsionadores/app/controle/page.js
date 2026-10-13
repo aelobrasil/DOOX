@@ -1,1 +1,1 @@
-export { default } from './ControlDashboardV3';
+export { default } from './ControlFinal';
