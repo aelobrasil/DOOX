@@ -1,0 +1,149 @@
+/* Final V4 layout isolation.
+   Legacy styles in globals.css intentionally remain for auth/older support surfaces,
+   but must never leak into the final member, business or control applications. */
+
+.hoccoFinal,
+.businessFinal,
+.controlFinal {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.hoccoFinal { padding-bottom: 72px; }
+.businessFinal { padding-bottom: 0; }
+.controlFinal { padding-bottom: 0; }
+
+/* Member app: neutralize legacy generic input/nav rules. */
+.hoccoFinal .hfSearch input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.hoccoFinal .hfNav {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+.hoccoFinal .hfNav button {
+  margin: 0;
+  padding: 0;
+}
+
+/* Business area: campaign headers and controls must not inherit the old site shell. */
+.businessFinal .bfCampaign header {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  position: static;
+  inset: auto;
+  background: transparent;
+  backdrop-filter: none;
+  z-index: auto;
+  align-items: flex-start;
+}
+.businessFinal .bfGrid input,
+.businessFinal .bfGrid textarea,
+.businessFinal .bfModal input,
+.businessFinal .bfModal textarea {
+  margin: 0;
+}
+.businessFinal input[type="checkbox"] {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  accent-color: #0875f5;
+}
+.businessFinal .bfCampaign footer .primary {
+  width: auto;
+  margin: 0;
+  padding: 6px 8px;
+}
+
+/* Control: its sidebar navigation is not the legacy fixed bottom nav. */
+.controlFinal .cfSide nav {
+  position: static;
+  inset: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  z-index: auto;
+}
+.controlFinal .cfSide nav button {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  justify-content: stretch;
+}
+.controlFinal .cfTop input,
+.controlFinal .cfSettings input[type="number"] {
+  margin: 0;
+  box-shadow: none;
+}
+.controlFinal input[type="checkbox"] {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  accent-color: #0875f5;
+}
+.controlFinal .cfSettings .switch {
+  width: auto;
+  margin-top: 0;
+  border: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Keep final semantic headers/cards independent from the legacy generic header rule. */
+.controlFinal .cfPanel header,
+.controlFinal article header {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  position: static;
+  inset: auto;
+  background: transparent;
+  backdrop-filter: none;
+  z-index: auto;
+}
+
+@media (max-width: 760px) {
+  .controlFinal { padding-bottom: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoccoFinal *,
+  .businessFinal *,
+  .controlFinal * {
+    scroll-behavior: auto !important;
+  }
+}
