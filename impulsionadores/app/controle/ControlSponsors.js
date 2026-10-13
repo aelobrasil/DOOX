@@ -1,204 +1,38 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle2, RefreshCw, X } from 'lucide-react';
+import { Building2, CheckCircle2, Pencil, RefreshCw, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-const CLOSED = new Set(['RECUSADO', 'ENCERRADO', 'CANCELADO', 'REEMBOLSO']);
+const partnerEmpty=()=>({nome_fantasia:'',razao_social:'',cnpj:'',responsavel:'',whatsapp:'',email:'',cidade:'',uf:'',logo_url:'',site_url:'',instagram:'',segmento:'',partnership_type:'drop',consideration:'',internal_notes:'',status:'PROSPECT'});
+const CLOSED=new Set(['RECUSADO','ENCERRADO','CANCELADO','REEMBOLSO']);
 
-export default function ControlSponsors() {
-  const [open, setOpen] = useState(false);
-  const [rows, setRows] = useState([]);
-  const [msg, setMsg] = useState('');
-  const [busy, setBusy] = useState(null);
-
-  useEffect(() => {
-    const nav = document.querySelector('.controlSide nav');
-    if (!nav || document.getElementById('sponsors-control-entry')) return;
-    const button = document.createElement('button');
-    button.id = 'sponsors-control-entry';
-    button.innerHTML = '<span style="font-size:18px">◆</span><span>Patrocinadores</span>';
-    button.onclick = () => setOpen(true);
-    nav.appendChild(button);
-    return () => button.remove();
-  }, []);
-
-  useEffect(() => {
-    if (open) load();
-  }, [open]);
-
-  async function load() {
-    const { data, error } = await supabase.from('hocco_patrocinios').select('*').order('created_at', { ascending: false }).limit(300);
-    if (error) setMsg(error.message);
-    else setRows(data || []);
-  }
-
-  function humanError(error) {
-    const text = String(error?.message || error || '');
-    if (text.includes('payment_not_confirmed')) return 'Confirme o pagamento antes de aprovar.';
-    if (text.includes('board_full')) return 'Este quadro já possui 4 marcas ativas. A solicitação deve permanecer programada na fila.';
-    if (text.includes('not_authorized')) return 'Sessão sem permissão de administrador.';
-    if (text.includes('invalid_board')) return 'Quadro inválido.';
-    return text || 'Não foi possível concluir a operação.';
-  }
-
-  async function confirmPayment(row) {
-    if (!confirm(`Confirmar recebimento de ${money(row.valor)} para ${row.nome_fantasia}?`)) return;
-    setBusy(row.id);
-    const { error } = await supabase.rpc('admin_confirmar_pagamento_patrocinio', { p_id: row.id });
-    setBusy(null);
-    setMsg(error ? humanError(error) : 'Pagamento confirmado. A solicitação está pronta para revisão e aprovação.');
-    await load();
-  }
-
-  async function act(row, status) {
-    let board = Number(row.quadro || 1);
-    if (status === 'APROVADO') {
-      const raw = prompt('Quadro (1 a 4):', String(board));
-      if (!raw) return;
-      board = Number(raw);
-    }
-    const defaultReason = status === 'APROVADO' ? 'Marca e destino revisados pela HOCCO.' : 'Operação HOCCO Control';
-    const reason = prompt('Observação/motivo:', defaultReason);
-    if (reason === null) return;
-
-    setBusy(row.id);
-    const { data, error } = await supabase.rpc('admin_set_patrocinio', {
-      p_id: row.id,
-      p_status: status,
-      p_quadro: board,
-      p_posicao: null,
-      p_reason: reason || defaultReason,
-    });
-    setBusy(null);
-    if (error) setMsg(humanError(error));
-    else if (status === 'APROVADO') setMsg(data?.status === 'PROGRAMADO' ? 'Aprovado e colocado na fila do quadro.' : 'Aprovado e ativado. O período contratado começou agora.');
-    else setMsg(`Patrocínio atualizado para ${data?.status || status}.`);
-    await load();
-  }
-
-  const now = new Date();
-  const active = rows.filter((r) => r.status === 'ATIVO' && r.fim_at && new Date(r.fim_at) > now);
-  const queued = rows.filter((r) => r.status === 'PROGRAMADO');
-  const waitingReview = rows.filter((r) => ['SOLICITADO', 'AGUARDANDO PAGAMENTO', 'EM ANÁLISE', 'APROVADO'].includes(r.status));
-  const activeValue = active.reduce((sum, row) => sum + Number(row.valor || 0), 0);
-  const impressions = rows.reduce((sum, row) => sum + Number(row.impressoes || 0), 0);
-  const clicks = rows.reduce((sum, row) => sum + Number(row.cliques || 0), 0);
-
-  if (!open) return null;
-
-  return (
-    <div style={S.overlay}>
-      <section style={S.panel}>
-        <header style={S.head}>
-          <div>
-            <small>HOCCO CONTROL</small>
-            <h1 style={{ margin: '3px 0' }}>Marcas Permanentes</h1>
-            <p style={S.muted}>16 vagas · 4 quadros · 4 marcas por quadro · R$ 49,90 / 7 dias · R$ 189,90 / 30 dias</p>
-          </div>
-          <button style={S.close} onClick={() => setOpen(false)} aria-label="Fechar"><X /></button>
-        </header>
-
-        <div style={S.stats}>
-          <Stat title="Ocupadas" value={`${active.length}/16`} />
-          <Stat title="Livres" value={16 - active.length} />
-          <Stat title="Na fila" value={queued.length} />
-          <Stat title="Em revisão" value={waitingReview.length} />
-          <Stat title="Contratos ativos" value={money(activeValue)} />
-          <Stat title="CTR acumulado" value={`${impressions ? ((clicks / impressions) * 100).toFixed(2) : '0.00'}%`} />
-        </div>
-
-        {msg && <div style={S.msg}>{msg}</div>}
-        <button style={S.refresh} onClick={load}><RefreshCw size={16} /> Atualizar</button>
-
-        <div style={S.boards}>
-          {[1, 2, 3, 4].map((board) => {
-            const boardActive = active.filter((r) => Number(r.quadro) === board);
-            const boardQueue = queued.filter((r) => Number(r.quadro) === board).sort((a, b) => Number(a.fila_ordem) - Number(b.fila_ordem));
-            return (
-              <article style={S.board} key={board}>
-                <h3 style={S.boardTitle}>Quadro {board} <span>{boardActive.length}/4</span></h3>
-                <small style={S.muted}>{boardName(board)}</small>
-                <div style={{ marginTop: 10 }}>
-                  {boardActive.map((row) => <SponsorRow row={row} key={row.id} busy={busy} onAct={act} compact />)}
-                  {!boardActive.length && <p style={S.muted}>Nenhuma marca ativa.</p>}
-                </div>
-                {!!boardQueue.length && <div style={S.queue}><b>FILA · {boardQueue.length}</b>{boardQueue.map((row, index) => <div key={row.id} style={S.queueRow}><span>{index + 1}. {row.nome_fantasia}</span><small>{row.plano_dias || 7} dias · {money(row.valor)}</small></div>)}</div>}
-              </article>
-            );
-          })}
-        </div>
-
-        <h2 style={{ marginTop: 28 }}>Solicitações e histórico</h2>
-        <div style={S.list}>
-          {!rows.length && <p style={{ ...S.muted, padding: 16 }}>Nenhuma solicitação de patrocínio.</p>}
-          {rows.map((row) => <SponsorRow row={row} key={row.id} busy={busy} onPayment={confirmPayment} onAct={act} />)}
-        </div>
-      </section>
-    </div>
-  );
+export default function ControlSponsors(){
+  const [open,setOpen]=useState(false),[tab,setTab]=useState('partners'),[partners,setPartners]=useState([]),[placements,setPlacements]=useState([]),[form,setForm]=useState(partnerEmpty),[editing,setEditing]=useState(null),[msg,setMsg]=useState(''),[busy,setBusy]=useState(null);
+  useEffect(()=>{const nav=document.querySelector('.controlSide nav');if(!nav||document.getElementById('sponsors-control-entry'))return;const b=document.createElement('button');b.id='sponsors-control-entry';b.innerHTML='<span style="font-size:18px">◆</span><span>Patrocinadores</span>';b.onclick=()=>setOpen(true);nav.appendChild(b);return()=>b.remove()},[]);
+  useEffect(()=>{if(open)load()},[open]);
+  async function load(){const [p,m]=await Promise.all([supabase.from('hocco_patrocinadores').select('*').order('created_at',{ascending:false}).limit(500),supabase.from('hocco_patrocinios').select('*').order('created_at',{ascending:false}).limit(500)]);setPartners(p.data||[]);setPlacements(m.data||[]);if(p.error||m.error)setMsg(p.error?.message||m.error?.message)}
+  function editPartner(p){setEditing(p.id);setForm({nome_fantasia:p.nome_fantasia||'',razao_social:p.razao_social||'',cnpj:p.cnpj||'',responsavel:p.responsavel||'',whatsapp:p.whatsapp||'',email:p.email||'',cidade:p.cidade||'',uf:p.uf||'',logo_url:p.logo_url||'',site_url:p.site_url||'',instagram:p.instagram||'',segmento:p.segmento||'',partnership_type:p.partnership_type||'drop',consideration:p.consideration||'',internal_notes:p.internal_notes||'',status:p.status||'PROSPECT'});setTab('partners')}
+  async function savePartner(){if(!form.nome_fantasia.trim())return setMsg('Informe o nome do patrocinador.');setBusy('partner');const payload={...form,nome_fantasia:form.nome_fantasia.trim(),updated_at:new Date().toISOString()};const q=editing?supabase.from('hocco_patrocinadores').update(payload).eq('id',editing):supabase.from('hocco_patrocinadores').insert(payload);const {error}=await q;setBusy(null);if(error)return setMsg(error.message);setMsg(editing?'Patrocinador atualizado.':'Patrocinador cadastrado.');setEditing(null);setForm(partnerEmpty());await load()}
+  async function setPartnerStatus(p,status){const {error}=await supabase.from('hocco_patrocinadores').update({status,updated_at:new Date().toISOString()}).eq('id',p.id);setMsg(error?error.message:`${p.nome_fantasia}: ${status}.`);await load()}
+  function humanError(error){const t=String(error?.message||error||'');if(t.includes('payment_not_confirmed'))return 'Confirme o pagamento antes de aprovar.';if(t.includes('board_full'))return 'Quadro lotado; mantenha na fila.';if(t.includes('not_authorized'))return 'Sem permissão administrativa.';return t||'Não foi possível concluir.'}
+  async function confirmPayment(row){if(!confirm(`Confirmar recebimento de ${money(row.valor)} para ${row.nome_fantasia}?`))return;setBusy(row.id);const {error}=await supabase.rpc('admin_confirmar_pagamento_patrocinio',{p_id:row.id});setBusy(null);setMsg(error?humanError(error):'Pagamento confirmado.');await load()}
+  async function act(row,status){let board=Number(row.quadro||1);if(status==='APROVADO'){const raw=prompt('Quadro (1 a 4):',String(board));if(!raw)return;board=Number(raw)}const reason=prompt('Observação/motivo:',status==='APROVADO'?'Marca e destino revisados pela HOCCO.':'Operação HOCCO Control');if(reason===null)return;setBusy(row.id);const {data,error}=await supabase.rpc('admin_set_patrocinio',{p_id:row.id,p_status:status,p_quadro:board,p_posicao:null,p_reason:reason||'Operação HOCCO Control'});setBusy(null);setMsg(error?humanError(error):`Patrocínio atualizado para ${data?.status||status}.`);await load()}
+  if(!open)return null;
+  const activePartners=partners.filter((p)=>p.status==='ATIVO').length;
+  return <div style={S.overlay}><section style={S.panel}>
+    <header style={S.head}><div><small>HOCCO CONTROL</small><h1>Patrocinadores</h1><p>Parcerias que fornecem benefícios/experiências ficam separadas das Marcas Permanentes de mídia.</p></div><button style={S.close} onClick={()=>setOpen(false)}><X/></button></header>
+    <div style={S.tabs}><button className={tab==='partners'?'active':''} onClick={()=>setTab('partners')}>PARCERIAS / DROPS</button><button className={tab==='brands'?'active':''} onClick={()=>setTab('brands')}>MARCAS PERMANENTES</button><button onClick={load}><RefreshCw/> ATUALIZAR</button></div>
+    {msg&&<div style={S.msg}>{msg}</div>}
+    {tab==='partners'?<div style={S.partnerLayout}>
+      <section style={S.form}><small>CADASTRO COMERCIAL</small><h2>{editing?'Editar patrocinador':'Novo patrocinador'}</h2><PartnerForm form={form} setForm={setForm}/><div style={S.actions}><button onClick={()=>{setEditing(null);setForm(partnerEmpty())}}>LIMPAR</button><button style={S.primary} disabled={busy==='partner'} onClick={savePartner}><CheckCircle2/> SALVAR</button></div></section>
+      <section><div style={S.stats}><Stat title="Cadastrados" value={partners.length}/><Stat title="Ativos" value={activePartners}/><Stat title="Em negociação" value={partners.filter((p)=>['PROSPECT','EM ANÁLISE','APROVADO'].includes(p.status)).length}/></div><div style={S.list}>{partners.map((p)=><article key={p.id} style={S.row}><div style={S.partnerLogo}>{p.logo_url?<img src={p.logo_url} alt=""/>:<Building2/>}</div><div style={{flex:1,minWidth:0}}><b>{p.nome_fantasia}</b><small>{p.segmento||'sem segmento'} · {p.partnership_type} · {p.status}</small><small>{p.consideration||'Contrapartida ainda não registrada'}</small></div><div style={S.actions}><button onClick={()=>editPartner(p)}><Pencil/> EDITAR</button>{p.status!=='ATIVO'&&<button onClick={()=>setPartnerStatus(p,'ATIVO')}>ATIVAR</button>}{p.status==='ATIVO'&&<button onClick={()=>setPartnerStatus(p,'PAUSADO')}>PAUSAR</button>}<button onClick={()=>setPartnerStatus(p,'ARQUIVADO')}>ARQUIVAR</button></div></article>)}{!partners.length&&<p>Nenhum patrocinador cadastrado.</p>}</div></section>
+    </div>:<PermanentBrands rows={placements} busy={busy} confirmPayment={confirmPayment} act={act}/>} 
+  </section></div>;
 }
 
-function SponsorRow({ row, busy, onPayment, onAct, compact = false }) {
-  const isBusy = busy === row.id;
-  const paid = row.payment_status === 'confirmado';
-  const canConfirm = !paid && !CLOSED.has(row.status);
-  const canApprove = paid && ['EM ANÁLISE', 'SOLICITADO', 'AGUARDANDO PAGAMENTO', 'APROVADO'].includes(row.status);
-  const canReject = !CLOSED.has(row.status) && row.status !== 'ATIVO';
-
-  return (
-    <div style={S.row}>
-      <img src={row.logo_url} alt="" style={{ width: 44, height: 44, objectFit: 'contain', background: '#f7f9fc', borderRadius: 10, padding: 4 }} />
-      <div style={{ flex: 1, minWidth: 180 }}>
-        <b>{row.nome_fantasia}</b>
-        <small style={{ display: 'block', color: '#718198' }}>{row.payment_reference} · {row.status} · Quadro {row.quadro}</small>
-        <small style={{ display: 'block' }}>{row.plano_dias || 7} dias · {money(row.valor)} · pagamento: <b>{row.payment_status}</b></small>
-        {row.fim_at && <small style={{ display: 'block' }}>Até {new Date(row.fim_at).toLocaleString('pt-BR')}</small>}
-        {!compact && <small style={{ display: 'block' }}>{row.impressoes} impressões · {row.cliques} cliques · {row.impressoes ? ((row.cliques / row.impressoes) * 100).toFixed(2) : '0.00'}% CTR</small>}
-      </div>
-      {!compact && <div style={S.actions}>
-        {canConfirm && <button disabled={isBusy} style={S.money} onClick={() => onPayment(row)}><CheckCircle2 size={14} /> CONFIRMAR PAGAMENTO</button>}
-        {canApprove && <button disabled={isBusy} style={S.action} onClick={() => onAct(row, 'APROVADO')}>APROVAR</button>}
-        {row.status === 'ATIVO' && <button disabled={isBusy} style={S.neutral} onClick={() => onAct(row, 'ENCERRADO')}>ENCERRAR</button>}
-        {row.status === 'PROGRAMADO' && <button disabled={isBusy} style={S.neutral} onClick={() => onAct(row, 'CANCELADO')}>CANCELAR FILA</button>}
-        {canReject && <button disabled={isBusy} style={S.danger} onClick={() => onAct(row, 'RECUSADO')}>RECUSAR</button>}
-      </div>}
-    </div>
-  );
-}
-
-function Stat({ title, value }) {
-  return <div style={S.stat}><small>{title}</small><b>{value}</b></div>;
-}
-
-function money(value) {
-  return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function boardName(number) {
-  return ({ 1: 'Home', 2: 'Hype ao vivo', 3: 'Explorar / Benefícios', 4: 'Parceiros' })[number] || '';
-}
-
-const S = {
-  overlay: { position: 'fixed', inset: 0, zIndex: 30000, background: 'rgba(4,15,34,.7)', padding: 14, overflow: 'auto' },
-  panel: { width: 'min(1160px,100%)', margin: '20px auto', background: '#f5f8fc', borderRadius: 24, padding: 20, color: '#10213b' },
-  head: { display: 'flex', justifyContent: 'space-between', gap: 12 },
-  close: { border: 0, background: '#fff', borderRadius: 12, width: 44, height: 44, cursor: 'pointer' },
-  muted: { color: '#718198' },
-  stats: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(145px,1fr))', gap: 10, margin: '16px 0' },
-  stat: { background: '#fff', padding: 15, borderRadius: 16, border: '1px solid #e1e8f0', display: 'grid', gap: 5 },
-  boards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(245px,1fr))', gap: 10 },
-  board: { background: '#fff', padding: 14, borderRadius: 18, border: '1px solid #e1e8f0' },
-  boardTitle: { display: 'flex', justifyContent: 'space-between', margin: 0 },
-  row: { display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: '1px solid #e6ebf2', flexWrap: 'wrap' },
-  list: { background: '#fff', padding: '0 14px', borderRadius: 18, border: '1px solid #e1e8f0' },
-  actions: { display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'flex-end' },
-  action: { border: 0, borderRadius: 9, padding: '8px 9px', background: '#075eea', color: '#fff', fontWeight: 800, fontSize: 10, cursor: 'pointer' },
-  money: { border: 0, borderRadius: 9, padding: '8px 9px', background: '#e7f7ee', color: '#14753d', fontWeight: 800, fontSize: 10, display: 'inline-flex', gap: 5, alignItems: 'center', cursor: 'pointer' },
-  neutral: { border: '1px solid #d5deea', borderRadius: 9, padding: '8px 9px', background: '#fff', color: '#31445f', fontWeight: 800, fontSize: 10, cursor: 'pointer' },
-  danger: { border: 0, borderRadius: 9, padding: '8px 9px', background: '#feecef', color: '#b42336', fontWeight: 800, fontSize: 10, cursor: 'pointer' },
-  refresh: { border: 0, background: '#fff', padding: 10, borderRadius: 10, display: 'flex', gap: 6, alignItems: 'center', marginBottom: 10, cursor: 'pointer' },
-  msg: { padding: 10, background: '#eef5ff', borderRadius: 10, marginBottom: 10 },
-  queue: { marginTop: 10, padding: 10, borderRadius: 12, background: '#f5f8fc', display: 'grid', gap: 6 },
-  queueRow: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12 },
-};
+function PartnerForm({form,setForm}){const f=(k)=>(e)=>setForm({...form,[k]:e.target.value});return <div style={S.formGrid}><label>Nome fantasia<input value={form.nome_fantasia} onChange={f('nome_fantasia')}/></label><label>Razão social<input value={form.razao_social} onChange={f('razao_social')}/></label><label>CNPJ<input value={form.cnpj} onChange={f('cnpj')}/></label><label>Responsável<input value={form.responsavel} onChange={f('responsavel')}/></label><label>WhatsApp<input value={form.whatsapp} onChange={f('whatsapp')}/></label><label>E-mail<input value={form.email} onChange={f('email')}/></label><label>Cidade<input value={form.cidade} onChange={f('cidade')}/></label><label>UF<input value={form.uf} onChange={f('uf')}/></label><label>Segmento<input value={form.segmento} onChange={f('segmento')}/></label><label>Tipo<select value={form.partnership_type} onChange={f('partnership_type')}><option value="drop">Drop</option><option value="experiencia">Experiência</option><option value="institucional">Institucional</option><option value="misto">Misto</option></select></label><label>Logo URL<input value={form.logo_url} onChange={f('logo_url')}/></label><label>Site<input value={form.site_url} onChange={f('site_url')}/></label><label>Instagram<input value={form.instagram} onChange={f('instagram')}/></label><label>Status<select value={form.status} onChange={f('status')}><option>PROSPECT</option><option>EM ANÁLISE</option><option>APROVADO</option><option>ATIVO</option><option>PAUSADO</option><option>ENCERRADO</option><option>ARQUIVADO</option></select></label><label style={{gridColumn:'1/-1'}}>Contrapartida<textarea value={form.consideration} onChange={f('consideration')} placeholder="Ex.: 20 mensalidades por 30 dias"/></label><label style={{gridColumn:'1/-1'}}>Observações internas<textarea value={form.internal_notes} onChange={f('internal_notes')}/></label></div>}
+function PermanentBrands({rows,busy,confirmPayment,act}){const now=new Date();const active=rows.filter((r)=>r.status==='ATIVO'&&r.fim_at&&new Date(r.fim_at)>now),queued=rows.filter((r)=>r.status==='PROGRAMADO');return <section><div style={S.stats}><Stat title="Ocupadas" value={`${active.length}/16`}/><Stat title="Livres" value={16-active.length}/><Stat title="Na fila" value={queued.length}/><Stat title="Solicitações" value={rows.filter((r)=>!CLOSED.has(r.status)).length}/></div><div style={S.list}>{rows.map((r)=><article key={r.id} style={S.row}><img src={r.logo_url} alt="" style={S.brandLogo}/><div style={{flex:1}}><b>{r.nome_fantasia}</b><small>{r.payment_reference} · {r.status} · Quadro {r.quadro}</small><small>{r.plano_dias||7} dias · {money(r.valor)} · pagamento {r.payment_status}</small></div><div style={S.actions}>{r.payment_status!=='confirmado'&&!CLOSED.has(r.status)&&<button disabled={busy===r.id} onClick={()=>confirmPayment(r)}>CONFIRMAR PAGAMENTO</button>}{r.payment_status==='confirmado'&&['EM ANÁLISE','SOLICITADO','AGUARDANDO PAGAMENTO','APROVADO'].includes(r.status)&&<button style={S.primary} onClick={()=>act(r,'APROVADO')}>APROVAR</button>}{r.status==='ATIVO'&&<button onClick={()=>act(r,'ENCERRADO')}>ENCERRAR</button>}{!CLOSED.has(r.status)&&r.status!=='ATIVO'&&<button onClick={()=>act(r,'RECUSADO')}>RECUSAR</button>}</div></article>)}</div></section>}
+function Stat({title,value}){return <div style={S.stat}><small>{title}</small><b>{value}</b></div>}
+function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+const S={overlay:{position:'fixed',inset:0,zIndex:30000,background:'rgba(4,15,34,.72)',padding:12,overflow:'auto'},panel:{width:'min(1260px,100%)',margin:'0 auto',background:'#f5f8fc',borderRadius:24,padding:18,color:'#10213b',minHeight:'min(820px,calc(100dvh - 24px))'},head:{display:'flex',justifyContent:'space-between',gap:12,borderBottom:'1px solid #dfe6ef',paddingBottom:14},close:{width:44,height:44,border:0,borderRadius:12,background:'#fff'},tabs:{display:'flex',gap:8,flexWrap:'wrap',margin:'14px 0'},msg:{padding:10,background:'#eef5ff',borderRadius:11,color:'#214e88'},partnerLayout:{display:'grid',gridTemplateColumns:'minmax(340px,.75fr) minmax(0,1.25fr)',gap:14},form:{background:'#fff',border:'1px solid #dfe6ef',borderRadius:18,padding:16},formGrid:{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:9},stats:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:8,marginBottom:12},stat:{background:'#fff',border:'1px solid #dfe6ef',borderRadius:14,padding:13,display:'grid',gap:4},list:{background:'#fff',border:'1px solid #dfe6ef',borderRadius:18,padding:'0 13px'},row:{display:'flex',alignItems:'center',gap:10,padding:'12px 0',borderBottom:'1px solid #edf1f5',flexWrap:'wrap'},partnerLogo:{width:44,height:44,borderRadius:11,background:'#eef4ff',display:'grid',placeItems:'center',overflow:'hidden'},brandLogo:{width:44,height:44,objectFit:'contain',borderRadius:10,background:'#f7f9fc'},actions:{display:'flex',gap:6,flexWrap:'wrap'},primary:{border:0,background:'#075eea',color:'#fff',borderRadius:10,padding:'9px 10px',fontWeight:900}};
