@@ -3,8 +3,10 @@ export const PIX_KEY = 'c9316176-6f92-413e-9209-63ae6f661ba9';
 export const PIX_RECEIVER = 'Alex Sandro Soares Fernandes';
 export const PIX_BANK = 'Nu Pagamentos S.A. – Instituição de Pagamento';
 export const PIX_CITY = 'Bauru';
-export const TERMS_VERSION = '2.0-2026-10-12';
+export const TERMS_VERSION = '2.1-2026-10-13';
 
+// Legado preservado apenas para rotinas históricas do antigo Hype competitivo.
+// A experiência atual do membro usa Ofertas do Momento, Missões, Drops e Perfil.
 export const HYPE_BOARDS = {
   almoco: { label: 'Hype Almoço', window: '11h–14h', start: 11, end: 14 },
   tarde: { label: 'Hype Tarde', window: '14h–18h', start: 14, end: 18 },
