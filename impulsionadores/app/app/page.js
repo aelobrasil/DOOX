@@ -1,1 +1,1 @@
-export { default } from './MemberAppCore';
+export { default } from './MemberAppFinal';
