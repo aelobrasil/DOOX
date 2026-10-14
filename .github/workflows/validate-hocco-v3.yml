@@ -1,50 +1,30 @@
-name: Apply HOCCO audit release
+name: Validate HOCCO Hype V3
 
 on:
   push:
     branches:
-      - hocco-audit-release
+      - redesign-ofertas-v3-build
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-build-commit:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout release branch
+      - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: hocco-audit-release
-          fetch-depth: 0
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@1e60f620b9541d292f52c1d4127a5e0c1f78c5a5
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: impulsionadores/package-lock.json
-      - name: Apply audited source fixes
-        run: python3 scripts/apply-hocco-audit-fixes.py
       - name: Install
         working-directory: impulsionadores
         run: npm ci
       - name: Build
         working-directory: impulsionadores
         run: npm run build
-      - name: Keep only product changes in the release branch
-        run: |
-          git show origin/main:.github/workflows/validate-hocco-v3.yml > .github/workflows/validate-hocco-v3.yml
-          rm -f scripts/apply-hocco-audit-fixes.py
-      - name: Commit validated product changes
-        run: |
-          git config user.name "HOCCO Audit Bot"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No source changes to commit"
-            exit 0
-          fi
-          git commit -m "fix(audit): align member, business and control flows"
-          git push origin HEAD:hocco-audit-release
