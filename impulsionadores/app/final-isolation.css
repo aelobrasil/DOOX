@@ -10,11 +10,57 @@
   margin: 0;
   border-radius: 0;
   box-shadow: none;
+  overflow-x: clip;
 }
 
 .hoccoFinal { padding-bottom: 72px; }
 .businessFinal { padding-bottom: 0; }
 .controlFinal { padding-bottom: 0; }
+
+/* Never allow long names, URLs, categories or status text to force a V4 card past the viewport. */
+.hoccoFinal *,
+.businessFinal *,
+.controlFinal * { min-width: 0; }
+
+.hoccoFinal h1,.hoccoFinal h2,.hoccoFinal h3,.hoccoFinal p,.hoccoFinal b,.hoccoFinal strong,.hoccoFinal small,.hoccoFinal em,.hoccoFinal span,.hoccoFinal button,
+.businessFinal h1,.businessFinal h2,.businessFinal h3,.businessFinal p,.businessFinal b,.businessFinal strong,.businessFinal small,.businessFinal em,.businessFinal span,.businessFinal button,
+.controlFinal h1,.controlFinal h2,.controlFinal h3,.controlFinal p,.controlFinal b,.controlFinal strong,.controlFinal small,.controlFinal em,.controlFinal span,.controlFinal button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.hfOfferRail,.hfOfferGrid,.hfTwin,.hfCommunity,.hfMissionGrid,.hfDropList,.hfCommercialGrid,
+.bfHero,.bfBrand,.bfKpis,.bfQuick,.bfCampaign,.bfBottom,.bfFormLayout,.bfGrid,.bfMedia,.bfTimeline,
+.cfMain,.cfHead,.cfKpis,.cfCharts,.cfPanel,.cfBottom,.cfCompanies,.cfSettings,.cfQueue,.cfOffers,.cfPayments,.cfMembers,.cfRules {
+  max-width: 100%;
+}
+
+.hfOffer,.hfEmpty,.hfFeature,.hfSponsors,.hfCommercial,.hfSettings,.hfStreak,
+.bfCampaign,.bfBottom>section,.bfForm,.bfCheckout,.bfPending,
+.cfCharts>section,.cfPanel,.cfBottom>section,.cfCompanies>section,.cfRules article,.cfSettings>section {
+  overflow: hidden;
+}
+
+/* Semantic icon replacement: use vector symbols instead of keyboard emoji glyphs. */
+.uiSemanticIcon {
+  display: inline-flex;
+  width: 1.05em;
+  height: 1.05em;
+  margin-right: .24em;
+  vertical-align: -.14em;
+  flex: 0 0 auto;
+  color: currentColor;
+}
+.uiSemanticIcon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* Member app: neutralize legacy generic input/nav rules. */
 .hoccoFinal .hfSearch input {
@@ -37,6 +83,10 @@
   margin: 0;
   padding: 0;
 }
+.hoccoFinal .hfCompany>div,
+.hoccoFinal .hfMission>div>div,
+.hoccoFinal .hfProfile>span,
+.hoccoFinal .hfCommercialGrid button>span { min-width: 0; }
 
 /* Business area: campaign headers and controls must not inherit the old site shell. */
 .businessFinal .bfCampaign header {
@@ -72,6 +122,12 @@
   margin: 0;
   padding: 6px 8px;
 }
+.businessFinal .bfCampaign>span,
+.businessFinal .bfBrand>div,
+.businessFinal .bfQuick article>span,
+.businessFinal .bfBottom p>span { min-width: 0; }
+.businessFinal .bfCampaign>span>p,
+.businessFinal .bfBottom p span small { overflow-wrap:anywhere; }
 
 /* Control: its sidebar navigation is not the legacy fixed bottom nav. */
 .controlFinal .cfSide nav {
@@ -120,6 +176,11 @@
   font-size: inherit;
   font-weight: inherit;
 }
+.controlFinal .cfQueue article>* ,
+.controlFinal .cfOffers article>* ,
+.controlFinal .cfPayments article>* ,
+.controlFinal .cfMembers article>* ,
+.controlFinal .cfCompanyHero>span { min-width:0; }
 
 /* Keep final semantic headers/cards independent from the legacy generic header rule. */
 .controlFinal .cfPanel header,
@@ -136,8 +197,28 @@
   z-index: auto;
 }
 
+@media (max-width: 800px) {
+  .hoccoFinal .hfBody,
+  .businessFinal .bfShell { width: calc(100% - 16px); }
+  .hoccoFinal .hfOfferRail,
+  .hoccoFinal .hfOfferGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .businessFinal .bfCampaign { grid-template-columns: minmax(72px,95px) minmax(0,1fr); }
+}
+
+@media (max-width: 520px) {
+  .hoccoFinal .hfOfferRail,
+  .hoccoFinal .hfOfferGrid { grid-template-columns: 1fr; }
+  .hoccoFinal .hfOfferImg { height: 175px; }
+  .businessFinal .bfActions { grid-template-columns:1fr; }
+  .businessFinal .bfCampaign { grid-template-columns: 74px minmax(0,1fr); }
+  .businessFinal .bfCampaign footer button { max-width:100%; white-space:normal; }
+}
+
 @media (max-width: 760px) {
   .controlFinal { padding-bottom: 64px; }
+  .controlFinal .cfMain { width:100%; max-width:100vw; overflow-x:hidden; }
+  .controlFinal .cfPanel { overflow-x:auto; overscroll-behavior-inline:contain; }
+  .controlFinal .cfHead,.controlFinal .cfKpis,.controlFinal .cfCharts,.controlFinal .cfBottom,.controlFinal .cfCompanies,.controlFinal .cfSettings,.controlFinal .cfRules { width:100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
