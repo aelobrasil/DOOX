@@ -1,0 +1,21 @@
+.hfNav{
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  transform:none!important;
+  inset-inline:0!important;
+}
+
+@supports (height: 100dvh){
+  .hfNav{
+    min-height:67px;
+    height:calc(67px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .hoccoFinal{
+    padding-bottom:calc(82px + env(safe-area-inset-bottom));
+  }
+}
