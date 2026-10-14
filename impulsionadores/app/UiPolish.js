@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect} from 'react';
+import {useLayoutEffect} from 'react';
 
 const ICONS={
   '\u{1F525}':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4 0 7-2.7 7-6.4 0-3.2-1.8-5.4-4.2-7.6.1 2-1 3.6-2.1 4.3.4-3.9-2.2-6.9-5-9.3.2 3.8-2.7 6-2.7 9.8C5 18 8.1 22 12 22Z"/><path d="M9.8 18.6c-1.1-1.5-.5-3.1.5-4.3.2 1.2.8 2 1.5 2.5.1-1.5.8-2.7 1.8-3.7 1.1 1.4 1.6 2.7 1.4 4-.2 1.7-1.5 2.9-3.1 2.9-.9 0-1.6-.5-2.1-1.4Z"/></svg>',
@@ -12,7 +12,12 @@ const ICONS={
   '\u{1F381}':'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M7.5 8C5.5 8 5 6.5 5.5 5.3c.6-1.4 2.4-1.6 3.5-.4L12 8M16.5 8c2 0 2.5-1.5 2-2.7-.6-1.4-2.4-1.6-3.5-.4L12 8"/></svg>',
   '\u{1F3C6}':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 12v5M8 21h8M9 17h6"/></svg>',
   '\u2661':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>',
-  '\u2713':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>'
+  '\u2713':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>',
+  '\u{1F44B}':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.1 11.2 6.7 7.1a1.2 1.2 0 0 1 2.2-.8l1.3 3.6-.9-5a1.2 1.2 0 0 1 2.3-.4l.9 4.9-.2-5.2a1.2 1.2 0 0 1 2.4-.1l.2 5.3.7-4.4a1.2 1.2 0 0 1 2.4.4l-.7 4.7 1.4-1.7a1.5 1.5 0 0 1 2.3 1.9l-3.2 4c-1.1 1.4-2.2 3.7-5.5 3.7-3.4 0-5.4-1.9-6.7-4.5L4 10.2a1.2 1.2 0 0 1 2.1-1.1l2 2.1Z"/></svg>',
+  '\u{1F7E2}':'<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:#18b77f;stroke:none"><circle cx="12" cy="12" r="7"/></svg>',
+  '\u{1F7E0}':'<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:#f2a51a;stroke:none"><circle cx="12" cy="12" r="7"/></svg>',
+  '\u26AA':'<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:#98a5b8;stroke:none"><circle cx="12" cy="12" r="7"/></svg>',
+  '\u{1F534}':'<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:#ef5a61;stroke:none"><circle cx="12" cy="12" r="7"/></svg>'
 };
 
 const TOKENS=Object.keys(ICONS).sort((a,b)=>b.length-a.length);
@@ -50,7 +55,7 @@ function scan(root){
 }
 
 export default function UiPolish(){
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     scan(document.body);
     const observer=new MutationObserver(entries=>entries.forEach(entry=>entry.addedNodes.forEach(node=>{
       if(node.nodeType===Node.TEXT_NODE)replaceNode(node);
