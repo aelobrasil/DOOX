@@ -1,2 +1,13 @@
-export const metadata={title:'HOCCO offline',robots:{index:false,follow:false}};
-export default function OfflinePage(){return <main style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#f6f9fd',padding:16,fontFamily:'Arial,Helvetica,sans-serif',color:'#142b49'}}><section style={{width:'min(440px,100%)',background:'#fff',border:'1px solid #dce6f2',borderRadius:24,padding:28,textAlign:'center',boxShadow:'0 18px 60px #12345a12'}}><div style={{fontWeight:900,fontSize:27,color:'#075eea'}}>HOCCO</div><div style={{fontSize:9,letterSpacing:'.13em',color:'#6c809b',fontWeight:900}}>IMPULSIONADORES</div><div style={{width:58,height:58,borderRadius:'50%',display:'grid',placeItems:'center',margin:'22px auto',background:'#edf4ff',color:'#075eea',fontSize:25}}>↻</div><h1 style={{fontSize:23,margin:'8px 0'}}>Você está offline.</h1><p style={{fontSize:12,lineHeight:1.6,color:'#6d7e93'}}>Sua conta permanece segura. Reconecte-se para participar dos Hypes, atualizar HC, fazer uma Impulsão ou acompanhar experiências.</p><a href="/" style={{display:'inline-block',textDecoration:'none',background:'#075eea',color:'#fff',borderRadius:12,padding:'12px 18px',fontWeight:900}}>TENTAR NOVAMENTE</a></section></main>}
+export const metadata = { title: 'HOCCO. · offline', robots: { index: false, follow: false } };
+
+export default function OfflinePage() {
+  return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f7f5f2', padding: 18, fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif', color: '#111' }}>
+    <section style={{ width: 'min(440px,100%)', background: '#fff', border: '1px solid #e5e1dc', borderRadius: 4, padding: 28 }}>
+      <div style={{ fontWeight: 950, fontSize: 28, letterSpacing: '-1.7px' }}>HOCCO<span style={{ color: '#ff5a1f' }}>.</span></div>
+      <small style={{ display: 'block', margin: '26px 0 16px', color: '#77736f', fontSize: 9, fontWeight: 900, letterSpacing: '.13em' }}>● CONEXÃO INTERROMPIDA</small>
+      <h1 style={{ fontSize: 25, letterSpacing: '-.04em', margin: '0 0 8px' }}>Você está offline.</h1>
+      <p style={{ fontSize: 12, lineHeight: 1.6, color: '#716d69' }}>Sua conta continua segura. Reconecte-se para acompanhar a história, abrir bastidores e ver as experiências disponíveis.</p>
+      <a href="/" style={{ display: 'inline-block', textDecoration: 'none', background: '#111', color: '#fff', borderRadius: 3, padding: '12px 16px', fontWeight: 850, fontSize: 10 }}>TENTAR NOVAMENTE</a>
+    </section>
+  </main>;
+}

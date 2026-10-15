@@ -5,5 +5,5 @@ import MemberGovernanceBridge from './MemberGovernanceBridge';
 import OfferDetailBridge from './OfferDetailBridge';
 
 export default function MemberLayout({children}){
-  return <>{children}<HoccoDrops/><LegalReacceptGuard/><MemberGovernanceBridge/><OfferDetailBridge/></>;
+  return <>{children}<HoccoDrops hideLauncher/><LegalReacceptGuard/><MemberGovernanceBridge/><OfferDetailBridge/></>;
 }

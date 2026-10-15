@@ -1,0 +1,12 @@
+.hdBackdrop{background:#111b!important}
+.hdPanel{background:#f7f5f2!important;color:#111!important;border:1px solid #e5e1dc!important;border-radius:4px!important;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+.hdPanel h1,.hdPanel h2,.hdPanel h3,.hdPanel b{color:#111}
+.hdHead{border-color:#e5e1dc!important}
+.hdHead>div>small,.hdPanel section>div>small{color:#ff5a1f!important}
+.hdHead button{border-radius:3px!important}
+.hdPanel [style*="background: rgb(255, 255, 255)"],.hdPanel article{border-radius:3px}
+.hdPrimary{background:#ff5a1f!important;color:#fff!important;border:0!important;border-radius:3px!important}
+.hdPrimary:disabled{background:#d8d3cd!important;color:#79736d!important}
+.hdPanel button[style*="borderColor"]{box-shadow:none!important}
+.hdPanel button[style*="cursor: pointer"]:hover{border-color:#ff8d68!important}
+.hdPanel section[style*="background"]{border-radius:3px!important}

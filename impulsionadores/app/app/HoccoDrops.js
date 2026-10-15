@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Clock3, Gift, LockKeyhole, RefreshCw, Sparkles, Trophy, Users, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import './hocco-drops.css';
 
 const LIVE = new Set(['published','eligibility_closed','drawn','completed']);
 
@@ -25,7 +26,7 @@ function requirementRows(e){
   ].filter(Boolean).map((r)=>({...r,pass:r.current>=r.required}));
 }
 
-export default function HoccoDrops(){
+export default function HoccoDrops({ hideLauncher = false }){
   const [user,setUser]=useState(null);
   const [open,setOpen]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -63,12 +64,12 @@ export default function HoccoDrops(){
 
   useEffect(()=>{
     let alive=true;
-    load();
-    const timer=setInterval(()=>{if(alive&&document.visibilityState==='visible')load()},60000);
-    return()=>{alive=false;clearInterval(timer)};
+    supabase.auth.getUser().then(({data})=>{if(alive)setUser(data.user||null)});
+    return()=>{alive=false};
   },[]);
 
   useEffect(()=>{if(open)load()},[open]);
+  useEffect(()=>{const openDrops=()=>setOpen(true);window.addEventListener('hocco:open-drops',openDrops);return()=>window.removeEventListener('hocco:open-drops',openDrops)},[]);
 
   const selected=useMemo(()=>drops.find((d)=>d.id===selectedId)||drops[0]||null,[drops,selectedId]);
   const reg=selected?registrations.find((r)=>r.drop_id===selected.id):null;
@@ -100,13 +101,13 @@ export default function HoccoDrops(){
   if(!user)return null;
 
   return <>
-    <button type="button" onClick={()=>setOpen(true)} style={S.launcher} aria-label="Abrir Drops HOCCO">
+    {!hideLauncher&&<button type="button" onClick={()=>setOpen(true)} style={S.launcher} aria-label="Abrir Drops HOCCO">
       <Gift size={18}/><span><b>DROPS</b><small>{activeCount?`${activeCount} aberto${activeCount>1?'s':''}`:myOpen?`${myOpen} em andamento`:'HOCCO'}</small></span>{activeCount>0&&<em>{activeCount}</em>}
-    </button>
+    </button>}
 
-    {open&&<div style={S.overlay} onClick={()=>setOpen(false)}>
-      <section style={S.panel} onClick={(e)=>e.stopPropagation()}>
-        <header style={S.head}>
+    {open&&<div className="hdBackdrop" style={S.overlay} onClick={()=>setOpen(false)}>
+      <section className="hdPanel" style={S.panel} onClick={(e)=>e.stopPropagation()}>
+        <header className="hdHead" style={S.head}>
           <div><small style={S.eyebrow}>ACESSO · BENEFÍCIOS · EXPERIÊNCIAS</small><h1 style={S.h1}>Drops HOCCO</h1><p style={S.muted}>Cumpra os requisitos, entre na rodada e acompanhe sua participação.</p></div>
           <div style={{display:'flex',gap:8}}><button style={S.iconBtn} onClick={load} aria-label="Atualizar"><RefreshCw size={17}/></button><button style={S.iconBtn} onClick={()=>setOpen(false)} aria-label="Fechar"><X size={18}/></button></div>
         </header>
@@ -141,9 +142,9 @@ export default function HoccoDrops(){
 
             {selected.public_rules&&<details style={S.rules}><summary>Regras desta oportunidade</summary><p>{selected.public_rules}</p></details>}
 
-            {!reg&&selected.status==='published'&&<button disabled={busy||!elig?.eligible} style={{...S.primary,...(!elig?.eligible?S.disabled:{})}} onClick={participate}>{elig?.eligible?'PARTICIPAR DA RODADA':'CUMPRA UM REQUISITO PARA PARTICIPAR'}</button>}
+            {!reg&&selected.status==='published'&&<button className="hdPrimary" disabled={busy||!elig?.eligible} style={{...S.primary,...(!elig?.eligible?S.disabled:{})}} onClick={participate}>{elig?.eligible?'PARTICIPAR DA RODADA':'CUMPRA UM REQUISITO PARA PARTICIPAR'}</button>}
             {reg&&['inscrito','elegivel'].includes(reg.status)&&<div style={S.memberState}><CheckCircle2/><div><b>Sua participação está registrada.</b><span>A elegibilidade será verificada novamente no fechamento da rodada.</span></div></div>}
-            {reg?.status==='selecionado'&&<button disabled={busy} style={S.primary} onClick={confirmSelection}>CONFIRMAR MINHA PARTICIPAÇÃO</button>}
+            {reg?.status==='selecionado'&&<button className="hdPrimary" disabled={busy} style={S.primary} onClick={confirmSelection}>CONFIRMAR MINHA PARTICIPAÇÃO</button>}
             {reg?.status==='suplente'&&<div style={S.memberState}><Clock3/><div><b>Você está como suplente.</b><span>Se uma vaga abrir, a HOCCO poderá promovê-lo seguindo a ordem registrada da rodada.</span></div></div>}
             {reg?.status==='nao_selecionado'&&<div style={S.memberState}><Users/><div><b>Você participou da rodada.</b><span>Desta vez não foi selecionado. Seu HC e sua progressão permanecem normalmente.</span></div></div>}
             {['confirmado','entregue'].includes(reg?.status)&&<div style={S.memberState}><CheckCircle2/><div><b>{reg.status==='entregue'?'Benefício entregue.':'Participação confirmada.'}</b><span>Acompanhe as instruções enviadas pela HOCCO.</span></div></div>}

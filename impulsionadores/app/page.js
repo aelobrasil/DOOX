@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, Eye, EyeOff, Lock, Mail, Phone, UserRound } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Phone, UserRound } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { onlyDigits, TERMS_VERSION } from '../lib/config';
 
 const FAST_SIGNUP_URL = 'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/fast-signup';
 
 export default function Login() {
-  const [mode, setMode] = useState('signup');
+  const [mode, setMode] = useState('welcome');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -19,21 +19,9 @@ export default function Login() {
   const [accepted, setAccepted] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [appInstalled, setAppInstalled] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { if (data.session) location.replace('/app'); });
-    const installedNow = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || localStorage.getItem('hocco_app_installed') === '1';
-    if (installedNow) { setAppInstalled(true); localStorage.setItem('hocco_app_installed', '1'); }
-    const handler = (event) => { event.preventDefault(); if (!installedNow) setInstallPrompt(event); };
-    const installedHandler = () => { localStorage.setItem('hocco_app_installed', '1'); setAppInstalled(true); setInstallPrompt(null); };
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', installedHandler);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installedHandler);
-    };
   }, []);
 
   async function submit(event) {
@@ -99,21 +87,6 @@ export default function Login() {
     setMsg('Enviamos um link de recuperação para o e-mail informado.');
   }
 
-  async function install() {
-    if (appInstalled) return;
-    if (installPrompt) {
-      installPrompt.prompt();
-      const choice = await installPrompt.userChoice;
-      setInstallPrompt(null);
-      if (choice?.outcome === 'accepted') {
-        localStorage.setItem('hocco_app_installed', '1');
-        setAppInstalled(true);
-      }
-      return;
-    }
-    alert('No celular, abra o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar app”.');
-  }
-
   function switchMode() {
     setMode(mode === 'signup' ? 'login' : 'signup');
     setMsg('');
@@ -123,12 +96,13 @@ export default function Login() {
     setShowConfirmPassword(false);
   }
 
-  return <div className="auth authSimple">
-    <div className="authBrand"><b>HOCCO</b><span>IMPULSIONADORES</span></div>
-    <div className="authCard">
-      <small>COMUNIDADE HOCCO</small>
-      <h1>{mode === 'signup' ? 'Entre em poucos segundos.' : 'Entre na sua conta.'}</h1>
-      <p>{mode === 'signup' ? 'Nome, telefone, e-mail e senha. Criou a conta, já entra no app.' : 'Continue sua ofensiva, seu HC, seus Hypes e suas experiências.'}</p>
+  return <div className={`auth authSimple ${mode === 'welcome' ? 'authWelcome' : ''}`}>
+    <div className="authBrand"><b>HOCCO<span className="authPeriod">.</span></b></div>
+    {mode === 'welcome' ? <section className="authIntro"><span className="authRec"><i/> GRAVANDO</span><h1>Você chegou no meio da história.</h1><p>Uma série documental independente que acompanha uma trajetória real enquanto ela ainda está acontecendo.</p><button className="authIntroPrimary" onClick={() => setMode('signup')}>Entrar na história</button><button className="authIntroSecondary" onClick={() => setMode('login')}>Já sou membro <span>→</span></button><small>Uma produção original DOOX Studios</small></section> : <div className="authCard">
+      <button className="authBack" onClick={() => { setMode('welcome'); setMsg(''); }}>← HOCCO.</button>
+      <small>{mode === 'signup' ? 'FAÇA PARTE DA HISTÓRIA' : 'BEM-VINDO DE VOLTA'}</small>
+      <h1>{mode === 'signup' ? 'Entre para acompanhar de perto.' : 'Continue de onde parou.'}</h1>
+      <p>{mode === 'signup' ? 'Crie sua conta para acompanhar os bastidores e os próximos acontecimentos.' : 'Acesse sua área de membro HOCCO.'}</p>
       <form onSubmit={submit}>
         {mode === 'signup' && <>
           <label>Nome<div className="inputIcon"><UserRound/><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" required minLength="2" maxLength="40"/></div></label>
@@ -142,9 +116,8 @@ export default function Login() {
         <button className="primary" disabled={busy}>{busy ? 'PROCESSANDO...' : mode === 'signup' ? 'CRIAR CONTA E ENTRAR' : 'ENTRAR'}</button>
       </form>
       {mode === 'login' && <button className="forgotLink" onClick={forgotPassword} disabled={busy}>Esqueci minha senha</button>}
-      <button className="switch" onClick={switchMode}>{mode === 'signup' ? 'Já tenho conta · Entrar' : 'Criar minha conta'}</button>
-    </div>
-    {!appInstalled && <button className="downloadAuth" onClick={install}><Download/> Baixar app no celular</button>}
-    <p className="authFoot">HOCCO · participação, Hype, HC, Impulsão e experiências em uma única conta.</p>
+      <button className="switch" onClick={switchMode}>{mode === 'signup' ? 'Já sou membro · Entrar' : 'Criar minha conta'}</button>
+    </div>}
+    {mode !== 'welcome' && <p className="authFoot">Uma produção original DOOX Studios · HOCCO.</p>}
   </div>;
 }

@@ -1,4 +1,5 @@
 import './globals.css';
+import './entry.css';
 import './living.css';
 import './enhancements.css';
 import './hype-effects.css';
@@ -12,10 +13,11 @@ import HypeBranding from './HypeBranding';
 import UiPolish from './UiPolish';
 
 export const metadata={
-  title:'HOCCO Hype',
-  description:'HOCCO Hype — ofertas do momento, missões, Drops, HC e benefícios para a comunidade.',
+  title:'HOCCO.',
+  description:'Uma série documental independente que acompanha uma trajetória real enquanto ela ainda está acontecendo.',
   manifest:'/manifest.webmanifest',
-  appleWebApp:{capable:true,statusBarStyle:'default',title:'HOCCO Hype'}
+  icons:{icon:'/icon.svg',apple:'/hocco-192.png'},
+  appleWebApp:{capable:true,statusBarStyle:'black-translucent',title:'HOCCO.'}
 };
-export const viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#075eea'};
+export const viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#111111'};
 export default function RootLayout({children}){return <html lang="pt-BR"><body>{children}<CompanyDateGuard/><SupportShortcut/><PwaExperience/><HypeBranding/><UiPolish/><script dangerouslySetInnerHTML={{__html:`if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}`}}/></body></html>}

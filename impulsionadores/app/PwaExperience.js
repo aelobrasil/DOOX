@@ -64,13 +64,20 @@ export default function PwaExperience() {
     const appInstalled = () => {
       document.documentElement.classList.add('pwa-installed');
       setInstalled(true);
-      setTimeout(() => {
-        if ('Notification' in window && Notification.permission === 'default' && location.pathname === '/app') setShowPrompt(true);
-      }, 1200);
     };
     const media = window.matchMedia?.('(display-mode: standalone)');
     const mediaChanged = () => syncInstalled();
+    const requestPush = () => {
+      if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        setMessage('Este navegador não oferece lembretes push. A HOCCO continua funcionando normalmente.');
+        return;
+      }
+      if (Notification.permission === 'granted') ensureSubscription(false);
+      else if (Notification.permission === 'default') setShowPrompt(true);
+      else setMessage('As notificações estão bloqueadas nas permissões deste navegador.');
+    };
     window.addEventListener('appinstalled', appInstalled);
+    window.addEventListener('hocco:request-push', requestPush);
     media?.addEventListener?.('change', mediaChanged);
 
     if ('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window) {
@@ -79,6 +86,7 @@ export default function PwaExperience() {
 
     return () => {
       window.removeEventListener('appinstalled', appInstalled);
+      window.removeEventListener('hocco:request-push', requestPush);
       media?.removeEventListener?.('change', mediaChanged);
     };
   }, []);
@@ -87,13 +95,9 @@ export default function PwaExperience() {
     if (location.pathname !== '/app') return;
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
-    let timer;
     if (permission === 'granted') {
       ensureSubscription(false);
-    } else if (installed && permission === 'default') {
-      timer = setTimeout(() => setShowPrompt(true), 2600);
     }
-    return () => clearTimeout(timer);
   }, [installed, permission]);
 
   async function ensureSubscription(requestPermission) {

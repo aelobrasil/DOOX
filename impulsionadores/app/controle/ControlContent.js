@@ -9,7 +9,7 @@ const TYPES = [
   ['promocao', 'Promoção'], ['empresa', 'Empresa'], ['drop', 'Drop'],
   ['video', 'Vídeo do YouTube'], ['story', 'Novidade HOCCO'],
 ];
-const EMPTY = { content_type: 'story', title: '', body: '', image_url: '', link_url: '', instagram: '', youtube_video_id: '', company_id: '', drop_id: '', offer_id: '', required_watch_seconds: 30, starts_at: '', ends_at: '', priority: 0, notify_members: true, story_kind: 'novidade' };
+const EMPTY = { content_type: 'story', title: '', body: '', image_url: '', link_url: '', instagram: '', youtube_video_id: '', video_storage_path: '', company_id: '', drop_id: '', offer_id: '', required_watch_seconds: 30, starts_at: '', ends_at: '', priority: 0, notify_members: true, story_kind: 'novidade' };
 
 function toLocal(value) {
   if (!value) return '';
@@ -27,6 +27,8 @@ export default function ControlContent() {
   const [draft, setDraft] = useState(EMPTY);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [videoBusy, setVideoBusy] = useState(false);
+  const [videoFile, setVideoFile] = useState(null);
   const [message, setMessage] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -49,13 +51,33 @@ export default function ControlContent() {
     else setRows(content.data || []);
   }
 
-  function newDraft() { setEditing(null); setDraft({ ...EMPTY, starts_at: toLocal(new Date()) }); setMessage(''); }
+  function newDraft() { setEditing(null); setVideoFile(null); setDraft({ ...EMPTY, starts_at: toLocal(new Date()) }); setMessage(''); }
   function editDraft(row) {
     setEditing(row.id);
+    setVideoFile(null);
     setDraft({ ...EMPTY, ...row, starts_at: toLocal(row.starts_at), ends_at: toLocal(row.ends_at) });
     setMessage('');
   }
   function field(key, value) { setDraft(current => ({ ...current, [key]: value })); }
+
+  async function uploadVideo() {
+    if (!videoFile || videoBusy) return;
+    const allowed = ['video/mp4', 'video/webm', 'video/quicktime'];
+    if (!allowed.includes(videoFile.type) || videoFile.size > 50 * 1024 * 1024) {
+      setMessage('Use MP4, WebM ou MOV de até 50 MB.'); return;
+    }
+    setVideoBusy(true); setMessage('Enviando bastidor privado…');
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { setVideoBusy(false); setMessage('Entre novamente no HOCCO Control para enviar o arquivo.'); return; }
+    const ext = videoFile.type === 'video/quicktime' ? 'mov' : videoFile.type === 'video/webm' ? 'webm' : 'mp4';
+    const path = `${auth.user.id}/content/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('hocco-bastidores').upload(path, videoFile, { contentType: videoFile.type, cacheControl: '3600', upsert: false });
+    setVideoBusy(false);
+    if (error) { setMessage(`Não foi possível enviar o vídeo: ${error.message}`); return; }
+    setVideoFile(null);
+    setDraft(current => ({ ...current, youtube_video_id: '', video_storage_path: path }));
+    setMessage('Bastidor privado enviado. Salve a publicação como rascunho antes de publicar.');
+  }
 
   async function save(event) {
     event.preventDefault();
@@ -65,6 +87,7 @@ export default function ControlContent() {
       title: draft.title.trim(), body: draft.body.trim(),
       image_url: draft.image_url.trim() || null, link_url: draft.link_url.trim() || null,
       youtube_video_id: draft.content_type === 'video' ? videoId(draft.youtube_video_id) : null,
+      video_storage_path: draft.content_type === 'video' ? draft.video_storage_path || null : null,
       instagram: draft.instagram.trim() || null,
       company_id: draft.content_type === 'empresa' ? (draft.company_id || null) : draft.content_type === 'promocao' ? (offers.find(o => o.id === draft.offer_id)?.hocco_empresa_id || null) : null,
       offer_id: draft.content_type === 'promocao' ? (draft.offer_id || null) : null,
@@ -75,8 +98,8 @@ export default function ControlContent() {
       priority: Math.max(0, Math.min(100, Number(draft.priority || 0))),
       notify_members: Boolean(draft.notify_members), story_kind: draft.story_kind || null,
     };
-    if (payload.content_type === 'video' && !payload.youtube_video_id) {
-      setBusy(false); setMessage('Informe um link ou ID válido do YouTube.'); return;
+    if (payload.content_type === 'video' && !payload.youtube_video_id && !payload.video_storage_path) {
+      setBusy(false); setMessage('Informe um link ou ID válido do YouTube ou envie um bastidor privado.'); return;
     }
     if ((payload.content_type === 'promocao' && !payload.offer_id) || (payload.content_type === 'empresa' && !payload.company_id) || (payload.content_type === 'drop' && !payload.drop_id)) {
       setBusy(false); setMessage('Selecione a oferta, empresa ou Drop correspondente antes de salvar.'); return;
@@ -152,7 +175,7 @@ export default function ControlContent() {
           {draft.content_type === 'drop' && <label>Drop cadastrado<select value={draft.drop_id || ''} onChange={e => selectDrop(e.target.value)}><option value="">Selecione um Drop</option>{drops.map(drop => <option key={drop.id} value={drop.id}>{drop.titulo} · {drop.status}</option>)}</select></label>}
           <label>Título<input value={draft.title} maxLength={100} required onChange={e => field('title', e.target.value)}/></label>
           <label>Texto<textarea value={draft.body} maxLength={500} required rows={4} onChange={e => field('body', e.target.value)}/></label>
-          {draft.content_type === 'video' && <><label>Link ou ID do YouTube<input value={draft.youtube_video_id} placeholder="https://youtu.be/..." required onChange={e => field('youtube_video_id', e.target.value)}/></label><div className="ccRule"><Check/> O app exige 30 segundos reproduzidos antes de registrar conclusão.</div></>}
+          {draft.content_type === 'video' && <><label>Link ou ID do YouTube (opcional)<input value={draft.youtube_video_id || ''} placeholder="https://youtu.be/..." onChange={e => { field('youtube_video_id', e.target.value); if (e.target.value) field('video_storage_path', ''); }}/></label><div className="ccFile"><label>Ou envie um bastidor privado<input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={e => setVideoFile(e.target.files?.[0] || null)}/><small>MP4, WebM ou MOV · até 50 MB · acesso para membros autenticados</small></label><button type="button" className="ccPrimary" disabled={!videoFile || videoBusy} onClick={uploadVideo}>{videoBusy ? 'ENVIANDO…' : 'Enviar vídeo'}</button>{draft.video_storage_path && <small className="ccUploaded"><Check/> Arquivo privado anexado a este rascunho</small>}</div><div className="ccRule"><Check/> O app exige o tempo mínimo de reprodução antes de registrar conclusão.</div></>}
           <label>Imagem (URL)<input value={draft.image_url || ''} type="url" placeholder="https://..." onChange={e => field('image_url', e.target.value)}/></label>
           <label>Link ao tocar<input value={draft.link_url || ''} placeholder="/app ou https://..." onChange={e => field('link_url', e.target.value)}/></label>
           <div className="ccDates"><label>Começa em<input type="datetime-local" value={draft.starts_at || ''} onChange={e => field('starts_at', e.target.value)}/></label><label>Termina em<input type="datetime-local" value={draft.ends_at || ''} onChange={e => field('ends_at', e.target.value)}/></label></div>

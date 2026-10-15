@@ -19,7 +19,7 @@ function loadYoutubeApi() {
   return youtubeApi;
 }
 
-export default function MemberCommunity({ profile, onRefresh }) {
+export default function MemberCommunity({ profile, onRefresh, requestedItem = null, onVideoOpened }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('news');
   const [items, setItems] = useState([]);
@@ -50,6 +50,17 @@ export default function MemberCommunity({ profile, onRefresh }) {
   }
 
   useEffect(() => { if (open) load(); }, [open, profile?.user_id]);
+  useEffect(() => {
+    const openExperiences = () => { setTab('experiences'); setOpen(true); };
+    window.addEventListener('hocco:open-experiences', openExperiences);
+    return () => window.removeEventListener('hocco:open-experiences', openExperiences);
+  }, []);
+  useEffect(() => {
+    if (!requestedItem) return;
+    setTab('news'); setOpen(true);
+    beginVideo(requestedItem);
+    onVideoOpened?.();
+  }, [requestedItem?.id]);
   useEffect(() => {
     if (!open) return;
     const channel = supabase.channel(`hocco-community-${profile?.user_id || 'member'}`)
@@ -102,7 +113,7 @@ export default function MemberCommunity({ profile, onRefresh }) {
         <header className="mcHeader"><div><small>HOCCO · COMUNIDADE</small><h2>Novidades e benefícios</h2><p>Publicações aprovadas, avisos e experiências.</p></div><button onClick={() => { setOpen(false); setVideo(null); }} aria-label="Fechar"><X/></button></header>
         <nav className="mcTabs"><button className={tab === 'news' ? 'active' : ''} onClick={() => setTab('news')}>Novidades</button><button className={tab === 'inbox' ? 'active' : ''} onClick={() => setTab('inbox')}>Notificações {unread > 0 && <i>{unread}</i>}</button><button className={tab === 'experiences' ? 'active' : ''} onClick={() => setTab('experiences')}>Experiências</button><button className="mcRefresh" onClick={load}>Atualizar</button></nav>
         {message && <div className="mcMessage" role="status">{message}</div>}
-        {video ? <YouTubeWatch key={video.sessionId} item={video.item} sessionId={video.sessionId} onDone={text => { setMessage(text); setVideo(null); load(); onRefresh?.(); }} onClose={() => setVideo(null)}/> : <div className="mcScroll">
+        {video ? video.item.youtube_video_id ? <YouTubeWatch key={video.sessionId} item={video.item} sessionId={video.sessionId} onDone={text => { setMessage(text); setVideo(null); load(); onRefresh?.(); }} onClose={() => setVideo(null)}/> : <PrivateVideoWatch key={video.sessionId} item={video.item} sessionId={video.sessionId} onDone={text => { setMessage(text); setVideo(null); load(); onRefresh?.(); }} onClose={() => setVideo(null)}/> : <div className="mcScroll">
           {tab === 'news' && <><div className="mcStreak"><Sparkles/><span><b>Marco de ofensiva: {reward} HC a cada {streakDays} dias</b><small>{streakProgress}/{streakDays} dias no ciclo atual · recompensa automática ao completar o ciclo</small></span><strong>{profile?.hc || 0} HC</strong></div><h3>Publicações HOCCO</h3>{items.map(item => <article className="mcCard" key={item.id}>{item.image_url && <img src={item.image_url} alt=""/>}<div><small>{kindLabel(item.content_type)} · {date(item.starts_at)}</small><b>{item.title}</b><p>{item.body}</p>{item.content_type === 'video' ? <button onClick={() => beginVideo(item)} disabled={busy === item.id}><Play/>{busy === item.id ? 'ABRINDO…' : `ASSISTIR · ${item.required_watch_seconds || 30}s`}</button> : item.link_url ? <a href={item.link_url} target={item.link_url.startsWith('/') ? '_self' : '_blank'} rel="noreferrer">ABRIR <ExternalLink/></a> : null}</div></article>)}{!items.length && <Empty>Novidades aprovadas pela HOCCO aparecerão aqui.</Empty>}</>}
           {tab === 'inbox' && <>{notifications.map(n => <button className={`mcNotice ${!n.read_at && !n.automatic ? 'unread' : ''}`} key={n.id} onClick={() => markRead(n)}><span>{n.automatic ? <CalendarDays/> : <Bell/>}</span><div><small>{n.automatic ? 'SEU PROGRESSO' : kindLabel(n.kind)} · {date(n.created_at)}</small><b>{n.title}</b><p>{n.body}</p></div>{!n.read_at && !n.automatic && <i/>}</button>)}{!notifications.length && <Empty>Você está em dia com os avisos HOCCO.</Empty>}</>}
           {tab === 'experiences' && <><div className="mcRedeemIntro"><Gift/><span><b>Troque HC por experiências grátis</b><small>O saldo é debitado somente após confirmar um resgate disponível.</small></span></div>{experiences.map(experience => {const balance = Number(profile?.hc || 0); const cost = Number(experience.hc_cost || 0); const minimum = Number(experience.hc_min || 0); const missing = Math.max(0, cost - balance, minimum - balance); const registration = experienceApps.find(app => app.experiencia_id === experience.id); return <article className="mcExperience" key={experience.id}>{experience.imagem_url && <img src={experience.imagem_url} alt=""/>}<div><small>{experience.evento_at ? date(experience.evento_at) : 'DATA A CONFIRMAR'} · {experience.vagas} vaga(s)</small><b>{experience.titulo}</b><p>{experience.descricao}</p><span>{experience.local_evento || 'Local informado na confirmação'} · mínimo {minimum} HC · custo {cost} HC</span><button disabled={busy === experience.id || missing > 0 || Boolean(registration)} onClick={() => redeem(experience)}>{registration ? 'JÁ RESGATADA' : missing > 0 ? `FALTAM ${missing} HC` : busy === experience.id ? 'PROCESSANDO…' : `RESGATAR POR ${cost} HC`}</button></div></article>;})}{!experiences.length && <Empty>As próximas experiências resgatáveis aparecerão aqui.</Empty>}</>}
@@ -145,6 +156,51 @@ function YouTubeWatch({ item, sessionId, onDone, onClose }) {
     return () => clearInterval(id);
   }, [playing, error, required, sessionId]);
   return <div className="mcPlayer"><header><span><small>VÍDEO HOCCO</small><b>{item.title}</b></span><button onClick={onClose} aria-label="Fechar vídeo"><X/></button></header><div className="mcVideoFrame"><div ref={host}/></div><div className="mcWatchProgress"><span>Tempo assistido</span><b>{Math.min(seconds, required)} / {required}s</b><i><em style={{ width: `${Math.min(100, seconds / required * 100)}%` }}/></i></div>{error && <p className="mcVideoError">{error}</p>}{canRetry && <button className="mcRetry" disabled={confirming} onClick={complete}>{confirming ? 'CONFIRMANDO…' : 'TENTAR CONFIRMAR'}</button>}<p className="mcWatchHelp">O contador avança somente enquanto o vídeo está reproduzindo e o app está visível.</p></div>;
+}
+
+function PrivateVideoWatch({ item, sessionId, onDone, onClose }) {
+  const [src, setSrc] = useState('');
+  const [seconds, setSeconds] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [error, setError] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [canRetry, setCanRetry] = useState(false);
+  const watched = useRef(0);
+  const finish = useRef(false);
+  const required = Math.max(30, Number(item.required_watch_seconds || 30));
+
+  useEffect(() => {
+    let active = true;
+    const path = String(item.video_storage_path || '').replace(/^\/+/, '');
+    if (!path || path.includes('..')) { setError('O arquivo deste bastidor não está disponível.'); return () => { active = false; }; }
+    supabase.storage.from('hocco-bastidores').createSignedUrl(path, 60 * 20).then(({ data, error: signedError }) => {
+      if (!active) return;
+      if (signedError || !data?.signedUrl) setError('Não foi possível abrir este bastidor para membros.');
+      else setSrc(data.signedUrl);
+    });
+    return () => { active = false; };
+  }, [item.video_storage_path]);
+
+  async function complete() {
+    setConfirming(true); setCanRetry(false); setError('');
+    const { data, error: rpcError } = await supabase.rpc('complete_content_video', { p_session_id: sessionId });
+    setConfirming(false);
+    if (rpcError || !data?.ok) { finish.current = true; setCanRetry(true); setError('A conclusão não foi confirmada. Tente novamente.'); return; }
+    onDone(`Bastidor concluído: ${required} segundos assistidos.`);
+  }
+
+  useEffect(() => {
+    if (!playing || error || finish.current) return;
+    const timer = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
+      watched.current += 1; setSeconds(watched.current);
+      if (watched.current < required || finish.current) return;
+      finish.current = true; clearInterval(timer); setPlaying(false); await complete();
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [playing, error, required, sessionId]);
+
+  return <div className="mcPlayer"><header><span><small>BASTIDOR EXCLUSIVO</small><b>{item.title}</b></span><button onClick={onClose} aria-label="Fechar vídeo"><X/></button></header><div className="mcVideoFrame mcPrivateVideo">{src ? <video controls playsInline preload="metadata" src={src} onPlay={() => { if (!finish.current) setPlaying(true); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onError={() => setError('O arquivo de vídeo não pôde ser reproduzido neste aparelho.')}/> : !error && <p>Preparando o bastidor…</p>}</div><div className="mcWatchProgress"><span>Tempo assistido</span><b>{Math.min(seconds, required)} / {required}s</b><i><em style={{ width: `${Math.min(100, seconds / required * 100)}%` }}/></i></div>{error && <p className="mcVideoError">{error}</p>}{canRetry && <button className="mcRetry" disabled={confirming} onClick={complete}>{confirming ? 'CONFIRMANDO…' : 'TENTAR CONFIRMAR'}</button>}<p className="mcWatchHelp">O tempo conta somente enquanto o vídeo reproduz e a HOCCO fica visível na tela.</p></div>;
 }
 
 function Empty({ children }) { return <div className="mcEmpty"><Bell/><p>{children}</p></div>; }

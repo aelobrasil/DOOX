@@ -1,0 +1,61 @@
+.controlFinal{--cb:#ff5a1f;--ci:#111;--cm:#716d69;--cl:#e5e1dc;--cg:#52794a;--co:#ff5a1f;background:#f7f5f2;color:#111}
+.cfSide{background:#111;border:0;color:#fff;padding:21px 12px}
+.cfLogo{padding:5px 9px 21px;grid-template-columns:auto auto;justify-content:start;column-gap:8px}
+.cfLogo b{font-size:22px;letter-spacing:-1.5px;color:#fff}
+.cfLogo i{font-size:14px;font-style:normal;font-family:inherit;color:#ff8052;font-weight:750}
+.cfLogo small{color:#ffffff77;letter-spacing:.13em;font-size:7px}
+.cfSide nav{position:static;left:auto;bottom:auto;transform:none;width:auto;height:auto;border:0;border-radius:0;background:transparent;padding:0;z-index:auto;overflow:visible;align-content:start;gap:11px}
+.cfNavGroup{display:grid;gap:3px}
+.cfNavGroup>small{padding:3px 10px;color:#ffffff69;font-size:7px;font-weight:900;letter-spacing:.13em}
+.cfSide nav button{background:transparent!important;border-radius:3px;color:#ffffffb0;padding:8px 9px;font-size:10px}
+.cfSide nav button.active{background:#ff5a1f1c!important;color:#ff8b63!important;box-shadow:inset 2px 0 #ff5a1f}
+.cfSide nav button.active em,.cfSide nav button em{background:#ff5a1f26;color:#ffad93}
+.cfLogout{background:#ffffff13;color:#ffffffc4;border-radius:3px}
+.cfTop{background:#f7f5f2ed;border-color:#e5e1dc}
+.cfTop label{border-color:#ddd8d2;border-radius:3px;background:#fff}
+.cfTop>div>button{border-color:#ddd8d2;border-radius:3px}
+.cfTop>div>span{border:0;background:#111;color:#fff}
+.cfHead small{color:#ff5a1f}
+.cfHead h1{color:#111;letter-spacing:-.045em}
+.cfPrimary{border-radius:3px;background:#ff5a1f}
+.cfSide nav button.active{color:#ff8b63}
+.cfKpi,.cfCharts>section,.cfPanel,.cfBottom>section,.cfCompanies>section,.cfRules article,.cfSettings>section{border-color:#e5e1dc;border-radius:4px;box-shadow:none}
+.cfKpi>svg{background:#fff0e9;color:#ff5a1f}
+.cfCompanies>section:first-child>button.active{background:#fff1eb}
+.cfCompanies button span em,.cfCompanies button em{color:#c54118}
+.cfTop label:focus-within{border-color:#ff8d68;box-shadow:0 0 0 3px #ff5a1f18}
+.cfTitle button{border-color:#ffc3ad;color:#c54118;border-radius:3px}
+.cfQueue article>div button,.cfOffers button,.cfPayments button{border-color:#ffc3ad;color:#c54118;border-radius:3px}
+.cfQueue article>div .ok{background:#52794a;color:#fff;border-color:#52794a}
+.cfQueue article>div .danger{border-color:#e79b94;color:#b83b33}
+.cfNotice{background:#181818;border-left:3px solid #ff5a1f;border-radius:2px}
+.cfGate svg{color:#ff5a1f}
+.cfGate button{background:#ff5a1f}
+.cfSettings>section>button:not(.cfPrimary){border-color:#ffc3ad;color:#c54118;border-radius:3px}
+.cfBottom button{border-color:#e5e1dc;border-radius:3px;background:#faf9f7}
+.ccBackdrop{background:#111a}
+.ccPanel{border-radius:4px;background:#f7f5f2;color:#111}
+.ccHead{border-color:#e5e1dc}
+.ccHead small,.ccFormTitle>svg{color:#ff5a1f}
+.ccHead>button,.ccListTools>button:not(.ccPrimary),.ccActions button{border-radius:3px}
+.ccPrimary{border-radius:3px;background:#ff5a1f}
+.ccListPane{border-color:#e5e1dc}
+.ccListTools{background:#f7f5f2;border-color:#e5e1dc}
+.ccListTools select,.ccForm input,.ccForm textarea,.ccForm select{border-radius:3px;border-color:#ddd8d2;color:#111}
+.ccForm label{color:#393633}
+.ccForm input:focus,.ccForm textarea:focus,.ccForm select:focus{border-color:#ff8d68;box-shadow:0 0 0 3px #ff5a1f18}
+.ccRow{border-radius:3px;border-color:#e5e1dc}
+.ccType{border-radius:3px;background:#fff1eb;color:#ba411b}
+.ccType.video{background:#ffe8de;color:#ba411b}
+.ccRule{border-radius:3px;background:#edf3e9;color:#4d6c42}
+.ccFile{display:grid;grid-template-columns:1fr auto;align-items:end;gap:8px;padding:10px;background:#eeeae5}
+.ccFile>label{min-width:0}
+.ccFile input[type=file]{padding:7px;background:#fff;font-size:9px}
+.ccFile label>small{font-size:8px;color:#77736f;font-weight:500;line-height:1.4}
+.ccFile>.ccPrimary{white-space:nowrap}
+.ccUploaded{grid-column:1/-1;display:flex;align-items:center;gap:5px;color:#4d6c42;font-size:9px}
+.ccUploaded svg{width:14px;height:14px}
+.ccSave,.ccPublishFull{border-radius:3px}
+.ccPublishFull{border-radius:3px}
+@media(max-width:1050px){.cfLogo i,.cfLogo small,.cfSide nav button span,.cfLogout{display:none}.cfLogo{justify-content:center;padding:4px 0 18px}}
+@media(max-width:760px){.cfSide{background:#111;border-top:1px solid #ffffff26;padding:3px 0;height:64px}.cfSide nav{display:flex;height:100%;overflow-x:auto;overflow-y:hidden;gap:10px;padding:0 9px;scrollbar-width:none}.cfSide nav::-webkit-scrollbar{display:none}.cfNavGroup{display:flex;align-items:center;gap:3px;flex:none}.cfNavGroup>small{display:none}.cfSide nav button{display:flex;flex-direction:column;justify-content:center;min-width:59px;min-height:52px;padding:4px 5px;font-size:7px;gap:3px;white-space:nowrap}.cfSide nav button span{display:block;max-width:78px;overflow:hidden;text-overflow:ellipsis}.cfSide nav button svg{width:16px;height:16px}.cfSide nav button em{position:absolute;margin:0 0 22px 25px}.cfSide nav button:nth-child(n+7){display:flex}.cfTop{background:#f7f5f2ed}.cfNotice{background:#181818}}

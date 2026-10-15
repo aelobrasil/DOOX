@@ -1,4 +1,4 @@
-const CACHE='hocco-shell-v7';
+const CACHE='hocco-shell-v8';
 const META='hocco-meta-v1';
 const CORE=['/offline','/manifest.webmanifest','/icon.svg','/hocco-192.png','/hocco-512.png','/hocco-badge-96.png'];
 
@@ -30,9 +30,9 @@ self.addEventListener('fetch',event=>{
 });
 
 async function showHoccoNotification(data={}){
-  const title=data.title||'HOCCO · mantenha sua ofensiva';
+  const title=data.title||'HOCCO · a história continua';
   const options={
-    body:data.body||'Entre hoje, mantenha sua sequência e acompanhe ofertas, missões, Drops e benefícios HOCCO.',
+    body:data.body||'Acompanhe os novos acontecimentos, bastidores e experiências da comunidade HOCCO.',
     icon:'/hocco-192.png',
     badge:'/hocco-badge-96.png',
     tag:data.tag||'hocco-daily',
@@ -67,8 +67,8 @@ async function dailyReminder(){
   const previous=await cache.match(key);
   if(previous&&await previous.text()===today)return;
   await showHoccoNotification({
-    title:'HOCCO · sua ofensiva continua hoje',
-    body:'Entre hoje para manter sua ofensiva e acompanhar ofertas, missões, HC e benefícios HOCCO.',
+    title:'HOCCO · a história continua hoje',
+    body:'Acompanhe os novos acontecimentos, bastidores e experiências da comunidade HOCCO.',
     tag:'hocco-daily-reminder',
     url:'/app',
   });
