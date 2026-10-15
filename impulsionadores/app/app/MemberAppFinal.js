@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Archive, ArrowDownRight, ArrowUpRight, Building2, CalendarDays, Check, ChevronRight, CirclePlay, Clock3, Compass, ExternalLink, Flame, Gift, Heart, Home, LogOut, MessageCircle, Search, Send, Sparkles, Tag, Target, Trash2, UserRound, Video, X } from 'lucide-react';
+import { Archive, ArrowDownRight, ArrowUpRight, Building2, CalendarDays, Check, ChevronRight, CirclePlay, Clock3, Compass, ExternalLink, Flame, Gift, Heart, Home, LogOut, MessageCircle, Search, Send, ShieldCheck, Sparkles, Tag, Target, Trash2, UserRound, Video, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { HOCCO_WHATSAPP, todayBR, whatsappUrl } from '../../lib/config';
 import { MINIGAMES, MiniGamesModal } from '../components/Minigames';
@@ -27,6 +27,7 @@ function storyMedia(item) { return item?.media_url || item?.image_url || item?.c
 
 export default function MemberAppFinal() {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState('inicio');
   const [stories, setStories] = useState([]);
@@ -103,6 +104,8 @@ export default function MemberAppFinal() {
       if (!active) return;
       if (!auth.user) { location.replace('/'); return; }
       setUser(auth.user);
+      const { data: adminAccess } = await supabase.from('hocco_admins').select('user_id').eq('user_id', auth.user.id).maybeSingle();
+      if (active) setIsAdmin(Boolean(adminAccess));
       let { data: member } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', auth.user.id).maybeSingle();
       if (!member) {
         const { data } = await supabase.from('impulsionadores_perfis').insert({ user_id: auth.user.id, nome_publico: auth.user.user_metadata?.full_name || auth.user.email?.split('@')[0] || 'Membro HOCCO' }).select('*').single();
@@ -256,6 +259,7 @@ export default function MemberAppFinal() {
 
       {tab === 'descobrir' && <>
         <PageTitle eyebrow="LUGARES · PESSOAS · EXPERIÊNCIAS" title="Descobrir" text="Encontre empresas e experiências que fazem parte da comunidade HOCCO."/>
+        <section className="hpBusiness"><div><span className="hpEyebrow">PARA EMPRESAS</span><h3>Sua empresa também pode fazer parte.</h3><p>Publique uma condição real para a comunidade e acompanhe os resultados pelo seu próprio painel.</p></div><button className="hpButton hpButtonDark" onClick={() => location.href = '/empresa'}>Abrir área da empresa <ChevronRight/></button></section>
         <label className="hpSearch"><Search/><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Buscar empresa, serviço ou categoria"/><button onClick={() => setSearch('')} aria-label="Limpar busca"><X/></button></label>
         <div className="hpFilters">{CATEGORIES.map(item => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}<button className={savedOnly ? 'active' : ''} onClick={() => setSavedOnly(value => !value)}>Salvos</button></div>
         <div className="hpDiscoverHead"><div><span className="hpEyebrow">VANTAGENS PARA MEMBROS</span><h2>Condições disponíveis hoje</h2></div><span>{filteredOffers.length} {filteredOffers.length === 1 ? 'empresa' : 'empresas'}</span></div>
@@ -280,7 +284,7 @@ export default function MemberAppFinal() {
         <section className="hpProfile"><div className="hpProfileTop"><div className="hpProfileAvatar">{profile.avatar_url ? <img src={profile.avatar_url} alt=""/> : firstName(profile).slice(0, 1).toUpperCase()}</div><div><h2>{profile.nome_publico}</h2><span>{profile.username ? `@${profile.username}` : 'Membro HOCCO'}</span></div></div><div className="hpProfileStats"><div><span>HC</span><b>{profile.hc || 0}</b><small>créditos HOCCO</small></div><div><span>XP</span><b>{profile.xp || 0}</b><small>participação</small></div><div><span>NÍVEL</span><b>{profile.nivel || 1}</b><small>na comunidade</small></div><div><span>SEQUÊNCIA</span><b>{profile.ofensiva_dias || 0}</b><small>dias</small></div></div></section>
         <section className="hpBusiness"><div><span className="hpEyebrow">PARA EMPRESAS</span><h3>Faça parte da comunidade.</h3><p>Empresas, MEIs e prestadores podem apresentar uma condição real para membros HOCCO.</p></div><button className="hpButton hpButtonDark" onClick={() => location.href = '/empresa?novo=1'}>Conhecer área de empresas <ChevronRight/></button></section>
         <section className="hpSupport"><div><span className="hpEyebrow">AJUDA E PRIVACIDADE</span><p>Se precisar de ajuda com seu perfil ou quiser encerrar sua conta, fale com a equipe HOCCO.</p><a href={whatsappUrl(HOCCO_WHATSAPP, 'Olá! Preciso de suporte com minha conta no app HOCCO.')} target="_blank" rel="noreferrer"><MessageCircle/> Suporte HOCCO <ExternalLink/></a></div><button onClick={deleteAccount} disabled={busy}><Trash2/>{busy ? 'PROCESSANDO…' : 'Excluir minha conta'}</button></section>
-        <section className="hpSettings"><div><span><b>Conta conectada</b><small>{user?.email || 'E-mail não disponível'}</small></span><Check/></div><button onClick={() => document.querySelector('.hpHeaderActions .mcBell')?.click()}><span><b>Novidades e experiências</b><small>Publicações, avisos e resgates</small></span><ChevronRight/></button><button onClick={() => window.dispatchEvent(new Event('hocco:request-push'))}><span><b>Lembretes HOCCO</b><small>Opcional · você controla as notificações no aparelho</small></span><ChevronRight/></button>{!installed && <button onClick={installApp}><span><b>Levar HOCCO com você</b><small>Instale para acompanhar novos acontecimentos</small></span><ChevronRight/></button>}<button onClick={logout}><span><b>Sair da conta</b><small>Encerrar esta sessão neste dispositivo</small></span><LogOut/></button></section>
+        <section className="hpSettings"><div><span><b>Conta conectada</b><small>{user?.email || 'E-mail não disponível'}</small></span><Check/></div><button onClick={() => document.querySelector('.hpHeaderActions .mcBell')?.click()}><span><b>Novidades e experiências</b><small>Publicações, avisos e resgates</small></span><ChevronRight/></button><button onClick={() => window.dispatchEvent(new Event('hocco:request-push'))}><span><b>Lembretes HOCCO</b><small>Opcional · você controla as notificações no aparelho</small></span><ChevronRight/></button>{!installed && <button onClick={installApp}><span><b>Levar HOCCO com você</b><small>Instale para acompanhar novos acontecimentos</small></span><ChevronRight/></button>}{isAdmin && <button onClick={() => location.href = '/controle'}><span><b>HOCCO Control</b><small>Operação administrativa · acesso restrito</small></span><ShieldCheck/></button>}<button onClick={logout}><span><b>Sair da conta</b><small>Encerrar esta sessão neste dispositivo</small></span><LogOut/></button></section>
         <footer className="hpLegal">Uma produção original DOOX Studios · HOCCO.</footer>
       </>}
     </section>

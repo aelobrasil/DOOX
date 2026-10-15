@@ -11,6 +11,8 @@
 .auth.authSimple .authIntroPrimary{width:min(300px,100%);min-height:49px;border:0;border-radius:2px;background:var(--entry-orange);color:white;font-size:11px;font-weight:900;letter-spacing:.05em}
 .auth.authSimple .authIntroSecondary{width:min(300px,100%);display:flex;justify-content:space-between;align-items:center;border:0;border-bottom:1px solid #d9d4cd;background:transparent;color:var(--entry-ink);font-size:11px;font-weight:850;padding:14px 3px}
 .auth.authSimple .authIntroSecondary span{color:var(--entry-orange);font-size:17px}
+.auth.authSimple .authCompanyEntry{width:min(300px,100%);display:flex;justify-content:space-between;align-items:center;padding:14px 3px;border-bottom:1px solid #d9d4cd;color:#6c6761;text-decoration:none;font-size:11px;font-weight:800}
+.auth.authSimple .authCompanyEntry span{color:var(--entry-orange);font-size:17px}
 .auth.authSimple .authIntro>small{margin-top:38px;color:#88837d;font-size:9px;letter-spacing:.05em}
 .auth.authSimple .authCard{border:1px solid #e5e1dc;border-radius:3px;box-shadow:none}
 .auth.authSimple .authCard>small{color:var(--entry-orange)}

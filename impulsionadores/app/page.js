@@ -7,6 +7,11 @@ import { onlyDigits, TERMS_VERSION } from '../lib/config';
 
 const FAST_SIGNUP_URL = 'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/fast-signup';
 
+function postAuthPath() {
+  const requested = new URLSearchParams(location.search).get('next');
+  return ['/empresa', '/controle', '/app'].includes(requested) ? requested : '/app';
+}
+
 export default function Login() {
   const [mode, setMode] = useState('welcome');
   const [name, setName] = useState('');
@@ -21,7 +26,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { if (data.session) location.replace('/app'); });
+    supabase.auth.getSession().then(({ data }) => { if (data.session) location.replace(postAuthPath()); });
   }, []);
 
   async function submit(event) {
@@ -63,7 +68,7 @@ export default function Login() {
           setBusy(false);
           return setMsg('Conta criada. Toque em Entrar e use seu e-mail e senha.');
         }
-        location.replace('/app');
+        location.replace(postAuthPath());
         return;
       } catch {
         setBusy(false);
@@ -74,7 +79,7 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     setBusy(false);
     if (error) return setMsg('E-mail ou senha inválidos.');
-    location.replace('/app');
+    location.replace(postAuthPath());
   }
 
   async function forgotPassword() {
@@ -98,7 +103,7 @@ export default function Login() {
 
   return <div className={`auth authSimple ${mode === 'welcome' ? 'authWelcome' : ''}`}>
     <div className="authBrand"><b>HOCCO<span className="authPeriod">.</span></b></div>
-    {mode === 'welcome' ? <section className="authIntro"><span className="authRec"><i/> GRAVANDO</span><h1>Você chegou no meio da história.</h1><p>Uma série documental independente que acompanha uma trajetória real enquanto ela ainda está acontecendo.</p><button className="authIntroPrimary" onClick={() => setMode('signup')}>Entrar na história</button><button className="authIntroSecondary" onClick={() => setMode('login')}>Já sou membro <span>→</span></button><small>Uma produção original DOOX Studios</small></section> : <div className="authCard">
+    {mode === 'welcome' ? <section className="authIntro"><span className="authRec"><i/> GRAVANDO</span><h1>Você chegou no meio da história.</h1><p>Uma série documental independente que acompanha uma trajetória real enquanto ela ainda está acontecendo.</p><button className="authIntroPrimary" onClick={() => setMode('signup')}>Entrar na história</button><button className="authIntroSecondary" onClick={() => setMode('login')}>Já sou membro <span>→</span></button><a className="authCompanyEntry" href="/empresa">Painel de empresas <span>→</span></a><a className="authCompanyEntry" href="/controle">Acesso da equipe HOCCO <span>→</span></a><small>Uma produção original DOOX Studios</small></section> : <div className="authCard">
       <button className="authBack" onClick={() => { setMode('welcome'); setMsg(''); }}>← HOCCO.</button>
       <small>{mode === 'signup' ? 'FAÇA PARTE DA HISTÓRIA' : 'BEM-VINDO DE VOLTA'}</small>
       <h1>{mode === 'signup' ? 'Entre para acompanhar de perto.' : 'Continue de onde parou.'}</h1>
