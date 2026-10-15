@@ -9,6 +9,7 @@ import ControlPush from './ControlPush';
 import ControlDataHealth from './ControlDataHealth';
 import ControlGovernance from './ControlGovernance';
 import ControlRealtimeBridge from './ControlRealtimeBridge';
+import ControlContent from './ControlContent';
 
 export const metadata = {
   title: 'HOCCO Control',
@@ -20,6 +21,7 @@ export default function ControlLayout({ children }) {
     <>
       {children}
       <ControlRealtimeBridge />
+      <ControlContent />
       <ControlMemberEnhancer />
       <ControlDrops />
       <ControlSponsors />

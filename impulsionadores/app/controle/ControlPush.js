@@ -29,14 +29,9 @@ export default function ControlPush() {
   });
 
   useEffect(() => {
-    const nav = document.querySelector('.controlSide nav');
-    if (!nav || document.getElementById('push-control-entry')) return;
-    const button = document.createElement('button');
-    button.id = 'push-control-entry';
-    button.innerHTML = '<span style="font-size:18px">🔔</span><span>Notificações</span>';
-    button.onclick = () => setOpen(true);
-    nav.appendChild(button);
-    return () => button.remove();
+    const openPanel = () => { setMessage(''); setOpen(true); };
+    window.addEventListener('hocco-control-push-open', openPanel);
+    return () => window.removeEventListener('hocco-control-push-open', openPanel);
   }, []);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-const CACHE='hocco-shell-v6';
+const CACHE='hocco-shell-v7';
 const META='hocco-meta-v1';
 const CORE=['/offline','/manifest.webmanifest','/icon.svg','/hocco-192.png','/hocco-512.png','/hocco-badge-96.png'];
 
