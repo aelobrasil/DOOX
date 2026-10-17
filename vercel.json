@@ -4,194 +4,71 @@
   "headers": [
     {
       "source": "/",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
+      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
     },
     {
       "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
+      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
     },
     {
-      "source": "/assets/hocco-v108.css",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
+      "source": "/assets/doox-v3.css",
+      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
     },
     {
-      "source": "/assets/hocco-v108.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
+      "source": "/assets/doox-v3.js",
+      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
     },
     {
-      "source": "/assets/hocco-v108-patch.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
+      "source": "/assets/doox-control-v3.css",
+      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
     },
     {
-      "source": "/assets/doox-control-v108.css",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
+      "source": "/assets/doox-control-v3.js",
+      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
     },
     {
-      "source": "/assets/doox-control-v108-views.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/doox-control-v108-core.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*)\\\\.(mp4|mp3|webm|png|jpg|jpeg|svg|ico)$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "source": "/assets/(.*)\\.(mp4|mp3|webm|png|jpg|jpeg|svg|ico)$",
+      "headers": [{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]
     },
     {
       "source": "/manifest.webmanifest",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache"
-        }
-      ]
+      "headers": [{"key":"Cache-Control","value":"no-cache"}]
     },
     {
       "source": "/sw.js",
+      "headers": [{"key":"Cache-Control","value":"no-cache, no-store"}]
+    },
+    {
+      "source": "/hocco-controle",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store"
-        }
+        {"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive, nosnippet"},
+        {"key":"Cache-Control","value":"no-store, max-age=0"}
       ]
     },
     {
       "source": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
       "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive, nosnippet"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/hocco-controle",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive, nosnippet"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
+        {"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive, nosnippet"},
+        {"key":"Cache-Control","value":"no-store, max-age=0"}
       ]
     }
   ],
   "routes": [
-    {
-      "src": "/hocco-controle",
-      "dest": "/doox-control-v108.html"
-    },
-    {
-      "src": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt",
-      "dest": "/doox-access-fRiqxdGcydxi5UvdiW89JcVt.html"
-    },
-    {
-      "src": "/portal",
-      "dest": "/"
-    },
-    {
-      "src": "/serie",
-      "dest": "/"
-    },
-    {
-      "src": "/empresas",
-      "dest": "/"
-    },
-    {
-      "src": "/insercoes",
-      "dest": "/"
-    },
-    {
-      "src": "/simulacao",
-      "dest": "/"
-    },
-    {
-      "src": "/participar",
-      "dest": "/"
-    },
-    {
-      "src": "/posicao",
-      "dest": "/"
-    },
-    {
-      "src": "/cadastro",
-      "dest": "/"
-    },
-    {
-      "src": "/materiais",
-      "dest": "/"
-    },
-    {
-      "src": "/revisao",
-      "dest": "/"
-    },
-    {
-      "src": "/acompanhar",
-      "dest": "/"
-    },
-    {
-      "src": "/termos",
-      "dest": "/"
-    },
-    {
-      "src": "/privacidade",
-      "dest": "/"
-    },
-    {
-      "src": "/regras",
-      "dest": "/"
-    }
+    {"src":"/hocco-controle","dest":"/doox-control-v3.html"},
+    {"src":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt","dest":"/doox-control-v3.html"},
+    {"src":"/portal","dest":"/"},
+    {"src":"/serie","dest":"/"},
+    {"src":"/empresas","dest":"/"},
+    {"src":"/insercoes","dest":"/"},
+    {"src":"/simulacao","dest":"/"},
+    {"src":"/participar","dest":"/"},
+    {"src":"/posicao","dest":"/"},
+    {"src":"/cadastro","dest":"/"},
+    {"src":"/materiais","dest":"/"},
+    {"src":"/revisao","dest":"/"},
+    {"src":"/acompanhar","dest":"/"},
+    {"src":"/termos","dest":"/"},
+    {"src":"/privacidade","dest":"/"},
+    {"src":"/regras","dest":"/"}
   ]
 }
