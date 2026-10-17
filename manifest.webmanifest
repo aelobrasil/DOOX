@@ -4,8 +4,8 @@
   "start_url":"/",
   "scope":"/",
   "display":"standalone",
-  "background_color":"#f3ede2",
-  "theme_color":"#ff5b18",
+  "background_color":"#f3f1eb",
+  "theme_color":"#0b0d0c",
   "description":"HOCCO — você chegou no meio da história.",
-  "icons":[{"src":"/assets/hocco-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "icons":[{"src":"/assets/hocco-icon.svg?v=3.3","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
