@@ -1,0 +1,22 @@
+/* DOOX V3.4 — inserções sem fundo/borda + pagamento PIX detalhado */
+.watch-cue{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;padding:0!important;border-radius:0!important;gap:6px!important;text-shadow:0 2px 10px rgba(0,0,0,.92)}
+.watch-cue:before{box-shadow:none!important;width:5px!important;height:5px!important}
+.ins.rodape,.sponsor-overlay,.audio-overlay{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;border-radius:0!important;padding:0!important;text-shadow:0 2px 12px rgba(0,0,0,.95)}
+.ins .brand-logo,.flame-brand .brand-logo{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;object-fit:contain!important;filter:drop-shadow(0 2px 7px rgba(0,0,0,.55))}
+.brand-logo.fallback{background:transparent!important;color:#f46b24!important;font-size:24px;text-shadow:0 2px 10px rgba(0,0,0,.85)}
+.audio-icon{background:transparent!important;border-radius:0!important;color:#f46b24!important;width:auto!important;height:auto!important;font-size:22px!important;text-shadow:0 2px 10px rgba(0,0,0,.9)}
+.flame-layer{background:transparent!important;padding:42px 24px 26px!important;text-shadow:0 2px 12px rgba(0,0,0,.95)}
+.flame-kicker{border:0!important;background:transparent!important;border-radius:0!important;padding:0!important;color:#f46b24!important;text-shadow:0 2px 10px rgba(0,0,0,.95)}
+.flame-note{display:none!important}
+.rodape-more,.ins small,.ins em,.flame-brand small{color:rgba(255,255,255,.82)!important;text-shadow:0 2px 9px rgba(0,0,0,.96)}
+.sponsor-overlay span>small,.audio-overlay span>small{color:#f46b24!important}
+.sponsor-slate{background:#050605!important}
+.video-shell.flame-mode video{filter:none!important}
+
+.payment-page-card{max-width:1080px;margin:0 auto}.payment-head{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:18px}.payment-head h2{margin:4px 0 3px;font-size:clamp(24px,4vw,42px)}.payment-head p{margin:0;color:var(--muted)}
+.payment-v34{display:grid;gap:18px}.pay-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:24px;border-radius:24px;background:#0b0d0c;color:#fff}.pay-hero h2{font-size:clamp(38px,7vw,68px);letter-spacing:-2px;margin:5px 0}.pay-hero p{margin:0;color:#b9bcb7}.pay-badge{font-size:11px;font-weight:900;letter-spacing:.8px;color:#f46b24}
+.pay-grid-v34{display:grid;grid-template-columns:minmax(280px,.78fr) minmax(0,1.4fr);gap:18px}.pay-qr-card,.pay-details-v34,.pay-steps{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:24px;padding:22px}.pay-qr-card{display:grid;justify-items:center;align-content:center;text-align:center;gap:10px;min-height:390px}.pay-qr-card .qr{width:min(280px,90%);height:auto;border-radius:14px}.pay-qr-card b{font-size:14px}.pay-qr-card small{max-width:260px;color:var(--muted);line-height:1.45}
+.pay-details-v34{display:grid;gap:0}.pay-line{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.06)}.pay-line span{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:850}.pay-line b{font-size:13px;overflow-wrap:anywhere}.copy-block{margin-top:18px;display:grid;gap:8px}.copy-block label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#747873}.copy-block code{display:block;background:#f5f5f2;border-radius:14px;padding:13px;font-size:11px;line-height:1.5;overflow-wrap:anywhere;word-break:break-word;color:#171817}.copy-block .pix-payload{max-height:104px;overflow:auto}.copy-block .btn{justify-self:start}
+.pay-steps b{font-size:14px}.pay-steps ol{margin:12px 0 0;padding-left:22px;color:#5f625e;line-height:1.75;font-size:12px}.pay-done{min-height:54px;font-size:13px}.pay-note{text-align:center;color:var(--muted);font-size:10px;margin:-7px 0 0;line-height:1.5}
+.payment-state{padding:34px;border-radius:24px;background:#fff;border:1px solid rgba(0,0,0,.07)}.payment-state h2{margin:7px 0}.payment-state.waiting{background:#f8f8f5}.payment-state.paid{background:#0b0d0c;color:#fff}.payment-state.paid p{color:#b9bcb7}
+@media(max-width:820px){.pay-grid-v34{grid-template-columns:1fr}.payment-head,.pay-hero{align-items:flex-start;flex-direction:column}.pay-qr-card{min-height:0}.pay-line{grid-template-columns:1fr}.copy-block .btn{width:100%;justify-content:center}}
