@@ -2,8 +2,8 @@ import crypto from 'node:crypto';
 export const config={api:{bodyParser:false}};
 const BUCKET='doox-v2-arquivos';
 const OBJECT_PATH='system/flame/flame-standard-v34.mp4';
-const EXPECTED_SHA='422cc45055ef261e05a189d813fe4c977d314fb6a86bb59549160c33757cdef8';
-const EXPECTED_SIZE=72107;
+const EXPECTED_SHA='cc025808e146b13de274a77e15711ab681b79732fc465f3fb0dd8152f31f6338';
+const EXPECTED_SIZE=2183787;
 const SUPABASE_URL=String(process.env.SUPABASE_URL||process.env.HOCCO_SUPABASE_URL||'https://txbowobtfiiqqatqjfpd.supabase.co').replace(/\/$/,'');
 const SERVICE_ROLE_KEY=String(process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.HOCCO_SUPABASE_SECRET_KEY||'');
 function json(res,status,body){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(body));}
