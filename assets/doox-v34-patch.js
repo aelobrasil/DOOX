@@ -1,5 +1,5 @@
 'use strict';
-const FLAME_STANDARD='/assets/flame-standard-v34.mp4?v=3.4.2';
+const FLAME_STANDARD='/assets/flame-standard-v34.mp4?v=3.4.3';
 
 function watchCue(mini=false){return `<div class="watch-cue${mini?' mini':''}"><span>Você está assistindo</span><b>HOCCO.</b></div>`}
 
