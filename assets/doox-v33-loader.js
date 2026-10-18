@@ -8,7 +8,7 @@
     '/assets/doox-v33-pages-c.js?v=3.3.1',
     '/assets/doox-v33-runtime-a.js?v=3.3.1',
     '/assets/doox-v33-runtime-b.js?v=3.3.1',
-    '/assets/doox-v34-patch.js?v=3.4.3'
+    '/assets/doox-v34-patch.js?v=3.4.4'
   ];
   const parts=await Promise.all(files.map(async url=>{
     const response=await fetch(url,{cache:'no-store'});
