@@ -17,6 +17,6 @@
   "routes":[
     {"src":"/hocco-controle","dest":"/doox-control-v3.html"},
     {"src":"/doox-access-fRiqxdGcydxi5UvdiW89JcVt","dest":"/doox-control-v3.html"},
-    {"src":"/(portal|serie|empresas|insercoes|simulacao|participar|posicao|cadastro|materiais|revisao|acompanhar|pagamento|termos|privacidade|regras)","dest":"/"}
+    {"src":"/(portal|serie|empresas|insercoes|catalogo|simulacao|participar|posicao|cadastro|solicitar|materiais|revisao|acompanhar|pagamento|patrocinar-app|termos|privacidade|regras)","dest":"/"}
   ]
 }

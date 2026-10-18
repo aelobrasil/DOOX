@@ -1,11 +1,11 @@
 {
-  "name":"HOCCO",
-  "short_name":"HOCCO",
+  "name":"DOOX Omega",
+  "short_name":"DOOX",
   "start_url":"/",
   "scope":"/",
   "display":"standalone",
-  "background_color":"#f3f1eb",
-  "theme_color":"#0b0d0c",
-  "description":"HOCCO — você chegou no meio da história.",
-  "icons":[{"src":"/assets/hocco-icon.svg?v=3.3","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "background_color":"#f7f5f1",
+  "theme_color":"#f7f5f1",
+  "description":"DOOX Omega — inserções comerciais em vídeo e no app.",
+  "icons":[{"src":"/assets/doox-omega-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
