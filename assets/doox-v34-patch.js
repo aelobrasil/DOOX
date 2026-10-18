@@ -1,19 +1,31 @@
 'use strict';
-const FLAME_STANDARD='/assets/flame-standard-v34.mp4?v=3.4.3';
+const FLAME_STANDARD='/assets/flame-standard-v34.mp4?v=3.4.4';
 
 function watchCue(mini=false){return `<div class="watch-cue${mini?' mini':''}"><span>Você está assistindo</span><b>HOCCO.</b></div>`}
 
 function insertionLayer(code,sim=state.sim,{thumb=false}={}){const d=brandData(sim),small=thumb?' mini':'';
- if(code==='RODAPE')return `${watchCue(thumb)}<div class="ins rodape insertion-reveal${small}"><div>${logoMarkup(d.logo,d.company)}<span><b>${esc(d.company)}</b><small>${esc(d.segment)} · ${esc(d.profile)}</small></span></div><div class="rodape-more">+ outras marcas</div></div>`;
- if(code==='SPONSOR_OVERLAY')return `${watchCue(thumb)}<div class="ins sponsor-overlay insertion-reveal${small}">${logoMarkup(d.logo,d.company)}<span><small>SPONSOR</small><b>${esc(d.company)}</b><em>${esc(d.segment)} · ${esc(d.profile)}</em></span></div>`;
- if(code==='OVERLAY_AUDIO')return `${watchCue(thumb)}<div class="ins audio-overlay insertion-reveal${small}"><span class="audio-icon">♪</span>${logoMarkup(d.logo,d.company)}<span><small>OVERLAY + ÁUDIO</small><b>${esc(d.company)}</b><em>${esc(d.segment)} · ${esc(d.profile)}</em></span></div>`;
- if(code==='PATROCINADOR_EPISODIO')return `${watchCue(thumb)}<div class="sponsor-slate insertion-reveal${small}"><div class="slate-in"><small>PATROCÍNIO DO EPISÓDIO</small>${logoMarkup(d.logo,d.company)}<h3>${esc(d.company)}</h3><p>${esc(d.segment)} · ${esc(d.profile)}</p></div></div>`;
- return `${watchCue(thumb)}<div class="flame-layer insertion-reveal${small}"><div class="flame-kicker">FLAME</div><div class="flame-brand">${logoMarkup(d.logo,d.company)}<span><b>${esc(d.company)}</b><small>${esc(d.segment)} · ${esc(d.profile)}</small></span></div></div>`;
+ if(code==='RODAPE')return `${watchCue(thumb)}<div class="ins rodape insertion-reveal${small}">${logoMarkup(d.logo,d.company)}<span><b>${esc(d.company)}</b><small>${esc(d.profile)} · ${esc(d.segment)}</small></span></div>`;
+ if(code==='SPONSOR_OVERLAY')return `${watchCue(thumb)}<div class="ins sponsor-overlay insertion-reveal${small}">${logoMarkup(d.logo,d.company)}<span><small>SPONSOR</small><b>${esc(d.company)}</b><em>${esc(d.profile)} · ${esc(d.segment)}</em></span></div>`;
+ if(code==='OVERLAY_AUDIO')return `${watchCue(thumb)}<div class="ins audio-overlay insertion-reveal${small}"><span class="audio-icon">♪</span>${logoMarkup(d.logo,d.company)}<span><small>OVERLAY + ÁUDIO</small><b>${esc(d.company)}</b><em>${esc(d.profile)} · ${esc(d.segment)}</em></span></div>`;
+ if(code==='PATROCINADOR_EPISODIO')return `${watchCue(thumb)}<div class="sponsor-slate insertion-reveal${small}"><div class="slate-in"><small>PATROCÍNIO DO EPISÓDIO</small>${logoMarkup(d.logo,d.company)}<h3>${esc(d.company)}</h3><p>${esc(d.profile)} · ${esc(d.segment)}</p></div></div>`;
+ return `${watchCue(thumb)}<div class="flame-layer${small}"><div class="flame-kicker">FLAME</div><div class="flame-brand">${logoMarkup(d.logo,d.company)}<span><b>${esc(d.company)}</b><small>${esc(d.profile)} · ${esc(d.segment)}</small></span></div></div>`;
 }
 
-function videoPreview(){const code=state.sim.mode,isFlame=code==='FLAME',flameSrc=state.sim.flameVideo||FLAME_STANDARD;return `<div class="video-shell ${code==='PATROCINADOR_EPISODIO'?'sponsor-mode':''} ${isFlame?'flame-mode':''}" id="videoShell"><video id="simVideo" src="${isFlame?flameSrc:VIDEO}" poster="${POSTER}" ${isFlame?'':'muted'} playsinline loop preload="metadata"></video><div id="liveInsertion">${insertionLayer(code)}</div><div class="video-top"><span class="rec-dot"></span> HOCCO · POV</div>${youtubeChrome()}</div>`}
+function videoPreview(){const code=state.sim.mode,isFlame=code==='FLAME',flameSrc=state.sim.flameVideo||FLAME_STANDARD;return `<div class="video-shell ${code==='PATROCINADOR_EPISODIO'?'sponsor-mode':''} ${isFlame?'flame-mode':''}" id="videoShell"><video id="simVideo" src="${VIDEO}" poster="${POSTER}" muted playsinline loop preload="metadata"></video>${isFlame?`<video id="flameVideo" class="flame-cut" src="${flameSrc}" playsinline preload="auto"></video><button type="button" class="flame-start" id="flameStart">▶ Ver Flame com áudio</button>`:''}<div id="liveInsertion">${insertionLayer(code)}</div><div class="video-top"><span class="rec-dot"></span> HOCCO · POV</div>${youtubeChrome()}</div>`}
 
-function startPreview(){const v=$('#simVideo');if(!v)return;const flame=state.sim.mode==='FLAME',play=$('#fakePlay');if(flame){v.volume=.72;v.muted=false;v.play().catch(()=>{v.pause();if(play)play.textContent='▶'});}else{v.muted=true;v.play().catch(()=>{});}if(play)play.addEventListener('click',()=>{if(flame){v.muted=false;v.volume=.72;}if(v.paused)v.play().catch(()=>{});else v.pause()});v.addEventListener('play',()=>{if(play)play.textContent='❚❚'});v.addEventListener('pause',()=>{if(play)play.textContent='▶'});if(state.sim.mode==='OVERLAY_AUDIO')setTimeout(()=>new Audio(AUDIO).play().catch(()=>{}),1200)}
+function startPreview(){const v=$('#simVideo');if(!v)return;const flameMode=state.sim.mode==='FLAME',play=$('#fakePlay');
+ if(!flameMode){v.muted=true;v.play().catch(()=>{});if(play)play.addEventListener('click',()=>{if(v.paused)v.play().catch(()=>{});else v.pause()});v.addEventListener('play',()=>{if(play)play.textContent='❚❚'});v.addEventListener('pause',()=>{if(play)play.textContent='▶'});if(state.sim.mode==='OVERLAY_AUDIO')setTimeout(()=>new Audio(AUDIO).play().catch(()=>{}),1200);return;}
+ const shell=$('#videoShell'),flame=$('#flameVideo'),start=$('#flameStart');let flamePlayed=false,flameActive=false,resumeAt=0,armed=false;
+ v.muted=true;v.pause();if(play)play.textContent='▶';
+ const finishFlame=()=>{if(!flame)return;flame.pause();flame.classList.remove('active');shell?.classList.remove('flame-playing');flameActive=false;v.currentTime=resumeAt;v.muted=true;v.play().catch(()=>{});};
+ const beginFlame=()=>{if(!flame||flameActive||flamePlayed)return;flamePlayed=true;flameActive=true;resumeAt=v.currentTime;v.pause();shell?.classList.add('flame-playing');flame.currentTime=0;flame.volume=.78;flame.muted=false;flame.classList.add('active');flame.play().catch(()=>{flame.muted=true;flame.play().catch(finishFlame)});};
+ const armAndPlay=()=>{armed=true;if(start)start.remove();if(flame){flame.volume=0;flame.muted=false;const p=flame.play();if(p&&p.then)p.then(()=>{flame.pause();flame.currentTime=0;flame.volume=.78;}).catch(()=>{});}v.play().catch(()=>{});};
+ start?.addEventListener('click',armAndPlay);
+ if(play)play.addEventListener('click',()=>{if(!armed)return armAndPlay();if(flameActive){if(flame.paused)flame.play().catch(()=>{});else flame.pause();return;}if(v.paused)v.play().catch(()=>{});else v.pause()});
+ v.addEventListener('timeupdate',()=>{if(armed&&!flameActive&&!flamePlayed&&v.currentTime>=2.4)beginFlame();if(!flameActive&&v.currentTime<.35&&flamePlayed)flamePlayed=false;});
+ flame?.addEventListener('ended',finishFlame);
+ v.addEventListener('play',()=>{if(play)play.textContent='❚❚'});v.addEventListener('pause',()=>{if(play&&!flameActive)play.textContent='▶'});flame?.addEventListener('play',()=>{if(play)play.textContent='❚❚'});flame?.addEventListener('pause',()=>{if(play&&flameActive)play.textContent='▶'});
+}
 
 function paymentBox(d){
  if(!d.stage.confirmed)return `<div class="payment-state waiting"><div class="payment-icon">○</div><div class="eyebrow orange">Ainda em fila</div><h2>Pagamento não liberado.</h2><p>A DOOX Studios só libera a cobrança depois de confirmar sua participação. Nenhuma ação financeira é necessária agora.</p></div>`;
