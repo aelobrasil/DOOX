@@ -4,6 +4,8 @@
   "headers":[
     {"source":"/","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
     {"source":"/index.html","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
+    {"source":"/assets/(doox-v33-loader|doox-v34-patch)\\.js","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
+    {"source":"/assets/doox-v34.css","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
     {"source":"/assets/doox-v3.js","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
     {"source":"/assets/doox-v3.css","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
     {"source":"/assets/doox-control-v3.js","headers":[{"key":"Cache-Control","value":"no-store, max-age=0"}]},
