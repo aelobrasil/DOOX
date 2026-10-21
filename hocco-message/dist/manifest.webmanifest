@@ -1,0 +1,13 @@
+{
+  "id": "/",
+  "name": "Message",
+  "short_name": "Message",
+  "description": "Envie um recado e acompanhe sua participação na história da HOCCO.",
+  "lang": "pt-BR",
+  "start_url": "/#inicio",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffcfa",
+  "theme_color": "#f56b32",
+  "icons": [{"src":"/assets/hocco-message-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"/assets/hocco-message-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
+}

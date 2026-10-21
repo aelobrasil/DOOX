@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/equipe", "destination": "/controle/", "permanent": true },
+    { "source": "/equipe/:path*", "destination": "/controle/:path*", "permanent": true }
+  ],
+  "headers": [
+    { "source": "/sw.js", "headers": [ { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }, { "key": "Service-Worker-Allowed", "value": "/" } ] },
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "no-referrer" },
+      { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+      { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com https:; media-src 'self'; connect-src 'self' https://vebqvedmhfaebvdantiu.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'" }
+    ] },
+    { "source": "/equipe/(.*)", "headers": [ { "key": "X-Robots-Tag", "value": "noindex, nofollow" }, { "key": "Cache-Control", "value": "no-store" } ] },
+    { "source": "/controle/(.*)", "headers": [ { "key": "X-Robots-Tag", "value": "noindex, nofollow" }, { "key": "Cache-Control", "value": "no-store" } ] }
+  ]
+}
