@@ -27,11 +27,13 @@ export function whatsappSponsorTemplatePayload(sponsor,kind,template,language,or
 export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
  const origin=req.headers.get('origin');
  const origins=new Set([PUBLIC_ORIGIN,...LEGACY_PUBLIC_ORIGINS,'http://terminal.local:4173',...(env?.get('HM_PUBLIC_ORIGIN')||'').split(',').filter(Boolean),...(env?.get('HM_ALLOWED_ORIGINS')||'').split(',').filter(Boolean)]);
- const cors={'Access-Control-Allow-Origin':origin&&origins.has(origin)?origin:PUBLIC_ORIGIN,'Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin','Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8'};
+ const isTrustedPreviewOrigin=value=>{try{const u=new URL(value);return u.protocol==='https:'&&u.origin===value&&/^hocco-message(?:-[a-z0-9-]+)?-aelobrasils-projects\.vercel\.app$/i.test(u.hostname)}catch{return false}};
+ const originAllowed=value=>!value||origins.has(value)||isTrustedPreviewOrigin(value);
+ const cors={'Access-Control-Allow-Origin':origin&&originAllowed(origin)?origin:PUBLIC_ORIGIN,'Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin','Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8'};
  const reply=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:cors});
  const waConfig=(reminders=false)=>{const access=env?.get('WHATSAPP_ACCESS_TOKEN'),sender=env?.get('WHATSAPP_PHONE_NUMBER_ID'),template=env?.get(reminders?'WHATSAPP_REMINDER_TEMPLATE_NAME':'WHATSAPP_TEMPLATE_NAME'),language=env?.get(reminders?'WHATSAPP_REMINDER_TEMPLATE_LANGUAGE':'WHATSAPP_TEMPLATE_LANGUAGE'),apiVersion=env?.get('WHATSAPP_GRAPH_API_VERSION');return access&&sender&&template&&language&&/^v\d+\.\d+$/.test(apiVersion||'')?{access,sender,template,language,apiVersion}:null};
  const sponsorWaConfig=(kind)=>{const access=env?.get('WHATSAPP_ACCESS_TOKEN'),sender=env?.get('WHATSAPP_PHONE_NUMBER_ID'),suffix=kind==='thank'?'THANK':'EXPIRY',template=env?.get('WHATSAPP_SPONSOR_'+suffix+'_TEMPLATE_NAME'),language=env?.get('WHATSAPP_SPONSOR_'+suffix+'_TEMPLATE_LANGUAGE'),apiVersion=env?.get('WHATSAPP_GRAPH_API_VERSION');return access&&sender&&template&&language&&/^v\d+\.\d+$/.test(apiVersion||'')?{access,sender,template,language,apiVersion}:null};
- if(origin&&!origins.has(origin))return reply({error:'Origem não autorizada.'},403);
+ if(origin&&!originAllowed(origin))return reply({error:'Origem não autorizada.'},403);
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
  if(req.method!=='POST')return reply({error:'Método não permitido.'},405);
  const url=env?.get('SUPABASE_URL');let secret;try{secret=JSON.parse(env?.get('SUPABASE_SECRET_KEYS')||'{}').default}catch{}secret||=env?.get('SUPABASE_SERVICE_ROLE_KEY');
