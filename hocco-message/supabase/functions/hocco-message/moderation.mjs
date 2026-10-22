@@ -9,7 +9,7 @@ export function moderateCommunityMessage(input) {
     .replace(/\s+/g, " ")
     .trim();
 
-  const blocked = [
+  const hardBlocks = [
     /\b(?:vou|vamos|quero|pretendo|prometo)\b.{0,45}\b(?:matar|assassinar|esfaquear|atirar|agredir|estuprar|queimar|explodir)\b/,
     /\b(?:te|lhe)\s+(?:vou\s+)?(?:matar|assassinar|esfaquear|atirar|agredir|estuprar)\b/,
     /\b(?:se mata|vai se matar|deveria se matar|se suicide|vai se suicidar)\b/,
@@ -18,14 +18,23 @@ export function moderateCommunityMessage(input) {
     /\b(?:menor|crianca|criancas|adolescente)\b.{0,45}\b(?:sexo|sexual|nudez|pornografia|estupr|abuso sexual)\b/,
     /\b(?:sexo|sexual|nudez|pornografia|estupr|abuso sexual)\b.{0,45}\b(?:menor|crianca|criancas|adolescente)\b/,
   ];
-  if (blocked.some((pattern) => pattern.test(text))) {
-    return { approved: false, category: "safety_policy" };
+  if (hardBlocks.some((pattern) => pattern.test(text))) {
+    return { approved: false, requiresReview: false, category: "safety_policy" };
   }
 
   const containsContact = /https?:\/\/|\bwww\.|\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b|\b\d{3}\.?\d{3}\.?\d{3}[- ]?\d{2}\b/.test(text);
   if (containsContact) {
-    return { approved: false, category: "contact_or_link" };
+    return { approved: false, requiresReview: false, category: "contact_or_link" };
   }
 
-  return { approved: true, category: "clear", version: "rules-v1" };
+  const reviewSignals = [
+    /\b(?:negros?|pretos?|gays?|lesbicas?|lgbtq(?:ia)?|trans|judeus?|arabes?|indigenas?|imigrantes?|mulheres|cristaos?|muculmanos?)\b/,
+    /\b(?:morte|matar|assassinar|arma|tiro|bomba|violencia|sexo|sexual|nudez|pornografia|suicid\w*|drogas?|maconha|cocaina|crack)\b/,
+    /\b(?:politica|eleicao|partido|candidato|presidente|religiao|igreja|racismo|nazismo)\b/,
+  ];
+  if (reviewSignals.some((pattern) => pattern.test(text))) {
+    return { approved: false, requiresReview: true, category: "context_check" };
+  }
+
+  return { approved: true, requiresReview: false, category: "clear", version: "rules-v1" };
 }

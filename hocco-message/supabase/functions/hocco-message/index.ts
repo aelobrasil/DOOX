@@ -185,7 +185,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    const kind=String(b.kind||''),code=String(b.code||''),token=String(b.trackingToken||'');if(!['order','community','sponsor'].includes(kind)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Link privado de pagamento inválido.'},404);
    const validCode=kind==='order'?/^HM-26-[A-F0-9]{12}$/.test(code):kind==='community'?/^HC-CM-[A-F0-9]{12}$/.test(code):/^HC-SP-[A-F0-9]{12}$/.test(code);if(!validCode)return reply({error:'Referência de pagamento inválida.'},404);
    const hash=await sha(token);let row;if(kind==='order')row=(await db(`hm_orders?code=eq.${encodeURIComponent(code)}&tracking_hash=eq.${hash}&select=*&limit=1`))[0];if(kind==='community')row=(await db(`hm_community_messages?code=eq.${encodeURIComponent(code)}&tracking_hash=eq.${hash}&select=*&limit=1`))[0];if(kind==='sponsor')row=(await db(`hm_sponsors?code=eq.${encodeURIComponent(code)}&tracking_hash=eq.${hash}&select=*&limit=1`))[0];
-   if(!row)return reply({error:'Pedido não encontrado.'},404);if(row.payment!=='pending'||row.review==='rejected')return reply({error:'Este pedido não está aguardando pagamento.'},409);if(kind==='sponsor'&&row.review!=='approved')return reply({error:'A empresa precisa ser aprovada pela curadoria antes do pagamento.'},409);
+   if(!row)return reply({error:'Pedido não encontrado.'},404);if(row.payment!=='pending'||row.review==='rejected')return reply({error:'Este pedido não está aguardando pagamento.'},409);if(kind==='community'&&row.review!=='approved')return reply({error:'A mensagem precisa passar pela verificação adicional antes do pagamento.'},409);if(kind==='sponsor'&&row.review!=='approved')return reply({error:'A empresa precisa ser aprovada pela curadoria antes do pagamento.'},409);
    const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Checkout Mercado Pago ainda não configurado.'},503);
    const allowedOrigin=origin&&origins.has(origin)?origin:PUBLIC_ORIGIN,returnPath=kind==='order'?`/cliente/#acompanhar/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:kind==='community'?`/#comunidade-pagamento/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:`/ir-alem/#pedido/${encodeURIComponent(code)}/${encodeURIComponent(token)}`;
    const result=await createPreference({accessToken,externalReference:paymentReference(kind,code),title:kind==='order'?'Mensagem no vídeo oficial HOCCO':kind==='community'?'Mensagem na Comunidade HOCCO':'Patrocínio HOCCO',priceCents:Number(row.price_cents),origin:allowedOrigin,returnPath,notificationUrl:'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment',payerEmail:kind==='sponsor'?row.email:undefined,environment:env?.get('MP_ENVIRONMENT')||env?.get('MP_Environment')||'production',fetcher});
@@ -197,10 +197,11 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   }
   if(action==='community.create'){
    const v=validateCommunityInput(b),moderation=moderateCommunityMessage(v.message);
-   if(!moderation.approved)return reply({error:'Esta mensagem pode não seguir as regras da Comunidade. Revise o texto e os termos antes de tentar novamente.'},422);
+   if(!moderation.approved&&!moderation.requiresReview)return reply({error:'Esta mensagem pode não seguir as regras da Comunidade. Revise o texto e os termos antes de tentar novamente.'},422);
    const trackingHash=await sha(b.trackingToken),code='HC-CM-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
-   const post=await db('rpc/hm_create_community_message_auto','POST',{p_code:code,p_tracking_hash:trackingHash,p_name:v.name,p_username:v.username,p_avatar_index:v.avatar,p_message:v.message});
-   return reply({post:safeCommunityMessage(post),trackingToken:b.trackingToken},201)
+   const rpc=moderation.requiresReview?'rpc/hm_create_community_message':'rpc/hm_create_community_message_auto';
+   const post=await db(rpc,'POST',{p_code:code,p_tracking_hash:trackingHash,p_name:v.name,p_username:v.username,p_avatar_index:v.avatar,p_message:v.message});
+   return reply({post:safeCommunityMessage(post),trackingToken:b.trackingToken,needsReview:moderation.requiresReview},201)
   }
   if(['community.lookup','community.payment_claim'].includes(action)){
    if(!/^[a-f0-9]{64}$/.test(b.trackingToken||'')||!/^HC-CM-[A-F0-9]{12}$/.test(b.code||''))return reply({error:'Link privado da mensagem inválido.'},404);

@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { moderateCommunityMessage } from "../supabase/functions/hocco-message/moderation.mjs";
 
 test("allows ordinary community messages", () => {
-  assert.equal(moderateCommunityMessage("Que bom fazer parte da HOCCO!").approved, true);
+  const result = moderateCommunityMessage("Que bom fazer parte da HOCCO!");
+  assert.equal(result.approved, true);
+  assert.equal(result.requiresReview, false);
 });
 test("blocks direct violent threats", () => {
   assert.equal(moderateCommunityMessage("Eu vou matar você").approved, false);
@@ -23,4 +25,9 @@ test("blocks links and direct contact data", () => {
 });
 test("normalizes diacritics before checking", () => {
   assert.equal(moderateCommunityMessage("Vai se matár").approved, false);
+});
+test("sends context-dependent sensitive wording to manual review", () => {
+  const result = moderateCommunityMessage("Tenho orgulho da comunidade LGBTQIA");
+  assert.equal(result.approved, false);
+  assert.equal(result.requiresReview, true);
 });
