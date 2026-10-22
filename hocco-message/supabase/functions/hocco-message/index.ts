@@ -1,6 +1,6 @@
 import { createPreference, isApprovedPayment, paymentReference, verifyWebhookSignature } from "./mercado-pago.mjs";
 // No browser secrets. Service credentials are supplied only by the Edge runtime.
-const PUBLIC_ORIGIN='https://hocco-message.vercel.app';
+const PUBLIC_ORIGIN='https://hocco-message-calce5ukf-aelobrasils-projects.vercel.app';
 const LEGACY_PUBLIC_ORIGINS=['https://hocco.loyallion10.chatgpt.site','https://hocco-message-6gpcxo23w-aelobrasils-projects.vercel.app','https://hocco-message-git-codex-hocco-messa-7dcea7-aelobrasils-projects.vercel.app'];
 const LEGAL_VERSION='2026-10-20.v6';
 const SPONSOR_TERMS_VERSION='2026-10-19.patrocinio.v3';
@@ -41,7 +41,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
  const safe=o=>{const{tracking_hash,phone,...rest}=o;return rest};
  try{
   const text=await req.text();if(text.length>3000000)return reply({error:'Solicitação muito grande.'},413);let b={};try{b=JSON.parse(text||'{}')}catch{return reply({error:'JSON inválido.'},400)}const action=b.action;
-  const requestUrl=new URL(req.url),isMpWebhook=requestUrl.searchParams.get('type')==='payment'||requestUrl.searchParams.get('topic')==='payment';
+  const requestUrl=new URL(req.url),isMpWebhook=requestUrl.searchParams.get('type')==='payment'||requestUrl.searchParams.get('topic')==='payment'||b.type==='payment'||['payment.created','payment.updated'].includes(b.action);
   if(isMpWebhook){
    const dataId=requestUrl.searchParams.get('data.id')||requestUrl.searchParams.get('id')||b.data?.id,requestId=req.headers.get('x-request-id'),signature=req.headers.get('x-signature'),webhookSecret=env?.get('MP_WEBHOOK_SECRET'),accessToken=env?.get('MP_ACCESS_TOKEN');
    if(!dataId)return reply({received:true});if(!webhookSecret||!accessToken)return reply({error:'Webhook de pagamento não configurado.'},503);
@@ -177,9 +177,9 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    const validCode=kind==='order'?/^HM-26-[A-F0-9]{12}$/.test(code):kind==='community'?/^HC-CM-[A-F0-9]{12}$/.test(code):/^HC-SP-[A-F0-9]{12}$/.test(code);if(!validCode)return reply({error:'Referência de pagamento inválida.'},404);
    const hash=await sha(token);let row;if(kind==='order')row=(await db(`hm_orders?code=eq.${encodeURIComponent(code)}&tracking_hash=eq.${hash}&select=*&limit=1`))[0];if(kind==='community')row=(await db(`hm_community_messages?code=eq.${encodeURIComponent(code)}&tracking_hash=eq.${hash}&select=*&limit=1`))[0];if(kind==='sponsor')row=(await db(`hm_sponsors?code=eq.${encodeURIComponent(code)}&tracking_hash=eq.${hash}&select=*&limit=1`))[0];
    if(!row)return reply({error:'Pedido não encontrado.'},404);if(row.payment!=='pending'||row.review==='rejected')return reply({error:'Este pedido não está aguardando pagamento.'},409);if(kind==='sponsor'&&row.review!=='approved')return reply({error:'A empresa precisa ser aprovada pela curadoria antes do pagamento.'},409);
-   const accessToken=env?.get('MP_ACCESS_TOKEN');if(!accessToken)return reply({error:'Checkout Mercado Pago ainda não configurado.'},503);
-   const allowedOrigin=origin&&origins.has(origin)?origin:PUBLIC_ORIGIN,returnPath=kind==='order'?`/cliente/#acompanhar/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:kind==='community'?`/#comunidade-pagamento/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:`/ir-alem/#pedido/${encodeURIComponent(code)}/${encodeURIComponent(token)}`;
-   const result=await createPreference({accessToken,externalReference:paymentReference(kind,code),title:kind==='order'?'Mensagem no vídeo oficial HOCCO':kind==='community'?'Mensagem na Comunidade HOCCO':'Patrocínio HOCCO',priceCents:Number(row.price_cents),origin:allowedOrigin,returnPath,notificationUrl:'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment',payerEmail:kind==='sponsor'?row.email:undefined,fetcher});
+   const accessToken=env?.get('MP_ACCESS_TOKEN');if(!accessToken)return reply({error:'Checkout Mercado Pago ainda não configurado.'},503);if(!/^[\\x21-\\x7E]{20,500}$/.test(accessToken))return reply({error:'Access Token inválido. Salve apenas a credencial de teste, sem aspas, rótulos, espaços ou quebras de linha.'},503);
+   const allowedOrigin=origin&&originAllowed(origin)?origin:PUBLIC_ORIGIN,returnPath=kind==='order'?`/cliente/#acompanhar/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:kind==='community'?`/#comunidade-pagamento/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:`/ir-alem/#pedido/${encodeURIComponent(code)}/${encodeURIComponent(token)}`;
+   const result=await createPreference({accessToken,externalReference:paymentReference(kind,code),title:kind==='order'?'Mensagem no vídeo oficial HOCCO':kind==='community'?'Mensagem na Comunidade HOCCO':'Patrocínio HOCCO',priceCents:Number(row.price_cents),origin:allowedOrigin,returnPath,notificationUrl:`${url}/functions/v1/hocco-message?type=payment`,payerEmail:kind==='sponsor'?row.email:undefined,fetcher});
    return reply({checkoutUrl:result.checkoutUrl,preferenceId:result.preferenceId,externalReference:result.externalReference});
   }
   if(action==='community.feed'){
