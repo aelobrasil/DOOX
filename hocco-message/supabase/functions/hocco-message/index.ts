@@ -1,4 +1,5 @@
 import { createPreference, isApprovedPayment, paymentReference, verifyWebhookSignature } from "./mercado-pago.mjs";
+import { moderateCommunityMessage } from "./moderation.mjs";
 // No browser secrets. Service credentials are supplied only by the Edge runtime.
 const PUBLIC_ORIGIN='https://hocco-message.vercel.app';
 const LEGACY_PUBLIC_ORIGINS=['https://hocco.loyallion10.chatgpt.site','https://hocco-message-6gpcxo23w-aelobrasils-projects.vercel.app','https://hocco-message-git-codex-hocco-messa-7dcea7-aelobrasils-projects.vercel.app'];
@@ -8,6 +9,8 @@ const SPONSOR_CATEGORIES=['Alimentação e bebidas','Casa e construção','Educa
 export const sha=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');
 export function normalizeVideo(input,second){const u=new URL(input);if(u.protocol!=='https:'||!['youtube.com','www.youtube.com','m.youtube.com','youtu.be'].includes(u.hostname))throw Error('Use o link HTTPS de um vídeo do YouTube.');const id=u.hostname==='youtu.be'?u.pathname.slice(1):u.pathname==='/watch'?u.searchParams.get('v'):null;if(!/^[\w-]{11}$/.test(id||'')||!Number.isSafeInteger(second)||second<0||second>86400)throw Error('Vídeo ou instante inválido.');return `https://www.youtube.com/watch?v=${id}&t=${second}s`}
 export function validateInput(b){const name=String(b.name||'').trim(),message=String(b.message||'').trim(),phone=String(b.phone||'').replace(/\D/g,''),platform=String(b.socialPlatform||'').toLowerCase(),handle=String(b.socialHandle||'').trim().replace(/^@/,'');if(!name||name.length>40||!message||message.length>180)throw Error('Confira o nome e a mensagem de até 180 caracteres.');if(!['instagram','tiktok'].includes(platform)||!(/^[A-Za-z0-9._]{1,30}$/).test(handle))throw Error('Escolha Instagram ou TikTok e informe um @ válido.');if(!Number.isInteger(b.slot)||b.slot<1||b.slot>2)throw Error('Escolha uma das duas posições.');if(b.legalVersion!==LEGAL_VERSION||b.terms!==true||b.publication!==true||b.adult!==true)throw Error('Confirme os termos, a maioridade e a autorização de exibição.');if((b.whatsappOptIn===true||b.reminderOptIn===true)&&!(/^(?:55)?[1-9][0-9]{9,10}$/).test(phone))throw Error('Informe um WhatsApp válido para receber as mensagens autorizadas.');if(!/^[a-f0-9]{64}$/.test(b.trackingToken||''))throw Error('Identificador de envio inválido.');return{name,message,phone:(b.whatsappOptIn===true||b.reminderOptIn===true)?phone:'',optIn:b.whatsappOptIn===true,reminderOptIn:b.reminderOptIn===true,platform,handle}}
+
+// Rules-only baseline filter. It never stores or logs rejected message text.
 export function validateCommunityInput(b){const name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,''),message=String(b.message||'').trim(),avatar=Number(b.avatar);if(!name||name.length>40||!/^[A-Za-z0-9._]{3,24}$/.test(username))throw Error('Complete seu nome e @ no perfil antes de enviar.');if(!message||message.length>180)throw Error('Escreva uma mensagem de até 180 caracteres.');if(!Number.isInteger(avatar)||avatar<1||avatar>20)throw Error('Escolha um Figurante para o seu perfil.');if(!/^[a-f0-9]{64}$/.test(b.trackingToken||''))throw Error('Identificador de envio inválido.');return{name,username,avatar,message}}
 function safeSponsor(s){const{tracking_hash,phone,email,contact_name,cnpj,legal_name,...publicFields}=s;return publicFields}
 function safeCommunityMessage(m){if(!m)return m;const{tracking_hash,...post}=m;return post}
@@ -63,7 +66,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    if(kind==='sponsor'&&row.review==='approved'){
     let start=new Date();if(row.renewal_of){const parent=(await db('hm_sponsors?id=eq.'+encodeURIComponent(row.renewal_of)+'&select=expires_at&limit=1'))[0];if(parent?.expires_at&&Date.parse(parent.expires_at)>start.getTime())start=new Date(parent.expires_at)}const end=new Date(start.getTime()+7*86400000);updates.starts_at=start.toISOString();updates.expires_at=end.toISOString();updates.next_thank_at=row.thank_you_opt_in?new Date(start.getTime()+2*86400000).toISOString():null;updates.next_expiry_notice_at=row.expiry_notice_opt_in?new Date(end.getTime()-86400000).toISOString():null;updates.notification_status=(row.thank_you_opt_in||row.expiry_notice_opt_in)?'pending':'not_configured';
    }
-   const saved=await db(path,'PATCH',updates);try{if(kind==='order')await db('hm_audit','POST',{order_id:row.id,action:'pay',detail:{source:'mercado_pago',payment_id:String(payment.id)}});else if(kind==='community')await db('hm_community_audit','POST',{post_id:row.id,action:'payment_confirmed',detail:{source:'mercado_pago',payment_id:String(payment.id)}});else await db('hm_alex_events','POST',{event_type:'system_event',detail:{object:'sponsor',action:'payment_confirmed',payment_id:String(payment.id)}})}catch{}return reply({received:true,updated:!!saved?.length});
+   if(kind==='community'){const confirmed=await db('rpc/hm_confirm_community_payment','POST',{p_id:row.id,p_payment_id:String(payment.id)});return reply({received:true,updated:!!confirmed?.id,published:!!confirmed?.published_at})}const saved=await db(path,'PATCH',updates);try{if(kind==='order')await db('hm_audit','POST',{order_id:row.id,action:'pay',detail:{source:'mercado_pago',payment_id:String(payment.id)}});else await db('hm_alex_events','POST',{event_type:'system_event',detail:{object:'sponsor',action:'payment_confirmed',payment_id:String(payment.id)}})}catch{}return reply({received:true,updated:!!saved?.length});
   }
   if(!['sponsor.create','customer.reset'].includes(action)&&text.length>12000)return reply({error:'Solicitação muito grande.'},413);
   if(typeof action!=='string')return reply({error:'Ação inválida.'},400);
@@ -193,11 +196,11 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    return reply({messages:rows})
   }
   if(action==='community.create'){
-   const v=validateCommunityInput(b),settings=(await db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name'))[0];
-   if(!settings?.pix_key||!settings?.payee_name||!settings?.payee_city)return reply({error:'O pagamento por PIX está temporariamente indisponível.'},503);
+   const v=validateCommunityInput(b),moderation=moderateCommunityMessage(v.message);
+   if(!moderation.approved)return reply({error:'Esta mensagem pode não seguir as regras da Comunidade. Revise o texto e os termos antes de tentar novamente.'},422);
    const trackingHash=await sha(b.trackingToken),code='HC-CM-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
-   const post=await db('rpc/hm_create_community_message','POST',{p_code:code,p_tracking_hash:trackingHash,p_name:v.name,p_username:v.username,p_avatar_index:v.avatar,p_message:v.message});
-   return reply({post:safeCommunityMessage(post),trackingToken:b.trackingToken,pix:settings},201)
+   const post=await db('rpc/hm_create_community_message_auto','POST',{p_code:code,p_tracking_hash:trackingHash,p_name:v.name,p_username:v.username,p_avatar_index:v.avatar,p_message:v.message});
+   return reply({post:safeCommunityMessage(post),trackingToken:b.trackingToken},201)
   }
   if(['community.lookup','community.payment_claim'].includes(action)){
    if(!/^[a-f0-9]{64}$/.test(b.trackingToken||'')||!/^HC-CM-[A-F0-9]{12}$/.test(b.code||''))return reply({error:'Link privado da mensagem inválido.'},404);
