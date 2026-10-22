@@ -48,7 +48,11 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    const dataId=requestUrl.searchParams.get('data.id')||requestUrl.searchParams.get('id')||b.data?.id,requestId=req.headers.get('x-request-id'),signature=req.headers.get('x-signature'),webhookSecret=env?.get('MP_WEBHOOK_SECRET'),accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();
    if(!dataId)return reply({received:true});if(!webhookSecret||!accessToken)return reply({error:'Webhook de pagamento não configurado.'},503);
    if(!await verifyWebhookSignature({dataId,requestId,signature,secret:webhookSecret}))return reply({error:'Assinatura do webhook inválida.'},401);
-   const paymentResponse=await fetcher(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`,{headers:{Authorization:`Bearer ${accessToken}`}});let payment={};try{payment=await paymentResponse.json()}catch{}if(!paymentResponse.ok)return reply({error:'Não foi possível consultar o pagamento.'},502);
+   const paymentResponse=await fetcher(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`,{headers:{Authorization:`Bearer ${accessToken}`}});let payment={};try{payment=await paymentResponse.json()}catch{}
+   // The developer dashboard sends a signed sample notification with the fake ID 123456.
+   // A genuine 404 means there is no payment to apply; acknowledge it so the test does not retry forever.
+   if(paymentResponse.status===404)return reply({received:true,ignored:true});
+   if(!paymentResponse.ok){const providerError=typeof payment.error==='string'?payment.error:'';const causeCodes=Array.isArray(payment.cause)?payment.cause.map((cause:any)=>typeof cause?.code==='string'?cause.code:'').filter(Boolean).slice(0,5):[];console.error('Mercado Pago webhook payment lookup failed',{status:paymentResponse.status,error:providerError,causeCodes});return reply({error:'Não foi possível consultar o pagamento.'},502);}
    const reference=String(payment.external_reference||''),match=/^hocco:(order|community|sponsor):([A-Z0-9-]{8,24})$/.exec(reference);if(!match||payment.status!=='approved')return reply({received:true});
    const [,kind,code]=match;let row,path,amount;
    if(kind==='order'){row=(await db(`hm_orders?code=eq.${encodeURIComponent(code)}&select=*&limit=1`))[0];path=row&&`hm_orders?id=eq.${encodeURIComponent(row.id)}`}
@@ -134,7 +138,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     return reply({ok:true,mediaDeleted,mediaFailed})
    }
    if(action==='admin.settings'){
-    const p=b.payload||{};if(!Array.isArray(p.prices)||p.prices.length!==5||p.prices.some(x=>!Number.isInteger(x)||x<500||x>999900))throw Error('Cada preço deve ser de pelo menos R$ 5,00.');
+    const p=b.payload||{};if(!Array.isArray(p.prices)||p.prices.length!==5||p.prices.some(x=>!Number.isInteger(x)||x<1||x>999900))throw Error('Cada preço deve ser de pelo menos R$ 0,01.');
     if(p.paymentUrl){const u=new URL(p.paymentUrl);if(u.protocol!=='https:'||u.username||u.password)throw Error('Use um link de pagamento HTTPS.');}
     if(p.pixKey&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.pixKey))throw Error('Informe a chave PIX aleatória emitida pelo seu banco.');
     if([p.paymentUrl,p.pixKey,p.payeeName,p.payeeCity,p.bankName].some(x=>typeof x!=='string'||x.length>500))throw Error('Configuração inválida.');
@@ -181,7 +185,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    if(!row)return reply({error:'Pedido não encontrado.'},404);if(row.payment!=='pending'||row.review==='rejected')return reply({error:'Este pedido não está aguardando pagamento.'},409);if(kind==='sponsor'&&row.review!=='approved')return reply({error:'A empresa precisa ser aprovada pela curadoria antes do pagamento.'},409);
    const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Checkout Mercado Pago ainda não configurado.'},503);
    const allowedOrigin=origin&&origins.has(origin)?origin:PUBLIC_ORIGIN,returnPath=kind==='order'?`/cliente/#acompanhar/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:kind==='community'?`/#comunidade-pagamento/${encodeURIComponent(code)}/${encodeURIComponent(token)}`:`/ir-alem/#pedido/${encodeURIComponent(code)}/${encodeURIComponent(token)}`;
-   const result=await createPreference({accessToken,externalReference:paymentReference(kind,code),title:kind==='order'?'Mensagem no vídeo oficial HOCCO':kind==='community'?'Mensagem na Comunidade HOCCO':'Patrocínio HOCCO',priceCents:Number(row.price_cents),origin:allowedOrigin,returnPath,notificationUrl:'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment',payerEmail:kind==='sponsor'?row.email:undefined,fetcher});
+   const result=await createPreference({accessToken,externalReference:paymentReference(kind,code),title:kind==='order'?'Mensagem no vídeo oficial HOCCO':kind==='community'?'Mensagem na Comunidade HOCCO':'Patrocínio HOCCO',priceCents:Number(row.price_cents),origin:allowedOrigin,returnPath,notificationUrl:'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment',payerEmail:kind==='sponsor'?row.email:undefined,environment:env?.get('MP_ENVIRONMENT')||env?.get('MP_Environment')||'production',fetcher});
    return reply({checkoutUrl:result.checkoutUrl,preferenceId:result.preferenceId,externalReference:result.externalReference});
   }
   if(action==='community.feed'){

@@ -27,10 +27,11 @@ export async function createPreference({
   returnPath,
   notificationUrl,
   payerEmail,
+  environment = "production",
   fetcher = fetch,
 }) {
   if (!accessToken) throw new Error("O pagamento online está em configuração.");
-  if (!Number.isSafeInteger(priceCents) || priceCents < 100 || priceCents > 999999) {
+  if (!Number.isSafeInteger(priceCents) || priceCents < 1 || priceCents > 999999) {
     throw new Error("Valor de pagamento inválido.");
   }
   const target = new URL(origin);
@@ -69,6 +70,7 @@ export async function createPreference({
     const causeCodes = Array.isArray(data.cause)
       ? data.cause.map((cause) => typeof cause?.code === "string" ? cause.code : "").filter(Boolean).slice(0, 5)
       : [];
+    // Keep diagnostics useful while never logging the access token or request body.
     console.error("Mercado Pago preference rejected", {
       status: response.status,
       error: providerError,
@@ -83,12 +85,23 @@ export async function createPreference({
     }
     throw new Error(`Não foi possível criar o checkout no Mercado Pago (HTTP ${response.status}).${detail}`);
   }
-  const checkoutUrl = accessToken.startsWith("TEST-")
-    ? data.sandbox_init_point || data.init_point
-    : data.init_point;
+  const mode = String(environment || "production").trim().toLowerCase();
+  let checkoutUrl;
+  if (mode === "test" || mode === "sandbox") {
+    checkoutUrl = data.sandbox_init_point;
+    if (!checkoutUrl) throw new Error("O Mercado Pago não retornou o link de checkout de teste. Confira as credenciais de teste do vendedor.");
+  } else if (mode === "production" || mode === "prod") {
+    checkoutUrl = data.init_point;
+  } else {
+    throw new Error("MP_ENVIRONMENT deve ser test ou production.");
+  }
   let parsed;
   try { parsed = new URL(checkoutUrl); } catch { throw new Error("O Mercado Pago não retornou um link de checkout válido."); }
-  if (parsed.protocol !== "https:" || !["mercadopago.com.br", "www.mercadopago.com.br", "mercadopago.com", "www.mercadopago.com"].includes(parsed.hostname)) {
+  const checkoutHost = parsed.hostname.toLowerCase().replace(/\\.$/, "");
+  const officialCheckoutHost = ["mercadopago.com.br", "mercadopago.com"].some(
+    (domain) => checkoutHost === domain || checkoutHost.endsWith("." + domain),
+  );
+  if (parsed.protocol !== "https:" || !officialCheckoutHost || parsed.username || parsed.password) {
     throw new Error("O Mercado Pago retornou um domínio de checkout inesperado.");
   }
   return { preferenceId: String(data.id || ""), checkoutUrl: parsed.href, externalReference };

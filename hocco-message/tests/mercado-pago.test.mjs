@@ -14,7 +14,8 @@ test("creates a Pix-capable Checkout Pro preference using the server token and e
     accessToken: "TEST-server-token",
     externalReference: paymentReference("order", "HM-26-ABCDEF123456"),
     title: "Mensagem no vídeo oficial HOCCO",
-    priceCents: 500,
+    priceCents: 1,
+    environment: "test",
     origin: "https://hocco-message.vercel.app",
     returnPath: "/cliente/#acompanhar/HM-26-ABCDEF123456/token",
     notificationUrl: "https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment",
@@ -23,7 +24,7 @@ test("creates a Pix-capable Checkout Pro preference using the server token and e
       return new Response(JSON.stringify({
         id: 456,
         init_point: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=live",
-        sandbox_init_point: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=test",
+        sandbox_init_point: "https://sandbox.mercadopago.com/checkout/v1/redirect?pref_id=test",
       }), { status: 201 });
     },
   });
@@ -31,7 +32,7 @@ test("creates a Pix-capable Checkout Pro preference using the server token and e
   assert.equal(request.options.headers.Authorization, "Bearer TEST-server-token");
   assert.match(request.options.headers["X-Idempotency-Key"], /^[a-f0-9-]{36}$/);
   const payload = JSON.parse(request.options.body);
-  assert.equal(payload.items[0].unit_price, 5);
+  assert.equal(payload.items[0].unit_price, 0.01);
   assert.equal(payload.items[0].currency_id, "BRL");
   assert.equal(payload.external_reference, "hocco:order:HM-26-ABCDEF123456");
   assert.match(payload.back_urls.success, /#acompanhar\/HM-26-ABCDEF123456/);
