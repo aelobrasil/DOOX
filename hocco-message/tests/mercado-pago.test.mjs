@@ -55,7 +55,8 @@ test("rejects invalid price and unexpected checkout domains", async () => {
     origin: "https://hocco-message.vercel.app",
     returnPath: "/",
     notificationUrl: "https://example.com/hook",
-    fetcher: async () => new Response(JSON.stringify({ id: 1, init_point: "https://attacker.invalid/pay" }), { status: 201 }),
+    fetcher: async () => new Response(JSON.stringify({ id: 1, sandbox_init_point: "https://attacker.invalid/pay",
+    init_point: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=not-used" }), { status: 201 }),
   }), /domínio de checkout inesperado/);
 });
 
