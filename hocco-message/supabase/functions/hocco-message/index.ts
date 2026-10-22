@@ -218,6 +218,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   if(action==='sponsor.create'){
    const sponsorConfig=(await db('hm_sponsor_settings?id=eq.1&select=enabled'))[0];if(!sponsorConfig?.enabled)return reply({error:'As inscrições de patrocinadores estão temporariamente fechadas.'},403);
    const companyName=String(b.companyName||'').trim(),legalName=String(b.legalName||'').trim(),cnpj=normalizeCnpj(b.cnpj),category=String(b.category||''),companyDescription=String(b.companyDescription||'').trim(),contactName=String(b.contactName||'').trim(),email=String(b.email||'').trim(),phone=String(b.phone||'').replace(/\D/g,''),token=b.trackingToken;
+   const sponsorTextModeration=moderateCommunityMessage([companyName,legalName,companyDescription,String(b.communityOffer||'')].filter(Boolean).join(' '));if(!sponsorTextModeration.approved&&!sponsorTextModeration.requiresReview)return reply({error:'Os dados enviados contêm conteúdo que não pode ser publicado. Revise as regras para patrocinadores.'},422);
    if(!validCnpj(cnpj)||legalName.length<2||legalName.length>160)throw Error('Informe um CNPJ válido e a razão social da empresa.');
    if(!SPONSOR_CATEGORIES.includes(category))throw Error('Escolha uma categoria válida para a empresa.');
    if(companyName.length<2||companyName.length>80||companyDescription.length<20||companyDescription.length>600||contactName.length<1||contactName.length>80||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira o nome, descrição da empresa (20 a 600 caracteres), contato e e-mail.');
@@ -240,7 +241,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   if(action!=='create'&&!['lookup','payment_claim','reminder_optout'].includes(action))return reply({error:'Ação inválida.'},400);
   if(action==='create'){
    const live=await db('hm_settings?id=eq.1&select=demo_mode,pix_key,payee_name,payee_city,publication_deadline,display_duration_seconds');const cfg=live[0];if(!cfg||cfg.demo_mode||!cfg.pix_key||!cfg.payee_name||!cfg.payee_city||!cfg.publication_deadline||new Date(cfg.publication_deadline)<=new Date()||!cfg.display_duration_seconds)return reply({error:'O envio de pedidos está temporariamente indisponível.'},503);
-   const v=validateInput(b);if(v.optIn&&!waConfig()||v.reminderOptIn&&!waConfig(true))return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
+   const v=validateInput(b),messageModeration=moderateCommunityMessage(v.message);if(!messageModeration.approved&&!messageModeration.requiresReview)return reply({error:'A mensagem contém conteúdo que não pode ser publicado. Revise as regras da HOCCO e tente novamente.'},422);if(v.optIn&&!waConfig()||v.reminderOptIn&&!waConfig(true))return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
    const o=await db('rpc/hm_create_order','POST',{p_code:code,p_tracking_hash:hash,p_name:v.name,p_message:v.message,p_phone:v.phone,p_opt_in:v.optIn,p_reminder_opt_in:v.reminderOptIn,p_social_platform:v.platform,p_social_handle:v.handle,p_slot:b.slot,p_legal_version:LEGAL_VERSION,p_expected_price:b.expectedPrice,p_settings_version:b.settingsVersion});
    return reply({order:safe(o),trackingToken:b.trackingToken},201)
   }
@@ -258,4 +259,5 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
  }catch(error){return reply({error:error instanceof SyntaxError?'Solicitação inválida.':String(error.message||'Não foi possível concluir.')},400)}
 }
 if(typeof Deno!=='undefined')Deno.serve(req=>handler(req));
+
 
