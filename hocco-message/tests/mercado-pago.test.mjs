@@ -83,3 +83,24 @@ test("accepts only the approved BRL payment for the exact reference and amount",
   assert.equal(isApprovedPayment({ ...payment, transaction_amount: 4 }, payment.external_reference, 350), false);
   assert.equal(isApprovedPayment({ ...payment, status: "pending" }, payment.external_reference, 350), false);
 });
+
+test("reports Mercado Pago permission errors without exposing credentials", async () => {
+  await assert.rejects(() => createPreference({
+    accessToken: "TEST-secret-value",
+    externalReference: "hocco:order:HM-26-ABCDEF123456",
+    title: "Mensagem no vídeo oficial HOCCO",
+    priceCents: 500,
+    origin: "https://hocco-message.vercel.app",
+    returnPath: "/cliente/#acompanhar/HM-26-ABCDEF123456/token",
+    notificationUrl: "https://hocco-message.vercel.app/hook",
+    fetcher: async () => new Response(JSON.stringify({
+      error: "forbidden",
+      cause: [{ code: "PA_UNAUTHORIZED_RESULT_FROM_POLICIES" }],
+    }), { status: 403 }),
+  }), (error) => {
+    assert.match(error.message, /HTTP 403/);
+    assert.match(error.message, /PA_UNAUTHORIZED_RESULT_FROM_POLICIES/);
+    assert.doesNotMatch(error.message, /TEST-secret-value/);
+    return true;
+  });
+});
