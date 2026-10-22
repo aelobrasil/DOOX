@@ -64,7 +64,25 @@ export async function createPreference({
   });
   let data = {};
   try { data = await response.json(); } catch {}
-  if (!response.ok) throw new Error(`Não foi possível criar o checkout no Mercado Pago (HTTP ${response.status}).`);
+  if (!response.ok) {
+    const providerError = typeof data.error === "string" ? data.error : "";
+    const causeCodes = Array.isArray(data.cause)
+      ? data.cause.map((cause) => typeof cause?.code === "string" ? cause.code : "").filter(Boolean).slice(0, 5)
+      : [];
+    console.error("Mercado Pago preference rejected", {
+      status: response.status,
+      error: providerError,
+      causeCodes,
+    });
+    const detail = causeCodes.length ? ` Código: ${causeCodes.join(", ")}.` : "";
+    if (response.status === 403) {
+      throw new Error(`O Mercado Pago recusou as permissões da conta conectada (HTTP 403). Verifique o Access Token do vendedor e a liberação do Checkout Pro.${detail}`);
+    }
+    if (response.status === 401) {
+      throw new Error(`O Mercado Pago não autorizou o Access Token configurado (HTTP 401). Confirme se ele pertence à aplicação e ao vendedor corretos.${detail}`);
+    }
+    throw new Error(`Não foi possível criar o checkout no Mercado Pago (HTTP ${response.status}).${detail}`);
+  }
   const checkoutUrl = accessToken.startsWith("TEST-")
     ? data.sandbox_init_point || data.init_point
     : data.init_point;
