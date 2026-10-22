@@ -65,9 +65,8 @@ export async function createPreference({
   let data = {};
   try { data = await response.json(); } catch {}
   if (!response.ok) throw new Error(`Não foi possível criar o checkout no Mercado Pago (HTTP ${response.status}).`);
-  const checkoutUrl = accessToken.startsWith("TEST-")
-    ? data.sandbox_init_point || data.init_point
-    : data.init_point;
+  const checkoutUrl = data.sandbox_init_point;
+  if (!checkoutUrl) throw new Error("O Mercado Pago não retornou um checkout sandbox; nenhum link de produção será usado.");
   let parsed;
   try { parsed = new URL(checkoutUrl); } catch { throw new Error("O Mercado Pago não retornou um link de checkout válido."); }
   if (parsed.protocol !== "https:" || !["mercadopago.com.br", "www.mercadopago.com.br", "mercadopago.com", "www.mercadopago.com"].includes(parsed.hostname)) {
