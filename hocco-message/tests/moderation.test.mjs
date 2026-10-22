@@ -26,8 +26,27 @@ test("blocks links and direct contact data", () => {
 test("normalizes diacritics before checking", () => {
   assert.equal(moderateCommunityMessage("Vai se matár").approved, false);
 });
+test("blocks threats written with leetspeak substitutions", () => {
+  assert.equal(moderateCommunityMessage("Eu vou m4tar todo mundo").category, "safety_policy");
+  assert.equal(moderateCommunityMessage("Eu vou m@t@r todo mundo").category, "safety_policy");
+});
+test("blocks threats split by punctuation or spaces", () => {
+  assert.equal(moderateCommunityMessage("E.u v.o.u m.a.t.a.r todo mundo").category, "safety_policy");
+  assert.equal(moderateCommunityMessage("e u v o u m a t a r todo mundo").category, "safety_policy");
+});
+test("blocks threats using Cyrillic homoglyphs", () => {
+  assert.equal(moderateCommunityMessage("Eu vоu mаtаr todo mundo").category, "safety_policy");
+});
+test("blocks elongated threat spellings", () => {
+  assert.equal(moderateCommunityMessage("Eu vou mataaaaar todo mundo").category, "safety_policy");
+});
+test("keeps ordinary double letters intact", () => {
+  const result = moderateCommunityMessage("Essa comunidade é incrível");
+  assert.equal(result.approved, true);
+});
 test("sends context-dependent sensitive wording to manual review", () => {
   const result = moderateCommunityMessage("Tenho orgulho da comunidade LGBTQIA");
   assert.equal(result.approved, false);
   assert.equal(result.requiresReview, true);
 });
+
