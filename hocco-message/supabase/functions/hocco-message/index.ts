@@ -3,7 +3,7 @@ import { moderateCommunityMessage } from "./moderation.mjs";
 // No browser secrets. Service credentials are supplied only by the Edge runtime.
 const PUBLIC_ORIGIN='https://hocco-message.vercel.app';
 const LEGACY_PUBLIC_ORIGINS=['https://hocco.loyallion10.chatgpt.site','https://hocco-message-6gpcxo23w-aelobrasils-projects.vercel.app','https://hocco-message-git-codex-hocco-messa-7dcea7-aelobrasils-projects.vercel.app'];
-const LEGAL_VERSION='2026-10-23.v7';
+const LEGAL_VERSION='2026-10-23.v9';
 const SPONSOR_TERMS_VERSION='2026-10-19.patrocinio.v3';
 const SPONSOR_CATEGORIES=['Alimentação e bebidas','Casa e construção','Educação e cultura','Moda e acessórios','Serviços','Tecnologia','Outros'];
 export const sha=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -12,6 +12,7 @@ export function validateInput(b){const name=String(b.name||'').trim(),message=St
 
 // Rules-only baseline filter. It never stores or logs rejected message text.
 export function validateCommunityInput(b){const name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,''),message=String(b.message||'').trim(),avatar=Number(b.avatar),destination=String(b.destination||'community');if(!name||name.length>40||!/^[A-Za-z0-9._]{3,24}$/.test(username))throw Error('Complete seu nome e @ no perfil antes de enviar.');if(!message||message.length>180)throw Error('Escreva uma mensagem de até 180 caracteres.');if(!Number.isInteger(avatar)||avatar<1||avatar>20)throw Error('Escolha um Figurante para o seu perfil.');if(!['community','live'].includes(destination))throw Error('Escolha Comunidade ou LIVE.');if(!/^[a-f0-9]{64}$/.test(b.trackingToken||''))throw Error('Identificador de envio inválido.');return{name,username,avatar,message,destination}}
+export function validateCommunityLikeInput(b){const messageId=String(b.messageId||''),voterToken=String(b.voterToken||'');if(!/^[0-9a-f-]{36}$/i.test(messageId)||!/^[a-f0-9]{64}$/.test(voterToken)||typeof b.liked!=='boolean')throw Error('Curtida inválida. Atualize a página e tente novamente.');return{messageId,voterToken,liked:b.liked}}
 function safeSponsor(s){const{tracking_hash,phone,email,contact_name,cnpj,legal_name,...publicFields}=s;return publicFields}
 function safeCommunityMessage(m){if(!m)return m;const{tracking_hash,...post}=m;return post}
 export const normalizeCnpj=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,14);
@@ -180,7 +181,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   }
   if(action==='sponsor.catalog'){const[config,rows,pix]=await Promise.all([db('hm_sponsor_settings?id=eq.1&select=price_cents,enabled'),db('hm_sponsors?archived_at=is.null&select=id,company_name,category,company_description,logo_url,cover_url,destination_url,community_offer,expires_at,starts_at,renewal_of,review,payment,created_at&order=created_at.asc'),db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name')]);const now=Date.now(),active=rows.filter(s=>s.review==='approved'&&s.payment==='confirmed'&&Date.parse(s.starts_at||0)<=now&&Date.parse(s.expires_at)>now);return reply({settings:config[0]||{price_cents:2990,enabled:true},active:active.map(s=>({id:s.id,company_name:s.company_name,category:s.category||'Outros',company_description:s.company_description||'',logo_url:s.logo_url,cover_url:s.cover_url,destination_url:s.destination_url,community_offer:s.community_offer||'',expires_at:s.expires_at})),pix:pix[0]||{}})}
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
-  const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:['create','sponsor.create','community.create'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
+  const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:action==='community.like'?120:['create','sponsor.create','community.create'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
   if(action==='payment.checkout'){
    const kind=String(b.kind||''),code=String(b.code||''),token=String(b.trackingToken||'');if(!['order','community','sponsor'].includes(kind)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Link privado de pagamento inválido.'},404);
    const validCode=kind==='order'?/^HM-26-[A-F0-9]{12}$/.test(code):kind==='community'?/^HC-CM-[A-F0-9]{12}$/.test(code):/^HC-SP-[A-F0-9]{12}$/.test(code);if(!validCode)return reply({error:'Referência de pagamento inválida.'},404);
@@ -192,8 +193,12 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    return reply({checkoutUrl:result.checkoutUrl,preferenceId:result.preferenceId,externalReference:result.externalReference});
   }
   if(action==='community.feed'){
-   const now=encodeURIComponent(new Date().toISOString()),rows=await db(`hm_community_messages?review=eq.approved&payment=eq.confirmed&published_at=not.is.null&expires_at=gt.${now}&select=id,member_name,member_username,avatar_index,message,published_at,expires_at&order=published_at.desc&limit=100`);
+   const now=encodeURIComponent(new Date().toISOString()),rows=await db(`hm_community_messages?review=eq.approved&payment=eq.confirmed&published_at=not.is.null&expires_at=gt.${now}&select=id,member_name,member_username,avatar_index,message,published_at,expires_at,likes_count&order=published_at.desc&limit=100`);
    return reply({messages:rows})
+  }
+  if(action==='community.like'){
+   const input=validateCommunityLikeInput(b),voterHash=await sha(input.voterToken),result=await db('rpc/hm_community_set_like','POST',{p_message_id:input.messageId,p_voter_hash:voterHash,p_liked:input.liked});
+   return reply({likesCount:Number(result?.likesCount)||0,liked:Boolean(result?.liked)})
   }
   if(action==='community.live_feed'){
    const rows=await db('hm_community_messages?destination=eq.live&live_status=eq.queued&review=eq.approved&payment=eq.confirmed&select=id,member_name,member_username,avatar_index,message,created_at&order=created_at.asc&limit=50');
