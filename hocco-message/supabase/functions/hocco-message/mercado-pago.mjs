@@ -107,6 +107,54 @@ export async function createPreference({
   return { preferenceId: String(data.id || ""), checkoutUrl: parsed.href, externalReference };
 }
 
+export async function refundApprovedPayment({
+  accessToken,
+  paymentId,
+  externalReference,
+  priceCents,
+  fetcher = fetch,
+}) {
+  if (!accessToken) throw new Error("O reembolso online está em configuração.");
+  if (!/^\\d{1,24}$/.test(String(paymentId || ""))) throw new Error("Identificador do pagamento inválido.");
+  if (!/^hocco:sponsor:[A-Z0-9-]{8,24}$/.test(String(externalReference || ""))) throw new Error("Referência do patrocínio inválida.");
+  if (!Number.isSafeInteger(priceCents) || priceCents < 1 || priceCents > 999999) throw new Error("Valor de reembolso inválido.");
+
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  const paymentResponse = await fetcher(`${API}/v1/payments/${encodeURIComponent(paymentId)}`, { headers });
+  let payment = {};
+  try { payment = await paymentResponse.json(); } catch {}
+  if (!paymentResponse.ok) throw new Error(`Não foi possível conferir o pagamento no Mercado Pago (HTTP ${paymentResponse.status}).`);
+  if (payment.status !== "approved"
+    || payment.currency_id !== "BRL"
+    || payment.external_reference !== externalReference
+    || !Number.isFinite(Number(payment.transaction_amount))
+    || Math.round(Number(payment.transaction_amount) * 100) !== priceCents) {
+    throw new Error("O pagamento não corresponde ao patrocínio ou não está disponível para devolução.");
+  }
+
+  const response = await fetcher(`${API}/v1/payments/${encodeURIComponent(paymentId)}/refunds`, {
+    method: "POST",
+    headers: {
+      ...headers,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": await stableIdempotencyKey(`hocco:sponsor:refund:${paymentId}`),
+    },
+    body: "{}",
+  });
+  let refund = {};
+  try { refund = await response.json(); } catch {}
+  if (!response.ok) {
+    const causeCodes = Array.isArray(refund.cause)
+      ? refund.cause.map((cause) => typeof cause?.code === "string" ? cause.code : "").filter(Boolean).slice(0, 5)
+      : [];
+    console.error("Mercado Pago sponsor refund rejected", { status: response.status, causeCodes });
+    throw new Error(`O Mercado Pago não confirmou a devolução (HTTP ${response.status}).${causeCodes.length ? ` Código: ${causeCodes.join(", ")}.` : ""}`);
+  }
+  if (refund.status && refund.status !== "approved") throw new Error("O Mercado Pago recebeu a solicitação, mas ainda não confirmou a devolução. Atualize o status mais tarde.");
+  if (refund.amount != null && Math.round(Number(refund.amount) * 100) !== priceCents) throw new Error("O Mercado Pago retornou um valor de devolução diferente do esperado.");
+  return { id: String(refund.id || ""), paymentId: String(paymentId), amount: Number(refund.amount ?? priceCents / 100), status: refund.status || "approved" };
+}
+
 export async function verifyWebhookSignature({ dataId, requestId, signature, secret, cryptoProvider = crypto }) {
   if (!dataId || !requestId || !signature || !secret) return false;
   const values = Object.fromEntries(signature.split(",").map((part) => {
