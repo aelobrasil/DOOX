@@ -116,7 +116,7 @@ export async function refundApprovedPayment({
 }) {
   if (!accessToken) throw new Error("O reembolso online está em configuração.");
   if (!/^\\d{1,24}$/.test(String(paymentId || ""))) throw new Error("Identificador do pagamento inválido.");
-  if (!/^hocco:sponsor:[A-Z0-9-]{8,24}$/.test(String(externalReference || ""))) throw new Error("Referência do patrocínio inválida.");
+  if (!/^hocco:(?:order|community|sponsor):[A-Z0-9-]{8,24}$/.test(String(externalReference || ""))) throw new Error("Referência do pedido inválida.");
   if (!Number.isSafeInteger(priceCents) || priceCents < 1 || priceCents > 999999) throw new Error("Valor de reembolso inválido.");
 
   const headers = { Authorization: `Bearer ${accessToken}` };
