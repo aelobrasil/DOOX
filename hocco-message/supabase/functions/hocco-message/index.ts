@@ -3,7 +3,7 @@ import { moderateCommunityMessage } from "./moderation.mjs";
 // No browser secrets. Service credentials are supplied only by the Edge runtime.
 const PUBLIC_ORIGIN='https://hocco-message.vercel.app';
 const LEGACY_PUBLIC_ORIGINS=['https://hocco.loyallion10.chatgpt.site','https://hocco-message-6gpcxo23w-aelobrasils-projects.vercel.app','https://hocco-message-git-codex-hocco-messa-7dcea7-aelobrasils-projects.vercel.app'];
-const LEGAL_VERSION='2026-10-23.v9';
+const LEGAL_VERSION='2026-10-23.v8';
 const SPONSOR_TERMS_VERSION='2026-10-19.patrocinio.v3';
 const SPONSOR_CATEGORIES=['Alimentação e bebidas','Casa e construção','Educação e cultura','Moda e acessórios','Serviços','Tecnologia','Outros'];
 export const sha=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');
