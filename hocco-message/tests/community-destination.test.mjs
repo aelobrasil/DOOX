@@ -10,7 +10,7 @@ const base = {
   trackingToken: "a".repeat(64),
 };
 
-test("community defaults to the existing 3h Community destination", () => {
+test("community defaults to the four-hour Community destination", () => {
   assert.equal(validateCommunityInput(base).destination, "community");
 });
 
