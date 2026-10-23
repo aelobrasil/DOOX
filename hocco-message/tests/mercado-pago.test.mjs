@@ -5,6 +5,7 @@ import {
   createPreference,
   isApprovedPayment,
   paymentReference,
+  refundApprovedPayment,
   verifyWebhookSignature,
 } from "../supabase/functions/hocco-message/mercado-pago.mjs";
 
@@ -103,4 +104,42 @@ test("reports Mercado Pago permission errors without exposing credentials", asyn
     assert.doesNotMatch(error.message, /TEST-secret-value/);
     return true;
   });
+});
+
+
+test("refunds only the matching approved sponsor payment using a stable idempotency key", async () => {
+  const requests = [];
+  const result = await refundApprovedPayment({
+    accessToken: "APP_USR-test-token",
+    paymentId: "998877",
+    externalReference: "hocco:sponsor:HM-26-ABCDEF123456",
+    priceCents: 2990,
+    fetcher: async (url, options) => {
+      requests.push({ url, options });
+      if (requests.length === 1) return new Response(JSON.stringify({
+        id: 998877, status: "approved", currency_id: "BRL",
+        external_reference: "hocco:sponsor:HM-26-ABCDEF123456", transaction_amount: 29.9,
+      }), { status: 200 });
+      return new Response(JSON.stringify({ id: "refund-1", payment_id: 998877, amount: 29.9, status: "approved" }), { status: 201 });
+    },
+  });
+  assert.equal(result.status, "approved");
+  assert.equal(result.amount, 29.9);
+  assert.match(requests[1].url, /\\/v1\\/payments\\/998877\\/refunds$/);
+  assert.match(requests[1].options.headers["X-Idempotency-Key"], /^[a-f0-9-]{36}$/);
+  assert.equal(requests[1].options.body, "{}");
+});
+
+test("does not request a refund if Mercado Pago payment does not match sponsor and price", async () => {
+  let refundCalled = false;
+  await assert.rejects(() => refundApprovedPayment({
+    accessToken: "APP_USR-test-token", paymentId: "998877",
+    externalReference: "hocco:sponsor:HM-26-ABCDEF123456", priceCents: 2990,
+    fetcher: async (url) => {
+      if (url.endsWith("/refunds")) refundCalled = true;
+      return new Response(JSON.stringify({ status: "approved", currency_id: "BRL",
+        external_reference: "hocco:sponsor:HM-26-OTHER123456", transaction_amount: 10 }), { status: 200 });
+    },
+  }), /não corresponde ao patrocínio/);
+  assert.equal(refundCalled, false);
 });
