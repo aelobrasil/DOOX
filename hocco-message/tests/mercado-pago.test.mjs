@@ -125,7 +125,7 @@ test("refunds only the matching approved sponsor payment using a stable idempote
   });
   assert.equal(result.status, "approved");
   assert.equal(result.amount, 29.9);
-  assert.match(requests[1].url, /\\/v1\\/payments\\/998877\\/refunds$/);
+  assert.ok(requests[1].url.endsWith("/v1/payments/998877/refunds"));
   assert.match(requests[1].options.headers["X-Idempotency-Key"], /^[a-f0-9-]{36}$/);
   assert.equal(requests[1].options.body, "{}");
 });
