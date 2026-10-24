@@ -24,3 +24,14 @@ test('opening the profile does not create a fake one-day streak', () => {
   assert.match(app, /registerActiveDay\(\);const o=remember/);
   assert.match(app, /registerActiveDay\(\);const entry=\{\.\.\.result\.post/);
 });
+
+test('Community and LIVE choices refresh their prices from Supabase before opening', () => {
+  const start = app.indexOf('async function openCommunityComposer(){');
+  const end = app.indexOf('function rememberCommunity', start);
+  const composer = app.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(composer.indexOf('await loadCatalog()') < composer.indexOf('openDialog('));
+  assert.match(composer, /communityPrice=catalog\.settings\.community_price_cents/);
+  assert.match(composer, /livePrice=catalog\.settings\.live_price_cents/);
+  assert.doesNotMatch(composer, /community_price_cents\?\?350|live_price_cents\?\?550/);
+});
