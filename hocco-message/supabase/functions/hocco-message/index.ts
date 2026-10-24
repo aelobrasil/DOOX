@@ -1,5 +1,6 @@
-import { createPreference, isApprovedPayment, paymentReference, refundApprovedPayment, verifyWebhookSignature } from "./mercado-pago.mjs";
+import { classifyMercadoPagoNotification, createPreference, isApprovedPayment, paymentReference, refundApprovedPayment, verifyWebhookSignature } from "./mercado-pago.mjs";
 import { moderateCommunityMessage } from "./moderation.mjs";
+import { validateCommunityPricing } from "./pricing.mjs";
 // No browser secrets. Service credentials are supplied only by the Edge runtime.
 const PUBLIC_ORIGIN='https://hocco-message.vercel.app';
 const LEGACY_PUBLIC_ORIGINS=['https://hocco.loyallion10.chatgpt.site','https://hocco-message-6gpcxo23w-aelobrasils-projects.vercel.app','https://hocco-message-git-codex-hocco-messa-7dcea7-aelobrasils-projects.vercel.app'];
@@ -47,10 +48,11 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
  const safe=o=>{const{tracking_hash,phone,...rest}=o;return rest};
  try{
   const text=await req.text();if(text.length>3000000)return reply({error:'Solicitação muito grande.'},413);let b={};try{b=JSON.parse(text||'{}')}catch{return reply({error:'JSON inválido.'},400)}const action=b.action;
-  const requestUrl=new URL(req.url),isMpWebhook=requestUrl.searchParams.get('type')==='payment'||requestUrl.searchParams.get('topic')==='payment';
+  const requestUrl=new URL(req.url),notificationType=requestUrl.searchParams.get('type')||String(b.type||''),notificationTopic=requestUrl.searchParams.get('topic')||'',isMpWebhook=notificationType==='payment'||notificationTopic==='payment'||notificationTopic==='merchant_order';
   if(isMpWebhook){
-   const dataId=requestUrl.searchParams.get('data.id')||requestUrl.searchParams.get('id')||b.data?.id,requestId=req.headers.get('x-request-id'),signature=req.headers.get('x-signature'),webhookSecret=env?.get('MP_WEBHOOK_SECRET'),accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();
-   if(!dataId)return reply({received:true});if(!webhookSecret||!accessToken)return reply({error:'Webhook de pagamento não configurado.'},503);
+   const dataId=requestUrl.searchParams.get('data.id')||b.data?.id||'',requestId=req.headers.get('x-request-id')||'',signature=req.headers.get('x-signature')||'',classification=classifyMercadoPagoNotification({topic:notificationTopic,type:notificationType,dataId,requestId,signature});
+   if(classification==='ignore')return reply({received:true,ignored:true});
+   const webhookSecret=env?.get('MP_WEBHOOK_SECRET'),accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!webhookSecret||!accessToken)return reply({error:'Webhook de pagamento não configurado.'},503);
    if(!await verifyWebhookSignature({dataId,requestId,signature,secret:webhookSecret}))return reply({error:'Assinatura do webhook inválida.'},401);
    const paymentResponse=await fetcher(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`,{headers:{Authorization:`Bearer ${accessToken}`}});let payment={};try{payment=await paymentResponse.json()}catch{}
    // The developer dashboard sends a signed sample notification with the fake ID 123456.
@@ -102,7 +104,20 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     const operation=String(b.operation||''),reason=String(b.payload?.reason||'').trim();
     if(!['approve','reject','pay','refund','refund_manual','live_read'].includes(operation))throw Error('Ação de curadoria inválida.');
     if(operation==='reject'&&(reason.length<2||reason.length>500))throw Error('Informe o motivo da recusa.');
-    let paymentId='';if(operation==='refund'||operation==='refund_manual'){const current=(await db('hm_community_messages?id=eq.'+encodeURIComponent(b.id)+'&select=id,code,price_cents,review,payment,mercado_pago_payment_id&limit=1'))[0];if(!current)throw Error('Mensagem da comunidade não encontrada.');if(current.review!=='rejected'||current.payment!=='confirmed')throw Error('A mensagem não tem uma devolução pendente.');paymentId=String(current.mercado_pago_payment_id||'');if(operation==='refund'){if(!paymentId)throw Error('Este pagamento antigo não tem identificador do Mercado Pago. Faça a devolução no painel e use “Registrar devolução manual”.');await refundApprovedPayment({accessToken:String(env?.get('MP_ACCESS_TOKEN')||'').trim(),paymentId,externalReference:paymentReference('community',current.code),priceCents:Number(current.price_cents),fetcher})}else{if(b.payload?.confirmed!==true)throw Error('Confirme que a devolução integral já foi realizada no Mercado Pago.');if(paymentId)throw Error('Este pagamento permite devolução automática; use “Devolver pelo Mercado Pago”.')}}const rpcAction=operation==='refund_manual'?'refund':operation,post=await db('rpc/hm_community_admin_action','POST',{p_actor:user.id,p_id:b.id,p_action:rpcAction,p_payload:rpcAction==='reject'?{reason}:{}});
+    let paymentId='';
+    if(operation==='refund'||operation==='refund_manual'){
+     const current=(await db('hm_community_messages?id=eq.'+encodeURIComponent(b.id)+'&select=id,code,price_cents,review,payment,mercado_pago_payment_id&limit=1'))[0];if(!current)throw Error('Mensagem da comunidade não encontrada.');
+     if(current.review!=='rejected'||current.payment!=='confirmed')throw Error('A mensagem não tem uma devolução pendente.');
+     paymentId=String(current.mercado_pago_payment_id||'');
+     if(operation==='refund'){
+      if(!paymentId)throw Error('Este pagamento antigo não tem identificador do Mercado Pago. Faça a devolução no painel e use “Registrar devolução manual”.');
+      await refundApprovedPayment({accessToken:String(env?.get('MP_ACCESS_TOKEN')||'').trim(),paymentId,externalReference:paymentReference('community',current.code),priceCents:Number(current.price_cents),fetcher});
+     }else{
+      if(b.payload?.confirmed!==true)throw Error('Confirme que a devolução integral já foi realizada no Mercado Pago.');
+      if(paymentId)throw Error('Este pagamento permite devolução automática; use “Devolver pelo Mercado Pago”.');
+     }
+    }
+    const rpcAction=operation==='refund_manual'?'refund':operation,post=await db('rpc/hm_community_admin_action','POST',{p_actor:user.id,p_id:b.id,p_action:rpcAction,p_payload:rpcAction==='reject'?{reason}:{}});
     try{await db('hm_alex_events','POST',{event_type:'system_event',severity:operation==='reject'?'warning':'info',detail:{object:'community_message',action:operation,payment:post.payment,review:post.review}})}catch{}
     return reply({post:safeCommunityMessage(post)})
    }
@@ -119,7 +134,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     else if(op==='refund'){if(s.payment!=='confirmed'||s.review!=='rejected')throw Error('A devolução online só está disponível para um patrocínio pago e recusado.');const events=await db('hm_alex_events?event_type=eq.system_event&select=detail&order=created_at.desc&limit=2000'),paymentEvent=events.find(e=>e.detail?.object==='sponsor'&&e.detail?.action==='payment_confirmed'&&e.detail?.sponsor_id===s.id&&e.detail?.code===s.code&&e.detail?.payment_id),paymentId=String(paymentEvent?.detail?.payment_id||'');if(!paymentId)throw Error('Não há identificador Mercado Pago associado a este pagamento antigo. Faça a devolução no painel do Mercado Pago e use “Registrar devolução manual”.');await refundApprovedPayment({accessToken:String(env?.get('MP_ACCESS_TOKEN')||'').trim(),paymentId,externalReference:paymentReference('sponsor',s.code),priceCents:Number(s.price_cents),fetcher});updates.payment='refunded';updates.starts_at=null;updates.expires_at=null}
     else if(op==='refund_manual'){if(s.payment!=='confirmed'||s.review!=='rejected'||b.payload?.confirmed!==true)throw Error('Confirme que a devolução foi concluída no Mercado Pago antes de registrar.');const events=await db('hm_alex_events?event_type=eq.system_event&select=detail&order=created_at.desc&limit=2000'),hasProviderId=events.some(e=>e.detail?.object==='sponsor'&&e.detail?.action==='payment_confirmed'&&e.detail?.sponsor_id===s.id&&e.detail?.code===s.code&&e.detail?.payment_id);if(hasProviderId)throw Error('Este pagamento permite devolução automática pelo controle; use “Devolver pelo Mercado Pago”.');updates.payment='refunded';updates.starts_at=null;updates.expires_at=null}
     else throw Error('Ação de patrocinador inválida.');
-    const saved=await db('hm_sponsors?id=eq.'+encodeURIComponent(b.id),'PATCH',updates);try{await db('hm_alex_events','POST',{event_type:'system_event',severity:op==='reject'?'warning':'info',detail:{object:'sponsor',action:op,review:updates.review||s.review,payment:updates.payment||s.payment}})}catch{}return reply({sponsor:saved[0]?safeSponsor(saved[0]):safeSponsor({...s,...updates})})
+    const saved=await db('hm_sponsors?id=eq.'+encodeURIComponent(b.id),'PATCH',updates);try{await db('hm_alex_events','POST',{event_type:'system_event',severity:op==='reject'?'warning':'info',detail:{object:'sponsor',action:op==='refund_manual'?'refund_recorded_manually':op,review:updates.review||s.review,payment:updates.payment||s.payment}})}catch{}return reply({sponsor:saved[0]?safeSponsor(saved[0]):safeSponsor({...s,...updates})})
    }
    if(action==='admin.sponsor.delete'){
     if(!/^[a-f0-9-]{36}$/i.test(b.id||''))throw Error('Empresa inválida.');
@@ -142,6 +157,12 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     if(mediaFailed)try{await db('hm_alex_events','POST',{event_type:'system_event',severity:'warning',detail:{object:'sponsor',action:'media_cleanup_pending',count:mediaFailed}})}catch{}
     return reply({ok:true,mediaDeleted,mediaFailed})
    }
+   if(action==='admin.community.pricing'){
+    const pricing=validateCommunityPricing(b.payload||{}),now=new Date().toISOString();
+    const updated=await db('hm_settings?id=eq.1','PATCH',{community_price_cents:pricing.communityPriceCents,live_price_cents:pricing.livePriceCents,updated_at:now});
+    await db('hm_audit','POST',{actor_id:user.id,action:'community_pricing',detail:{community_price_cents:pricing.communityPriceCents,live_price_cents:pricing.livePriceCents}});
+    return reply({ok:true,settings:updated[0]||null});
+   }
    if(action==='admin.settings'){
     const p=b.payload||{};if(!Array.isArray(p.prices)||p.prices.length!==5||p.prices.some(x=>!Number.isInteger(x)||x<1||x>999900))throw Error('Cada preço deve ser de pelo menos R$ 0,01.');
     if(p.paymentUrl){const u=new URL(p.paymentUrl);if(u.protocol!=='https:'||u.username||u.password)throw Error('Use um link de pagamento HTTPS.');}
@@ -156,7 +177,19 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     if(b.operation==='reject')payload={reason:String(b.payload?.reason||'').trim()};
     if(b.operation==='publish'){const second=Number(b.payload?.second);payload={url:normalizeVideo(String(b.payload?.url||''),second),second}}
     if(!['approve','reject','pay','refund','refund_manual','publish','notify'].includes(b.operation))throw Error('Ação inválida.');
-    if(b.operation==='refund'||b.operation==='refund_manual'){const current=(await db('hm_orders?id=eq.'+encodeURIComponent(b.id)+'&select=id,code,price_cents,review,payment&limit=1'))[0];if(!current)throw Error('Pedido não encontrado.');if(current.review!=='rejected'||current.payment!=='confirmed')throw Error('O pedido não tem uma devolução pendente.');const events=await db('hm_audit?order_id=eq.'+encodeURIComponent(b.id)+'&select=detail&order=created_at.desc&limit=50'),paymentEvent=events.find(e=>e.detail?.source==='mercado_pago'&&e.detail?.payment_id),paymentId=String(paymentEvent?.detail?.payment_id||'');if(b.operation==='refund'){if(!paymentId)throw Error('Este pagamento antigo não tem identificador do Mercado Pago. Faça a devolução no painel e use “Registrar devolução manual”.');await refundApprovedPayment({accessToken:String(env?.get('MP_ACCESS_TOKEN')||'').trim(),paymentId,externalReference:paymentReference('order',current.code),priceCents:Number(current.price_cents),fetcher})}else{if(b.payload?.confirmed!==true)throw Error('Confirme que a devolução integral já foi realizada no Mercado Pago.');if(paymentId)throw Error('Este pagamento permite devolução automática; use “Devolver pelo Mercado Pago”.')}}const actorAction=b.operation==='notify'?'notify-start':b.operation==='refund_manual'?'refund':b.operation;
+    if(b.operation==='refund'||b.operation==='refund_manual'){
+     const current=(await db('hm_orders?id=eq.'+encodeURIComponent(b.id)+'&select=id,code,price_cents,review,payment&limit=1'))[0];if(!current)throw Error('Pedido não encontrado.');
+     if(current.review!=='rejected'||current.payment!=='confirmed')throw Error('O pedido não tem uma devolução pendente.');
+     const events=await db('hm_audit?order_id=eq.'+encodeURIComponent(b.id)+'&select=detail&order=created_at.desc&limit=50'),paymentEvent=events.find(e=>e.detail?.source==='mercado_pago'&&e.detail?.payment_id),paymentId=String(paymentEvent?.detail?.payment_id||'');
+     if(b.operation==='refund'){
+      if(!paymentId)throw Error('Este pagamento antigo não tem identificador do Mercado Pago. Faça a devolução no painel e use “Registrar devolução manual”.');
+      await refundApprovedPayment({accessToken:String(env?.get('MP_ACCESS_TOKEN')||'').trim(),paymentId,externalReference:paymentReference('order',current.code),priceCents:Number(current.price_cents),fetcher});
+     }else{
+      if(b.payload?.confirmed!==true)throw Error('Confirme que a devolução integral já foi realizada no Mercado Pago.');
+      if(paymentId)throw Error('Este pagamento permite devolução automática; use “Devolver pelo Mercado Pago”.');
+     }
+    }
+    const actorAction=b.operation==='notify'?'notify-start':b.operation==='refund_manual'?'refund':b.operation;
     let order=await db('rpc/hm_admin_action','POST',{p_actor:user.id,p_id:b.id,p_action:actorAction,p_payload:payload});
     if(b.operation==='publish'||b.operation==='notify'){
      if(b.operation==='publish'&&order.notification!=='pending')return reply({order});
@@ -178,7 +211,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    return reply({error:'Ação inválida.'},400);
   }
   if(action==='catalog'){
-   const[settings,orders]=await Promise.all([db('hm_settings?id=eq.1&select=prices,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds'),db('hm_orders?is_demo=eq.false&archived_at=is.null&select=slot,episode,review')]);const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:Boolean(waConfig(true)),availability:[1,2,3,4,5].map(slot=>({slot,available:Math.max(0,s.capacity_per_slot-orders.filter(o=>o.episode===s.episode&&o.slot===slot&&o.review!=='rejected').length)})),paymentsEnabled})
+   const[settings,orders]=await Promise.all([db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds'),db('hm_orders?is_demo=eq.false&archived_at=is.null&select=slot,episode,review')]);const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:Boolean(waConfig(true)),availability:[1,2,3,4,5].map(slot=>({slot,available:Math.max(0,s.capacity_per_slot-orders.filter(o=>o.episode===s.episode&&o.slot===slot&&o.review!=='rejected').length)})),paymentsEnabled})
   }
   if(action==='sponsor.catalog'){const[config,rows,pix]=await Promise.all([db('hm_sponsor_settings?id=eq.1&select=price_cents,enabled'),db('hm_sponsors?archived_at=is.null&select=id,company_name,category,company_description,logo_url,cover_url,destination_url,community_offer,expires_at,starts_at,renewal_of,review,payment,created_at&order=created_at.asc'),db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name')]);const now=Date.now(),active=rows.filter(s=>s.review==='approved'&&s.payment==='confirmed'&&Date.parse(s.starts_at||0)<=now&&Date.parse(s.expires_at)>now);return reply({settings:config[0]||{price_cents:2990,enabled:true},active:active.map(s=>({id:s.id,company_name:s.company_name,category:s.category||'Outros',company_description:s.company_description||'',logo_url:s.logo_url,cover_url:s.cover_url,destination_url:s.destination_url,community_offer:s.community_offer||'',expires_at:s.expires_at})),pix:pix[0]||{}})}
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';

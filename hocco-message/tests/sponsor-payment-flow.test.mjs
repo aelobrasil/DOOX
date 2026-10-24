@@ -19,6 +19,8 @@ test('sponsor tracking offers checkout before curation, but not after rejection'
 test('sponsor registration clearly explains payment first and curation before publication', () => {
   assert.match(client, /pagamento é feito antes da curadoria/);
   assert.match(client, /após pagamento e aprovação da curadoria/);
+  assert.match(client, /Curadoria após a confirmação do pagamento/);
+  assert.doesNotMatch(client, /Cadastro revisado pela equipe/);
   assert.match(policies, /Curadoria após a solicitação/);
   assert.match(policies, /Pagar não garante aprovação nem publicação/);
 });

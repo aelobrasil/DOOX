@@ -18,6 +18,16 @@ export function paymentReference(kind, code) {
   return `hocco:${kind}:${code}`;
 }
 
+export function classifyMercadoPagoNotification({ topic = "", type = "", dataId = "", signature = "", requestId = "" }) {
+  // Merchant-order notifications do not contain the payment ID expected by
+  // /v1/payments/{id}. Legacy IPN/feed notifications also lack Webhook HMAC
+  // headers, so acknowledge them without applying payment state changes.
+  if (topic === "merchant_order") return "ignore";
+  if (topic && (!signature || !requestId)) return "ignore";
+  if (dataId && (type === "payment" || topic === "payment")) return "payment";
+  return "ignore";
+}
+
 export async function createPreference({
   accessToken,
   externalReference,
@@ -27,7 +37,6 @@ export async function createPreference({
   returnPath,
   notificationUrl,
   payerEmail,
-  environment = "production",
   fetcher = fetch,
 }) {
   if (!accessToken) throw new Error("O pagamento online está em configuração.");
@@ -85,23 +94,12 @@ export async function createPreference({
     }
     throw new Error(`Não foi possível criar o checkout no Mercado Pago (HTTP ${response.status}).${detail}`);
   }
-  const mode = String(environment || "production").trim().toLowerCase();
-  let checkoutUrl;
-  if (mode === "test" || mode === "sandbox") {
-    checkoutUrl = data.sandbox_init_point;
-    if (!checkoutUrl) throw new Error("O Mercado Pago não retornou o link de checkout de teste. Confira as credenciais de teste do vendedor.");
-  } else if (mode === "production" || mode === "prod") {
-    checkoutUrl = data.init_point;
-  } else {
-    throw new Error("MP_ENVIRONMENT deve ser test ou production.");
-  }
+  const checkoutUrl = accessToken.startsWith("TEST-")
+    ? data.sandbox_init_point || data.init_point
+    : data.init_point;
   let parsed;
   try { parsed = new URL(checkoutUrl); } catch { throw new Error("O Mercado Pago não retornou um link de checkout válido."); }
-  const checkoutHost = parsed.hostname.toLowerCase().replace(/\\.$/, "");
-  const officialCheckoutHost = ["mercadopago.com.br", "mercadopago.com"].some(
-    (domain) => checkoutHost === domain || checkoutHost.endsWith("." + domain),
-  );
-  if (parsed.protocol !== "https:" || !officialCheckoutHost || parsed.username || parsed.password) {
+  if (parsed.protocol !== "https:" || !["mercadopago.com.br", "www.mercadopago.com.br", "mercadopago.com", "www.mercadopago.com"].includes(parsed.hostname)) {
     throw new Error("O Mercado Pago retornou um domínio de checkout inesperado.");
   }
   return { preferenceId: String(data.id || ""), checkoutUrl: parsed.href, externalReference };
@@ -115,7 +113,7 @@ export async function refundApprovedPayment({
   fetcher = fetch,
 }) {
   if (!accessToken) throw new Error("O reembolso online está em configuração.");
-  if (!/^\\d{1,24}$/.test(String(paymentId || ""))) throw new Error("Identificador do pagamento inválido.");
+  if (!/^\d{1,24}$/.test(String(paymentId || ""))) throw new Error("Identificador do pagamento inválido.");
   if (!/^hocco:(?:order|community|sponsor):[A-Z0-9-]{8,24}$/.test(String(externalReference || ""))) throw new Error("Referência do pedido inválida.");
   if (!Number.isSafeInteger(priceCents) || priceCents < 1 || priceCents > 999999) throw new Error("Valor de reembolso inválido.");
 
