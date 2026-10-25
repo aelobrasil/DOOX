@@ -1,4 +1,4 @@
-import{api,money,esc,messageStatus}from'./config.mjs';
+import{api,money,esc,messageStatus,paymentCard}from'./config.mjs';
 import{LEGAL_VERSION,LEGAL_DATE,policyDocs,legalSources}from'./policies.mjs';
 const $=s=>document.querySelector(s),app=$('#app'),KEY='hocco-message-client-v3';
 try{localStorage.removeItem('hocco-message-client-v2')}catch{}
@@ -113,7 +113,7 @@ async function renderCommunityPayment(code,trackingToken,version){
   const post=rememberCommunity(result.post,trackingToken),rejected=post.review==='rejected',active=post.published_at&&Date.parse(post.expires_at)>Date.now();
   const isLive=post.destination==='live',destinationLabel=isLive?'Mensagem para a próxima LIVE':'Mensagem na Comunidade',durationLabel=isLive?'Leitura na próxima LIVE do TikTok':'Exibição por 4 horas na Comunidade';
   const paymentPanel=!rejected&&post.payment==='pending'&&post.review==='approved'
-   ? `<section class="payment-method payment-card"><div class="payment-heading"><span class="payment-mark" aria-hidden="true">✓</span><div><span class="payment-kicker">Pagamento seguro</span><h2>Confirme seu pedido</h2></div><span class="badge">Mercado Pago</span></div><div class="payment-product"><div><strong>${destinationLabel}</strong><small>${durationLabel}</small></div><strong class="payment-amount">${money(post.price_cents)}</strong></div><button class="btn purple full payment-primary" id="mp-checkout-community">Pagar com Pix ou cartão <span aria-hidden="true">→</span></button><p class="hint">Você pode pagar por Pix ou cartão, mesmo sem conta no Mercado Pago. O QR Code Pix aparecerá no checkout seguro.</p><p class="payment-note">A confirmação chega automaticamente. ${isLive?'Depois, a mensagem entra na fila da próxima LIVE.':'Depois, a mensagem aprovada fica 4 horas na Comunidade.'}</p></section>`
+   ? paymentCard({kind:isLive?'live':'community',title:'Sua mensagem está pronta para participar',product:destinationLabel,detail:durationLabel,amount:post.price_cents,buttonId:'mp-checkout-community',buttonLabel:isLive?'Quero entrar na próxima LIVE':'Quero aparecer na Comunidade',note:isLive?'Após a confirmação do Mercado Pago, sua mensagem aprovada entra na fila da próxima LIVE.':'Após a confirmação do Mercado Pago, sua mensagem aprovada aparece na Comunidade pelo período informado.'})
    :!rejected&&post.payment==='pending'&&post.review==='pending'
     ?'<div class="note"><strong>Verificação adicional.</strong> Antes do pagamento, nossa equipe vai revisar esta mensagem. Acompanhe por este link; nenhuma cobrança foi iniciada.</div>'
    :!rejected&&post.payment==='confirmed'&&isLive
@@ -130,7 +130,7 @@ async function renderCommunityPayment(code,trackingToken,version){
 function renderCheckout(o){
  const pending=o.payment==='pending'&&o.review!=='rejected'&&o.delivery!=='published';
  const paymentPanel=pending
-  ? '<section class="payment-method payment-card"><div class="payment-heading"><span class="payment-mark" aria-hidden="true">✓</span><div><span class="payment-kicker">Pagamento seguro</span><h2>Confirme seu pedido</h2></div><span class="badge">Mercado Pago</span></div><div class="payment-product"><div><strong>Mensagem no vídeo oficial</strong><small>Posição '+esc(String(o.slot))+' · '+esc(o.episode)+'</small></div><strong class="payment-amount">'+money(o.price_cents)+'</strong></div><button class="btn purple full payment-primary" id="mp-checkout-order">Pagar com Pix ou cartão <span aria-hidden="true">→</span></button><p class="hint">O QR Code Pix aparecerá no checkout seguro. Você também pode pagar com cartão, mesmo sem conta no Mercado Pago.</p><p class="payment-note">A confirmação chega automaticamente. Seu recado ainda passa pela curadoria antes de entrar no vídeo.</p></section>'
+  ? paymentCard({kind:'video',title:'Sua mensagem está pronta para o Reality',product:'Mensagem no vídeo oficial',detail:'Posição '+String(o.slot)+' · '+String(o.episode||''),amount:o.price_cents,buttonId:'mp-checkout-order',buttonLabel:'Quero minha mensagem no Reality',note:'A confirmação do pagamento é automática. A mensagem ainda passa pela curadoria antes de entrar na edição do episódio.'})
   :o.payment==='confirmed'
    ?'<div class="note"><strong>Pagamento confirmado automaticamente.</strong> Acompanhe aqui as atualizações da curadoria e da veiculação.</div>'
    :o.payment==='refunded'?'<div class="note">O pagamento foi devolvido.</div>':'';
