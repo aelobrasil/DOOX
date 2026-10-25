@@ -1,3 +1,4 @@
+import { paymentState } from './payment-state.mjs';
 export const SUPABASE_URL='https://vebqvedmhfaebvdantiu.supabase.co';
 export const PUBLISHABLE_KEY="sb_publishable_4qUcXYXNFDUc6UAw_nvpDw_M-9w3vuz";
 export const API_URL=SUPABASE_URL+'/functions/v1/hocco-message';
@@ -8,3 +9,9 @@ export const money=cents=>new Intl.NumberFormat('pt-BR',{style:'currency',curren
 export const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function paymentCard({kind='video',title,product,detail,amount,buttonId,buttonLabel='Pagar com Pix ou cartão',help='O checkout aceita Pix ou cartão, mesmo sem conta no Mercado Pago. O QR Code Pix aparece no ambiente seguro.',note=''}){const themes=['video','community','live','sponsor'];const theme=themes.includes(kind)?kind:'video';return `<section class="payment-method payment-card" data-payment-kind="${theme}"><div class="payment-heading"><span class="payment-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5 9.2 17 20 6.5"/></svg></span><div><span class="payment-kicker">Pagamento seguro</span><h2>${esc(title||'Confirme seu pedido')}</h2></div><span class="badge">Mercado Pago</span></div><div class="payment-product"><div><strong>${esc(product||'HOCCO Message')}</strong><small>${esc(detail||'')}</small></div><strong class="payment-amount">${money(amount||0)}</strong></div><button class="btn purple full payment-primary" id="${esc(buttonId||'payment-checkout')}">${esc(buttonLabel)} <span aria-hidden="true">→</span></button><p class="hint">${esc(help)}</p>${note?`<p class="payment-note">${esc(note)}</p>`:''}</section>`}
 export const messageStatus=o=>o.delivery==='published'?'Veiculada':o.review==='rejected'?(o.payment==='confirmed'?'Reprovada · devolução pendente':o.payment==='refunded'?'Reprovada · devolvida':'Reprovada'):o.review==='approved'&&o.payment==='confirmed'?'Na fila de edição':o.review==='approved'?'Aguardando pagamento':'Em curadoria';
+
+export function paymentFeedback(order,kind){
+ const result=paymentState(order,kind),confirmed=['review','queued','read','published','processing'].includes(result.state);
+ const icon=confirmed?'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12 3 3 7-7"/></svg>':'';
+ return `<div class="note payment-feedback" role="status" aria-live="polite" data-payment-state="${result.state}">${icon}<strong>${esc(result.title)}</strong><p>${esc(result.detail)}</p></div>`;
+}

@@ -87,12 +87,8 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    await db('hm_alex_events','POST',{event_type:'site_view',route,severity:'info',detail:{}});return reply({ok:true},202)
   }
   if(action==='customer.reset'){
-   if(!Array.isArray(b.orders)||b.orders.length>500)return reply({error:'Não foi possível validar os pedidos deste aparelho.'},400);
-   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown',bucket=`customer-reset:${await sha(ip)}:${Math.floor(Date.now()/3600000)}`;
-   if(!await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:5}))return reply({error:'Limite de tentativas atingido. Tente novamente mais tarde.'},429);
-   let deleted=0;const seen=new Set();
-   for(const item of b.orders){const code=String(item?.code||''),trackingToken=String(item?.trackingToken||'');if(!/^HM-26-[A-F0-9]{12}$/.test(code)||! /^[a-f0-9]{64}$/.test(trackingToken)||seen.has(code))continue;seen.add(code);const hash=await sha(trackingToken),found=await db(`hm_orders?code=eq.${code}&tracking_hash=eq.${hash}&select=id&limit=1`);if(!found.length)continue;const id=found[0].id;await db(`hm_audit?order_id=eq.${encodeURIComponent(id)}`,'DELETE');await db(`hm_orders?id=eq.${encodeURIComponent(id)}&code=eq.${code}&tracking_hash=eq.${hash}`,'DELETE');deleted++}
-   return reply({ok:true,deleted})
+   // Reset is local-only. Old clients must not erase orders or financial audit records.
+   return reply({error:'Atualize o app para limpar somente os dados deste aparelho. Seus pedidos continuam preservados.'},409)
   }
   if(action.startsWith('admin.')){
    const authorization=req.headers.get('Authorization');if(!authorization?.startsWith('Bearer '))return reply({error:'Entre com a conta autorizada da equipe.'},401);
