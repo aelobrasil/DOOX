@@ -49,7 +49,7 @@ test('community and video message refunds verify provider payment before recordi
 });
 
 test('customer-facing copy agrees that Community messages stay up for four hours', () => {
-  assert.match(home, /mensagem aparece na Comunidade por 4 horas/);
-  assert.match(policies, /ficam disponíveis por 4 horas/);
-  assert.match(admin, /publicada automaticamente por 4 horas/);
+  assert.match(home, /communityDuration/);
+  assert.match(policies, /preços e a duração de exibição da Comunidade e da LIVE/);
+  assert.match(admin, /community_duration_hours/);
 });

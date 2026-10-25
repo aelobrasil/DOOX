@@ -102,8 +102,24 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    if(action==='admin.community.mutate'){
     if(!/^[a-f0-9-]{36}$/i.test(b.id||''))throw Error('Mensagem da comunidade inválida.');
     const operation=String(b.operation||''),reason=String(b.payload?.reason||'').trim();
-    if(!['approve','reject','pay','refund','refund_manual','live_read'].includes(operation))throw Error('Ação de curadoria inválida.');
+    if(!['approve','reject','pay','refund','refund_manual','live_read','edit','hide','restore'].includes(operation))throw Error('Ação de curadoria inválida.');
     if(operation==='reject'&&(reason.length<2||reason.length>500))throw Error('Informe o motivo da recusa.');
+    if(operation==='hide'&&(reason.length<2||reason.length>500))throw Error('Informe o motivo para ocultar a mensagem.');
+    if(operation==='edit'){
+     const message=String(b.payload?.message||'').trim(),editReason=reason,moderation=moderateCommunityMessage(message);
+     if(message.length<1||message.length>180||editReason.length<2||editReason.length>500)throw Error('Informe uma mensagem de até 180 caracteres e o motivo da correção.');
+     if(!moderation.approved&&!moderation.requiresReview)throw Error('O texto corrigido viola as regras da Comunidade.');
+     const post=await db('rpc/hm_admin_edit_community_message','POST',{p_actor:user.id,p_id:b.id,p_message:message,p_reason:editReason});
+     return reply({post:safeCommunityMessage(post),needsReview:moderation.requiresReview});
+    }
+    if(operation==='hide'){
+     const post=await db('rpc/hm_admin_hide_community_message','POST',{p_actor:user.id,p_id:b.id,p_reason:reason});
+     return reply({post:safeCommunityMessage(post)});
+    }
+    if(operation==='restore'){
+     const post=await db('rpc/hm_admin_restore_community_message','POST',{p_actor:user.id,p_id:b.id});
+     return reply({post:safeCommunityMessage(post)});
+    }
     let paymentId='';
     if(operation==='refund'||operation==='refund_manual'){
      const current=(await db('hm_community_messages?id=eq.'+encodeURIComponent(b.id)+'&select=id,code,price_cents,review,payment,mercado_pago_payment_id&limit=1'))[0];if(!current)throw Error('Mensagem da comunidade não encontrada.');
@@ -157,6 +173,14 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     if(mediaFailed)try{await db('hm_alex_events','POST',{event_type:'system_event',severity:'warning',detail:{object:'sponsor',action:'media_cleanup_pending',count:mediaFailed}})}catch{}
     return reply({ok:true,mediaDeleted,mediaFailed})
    }
+   if(action==='admin.general.update'){
+    const p=b.payload||{},notice=String(p.founderNotice||'').trim(),hours=Number(p.communityDurationHours);
+    const validPrice=value=>Number.isInteger(value)&&value>=1&&value<=999900;
+    if(!Array.isArray(p.videoPrices)||p.videoPrices.length!==2||!p.videoPrices.every(validPrice)||!validPrice(p.communityPriceCents)||!validPrice(p.livePriceCents)||!Number.isInteger(p.sponsorPriceCents)||p.sponsorPriceCents<100||p.sponsorPriceCents>999999||typeof p.videoEnabled!=='boolean'||typeof p.communityEnabled!=='boolean'||typeof p.liveEnabled!=='boolean'||typeof p.sponsorsEnabled!=='boolean'||typeof p.founderNoticeActive!=='boolean'||!Number.isInteger(hours)||hours<1||hours>24||notice.length>500||p.founderNoticeActive&&notice.length===0)throw Error('Confira preços, disponibilidade e controles gerais. A mensagem oficial pode ter até 500 caracteres e a duração deve ficar entre 1 e 24 horas.');
+    const settings=await db('rpc/hm_update_general_control','POST',{p_actor:user.id,p_payload:{...p,founderNotice:notice,communityDurationHours:hours}});
+    try{await db('hm_alex_events','POST',{event_type:'system_event',detail:{object:'general_control',action:'updated'}})}catch{}
+    return reply({ok:true,settings});
+   }
    if(action==='admin.community.pricing'){
     const pricing=validateCommunityPricing(b.payload||{}),now=new Date().toISOString();
     const updated=await db('hm_settings?id=eq.1','PATCH',{community_price_cents:pricing.communityPriceCents,live_price_cents:pricing.livePriceCents,updated_at:now});
@@ -175,8 +199,15 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    if(action==='admin.mutate'){
     if(!/^[a-f0-9-]{36}$/i.test(b.id||''))throw Error('Pedido inválido.');let payload={};
     if(b.operation==='reject')payload={reason:String(b.payload?.reason||'').trim()};
+    if(b.operation==='edit'){
+     const message=String(b.payload?.message||'').trim(),reason=String(b.payload?.reason||'').trim(),moderation=moderateCommunityMessage(message);
+     if(message.length<1||message.length>180||reason.length<2||reason.length>500)throw Error('Informe uma mensagem de até 180 caracteres e o motivo da correção.');
+     if(!moderation.approved&&!moderation.requiresReview)throw Error('O texto corrigido viola as regras da Comunidade.');
+     const order=await db('rpc/hm_admin_edit_video_message','POST',{p_actor:user.id,p_id:b.id,p_message:message,p_reason:reason});return reply({order,needsReview:moderation.requiresReview});
+    }
+    if(b.operation==='archive'){const order=await db('rpc/hm_admin_archive_video_message','POST',{p_actor:user.id,p_id:b.id});return reply({order})}
     if(b.operation==='publish'){const second=Number(b.payload?.second);payload={url:normalizeVideo(String(b.payload?.url||''),second),second}}
-    if(!['approve','reject','pay','refund','refund_manual','publish','notify'].includes(b.operation))throw Error('Ação inválida.');
+    if(!['approve','reject','pay','refund','refund_manual','publish','notify','edit','archive'].includes(b.operation))throw Error('Ação inválida.');
     if(b.operation==='refund'||b.operation==='refund_manual'){
      const current=(await db('hm_orders?id=eq.'+encodeURIComponent(b.id)+'&select=id,code,price_cents,review,payment&limit=1'))[0];if(!current)throw Error('Pedido não encontrado.');
      if(current.review!=='rejected'||current.payment!=='confirmed')throw Error('O pedido não tem uma devolução pendente.');
@@ -211,7 +242,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    return reply({error:'Ação inválida.'},400);
   }
   if(action==='catalog'){
-   const[settings,orders]=await Promise.all([db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds'),db('hm_orders?is_demo=eq.false&archived_at=is.null&select=slot,episode,review')]);const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:Boolean(waConfig(true)),availability:[1,2,3,4,5].map(slot=>({slot,available:Math.max(0,s.capacity_per_slot-orders.filter(o=>o.episode===s.episode&&o.slot===slot&&o.review!=='rejected').length)})),paymentsEnabled})
+   const[settings,orders]=await Promise.all([db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,community_enabled,live_enabled,video_enabled,community_duration_hours,founder_notice,founder_notice_active,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds'),db('hm_orders?is_demo=eq.false&archived_at=is.null&select=slot,episode,review')]);const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.video_enabled!==false&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:Boolean(waConfig(true)),availability:[1,2,3,4,5].map(slot=>({slot,available:Math.max(0,s.capacity_per_slot-orders.filter(o=>o.episode===s.episode&&o.slot===slot&&o.review!=='rejected').length)})),paymentsEnabled})
   }
   if(action==='sponsor.catalog'){const[config,rows,pix]=await Promise.all([db('hm_sponsor_settings?id=eq.1&select=price_cents,enabled'),db('hm_sponsors?archived_at=is.null&select=id,company_name,category,company_description,logo_url,cover_url,destination_url,community_offer,expires_at,starts_at,renewal_of,review,payment,created_at&order=created_at.asc'),db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name')]);const now=Date.now(),active=rows.filter(s=>s.review==='approved'&&s.payment==='confirmed'&&Date.parse(s.starts_at||0)<=now&&Date.parse(s.expires_at)>now);return reply({settings:config[0]||{price_cents:2990,enabled:true},active:active.map(s=>({id:s.id,company_name:s.company_name,category:s.category||'Outros',company_description:s.company_description||'',logo_url:s.logo_url,cover_url:s.cover_url,destination_url:s.destination_url,community_offer:s.community_offer||'',expires_at:s.expires_at})),pix:pix[0]||{}})}
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
@@ -227,7 +258,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    return reply({checkoutUrl:result.checkoutUrl,preferenceId:result.preferenceId,externalReference:result.externalReference});
   }
   if(action==='community.feed'){
-   const now=encodeURIComponent(new Date().toISOString()),rows=await db(`hm_community_messages?review=eq.approved&payment=eq.confirmed&published_at=not.is.null&expires_at=gt.${now}&select=id,member_name,member_username,avatar_index,message,published_at,expires_at,likes_count&order=published_at.desc&limit=100`);
+   const now=encodeURIComponent(new Date().toISOString()),rows=await db(`hm_community_messages?review=eq.approved&payment=eq.confirmed&hidden_at=is.null&published_at=not.is.null&expires_at=gt.${now}&select=id,member_name,member_username,avatar_index,message,published_at,expires_at,likes_count&order=published_at.desc&limit=100`);
    return reply({messages:rows})
   }
   if(action==='community.like'){
@@ -235,11 +266,12 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    return reply({likesCount:Number(result?.likesCount)||0,liked:Boolean(result?.liked)})
   }
   if(action==='community.live_feed'){
-   const rows=await db('hm_community_messages?destination=eq.live&live_status=eq.queued&review=eq.approved&payment=eq.confirmed&select=id,member_name,member_username,avatar_index,message,created_at&order=created_at.asc&limit=50');
+   const rows=await db('hm_community_messages?destination=eq.live&live_status=eq.queued&review=eq.approved&payment=eq.confirmed&hidden_at=is.null&select=id,member_name,member_username,avatar_index,message,created_at&order=created_at.asc&limit=50');
    return reply({messages:rows})
   }
   if(action==='community.create'){
    const v=validateCommunityInput(b),moderation=moderateCommunityMessage(v.message);
+   const controls=(await db('hm_settings?id=eq.1&select=community_enabled,live_enabled'))[0];if(!controls)throw Error('Os controles da Comunidade estão indisponíveis.');if(v.destination==='community'&&controls.community_enabled===false)return reply({error:'O envio para a Comunidade está temporariamente pausado.'},503);if(v.destination==='live'&&controls.live_enabled===false)return reply({error:'O envio para a LIVE está temporariamente pausado.'},503);
    if(!moderation.approved&&!moderation.requiresReview)return reply({error:'Esta mensagem pode não seguir as regras da Comunidade. Revise o texto e os termos antes de tentar novamente.'},422);
    const trackingHash=await sha(b.trackingToken),code='HC-CM-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
    const rpc=moderation.requiresReview?'rpc/hm_create_community_message_v2':'rpc/hm_create_community_message_auto_v2';
@@ -283,7 +315,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   }
   if(action!=='create'&&!['lookup','payment_claim','reminder_optout'].includes(action))return reply({error:'Ação inválida.'},400);
   if(action==='create'){
-   const live=await db('hm_settings?id=eq.1&select=demo_mode,pix_key,payee_name,payee_city,publication_deadline,display_duration_seconds');const cfg=live[0];if(!cfg||cfg.demo_mode||!cfg.pix_key||!cfg.payee_name||!cfg.payee_city||!cfg.publication_deadline||new Date(cfg.publication_deadline)<=new Date()||!cfg.display_duration_seconds)return reply({error:'O envio de pedidos está temporariamente indisponível.'},503);
+   const live=await db('hm_settings?id=eq.1&select=demo_mode,video_enabled,pix_key,payee_name,payee_city,publication_deadline,display_duration_seconds');const cfg=live[0];if(!cfg||cfg.demo_mode||cfg.video_enabled===false||!cfg.pix_key||!cfg.payee_name||!cfg.payee_city||!cfg.publication_deadline||new Date(cfg.publication_deadline)<=new Date()||!cfg.display_duration_seconds)return reply({error:'O envio de pedidos está temporariamente indisponível.'},503);
    const v=validateInput(b),messageModeration=moderateCommunityMessage(v.message);if(!messageModeration.approved&&!messageModeration.requiresReview)return reply({error:'A mensagem contém conteúdo que não pode ser publicado. Revise as regras da HOCCO e tente novamente.'},422);if(v.optIn&&!waConfig()||v.reminderOptIn&&!waConfig(true))return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
    const o=await db('rpc/hm_create_order','POST',{p_code:code,p_tracking_hash:hash,p_name:v.name,p_message:v.message,p_phone:v.phone,p_opt_in:v.optIn,p_reminder_opt_in:v.reminderOptIn,p_social_platform:v.platform,p_social_handle:v.handle,p_slot:b.slot,p_legal_version:LEGAL_VERSION,p_expected_price:b.expectedPrice,p_settings_version:b.settingsVersion});
    return reply({order:safe(o),trackingToken:b.trackingToken},201)
