@@ -14,8 +14,10 @@
 - Cenários simulados: comunidade, LIVE, vídeo e patrocínio; pagamento, aprovação, repetição, leitura, veiculação e devolução. Utiliza moderação e verificação financeira compartilhadas; não usa o checkout Mercado Pago nem envia notificações reais. Limpeza restrita aos cenários fictícios do administrador.
 
 ## Verificação
-110 testes Node passaram. SQL transacional com rollback verificou reserva da última vaga LIVE, bloqueio de excedente, snapshot de preço/data, publicação após pagamento, duração24h e cadastro local de patrocinador pendente. Os dados sintéticos desses testes não permaneceram no banco de produção.
+111 testes Node passaram. SQL transacional com rollback verificou reserva da última vaga LIVE, bloqueio de excedente, snapshot de preço/data, publicação após pagamento, duração24h e cadastro local de patrocinador pendente. Os dados sintéticos desses testes não permaneceram no banco de produção.
 As novas tabelas possuem RLS e acesso direto público/autenticado revogado; acesso via funções autenticadas. O laboratório é simulação, não certificação de integração real do Mercado Pago.
 
 ## Limites e pendências anteriores
 Não implementa nesta entrega identidade persistente dos clientes, recuperação de conta, ofensiva no servidor, Realtime privado, reconciliação financeira independente agendada, IA contextual externa nem preço automático. O erro previamente observado no checkout externo não é considerado resolvido por testes simulados. Mantém capacidade global atual de patrocinadores, sem ativar automaticamente50 vagas por cidade/categoria. Não cria programação fictícia de LIVE: equipe deverá salvar a data e abrir a fila.
+
+Correção de execução: entrypoint Deno do laboratório encaminha apenas a requisição ao handler; teste de regressão cobre os metadados de conexão do runtime.

@@ -38,4 +38,4 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   return reply({error:'Ação de laboratório inválida.'},400);
  }catch(error){return reply({error:String(error.message||'Falha no laboratório.').slice(0,300)},400)}
 }
-if(globalThis.Deno?.serve)globalThis.Deno.serve(handler);
+if(globalThis.Deno?.serve)globalThis.Deno.serve(req=>handler(req));

@@ -23,3 +23,9 @@ test('sandbox reads always filter verified owner',async()=>{
  const r=await labHandler(new Request('https://example.test',{method:'POST',headers:{Authorization:'Bearer x'},body:JSON.stringify({action:'lab.list'})}),env,async u=>{calls.push(u);return u.includes('vebqvedmhfaebvdantiu')?Response.json({ok:true,actorId:uid}):Response.json([])});
  assert.equal(r.status,200);assert.ok(calls[1].includes('actor_id=eq.'+uid));assert.ok(calls[1].startsWith('https://lssfoyzhxdfekuqxwyxy.supabase.co/rest/v1/hm_lab_scenarios'));
 });
+test('Deno entrypoint does not interpret connection metadata as environment',async()=>{
+ const {readFile}=await import('node:fs/promises'),{default:vm}=await import('node:vm');let callback;
+ const source=(await readFile(new URL('../supabase/functions/hocco-lab/index.ts',import.meta.url),'utf8')).replace(/^import .*?;\n/,'').replace('export async function handler','async function handler');
+ const context={Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://lssfoyzhxdfekuqxwyxy.supabase.co':undefined},serve:fn=>{callback=fn}},Response,Request,AbortSignal,fetch,createScenario,transitionScenario};
+ vm.runInNewContext(source,context);const r=await callback(new Request('https://example.test',{method:'POST',body:'{}'}),{remoteAddr:{}});assert.equal(r.status,401);
+});
