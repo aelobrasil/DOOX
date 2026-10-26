@@ -11,7 +11,7 @@ const [client, edge, policies, home] = await Promise.all([
 const admin = await readFile(new URL('../dist/controle/admin.mjs', import.meta.url), 'utf8');
 
 test('sponsor tracking offers checkout before curation, but not after rejection', () => {
-  assert.match(client, /pay=s.review!=='rejected'&&s.payment==='pending'/);
+  assert.match(client, /pay=!s.payment_hold&&s.review!=='rejected'&&s.payment==='pending'/);
   assert.match(edge, /row.payment!=='pending'||row.review==='rejected'/);
   assert.doesNotMatch(edge, /kind==='sponsor'&&row.review!=='approved'/);
 });
@@ -27,7 +27,7 @@ test('sponsor registration clearly explains payment first and curation before pu
 
 test('approved sponsor payment can be refunded through Mercado Pago with a recorded payment id', () => {
   assert.match(edge, /refundApprovedPayment\(/);
-  assert.match(edge, /sponsor_id:row\.id,code:row\.code,payment_id:String\(payment\.id\)/);
+  assert.match(edge, /s\.mercado_pago_payment_id/);
   assert.match(edge, /Devolver pelo Mercado Pago/);
   assert.match(admin, /Devolver pelo Mercado Pago/);
 });

@@ -32,8 +32,8 @@ test("control exposes both editable prices and a protected settings action", () 
 });
 
 test("customer display and database price snapshots use the configured values", () => {
-  assert.match(customer, /community_price_cents\?\?350/);
-  assert.match(customer, /live_price_cents\?\?550/);
+  assert.match(customer, /communityPrice=catalog.settings.community_price_cents/);
+  assert.match(customer, /livePrice=catalog.settings.live_price_cents/);
   assert.match(edge, /community_price_cents,live_price_cents/);
   assert.match(migration, /live_price_cents/);
   assert.match(migration, /community_price_cents/);
