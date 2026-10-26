@@ -12,7 +12,7 @@ Referência aprovada: preto/laranja, degradês, balanço com borboleta, carrosse
 - Favicon, ícone PWA, tema e cache atualizados. Área administrativa mantém sua operação e proteção; não houve alteração de banco, preços, secrets ou provedor de pagamentos nesta entrega.
 
 ## Validação
-113 testes Node passaram, incluindo execução dos controles: sem autoplay, manutenção da posição do áudio entre slides, pausa por visibilidade e descarte de timers/listeners ao sair. Smoke test visual de desktop e largura móvel antes da promoção. Não houve compra real de validação.
+113 testes Node passaram, incluindo execução dos controles: sem autoplay, manutenção da posição do áudio entre slides, pausa por visibilidade e descarte de timers/listeners ao sair. Smoke test visual de desktop antes da promoção. CSS responsivo e navegação móvel implementados; a sessão de navegador não disponibilizou emulação móvel para conferência visual. Não houve compra real de validação.
 
 ## Limites
 O design adapta a referência ao conteúdo disponível e às dimensões reais das telas; não publica empresas, números de curtidas ou episódios fictícios presentes na imagem de referência. Progresso de reprodução, favoritos e catálogo dinâmico de episódios dependem de implementação futura. As pendências operacionais anteriores, incluindo a verificação real do checkout externo, não são resolvidas por uma troca visual.
