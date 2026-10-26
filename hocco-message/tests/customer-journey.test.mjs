@@ -26,7 +26,7 @@ test('opening the profile does not create a fake one-day streak', () => {
 });
 
 test('Community and LIVE choices refresh their prices from Supabase before opening', () => {
-  const start = app.indexOf('async function openCommunityComposer(){');
+  const start = app.indexOf('async function openCommunityComposer(');
   const end = app.indexOf('function rememberCommunity', start);
   const composer = app.slice(start, end);
   assert.ok(start >= 0 && end > start);
