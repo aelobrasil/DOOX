@@ -154,26 +154,11 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     else throw Error('Ação de patrocinador inválida.');
     const saved=await db('hm_sponsors?id=eq.'+encodeURIComponent(b.id),'PATCH',updates);try{await db('hm_alex_events','POST',{event_type:'system_event',severity:op==='reject'?'warning':'info',detail:{object:'sponsor',action:op==='refund_manual'?'refund_recorded_manually':op,review:updates.review||s.review,payment:updates.payment||s.payment}})}catch{}return reply({sponsor:saved[0]?safeSponsor(saved[0]):safeSponsor({...s,...updates})})
    }
-   if(action==='admin.sponsor.delete'){
-    if(!/^[a-f0-9-]{36}$/i.test(b.id||''))throw Error('Empresa inválida.');
-    const rows=await db('hm_sponsors?id=eq.'+encodeURIComponent(b.id)+'&select=id,company_name&limit=1'),s=rows[0];
-    if(!s)throw Error('Empresa não encontrada.');
-    if(String(b.confirmName||'').trim()!==s.company_name)throw Error('Digite o nome exato da empresa para confirmar a exclusão.');
-    const deleted=await db('rpc/hm_delete_sponsor','POST',{p_actor:user.id,p_id:s.id});
-    let mediaDeleted=0,mediaFailed=0;
-    for(const asset of deleted.assets||[]){
-     try{
-      const u=new URL(asset),prefix='/storage/v1/object/public/hocco-sponsor-logos/';
-      if(u.origin!==new URL(url).origin||!u.pathname.startsWith(prefix))continue;
-      const path=decodeURIComponent(u.pathname.slice(prefix.length));
-      if(!path||path.split('/').some(part=>!part||part==='.'||part==='..'))continue;
-      const encoded=path.split('/').map(encodeURIComponent).join('/');
-      const response=await fetcher(`${url}/storage/v1/object/hocco-sponsor-logos/${encoded}`,{method:'DELETE',headers});
-      if(response.ok||response.status===404)mediaDeleted++;else mediaFailed++;
-     }catch{mediaFailed++}
-    }
-    if(mediaFailed)try{await db('hm_alex_events','POST',{event_type:'system_event',severity:'warning',detail:{object:'sponsor',action:'media_cleanup_pending',count:mediaFailed}})}catch{}
-    return reply({ok:true,mediaDeleted,mediaFailed})
+   if(action==='admin.sponsor.delete')return reply({error:'Exclusão definitiva desativada. Atualize o controle e envie o registro para a lixeira.'},409);
+   if(action==='admin.records.archive_one'){
+    if(!/^[a-f0-9-]{36}$/i.test(b.id||'')||!['order','sponsor'].includes(b.type))throw Error('Registro inválido.');
+    const reason=String(b.reason||'').trim();if(reason.length<2||reason.length>500)throw Error('Informe o motivo do arquivamento.');
+    return reply(await db('rpc/hm_archive_record','POST',{p_actor:user.id,p_type:b.type,p_id:b.id,p_reason:reason}));
    }
    if(action==='admin.general.update'){
     const p=b.payload||{},notice=String(p.founderNotice||'').trim(),hours=Number(p.communityDurationHours);

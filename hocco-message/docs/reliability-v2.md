@@ -23,3 +23,11 @@ ACL confirmada: RPC financeiro inacessível para anon/authenticated, disponível
 ## Ainda fora desta entrega
 Identidade persistente e recuperação de conta, ofensiva no servidor, Realtime privado, reserva concorrente de patrocínio antes da cobrança, revisão completa de exclusões administrativas, edição de pedidos, moderação contextual por provedor de IA, notificações WhatsApp e reconciliação financeira agendada. Não apresentar esses itens como concluídos.
 Não houve compra real de validação. A disponibilidade efetiva de Pix/cartões depende do Mercado Pago e da conta conectada.
+
+## Controle seguro — 26/10/2026
+- Patrocinadores: enviar à lixeira com motivo e restaurar, sem apagar pedidos, pagamentos ou imagens.
+- Exclusão permanente legada bloqueada no servidor e no banco.
+- Arquivamento e auditoria atômicos, com bloqueio de linha e idempotência.
+- Texto da configuração de duração esclarece que mudanças valem para novos pedidos.
+- 93 testes Node passaram. Teste SQL com rollback confirmou preservação financeira, restauração e ausência de auditoria duplicada. ACL: somente service_role executa o RPC, após autenticação da equipe na Edge Function.
+- Este incremento não implementa identidade persistente, sincronização privada em tempo real nem resolve o erro externo do checkout; esses pontos continuam pendentes.
