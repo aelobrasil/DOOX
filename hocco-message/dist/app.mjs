@@ -131,6 +131,7 @@ function runScreenTransition(update,element=app,direction='forward'){
  if(typeof document.startViewTransition==='function'){
   document.documentElement.dataset.hoccoDirection=direction;
   const transition=document.startViewTransition(()=>update());
+  transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});
   transition.finished.then(()=>delete document.documentElement.dataset.hoccoDirection,()=>delete document.documentElement.dataset.hoccoDirection);
   return transition;
  }

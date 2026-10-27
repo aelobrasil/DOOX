@@ -26,3 +26,7 @@
 Não implementa conta recuperável entre aparelhos, ofensiva centralizada, Realtime privado em todas as telas, IA contextual externa ou certificação de segurança absoluta. Perfil continua local; links privados permitem recuperar pedidos. As métricas são estimativas e podem ser afetadas por VPN, operadoras, limpeza de armazenamento e tráfego automatizado.
 
 O sandbox permanente ainda não tem a estrutura financeira completa da produção para checkout ponta a ponta com vendedor/comprador fictícios. Não anunciar esse teste como realizado. Não foram alterados secrets de pagamento, cobradas compras reais, apagados pedidos ou imagens de empresas. Credencial nova restrita à comunicação interna de métricas/recuperação é independente do Mercado Pago.
+
+## Verificação de implantação
+
+Build de prévia READY. Criação transacional de pedido de vídeo e de Comunidade com aceite atual passou no banco, terminando em ROLLBACK sem registros fictícios persistidos. O teste identificou e corrigiu a conversão do avatar para smallint exigida pelas rotinas existentes. Ajustes de contraste e recuo do perfil conferidos visualmente na prévia de desktop; a sessão não dispõe de emulação móvel para validar visualmente todos os tamanhos. As migrações de cidades foram divididas por etapa de implantação.

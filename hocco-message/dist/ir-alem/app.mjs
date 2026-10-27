@@ -86,6 +86,7 @@ function transitionSponsorScreen(){
  if(typeof document.startViewTransition==='function'){
   document.documentElement.dataset.hoccoDirection=direction;
   const transition=document.startViewTransition(()=>render());
+  transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});
   transition.finished.then(()=>delete document.documentElement.dataset.hoccoDirection,()=>delete document.documentElement.dataset.hoccoDirection);
   return;
  }
