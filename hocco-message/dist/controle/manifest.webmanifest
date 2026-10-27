@@ -1,0 +1,32 @@
+{
+  "id": "/controle/",
+  "name": "HOCCO Controle",
+  "short_name": "Controle",
+  "description": "Área restrita de gestão da equipe HOCCO.",
+  "lang": "pt-BR",
+  "start_url": "/controle/",
+  "scope": "/controle/",
+  "display": "standalone",
+  "background_color": "#090909",
+  "theme_color": "#090909",
+  "icons": [
+    {
+      "src": "/assets/hocco-message-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/hocco-message-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/hocco-message-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

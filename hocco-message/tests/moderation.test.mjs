@@ -82,4 +82,3 @@ test("fuzzy misspellings route to review, and threat intent is blocked", () => {
   assert.equal(uncertain.requiresReview, true);
   assert.equal(moderateCommunityMessage("Eu vou mtr todo mundo").requiresReview, false);
 });
-

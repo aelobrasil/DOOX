@@ -26,3 +26,28 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 .participation-options :is(a,button):hover{border-color:#ff5a00;background:#281a13}.participation-options small{font-size:9px;letter-spacing:1px;color:#ff8b50}.participation-options strong{font-size:25px}.participation-options span{font-size:13px;color:#d1c7bf}.participation-links{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.participation-links a{color:#ffac80;font-size:12px}
 .cinema-app .payment-screen{background:#101010}.cinema-app .payment-primary{background:#ff5a00!important;color:#fff!important}
 @media(max-width:600px){.participation-scene{padding:24px 18px}.participation-options{grid-template-columns:1fr;gap:10px;margin:18px 0}.participation-options>a,.participation-options>button{padding:16px;gap:5px}.participation-options strong{font-size:22px}.cinema-watch{padding:18px}.cinema-app dialog{max-height:calc(100dvh - 32px);overflow-y:auto}}
+
+/* Release: readable profile and consent surfaces */
+.cinema-app .profile-screen{padding:24px;border-radius:24px;min-width:0}
+.cinema-app .profile-identity{min-width:0;width:100%}
+.cinema-app #profile-name,.cinema-app #profile-username{box-sizing:border-box;width:100%;padding:12px 16px;min-height:48px;border:1px solid #82725e;border-radius:12px;line-height:1.4;color:#fff5e9;background:#100e0b}
+.cinema-app #profile-name{font-size:clamp(22px,4vw,36px)}
+.cinema-app #profile-username{font-size:17px;margin-top:10px}
+.cinema-app .profile-heading p,.cinema-app .profile-photo-hint,.cinema-app .profile-history-empty span{color:#c7bdb2;line-height:1.65}
+.cinema-app .profile-photo-hint{font-size:12px;overflow-wrap:anywhere}
+.cinema-app .profile-active{background:#193b28;color:#d6f8dd;border:1px solid #49845b;padding:8px 12px}
+.cinema-app .profile-history-copy,.cinema-app .profile-history-status{min-width:0;overflow-wrap:anywhere}
+.cinema-app .acceptance-box,.cinema-app .sponsor-acceptance{padding:16px;border:1px solid #68533d;border-radius:16px;background:#21180f;min-width:0}
+.cinema-app .check{display:flex;align-items:flex-start;gap:12px;margin:0 0 14px;padding:3px 0;font-size:13px;line-height:1.6;color:#e6d9c9;text-align:left;min-width:0}
+.cinema-app .check input{flex:0 0 20px;width:20px;height:20px;margin:2px 0 0;padding:0}
+.cinema-app .check span{flex:1;min-width:0;overflow-wrap:anywhere}
+.cinema-app .check a,.cinema-app .legal-text a{color:#ffc18a;text-decoration:underline;text-underline-offset:3px}
+.cinema-app .legal-summary,.cinema-app .policy-tabs a{background:#241b13;color:#eee0d0;border:1px solid #68533d}
+.cinema-app .policy-tabs a[aria-current=page]{background:#ff650a;color:#160b00}
+.cinema-app .legal-text p,.cinema-app .legal-version,.cinema-app .footer-links a{color:#c7bdb2}
+.cinema-app .legal-page{width:100%;padding:clamp(16px,3vw,28px);overflow-wrap:anywhere}
+.cinema-app .legal-page .section-title{font-size:clamp(28px,6vw,45px);line-height:1.15}
+.cinema-app .payment-feedback{display:grid;grid-template-columns:auto 1fr;gap:8px 12px}
+.cinema-app .payment-feedback p{grid-column:1/-1;margin:0}
+.cinema-frame-art-label{position:absolute;right:20px;top:20px;background:#090909b8;color:#e6d4c1;border-radius:7px;padding:4px 8px;font-size:10px;z-index:2;pointer-events:none}
+@media(max-width:700px){.cinema-app .profile-screen{padding:16px}.cinema-app .profile-card{padding:20px 16px;gap:16px}.cinema-app .profile-identity{grid-column:1/-1}.cinema-app .profile-save{max-width:100%}.cinema-app .profile-history-card{padding:16px;gap:12px}.cinema-app .profile-stats{gap:8px}.cinema-app .profile-stat{padding:16px 10px}.cinema-app .profile-stat strong{font-size:30px}.cinema-app .profile-stat span{font-size:11px}.cinema-app .check{font-size:12px}.cinema-app .policy-tabs a{flex:1 1 120px;min-height:42px;text-align:center}}

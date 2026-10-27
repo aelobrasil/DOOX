@@ -1,5 +1,6 @@
-const rememberedInstall=()=>{try{return localStorage.getItem('hocco-message-installed')==='true'}catch{return false}};
-const rememberInstall=()=>{try{localStorage.setItem('hocco-message-installed','true')}catch{}};
+const installStorageKey=location.pathname.startsWith('/controle')?'hocco-control-installed':'hocco-message-installed';
+const rememberedInstall=()=>{try{return localStorage.getItem(installStorageKey)==='true'}catch{return false}};
+const rememberInstall=()=>{try{localStorage.setItem(installStorageKey,'true')}catch{}};
 const button=document.querySelector('#install-app');
 const help=document.querySelector('#install-help');
 let installPrompt=null;

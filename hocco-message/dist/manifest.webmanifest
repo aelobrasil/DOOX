@@ -1,7 +1,7 @@
 {
   "id": "/",
   "name": "HOCCO Message",
-  "short_name": "Message",
+  "short_name": "HOCCO",
   "description": "Envie um recado e acompanhe sua participação no Reality da HOCCO.",
   "lang": "pt-BR",
   "start_url": "/#inicio",
@@ -13,6 +13,12 @@
     {
       "src": "/assets/hocco-message-192.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/hocco-message-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
