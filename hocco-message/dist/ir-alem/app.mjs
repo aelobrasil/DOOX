@@ -36,7 +36,8 @@ function company(id){
 }
 function form(renewal=''){
  if(catalog.settings.enabled===false){app.innerHTML='<section class="narrow"><div class="empty"><h2>Inscrições de patrocinadores temporariamente fechadas.</h2><a class="btn" href="/ir-alem/">Voltar</a></div></section>';return}
- const priceCents=Number.isInteger(Number(catalog.settings.price_cents))?Number(catalog.settings.price_cents):2990;
+ if(!catalog.cities?.length){app.innerHTML=`<section class="narrow paper"><div class="eyebrow">Sua marca na HOCCO</div><h1>Novas cidades em breve.</h1><p>As inscrições de empresas serão abertas por cidade. No momento, não há uma cidade disponível para novos cadastros.</p><p>O patrocínio custa ${money(Number(catalog.settings.price_cents)||6990)} por sete dias de publicação, após pagamento e aprovação.</p><a class="btn secondary" href="/ir-alem/">Conhecer as empresas</a><a class="btn" href="/#comunidade">Explorar a comunidade</a></section>`;return}
+ const priceCents=Number.isInteger(Number(catalog.settings.price_cents))?Number(catalog.settings.price_cents):6990;
  app.innerHTML=`<section class="sponsor-signup-layout">
   <aside class="sponsor-signup-story"><div class="eyebrow">Parcerias que fortalecem</div><h1>Sua marca perto da comunidade <em>HOCCO</em></h1>
    <p class="sponsor-story-lead">Apresente sua empresa para quem acompanha a HOCCO e faça parte da história que estamos construindo.</p>
