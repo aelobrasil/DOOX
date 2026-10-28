@@ -41,3 +41,8 @@ body.admin-body .sponsor-admin-description b{color:#f0e7df}
 body.admin-body .sponsor-logo-fallback{background:#3a2c21;color:#ffb87e}
 @media(max-width:1250px){body.admin-body .admin-grid:has(#sponsor-price-form){grid-template-columns:minmax(0,1fr)}body.admin-body .admin-grid:has(#sponsor-price-form)>section{grid-column:1;grid-row:2}body.admin-body .admin-grid:has(#sponsor-price-form)>.settings{grid-column:1;grid-row:1}}
 @media(max-width:760px){.control-ready .control-sidebar{visibility:hidden}.control-ready.control-menu-open .control-sidebar{visibility:visible}}
+
+.control-summary-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.control-traffic-report{margin-top:20px}.control-traffic-days{display:flex;gap:24px;flex-wrap:wrap}.control-traffic-days>div{padding:16px 20px;border:1px solid #3a3c46;border-radius:12px;min-width:160px;display:grid;gap:5px}.control-traffic-days strong{font-size:28px;color:#ff9c55}.control-traffic-days span{font-size:13px;color:#eceaf4}.control-traffic-days small{font-size:10px;color:#a9afc2}
+@media(max-width:1250px){.control-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1000px){.control-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

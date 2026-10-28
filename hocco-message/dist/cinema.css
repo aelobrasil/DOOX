@@ -127,3 +127,25 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 
 .cinema-hero .cinema-age-rating{pointer-events:auto;cursor:pointer;padding:0;touch-action:manipulation}
 .cinema-hero .cinema-age-rating:focus-visible{outline:3px solid #fff;outline-offset:5px}
+
+/* Draft: compact messages across the available row, without fabricating empty posts. */
+.cinema-social-grid .cinema-community{grid-column:1/-1;grid-row:1;min-width:0}
+.cinema-social-grid .cinema-live-card{grid-column:1/-1;grid-row:2}
+.cinema-community .community-track{gap:12px;scrollbar-width:none;padding:2px 0 8px}
+.cinema-community .community-card{flex:0 0 calc((100% - 48px)/5);padding:12px;border-radius:14px;min-height:184px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:10px}
+.cinema-community .community-card-head{gap:7px;min-width:0;align-items:flex-start}
+.cinema-community .community-card-head>.avatar-portrait{width:28px;height:28px;flex-basis:28px}
+.cinema-community .community-identity{min-width:0;overflow-wrap:anywhere}
+.cinema-community .community-identity strong{font-size:11px;line-height:1.5}
+.cinema-community .community-identity span{font-size:10px;line-height:1.5}
+.cinema-community .community-identity small{font-size:9px}
+.cinema-community .community-card p{font-size:12px;line-height:1.6;grid-column:1/-1;margin:0}
+.cinema-community .community-like{justify-self:start;min-height:32px;grid-column:1/-1}
+.community-scroll-controls{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:10px 0}
+.community-scroll-controls button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:36px;min-height:36px;padding:8px 12px;border-radius:10px;border:1px solid #66513d;background:#1c1712;color:#f2d8bb;font-size:10px}
+.community-scroll-controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:1100px){.cinema-community .community-card{flex-basis:calc((100% - 24px)/3)}}
+@media(max-width:600px){.cinema-community .community-track{gap:10px}.cinema-community .community-card{flex-basis:calc((100% - 10px)/2);min-height:190px;padding:10px}.cinema-community .community-identity strong{font-size:11px}.cinema-community .community-card p{font-size:12px}}
+
+/* Participation has the strongest action hierarchy. */
+.cinema-participation-hint{color:#f4f4f4;font:500 14px/1.5 "DM Sans",sans-serif;max-width:36ch;margin:14px 0}.cinema-actions .cinema-participation-cta{order:-1;background:#d92d29;color:#fff;border:1px solid #ed524d;border-radius:14px;min-height:50px;padding:13px 20px;font:700 15px/1.35 "DM Sans",sans-serif;box-shadow:0 6px 22px #a5181838;transition:background .18s,transform .18s}.cinema-participation-cta svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;flex:none}.cinema-actions .cinema-participation-cta:hover{background:#c42420;transform:translateY(-1px)}.cinema-participation-cta:focus-visible{outline:3px solid #fff;outline-offset:4px}.cinema-actions .cinema-primary{background:#17171bd9;color:#fff;border:1px solid #ffffff70;border-radius:14px}@media(max-width:600px){.cinema-actions{flex-direction:column;align-items:stretch}.cinema-actions .cinema-participation-cta,.cinema-actions .cinema-primary{width:100%;justify-content:center}.cinema-participation-hint{font-size:13px;max-width:30ch}}
