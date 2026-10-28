@@ -126,6 +126,12 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    const authorization=req.headers.get('Authorization');if(!authorization?.startsWith('Bearer '))return reply({error:'Entre com a conta autorizada da equipe.'},401);
    const res=await fetcher(`${url}/auth/v1/user`,{headers:{...headers,Authorization:authorization}});if(!res.ok)return reply({error:'Sessão inválida ou expirada.'},401);const user=await res.json();if(!user.id||!user.email_confirmed_at)return reply({error:'Conta não autorizada.'},403);
    const members=await db(`hm_team_members?user_id=eq.${encodeURIComponent(user.id)}&active=eq.true&select=user_id`);if(!members.length)return reply({error:'Acesso restrito à equipe HOCCO.'},403);
+   if(action==='admin.episode.update'){
+    const title=String(b.payload?.title||'').trim(),raw=String(b.payload?.url||'').trim();
+    if((!title)!==(!raw)||title.length>120||raw.length>500)throw Error('Informe o título de até 120 caracteres e o link do episódio, ou deixe ambos vazios para retirar o destaque.');
+    const videoUrl=raw?normalizeVideo(raw,0).replace('&t=0s',''):'';
+    const episode=await db('rpc/hm_set_featured_episode','POST',{p_actor:user.id,p_title:title,p_url:videoUrl});return reply({ok:true,episode});
+   }
    if(action==='admin.reconciliation')return reply({jobs:await db('hm_reconciliation_jobs?status=neq.done&select=kind,code,attempts,status,next_attempt_at,last_error,updated_at&order=updated_at.desc&limit=100')});
    if(action==='admin.geo'){await db('rpc/hm_refresh_city_markets','POST',{});return reply({cities:await db('rpc/hm_city_dashboard','POST',{})})}
    if(action==='admin.geo.mutate'){
@@ -265,6 +271,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    }
    return reply({error:'Ação inválida.'},400);
   }
+  if(action==='series.episode'){const rows=await db('hm_settings?id=eq.1&select=featured_episode_title,featured_episode_url,featured_episode_updated_at&limit=1'),s=rows[0];return reply({episode:s?.featured_episode_title&&s?.featured_episode_url?{title:s.featured_episode_title,url:s.featured_episode_url,updatedAt:s.featured_episode_updated_at}:null})}
   if(action==='catalog'){
    const[settings,orders]=await Promise.all([db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,community_enabled,live_enabled,video_enabled,community_duration_hours,founder_notice,founder_notice_active,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds'),db('hm_orders?is_demo=eq.false&archived_at=is.null&select=slot,episode,review')]);const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.video_enabled!==false&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:Boolean(waConfig(true)),availability:[1,2,3,4,5].map(slot=>({slot,available:Math.max(0,s.capacity_per_slot-orders.filter(o=>o.episode===s.episode&&o.slot===slot&&o.review!=='rejected').length)})),paymentsEnabled})
   }

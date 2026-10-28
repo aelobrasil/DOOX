@@ -104,3 +104,12 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
  .cinema-app .cinema-editorial{padding:22px 18px}
 }
 .cinema-app .slot-option input:checked+span small{color:#231000;font-weight:700}
+
+/* Reserved space keeps the age classification separate from carousel controls. */
+.cinema-age-rating{position:absolute;right:26px;bottom:28px;z-index:4;display:grid;place-items:center;width:44px;height:44px;border:2px solid #fff;border-radius:7px;background:#fbc115;color:#fff;font:800 27px/1 Arial,sans-serif;text-shadow:0 1px 2px #684f00;box-shadow:0 3px 12px #0005;pointer-events:none}
+.cinema-hero .cinema-controls{right:94px}
+.featured-episode-card{padding:22px;display:grid;gap:16px;border:1px solid #6e4b2b;background:#17110c;border-radius:16px;min-width:0}
+.featured-episode-card h3{font-size:24px;line-height:1.35;overflow-wrap:anywhere;margin:0;color:#fff0dc}
+.featured-episode-card .eyebrow,.featured-episode-card a{justify-self:start}
+.episode-settings{margin-bottom:18px}
+@media(max-width:700px){.cinema-age-rating{right:16px;bottom:24px;width:36px;height:36px;font-size:23px}.cinema-hero .cinema-controls{right:70px}.featured-episode-card{padding:18px}.featured-episode-card h3{font-size:21px}.cinema-hero .cinema-progress button{min-width:12px;flex:1}}
