@@ -113,3 +113,14 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 .featured-episode-card .eyebrow,.featured-episode-card a{justify-self:start}
 .episode-settings{margin-bottom:18px}
 @media(max-width:700px){.cinema-age-rating{right:16px;bottom:24px;width:36px;height:36px;font-size:23px}.cinema-hero .cinema-controls{right:70px}.featured-episode-card{padding:18px}.featured-episode-card h3{font-size:21px}.cinema-hero .cinema-progress button{min-width:12px;flex:1}}
+
+/* The age advisory belongs to the carousel corner, never to a fullscreen opening. */
+.cinema-rating-advisory{position:absolute;z-index:4;right:84px;bottom:28px;max-width:calc(100% - 112px);padding:14px 18px;border:1px solid #ffffff30;border-radius:12px;background:#080809ec;color:#fff;opacity:1;transform:translateX(0);transition:opacity .32s ease,transform .32s ease;pointer-events:none}
+.cinema-rating-advisory[hidden]{display:none}
+.cinema-rating-advisory>span{display:block;margin:0 0 6px;font:700 9px/1.5 Arial,sans-serif;text-transform:uppercase;letter-spacing:1.4px;color:#c4c4ce}
+.cinema-rating-advisory p{font:400 15px/1.45 'DM Sans',Arial,sans-serif;margin:0;color:#fff}
+.cinema-rating-advisory.is-dismissing{opacity:0;transform:translateX(8px)}
+.cinema-hero .cinema-controls{transition:opacity .32s ease}
+.cinema-hero.is-rating-advisory .cinema-controls{opacity:0;visibility:hidden;pointer-events:none}
+@media(max-width:700px){.cinema-rating-advisory{right:66px;left:auto;bottom:24px;max-width:calc(100% - 84px);padding:12px 14px}.cinema-rating-advisory p{font-size:13px}.cinema-rating-advisory>span{font-size:8px;letter-spacing:1px}}
+@media(prefers-reduced-motion:reduce){.cinema-rating-advisory,.cinema-hero .cinema-controls{transition:none}.cinema-rating-advisory.is-dismissing{transform:none}}
