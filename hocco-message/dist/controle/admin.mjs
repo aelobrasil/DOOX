@@ -1,3 +1,4 @@
+import '/navigation-ui.mjs';
 import {renderCities,renderRecovery} from './cities.mjs';
 import {renderLaboratory} from './laboratory.mjs';
 import{api,SUPABASE_URL,PUBLISHABLE_KEY,money,esc,messageStatus}from'/config.mjs';

@@ -51,3 +51,23 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 .cinema-app .payment-feedback p{grid-column:1/-1;margin:0}
 .cinema-frame-art-label{position:absolute;right:20px;top:20px;background:#090909b8;color:#e6d4c1;border-radius:7px;padding:4px 8px;font-size:10px;z-index:2;pointer-events:none}
 @media(max-width:700px){.cinema-app .profile-screen{padding:16px}.cinema-app .profile-card{padding:20px 16px;gap:16px}.cinema-app .profile-identity{grid-column:1/-1}.cinema-app .profile-save{max-width:100%}.cinema-app .profile-history-card{padding:16px;gap:12px}.cinema-app .profile-stats{gap:8px}.cinema-app .profile-stat{padding:16px 10px}.cinema-app .profile-stat strong{font-size:30px}.cinema-app .profile-stat span{font-size:11px}.cinema-app .check{font-size:12px}.cinema-app .policy-tabs a{flex:1 1 120px;min-height:42px;text-align:center}}
+/* Fade through darkness: only the image changes, never the controls or text. */
+.cinema-hero .cinema-frames{transition:filter .6s cubic-bezier(.22,.61,.36,1);filter:brightness(1);background:#000}
+.cinema-hero.is-changing .cinema-frames{filter:brightness(.035)}
+.cinema-hero .cinema-frame{transition:opacity .8s ease}
+.cinema-arrow{display:grid;place-items:center!important;width:44px!important;height:44px!important;border:1px solid #ffffff50!important;background:#100f0dd9!important;backdrop-filter:blur(14px);box-shadow:0 6px 22px #0006;transition:background .2s,border-color .2s,transform .2s}
+.cinema-arrow:hover{background:#4b2c14!important;border-color:#ffac64!important;transform:translateY(-1px)}
+.cinema-arrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cinema-app :is(.btn,.cinema-primary,.cinema-secondary,.cinema-message-button){border-radius:14px;letter-spacing:.1px;transition:background .2s,box-shadow .2s,transform .2s,border-color .2s}
+.cinema-app :is(.btn,.cinema-primary,.cinema-secondary,.cinema-message-button):hover{transform:translateY(-1px);box-shadow:0 7px 22px #0003}
+.cinema-app :is(.btn,.cinema-primary,.cinema-secondary,.cinema-message-button):active{transform:translateY(0)}
+.cinema-app :is(button,a):focus-visible{outline:3px solid #ffb46d;outline-offset:4px}
+.cinema-app :is(.cinema-bottom-actions a,.cinema-section-heading>a,.home-view-all,.cinema-editorial>a,.cinema-watch-copy>a){display:inline-flex;align-items:center;justify-content:space-between;gap:14px;min-height:44px;padding:10px 14px;border-radius:12px;border:1px solid #ffffff26;background:#181410;color:#f7e9db;font-size:12px;font-weight:600}
+.cinema-app .cinema-bottom-actions{gap:10px;align-items:center;flex-wrap:wrap}
+.cinema-app .cinema-sponsor-card span{display:inline-flex;align-items:center;justify-content:space-between;gap:12px}
+.navigation-icon{display:inline-grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:9px;background:#ffffff12;border:1px solid #ffffff22;color:inherit;pointer-events:none}
+.navigation-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.navigation-action{gap:12px!important}
+.cinema-app .btn.purple .navigation-icon,.cinema-primary .navigation-icon{background:#140b0014;border-color:#140b0029}
+@media(max-width:700px){.cinema-app .cinema-section-heading{gap:12px;align-items:flex-start;flex-wrap:wrap}.cinema-app .cinema-section-heading>a{font-size:11px}.cinema-arrow{width:38px!important;height:38px!important}.navigation-icon{width:24px;height:24px;flex-basis:24px}.cinema-app .cinema-bottom-actions a{width:100%}}
+@media(prefers-reduced-motion:reduce){.cinema-hero .cinema-frames,.cinema-hero .cinema-frame,.cinema-app :is(.btn,.cinema-primary,.cinema-secondary,.cinema-message-button){transition:none!important}.cinema-app :is(.btn,.cinema-primary,.cinema-secondary,.cinema-message-button):hover{transform:none}}

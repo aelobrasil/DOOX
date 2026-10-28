@@ -1,3 +1,4 @@
+import '/navigation-ui.mjs';
 const KEY='hocco-message-client-v3';
 export function syncHeaderAvatar(){let p={};try{p=JSON.parse(localStorage.getItem(KEY)||'{}').profile||{}}catch{}const index=Math.max(0,Math.min(19,Number(String(p.avatar||'avatar-01').replace('avatar-',''))-1||0)),el=document.querySelector('#header-profile-avatar');if(el)el.style.backgroundPosition=`${index%5*25}% ${Math.floor(index/5)*100/3}%`;}
 syncHeaderAvatar();window.addEventListener('storage',syncHeaderAvatar);window.addEventListener('hocco-profile-updated',syncHeaderAvatar);

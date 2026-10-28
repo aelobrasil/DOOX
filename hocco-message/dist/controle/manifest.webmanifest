@@ -28,5 +28,13 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
-  ]
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://hocco-message.vercel.app/controle/manifest.webmanifest",
+      "id": "https://hocco-message.vercel.app/controle/"
+    }
+  ],
+  "prefer_related_applications": false
 }
