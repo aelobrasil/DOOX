@@ -124,3 +124,6 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 .cinema-hero.is-rating-advisory .cinema-controls{opacity:0;visibility:hidden;pointer-events:none}
 @media(max-width:700px){.cinema-rating-advisory{right:66px;left:auto;bottom:24px;max-width:calc(100% - 84px);padding:12px 14px}.cinema-rating-advisory p{font-size:13px}.cinema-rating-advisory>span{font-size:8px;letter-spacing:1px}}
 @media(prefers-reduced-motion:reduce){.cinema-rating-advisory,.cinema-hero .cinema-controls{transition:none}.cinema-rating-advisory.is-dismissing{transform:none}}
+
+.cinema-hero .cinema-age-rating{pointer-events:auto;cursor:pointer;padding:0;touch-action:manipulation}
+.cinema-hero .cinema-age-rating:focus-visible{outline:3px solid #fff;outline-offset:5px}
