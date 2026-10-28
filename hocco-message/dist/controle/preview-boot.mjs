@@ -1,0 +1,1 @@
+localStorage.setItem('hocco-message-team-session',JSON.stringify({access_token:'preview-not-a-credential',expires_at:9999999999,user:{email:'equipe@example.invalid'}}));await import('./preview-admin.mjs');
