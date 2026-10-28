@@ -103,3 +103,4 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
  .cinema-app .cinema-watch{padding:22px 18px}
  .cinema-app .cinema-editorial{padding:22px 18px}
 }
+.cinema-app .slot-option input:checked+span small{color:#231000;font-weight:700}
