@@ -323,3 +323,11 @@ body.home-theme #toast{bottom:88px}
 .admin-body .btn{border-radius:13px;min-height:40px;padding:10px 15px;display:inline-flex;gap:10px;align-items:center;justify-content:center;line-height:1.4}.admin-body .actions{gap:9px;flex-wrap:wrap}.admin-body .navigation-icon{background:#f1e8fc;border:1px solid #d9c7ee}.admin-body .btn.purple .navigation-icon{background:#ffffff20;border-color:#ffffff30}
 
 .navigation-icon{display:inline-grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:9px;pointer-events:none;color:inherit}.navigation-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.navigation-action{gap:12px}
+
+/* Brand reaction and community reaction count. */
+.community-reactions-footer{display:grid;gap:4px;grid-column:1/-1;align-self:end;min-width:0}
+.community-brand-reaction{display:inline-flex;align-items:flex-start;gap:5px;color:#c598ad;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+.community-brand-reaction>span{color:#ff6888;flex:none}
+.community-reaction-summary{display:grid;gap:7px;margin:0 0 16px;padding:12px 14px;border-radius:12px;background:#f9f3f6;color:#67243e;font-size:13px}
+.community-reaction-summary .community-brand-reaction{color:#80364f;font-size:12px}
+.community-like-count{font-variant-numeric:tabular-nums}
