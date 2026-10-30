@@ -331,3 +331,7 @@ body.home-theme #toast{bottom:88px}
 .community-reaction-summary{display:grid;gap:7px;margin:0 0 16px;padding:12px 14px;border-radius:12px;background:#f9f3f6;color:#67243e;font-size:13px}
 .community-reaction-summary .community-brand-reaction{color:#80364f;font-size:12px}
 .community-like-count{font-variant-numeric:tabular-nums}
+
+.community-brand-reaction>span{animation:community-welcome-heart .45s ease-out both}
+@keyframes community-welcome-heart{from{transform:scale(.8);opacity:.5}to{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.community-brand-reaction>span{animation:none}}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
-import { communityReactionCount, paintCommunityReactions } from '../dist/community-reactions.mjs';
+import { communityActualLikes, communityReactionCount, paintCommunityReactions } from '../dist/community-reactions.mjs';
 
 const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
 const source = app.slice(app.indexOf('const communityBrandReaction='), app.indexOf('async function loadLiveQueue'));
@@ -38,7 +38,7 @@ function harness() {
     return { liked: body.liked, likesCount: actual };
   };
   const context = vm.createContext({ state, api, $: () => track, CSS: { escape: x => x }, esc: x => String(x),
-    communityReactionCount: p => communityReactionCount(p, time),
+    communityActualLikes, communityReactionCount: p => communityReactionCount(p, time),
     paintCommunityReactions: el => paintCommunityReactions(el, time),
     mountCommunityReactions: () => ({ refresh() {} }), mountCommunityCarousel: () => ({ refresh() {} }),
     avatarArt: () => '', relativeCommunityTime: () => 'agora', communityVoterToken: () => 'a'.repeat(64),
@@ -49,13 +49,13 @@ function harness() {
     defer(promise) { deferred = promise; } };
 }
 
-test('feed render and unchanged-feed refresh retain the automated component; real likes and failures reconcile', async () => {
+test('feed render and unchanged-feed refresh never grow without votes; real likes and failures reconcile', async () => {
   const h = harness(); await h.load(); const button = h.button();
   assert.match(h.track.innerHTML, /A HOCCO curtiu sua mensagem/);
   assert.equal(button.node.textContent, '1');
   h.setTime(start + 2 * 3600_000); await h.load();
   assert.equal(h.button(), button, 'refresh must preserve the existing carousel and button');
-  const displayed = Number(button.node.textContent); assert.ok(displayed > 1);
+  const displayed = Number(button.node.textContent); assert.equal(displayed, 1);
   await button.click(); assert.equal(Number(button.node.textContent), displayed + 1);
   assert.equal(button.attrs['aria-pressed'], 'true'); assert.deepEqual(h.state.communityLikes, [post.id]);
   await h.load(); assert.equal(Number(button.node.textContent), displayed + 1);
@@ -76,4 +76,18 @@ test('feed refresh cannot overwrite a pending optimistic like and the API respon
   h.setActual(9); release(); await pending;
   assert.equal(button.dataset.actualLikes, '10'); assert.equal(button.node.textContent, '11');
   assert.equal(button.disabled, false); assert.match(button.attrs['aria-label'], /11 curtidas/);
+});
+
+test('only newly observed real likes on the client own messages produce an in-app notice', async () => {
+  const h = harness(); h.state.communityOrders = [{ id: post.id }]; h.setActual(20);
+  await h.load(); assert.equal(h.notices.length, 0, 'old likes establish a baseline silently');
+  h.setActual(21); await h.load();
+  assert.equal(h.notices[0], 'Sua mensagem recebeu uma nova curtida.');
+  await h.load(); h.setTime(start + 3 * 3600_000); await h.load();
+  assert.equal(h.notices.length, 1, 'time and repeat refreshes must not create notices');
+  h.setActual(24); await h.load();
+  assert.equal(h.notices[1], 'Suas mensagens receberam 3 novas curtidas.');
+  h.setActual(22); await h.load(); assert.equal(h.notices.length, 2, 'unlikes are silent');
+  const other = harness(); await other.load(); other.setActual(30); await other.load();
+  assert.equal(other.notices.length, 0, 'other clients messages never trigger a personal notice');
 });
