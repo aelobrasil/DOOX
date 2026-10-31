@@ -182,7 +182,7 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 .cinema-hero .cinema-progress button{flex:1;min-width:0;width:auto;padding:5px 0}
 .cinema-hero .cinema-motion{position:static;margin:0;width:40px;height:40px;align-self:center}
 .cinema-toolbar .cinema-age-rating{right:166px;bottom:39px;width:44px;height:48px;color:#141000;text-shadow:none;border:0;border-radius:6px}
-.cinema-rating-caption{position:absolute;right:3%;bottom:37px;width:130px;font-size:10px;line-height:1.5;color:#ddd;margin:0}
+.cinema-rating-caption{position:absolute;right:20px;bottom:37px;width:130px;font-size:10px;line-height:1.5;color:#ddd;margin:0}
 .cinema-toolbar .cinema-rating-advisory{right:30px;bottom:104px;max-width:calc(100vw - 60px)}
 .cinema-social-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:16px;margin:20px 4%}
 .cinema-social-grid .cinema-community{grid-column:1;grid-row:1;background:linear-gradient(125deg,#161616,#0b0b0b);padding:22px}
