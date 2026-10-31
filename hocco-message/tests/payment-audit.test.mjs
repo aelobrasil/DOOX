@@ -22,6 +22,7 @@ async function notification(kind,overrides={},options={}){
    return Response.json({id,status:'approved',external_reference:`hocco:${kind}:${codes[kind]}`,currency_id:'BRL',transaction_amount:kind==='sponsor'?69.90:kind==='order'?5:3.50,collector_id:42,live_mode:false,date_last_updated:'2026-10-27T12:00:00Z',...overrides});
   }
   if(parsed.hostname==='api.mercadopago.com'&&parsed.pathname==='/users/me')return Response.json({id:42});
+  if(parsed.hostname==='database.invalid'&&parsed.pathname==='/rest/v1/hm_expired_purchases')return Response.json(options.expired?[{kind,code:codes[kind],order_id:'11111111-1111-4111-8111-111111111111',price_cents:kind==='order'?500:350}]:[]);
   if(parsed.hostname==='database.invalid'&&parsed.pathname==='/rest/v1/'+tables[kind])return Response.json(options.missing?[]:[{id:'11111111-1111-4111-8111-111111111111',code:codes[kind],price_cents:kind==='sponsor'?6990:kind==='order'?500:350,payment:'pending'}]);
   if(parsed.hostname==='database.invalid'&&parsed.pathname==='/rest/v1/rpc/hm_apply_verified_payment'){
    writes.push(url);events.push(JSON.parse(opts.body));
@@ -77,3 +78,5 @@ test('audit laboratory live: reading requires payment and updates presentation',
  const s=createScenario('live','Mensagem fictícia',now);assert.throws(()=>transitionScenario(s,'read',now));
  const paid=transitionScenario(s,'pay',now),read=transitionScenario(paid,'read',now+3600000);assert.equal(paymentState(read,'live',now+3600000).state,'read');
 });
+
+test('late payment on a removed comment still reaches the financial ledger',async()=>{const r=await notification('community',{}, {missing:true,expired:true});assert.equal(r.status,200);assert.equal(r.events.length,1);assert.equal(r.events[0].p_code,codes.community)});

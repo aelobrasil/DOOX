@@ -1,7 +1,8 @@
-export const LEGAL_VERSION='2026-10-27.v11';
-export const LEGAL_DATE='27 de outubro de 2026';
+export const LEGAL_VERSION='2026-10-31.v12';
+export const LEGAL_DATE='31 de outubro de 2026';
 export const policyDocs={
 termos:{title:'Termos de Uso',intro:'O que você está contratando e como seu recado chega ao vídeo.',summary:['Você escolhe uma inserção no vídeo ou uma mensagem para a Comunidade ou para a próxima LIVE HOCCO; cada destino tem prazo e preço próprios.','O nome, a rede social escolhida e o @, junto da mensagem, poderão integrar a exibição pública; telefone não faz parte da inserção.','Sem promessa de audiência, resposta do apresentador ou leitura em voz alta.'],sections:[
+['Prazo de pagamento dos comentários','Pedidos de mensagem para vídeo, Comunidade ou LIVE devem ter o pagamento confirmado em até 20 minutos após sua criação. Sem confirmação nesse prazo, o comentário e seus dados de publicação são excluídos, liberando a vaga. Uma referência financeira mínima é preservada para conferir pagamentos atrasados. Se você já pagou e o pedido expirou, não pague novamente: procure o suporte com o código do pedido para conferência e devolução quando cabível.'],
 ['1. O serviço','O Hocco Message permite enviar uma mensagem para a Comunidade HOCCO, para a fila de leitura da próxima LIVE no TikTok ou para inserção em um episódio do canal HOCCO. Os destinos têm preços, prazos e formas de exibição diferentes, informados antes do pagamento. A publicação depende da aprovação das regras e da confirmação do pagamento.'],
 ['2. Quem presta o serviço','Hocco Message é um serviço do projeto HOCCO. Atendimento: Alex Hocc, showrunner e protagonista da série documental HOCCO, pelo WhatsApp (14) 99108-8104. O checkout informa o recebedor e os dados do pagamento. Confira tudo antes de confirmar e guarde o comprovante.'],
 ['3. Quem pode contratar','O serviço está disponível para pessoas com 18 anos ou mais. Não envie mensagens em nome de outra pessoa sem autorização. Você pode usar um nome de exibição ou apelido que não se passe por terceiros.'],

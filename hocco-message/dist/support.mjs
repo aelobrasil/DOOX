@@ -8,7 +8,7 @@ function close(){panel.hidden=true;launcher.setAttribute('aria-expanded','false'
 launcher.addEventListener('click',()=>{panel.hidden=!panel.hidden;launcher.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden){reveal();widget.querySelector('.support-close').focus()}});
 widget.querySelector('.support-close').addEventListener('click',()=>{close();launcher.focus()});
 widget.querySelectorAll('.support-topics a').forEach(link=>link.addEventListener('click',close));
-widget.querySelector('.support-send').addEventListener('click',()=>{const message=input.value.trim();if(!message){input.focus();input.setCustomValidity('Escreva sua dúvida para continuar.');input.reportValidity();return}input.setCustomValidity('');const url='https://wa.me/5514991088104?text='+encodeURIComponent('Olá, preciso de ajuda com o Hocco Message. '+message);const tab=window.open(url,'_blank','noopener,noreferrer');if(!tab)location.href=url});
+widget.querySelector('.support-send').addEventListener('click',()=>{const message=input.value.trim();if(!message){input.focus();input.setCustomValidity('Escreva sua dúvida para continuar.');input.reportValidity();return}input.setCustomValidity('');const url='https://wa.me/5514991088104?text='+encodeURIComponent('Olá, preciso de ajuda com o Hocco Message. '+message);window.open(url,'_blank','noopener,noreferrer')});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden){close();launcher.focus()}});
 
 let previousY=window.scrollY||0,lastDirection='up',revealTimer;

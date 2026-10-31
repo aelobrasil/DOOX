@@ -37,6 +37,8 @@ export async function createPreference({
   returnPath,
   notificationUrl,
   payerEmail,
+  expiresAt,
+  validFrom,
   fetcher = fetch,
 }) {
   if (!accessToken) throw new Error("O pagamento online está em configuração.");
@@ -60,6 +62,13 @@ export async function createPreference({
     auto_return: "approved",
     statement_descriptor: "HOCCO",
   };
+  if (expiresAt) {
+    const expiry = Date.parse(expiresAt);
+    if (!Number.isFinite(expiry) || expiry <= Date.now()) throw new Error('O prazo de pagamento deste pedido terminou.');
+    body.expires = true;
+    body.expiration_date_from = new Date(Number.isFinite(Date.parse(validFrom)) ? Date.parse(validFrom) : Date.now()).toISOString();
+    body.expiration_date_to = new Date(expiry).toISOString();
+  }
   if (payerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payerEmail)) {
     body.payer = { email: payerEmail };
   }
