@@ -149,3 +149,7 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 
 /* Participation has the strongest action hierarchy. */
 .cinema-participation-hint{color:#f4f4f4;font:500 14px/1.5 "DM Sans",sans-serif;max-width:36ch;margin:14px 0}.cinema-actions .cinema-participation-cta{order:-1;background:#d92d29;color:#fff;border:1px solid #ed524d;border-radius:14px;min-height:50px;padding:13px 20px;font:700 15px/1.35 "DM Sans",sans-serif;box-shadow:0 6px 22px #a5181838;transition:background .18s,transform .18s}.cinema-participation-cta svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;flex:none}.cinema-actions .cinema-participation-cta:hover{background:#c42420;transform:translateY(-1px)}.cinema-participation-cta:focus-visible{outline:3px solid #fff;outline-offset:4px}.cinema-actions .cinema-primary{background:#17171bd9;color:#fff;border:1px solid #ffffff70;border-radius:14px}@media(max-width:600px){.cinema-actions{flex-direction:column;align-items:stretch}.cinema-actions .cinema-participation-cta,.cinema-actions .cinema-primary{width:100%;justify-content:center}.cinema-participation-hint{font-size:13px;max-width:30ch}}
+
+/* Preserve the subjects of the new cinematic artwork on narrow screens. */
+.cinema-frame{object-position:var(--cinema-position,center)}
+@media(max-width:700px){.cinema-frame{object-position:var(--cinema-mobile-position,var(--cinema-position,center))}}
