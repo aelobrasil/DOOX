@@ -1,6 +1,7 @@
+import {avatarIndex,applyAvatar} from './avatars.mjs';
 import '/navigation-ui.mjs';
 const KEY='hocco-message-client-v3';
-export function syncHeaderAvatar(){let p={};try{p=JSON.parse(localStorage.getItem(KEY)||'{}').profile||{}}catch{}const index=Math.max(0,Math.min(19,Number(String(p.avatar||'avatar-01').replace('avatar-',''))-1||0)),el=document.querySelector('#header-profile-avatar');if(el)el.style.backgroundPosition=`${index%5*25}% ${Math.floor(index/5)*100/3}%`;}
+export function syncHeaderAvatar(){let p={};try{p=JSON.parse(localStorage.getItem(KEY)||'{}').profile||{}}catch{}const index=avatarIndex(Number(String(p.avatar||'avatar-01').replace('avatar-',''))-1),el=document.querySelector('#header-profile-avatar');applyAvatar(el,index);}
 syncHeaderAvatar();window.addEventListener('storage',syncHeaderAvatar);window.addEventListener('hocco-profile-updated',syncHeaderAvatar);
 const mark=()=>{const hash=location.hash.slice(1).split('/')[0]||'inicio',current=location.pathname.startsWith('/ir-alem/')?'empresas':hash;document.querySelectorAll('[data-tab]').forEach(a=>a.classList.toggle('active',a.dataset.tab===current))};mark();window.addEventListener('hashchange',mark);
 const destinations=[['Conhecer a série','/#assistir'],['Enviar mensagem para o vídeo','/#enviar'],['Comunidade e LIVE','/#comunidade'],['Empresas e descontos por cidade','/ir-alem/'],['Patrocinar a HOCCO','/ir-alem/#novo'],['Meu perfil e avatar','/cliente/#perfil'],['Acompanhar pagamento e pedido','/cliente/#acompanhar'],['Informações e políticas','/#informacoes']];
