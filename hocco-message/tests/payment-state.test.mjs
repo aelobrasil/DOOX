@@ -19,3 +19,9 @@ for(const [label,order,kind,state] of [
  ['future publication',{...active,published_at:'2026-10-26T11:00:00Z'},'community','processing']
 ])test(label,()=>assert.equal(paymentState(order,kind,now).state,state));
 test('feedback announces status with vector confirmation',()=>{const html=paymentFeedback({payment:'confirmed',review:'approved'},'community');assert.match(html,/role="status"/);assert.match(html,/<svg/);assert.match(html,/Publicação em processamento/);assert.doesNotMatch(html,/está na Comunidade/)});
+test('expired and archived sponsors cannot offer another checkout',async()=>{
+ const {canPaySponsor}=await import('../dist/payment-state.mjs');
+ const pending={payment:'pending',review:'pending',created_at:new Date(now-47*3600000).toISOString()};
+ assert.equal(canPaySponsor(pending,now),true);
+ for(const row of [{...pending,archived_at:'2026-10-24'}, {...pending,hidden_at:'2026-10-24'}, {...pending,created_at:new Date(now-49*3600000).toISOString()}, {...pending,payment_hold:true}, {...pending,review:'rejected'}]){assert.equal(canPaySponsor(row,now),false);assert.ok(['hold','closed'].includes(paymentState(row,'sponsor',now).state))}
+});

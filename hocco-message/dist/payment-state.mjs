@@ -1,7 +1,12 @@
+export function canPaySponsor(order,now=Date.now()){
+ const created=Date.parse(order.created_at||'');const end=Number.isFinite(created)?created+48*3600000:NaN;
+ return order.payment==='pending'&&order.review!=='rejected'&&!order.payment_hold&&!order.archived_at&&!order.hidden_at&&(!Number.isFinite(end)||end>now);
+}
 // Presentation only: payment and delivery facts must come from the server.
 export function paymentState(order, kind = 'community', now = Date.now()) {
   if (order.payment === 'refunded') return {state:'refunded',title:'Pagamento devolvido',detail:'A devolução foi registrada. O prazo de crédito depende do meio de pagamento.'};
   if (order.payment_hold) return {state:'hold',title:'Pagamento em revisão',detail:'Há uma atualização financeira neste pedido. Acompanhe por aqui; não pague novamente.'};
+  if (order.payment !== 'confirmed' && (order.archived_at || order.hidden_at || kind==='sponsor'&&!canPaySponsor(order,now))) return {state:'closed',title:'Pedido encerrado para pagamento',detail:'Este pedido não está disponível para pagamento. Se você já pagou, acompanhe a conferência por aqui antes de fazer outro pedido.'};
   if (order.payment !== 'confirmed') return {state:'pending',title:'Aguardando confirmação do pagamento',detail:'Se você já pagou, não pague novamente. Este pedido será atualizado após a confirmação.'};
   if (order.review === 'rejected') return {state:'rejected',title:'Pagamento confirmado · solicitação recusada',detail:'Acompanhe a devolução por este pedido.'};
   if (order.review !== 'approved') return {state:'review',title:'Pagamento confirmado',detail:kind==='sponsor'?'Sua empresa está em análise pela HOCCO.':'Sua mensagem está em análise. A publicação ainda não foi liberada.'};

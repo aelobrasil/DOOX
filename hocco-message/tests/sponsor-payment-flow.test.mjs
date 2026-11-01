@@ -11,7 +11,7 @@ const [client, edge, policies, home] = await Promise.all([
 const admin = await readFile(new URL('../dist/controle/admin.mjs', import.meta.url), 'utf8');
 
 test('sponsor tracking offers checkout before curation, but not after rejection', () => {
-  assert.match(client, /pay=!s.payment_hold&&s.review!=='rejected'&&s.payment==='pending'/);
+  assert.match(client, /pay=canPaySponsor\(s\)/);
   assert.match(edge, /row.payment!=='pending'||row.review==='rejected'/);
   assert.doesNotMatch(edge, /kind==='sponsor'&&row.review!=='approved'/);
 });
