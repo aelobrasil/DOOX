@@ -315,3 +315,4 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 
 .cinema-figurantes .avatar-portrait{background-image:url('/assets/figurantes-body-v2.webp')!important}
 .cinema-figurantes .avatar-portrait::before{display:none}
+.cinema-app header .avatar>.avatar-portrait{position:relative}
