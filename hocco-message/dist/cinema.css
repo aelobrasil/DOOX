@@ -306,3 +306,5 @@ body.cinema-app{--purple:#ff5a00;--ink:#f7f3ed;--orange:#ff5a00;--muted:#b8b0a7;
 .cinema-community-feed:has(.community-empty) .community-scroll-controls{display:none}
 @media(max-width:1100px){.cinema-community-feed .community-card{flex-basis:calc((100% - 24px)/3)}}
 @media(max-width:700px){.cinema-app .cinema-community-feed{margin:16px;padding:18px 16px}.cinema-community-feed .community-card{flex-basis:calc((100% - 12px)/2)}.cinema-community-feed .community-heading{align-items:flex-start}.cinema-community-feed .community-heading h2{font-size:23px}.cinema-community-intro-card{min-height:230px}}
+
+.cinema-business-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.cinema-business-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:10px 14px;border:1px solid #ffffffa0;border-radius:24px;background:#080808c9;color:#fff;font-size:11px;font-weight:700}.cinema-business-actions a:first-child{background:#df1721;border-color:#fb474e}.cinema-business-actions a:focus-visible{outline:3px solid #ffb46d;outline-offset:3px}
