@@ -1,3 +1,4 @@
+import {readJsonBody} from './request-body.mjs';
 import {checkoutBlock,isUnpaidCommentExpired,paymentExpiresAt} from './purchase-lifecycle.mjs';
 import {validateLocation,validateProgramming} from './local-community.mjs';
 import { verifiedPaymentEvent } from "./payment-verification.mjs";
@@ -60,7 +61,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
  };
  const safe=o=>{const{tracking_hash,phone,mercado_pago_payment_id,...rest}=o;return {...rest,payment_expires_at:paymentExpiresAt(rest,'order')}};
  try{
-  const text=await req.text();if(text.length>3000000)return reply({error:'Solicitação muito grande.'},413);let b={};try{b=JSON.parse(text||'{}')}catch{return reply({error:'JSON inválido.'},400)}const action=b.action;
+  let bodySize=0;const b=await readJsonBody(req,undefined,size=>{bodySize=size}),action=b?.action;
   const requestUrl=new URL(req.url),notificationType=requestUrl.searchParams.get('type')||String(b.type||''),notificationTopic=requestUrl.searchParams.get('topic')||'',isMpWebhook=notificationType==='payment'||notificationTopic==='payment'||notificationTopic==='merchant_order';
   if(isMpWebhook){
    const dataId=requestUrl.searchParams.get('data.id')||b.data?.id||'',requestId=req.headers.get('x-request-id')||'',signature=req.headers.get('x-signature')||'',classification=classifyMercadoPagoNotification({topic:notificationTopic,type:notificationType,dataId,requestId,signature});
@@ -80,7 +81,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    if(!row&&kind!=='sponsor')row=await expiredPurchase(kind,code);
    if(!row)return reply({received:true});return reply(await applyPayment(payment,kind,row));
   }
-  if(!['sponsor.create','customer.reset'].includes(action)&&text.length>12000)return reply({error:'Solicitação muito grande.'},413);
+  if(!['sponsor.create','customer.reset'].includes(action)&&bodySize>12000)return reply({error:'Solicitação muito grande.'},413);
   if(typeof action!=='string')return reply({error:'Ação inválida.'},400);
   // The random private tracking token authenticates order access; team actions require a verified user JWT and active membership.
   if(action==='reminders.run'){
@@ -424,6 +425,6 @@ if(kind==='sponsor'&&row.payment==='pending'&&Date.parse(row.created_at||0)<Date
    if(!o.payment_claimed){await db(`hm_orders?id=eq.${o.id}`,'PATCH',{payment_claimed:true,updated_at:new Date().toISOString()});await db('hm_audit','POST',{order_id:o.id,action:'payment-claimed',detail:{source:'customer'}});o.payment_claimed=true;}
   }
   return reply({order:{...safe(o),reminder_active:(await db(`hm_reminder_subscriptions?order_id=eq.${o.id}&enabled=eq.true&select=phone`)).length>0},history:history.filter(h=>['created','approve','reject','pay','refund','publish','payment-claimed','reminder_sent','reminder_optout'].includes(h.action))})
- }catch(error){return reply({error:error instanceof SyntaxError?'Solicitação inválida.':String(error.message||'Não foi possível concluir.')},400)}
+ }catch(error){return reply({error:error instanceof SyntaxError?'Solicitação inválida.':String(error.message||'Não foi possível concluir.')},error.status===413?413:400)}
 }
 if(typeof Deno!=='undefined')Deno.serve(req=>handler(req));
