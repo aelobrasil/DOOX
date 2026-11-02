@@ -1,0 +1,10 @@
+import {api,esc} from './config.mjs';
+export function mountSponsorPix(root,{code,trackingToken}){
+ const card=root.querySelector('[data-payment-kind=sponsor]');if(!card)return;
+ const open=document.createElement('button');open.type='button';open.className='btn full';open.textContent='Gerar QR Code Pix';card.querySelector('.payment-primary').before(open);
+ const host=document.createElement('div');host.className='inline-pix';host.hidden=true;open.after(host);
+ open.onclick=async()=>{open.disabled=true;open.textContent='Gerando Pix seguro…';try{const {pix}=await api('payment.pix',{kind:'sponsor',code,trackingToken});if(!host.isConnected)return;host.hidden=false;host.innerHTML='<h3>Pague com Pix</h3><img class="real-pix-qr" src="data:image/png;base64,'+pix.qrImage+'" alt="QR Code Pix exclusivo deste pedido"><p>Abra o aplicativo do seu banco para ler o QR Code ou copiar o código abaixo.</p><label>Código Pix copia e cola<textarea readonly rows="3">'+esc(pix.qrCode)+'</textarea></label><button type="button" class="btn full" data-copy-pix>Copiar código Pix</button><p class="hint">Válido até '+esc(new Date(pix.expiresAt).toLocaleString('pt-BR'))+'. Confira o recebedor e o valor no seu banco.</p><p role="status">Aguardando confirmação do pagamento.</p>';
+ host.querySelector('[data-copy-pix]').onclick=async()=>{const button=host.querySelector('[data-copy-pix]');try{await navigator.clipboard.writeText(pix.qrCode);button.textContent='Código Pix copiado'}catch{host.querySelector('textarea').select();button.textContent='Selecione e copie o código acima'}};
+ open.hidden=true;
+ }catch(error){host.hidden=false;host.innerHTML='<p role="alert">'+esc(error.message)+'</p>';open.disabled=false;open.textContent='Tentar gerar Pix novamente'}};
+}

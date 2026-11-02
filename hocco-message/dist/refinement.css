@@ -226,3 +226,27 @@ html{scroll-padding-bottom:100px}body.cinema-app{font:16px/1.6 var(--ui-font);ba
 .cinema-app .cinema-hero.slide-immediate .cinema-frame{transition:none}
 @media(prefers-reduced-motion:reduce){.cinema-app .cinema-hero .cinema-frame{transition:none;will-change:auto}}
 .cinema-app .cinema-hero .cinema-frame:not(.is-current):not(.is-leaving){transition:none}
+/* Registration and payment have an independent white and blue identity. */
+body.cinema-app.business-flow{background:#edf5ff;color:#142c50}
+.cinema-app.business-flow header,.cinema-app.business-flow footer,.cinema-app.business-flow .bottom-nav{background:#fff;border-color:#d9e6f3;color:#142c50}
+.cinema-app.business-flow :is(header,footer,.bottom-nav) a{color:#142c50}.cinema-app.business-flow .brand{color:#142c50}
+.cinema-app.business-flow .sponsor-signup-layout{display:block;max-width:760px;margin:24px auto;padding:0}
+.cinema-app.business-flow .sponsor-signup-story{display:none}
+.cinema-app.business-flow .sponsor-form-card{background:#fff;border:1px solid #d9e6f3;border-radius:20px;padding:32px;box-shadow:0 12px 40px #244b7a0d}
+.cinema-app.business-flow :is(h1,h2,h3,strong,.eyebrow,.sponsor-form-title h2){color:#142c50}
+.cinema-app.business-flow :is(p,small,.hint,.check){color:#4c6680}
+.cinema-app.business-flow .sponsor-form-card :is(input:not([type=checkbox]),textarea,select){background:#fff;color:#142c50;border:1px solid #bccfe3;font-size:16px;min-height:48px;line-height:1.5}
+.cinema-app.business-flow .sponsor-form-card .field label{color:#142c50;font-size:15px;font-weight:700;margin-bottom:8px}
+.cinema-app.business-flow .sponsor-form-card .field{margin:0 0 20px}
+.cinema-app.business-flow .sponsor-form-card .field small{font-size:13px;line-height:1.5;color:#4c6680}
+.cinema-app.business-flow .btn{background:#0758ed;border:1px solid #0758ed;color:#fff;border-radius:10px;min-height:48px;font-size:16px;padding:12px 20px}
+.cinema-app.business-flow .btn.secondary,.cinema-app.business-flow .btn.ghost{background:#fff;border-color:#9dbce3;color:#0758ed}
+.cinema-app.business-flow .sponsor-notice-options,.cinema-app.business-flow .wizard-price{background:#edf5ff;border:1px solid #d9e6f3;border-radius:12px;padding:18px}
+.cinema-app.business-flow .sponsor-form-card .check{font-size:14px;line-height:1.6;color:#142c50;gap:12px}.cinema-app.business-flow .check input{accent-color:#0758ed;width:20px;height:20px}
+.sponsor-wizard-step{border:0;padding:0;margin:24px 0;min-width:0}.sponsor-wizard-step[hidden],.wizard-navigation[hidden],.sponsor-form-actions[hidden]{display:none!important}
+.sponsor-wizard-step>.location-filters{display:grid;grid-template-columns:minmax(0,1fr);gap:0}.sponsor-wizard-step .sponsor-upload-grid{grid-template-columns:1fr;margin-bottom:24px}
+.wizard-navigation{display:flex;gap:16px;justify-content:space-between}.wizard-navigation button:last-child{margin-left:auto;flex:1}.wizard-progress{display:flex;gap:16px;justify-content:space-between;width:100%;padding:0;list-style:none;margin:0}.wizard-progress li{flex:1;display:grid;justify-items:center;gap:8px;border-top:3px solid #d9e6f3;padding-top:12px;color:#6e809b}.wizard-progress li.is-active{border-color:#0758ed}.wizard-progress li>span{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#edf3fa;color:#536b84}.wizard-progress li.is-active>span{background:#0758ed;color:#fff}.wizard-progress small{font-size:12px}
+.cinema-app.business-flow .registration-review{background:#fff;border:0;padding:0;margin:0 0 24px;color:#142c50}.cinema-app.business-flow .registration-review dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;font-size:14px}.cinema-app.business-flow .registration-review dt{color:#526b85}.cinema-app.business-flow .registration-review dd{color:#142c50;overflow-wrap:anywhere}
+.wizard-brand-preview{overflow:hidden;border:1px solid #d9e6f3;border-radius:14px;margin:16px 0;padding-bottom:16px}.wizard-brand-preview>strong,.wizard-brand-preview>p{display:block;margin:12px 16px}.wizard-cover{aspect-ratio:16/9;background:#e7eff8;overflow:hidden}.wizard-cover img{width:100%;height:100%;object-fit:cover}.wizard-logo{width:72px;height:72px;margin:16px;background:#f4f8fd;border:1px solid #d9e6f3;border-radius:12px;overflow:hidden}.wizard-logo img{width:100%;height:100%;object-fit:contain}
+@media(max-width:700px){.cinema-app.business-flow .sponsor-form-card{padding:24px 16px}.cinema-app.business-flow .sponsor-signup-layout{margin:12px auto}.cinema-app.business-flow .registration-review dl{grid-template-columns:1fr;gap:4px}.cinema-app.business-flow .registration-review dd{margin-bottom:12px}.cinema-app.business-flow .sponsor-form-actions{align-items:stretch}.cinema-app.business-flow .sponsor-form-actions .btn{width:100%}}
+.inline-pix{padding:20px 0;margin:16px 0;border-block:1px solid #d9e6f3}.inline-pix[hidden]{display:none}.inline-pix .real-pix-qr{display:block;width:256px;height:256px;max-width:100%;object-fit:contain;background:#fff;padding:12px;margin:16px auto}.inline-pix textarea{display:block;width:100%;font-size:13px;resize:vertical;color:#142c50;background:#fff;border:1px solid #bccfe3;padding:12px;border-radius:10px}.inline-pix p{font-size:14px;line-height:1.6}.inline-pix .btn{margin-top:16px}

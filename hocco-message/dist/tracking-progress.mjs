@@ -3,7 +3,7 @@ import {esc} from './config.mjs';
 // suffix after a complete private token; never accept a partial secret.
 export function normalizeTrackingHash(hash,saved=[]){
  const value=String(hash||'').replace(/^#/,'');
- const match=value.match(/^(comunidade-pagamento|acompanhar|pagamento)\/([A-Z0-9-]+)(?:\/([^/]*))?$/);
+ const match=value.match(/^(comunidade-pagamento|acompanhar|pagamento|pedido)\/([A-Z0-9-]+)(?:\/([^/]*))?$/);
  if(!match)return hash;
  const [,route,code,raw='']=match;
  const clean=raw.match(/^([a-f0-9]{64})(?:[?&].*)?$/)?.[1];
