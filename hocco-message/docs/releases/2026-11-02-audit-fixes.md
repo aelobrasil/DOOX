@@ -13,3 +13,5 @@ Permanece apenas o registro necessário à conferência financeira e ao acompanh
 Validação: 292 testes automatizados; smoke SQL transacional com rollback confirma exclusão de conteúdo, preservação financeira, idempotência e proteção de LIVE/devolução/revisão. Prévia em produção: seis mensagens antigas elegíveis e dois casos financeiros preservados. A regra foi inicialmente instalada com agendamento pausado e ativada após publicação das telas compatíveis.
 
 Advisors: nenhum novo alerta; um WARN de proteção contra senhas vazadas depende do plano do Supabase. Tabelas de acesso exclusivo do servidor continuam sem políticas públicas por projeto.
+
+Execução em produção: conteúdo de seis mensagens antigas removido; seis registros financeiros mínimos preservados. Rotina de cinco minutos ativa. Novas mensagens e pendências permanecem na operação.
