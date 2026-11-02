@@ -133,3 +133,72 @@ html{scroll-padding-bottom:100px}body.cinema-app{font:16px/1.6 var(--ui-font);ba
  .cinema-app .cinema-tabs button{flex:1 1 calc(50% - 8px);white-space:normal}
  .cinema-app .empty{padding:20px 16px}
 }
+
+/* Streaming homepage: cinematic hero, story shelf and distinct participation area. */
+.cinema-app.streaming-home header{background:#090909ed;border-bottom:1px solid #ffffff12;min-height:76px;padding-inline:3.5%;max-width:none}
+.cinema-app.streaming-home header .brand{font-size:32px;letter-spacing:-1.5px}.cinema-app.streaming-home header .brand small{display:none}
+.cinema-app.streaming-home .cinema-home{padding-top:0;max-width:1800px;margin:0 auto}
+.cinema-app.streaming-home .founder-notice{position:relative;inset:auto;width:93%;margin:12px auto;max-height:none}
+.cinema-app.streaming-home .cinema-hero{display:block;min-height:0;border-radius:0;overflow:hidden;background:#090909}
+.cinema-app.streaming-home .cinema-copy{position:relative;z-index:2;width:100%;max-width:820px;padding:46px 6% 26px;min-height:390px}
+.cinema-app.streaming-home .cinema-coming{font-size:11px;letter-spacing:.24em;color:#eee;text-transform:uppercase;margin-bottom:14px}
+.cinema-app.streaming-home .cinema-copy h1{font-family:'DM Sans',Arial,sans-serif;font-weight:900;font-size:clamp(76px,8.5vw,132px);line-height:.95;letter-spacing:-.065em;margin:0}
+.cinema-app.streaming-home .cinema-part{font-size:clamp(23px,2.8vw,40px);font-weight:400;letter-spacing:.35em;line-height:1.3;margin:4px 0 14px;text-transform:uppercase}
+.cinema-app.streaming-home .cinema-tagline{font-family:'DM Sans',Arial,sans-serif;font-size:clamp(22px,2.2vw,32px);font-weight:700;line-height:1.25;max-width:650px;margin:0 0 8px;letter-spacing:-.025em}
+.cinema-app.streaming-home .cinema-original{font-size:15px;line-height:1.6;color:#d0ccc7;margin:0 0 22px;max-width:540px}
+.cinema-app.streaming-home .cinema-shade{background:linear-gradient(90deg,#090909f5 0%,#090909bd 32%,#09090922 70%),linear-gradient(0deg,#090909 0%,transparent 38%)}
+.cinema-app.streaming-home .cinema-actions{display:flex;flex-direction:row;justify-content:flex-start;gap:16px;margin:0;max-width:none}
+.cinema-app.streaming-home .cinema-actions .cinema-primary,.cinema-app.streaming-home .streaming-participation .cinema-primary{background:#e50914;color:white;border:1px solid #e50914;border-radius:7px;min-height:48px;padding:12px 24px;font-size:16px;font-weight:700;box-shadow:none;text-decoration:none}
+.cinema-app.streaming-home .cinema-actions .cinema-secondary{background:#10101070;color:#fff;border:1px solid #b7b2ac;border-radius:7px;min-height:48px;padding:12px 24px;font-size:15px;box-shadow:none}
+.cinema-app.streaming-home .cinema-toolbar{position:relative;z-index:4;display:grid;grid-template-columns:44px minmax(170px,260px) minmax(200px,1fr) 48px minmax(100px,160px);align-items:center;gap:16px;padding:8px 6% 24px;min-height:0;background:transparent}
+.cinema-app.streaming-home .cinema-hero .cinema-controls{display:contents}
+.cinema-app.streaming-home .cinema-toolbar .cinema-age-rating{position:static;grid-column:1;grid-row:1;width:40px;height:44px;min-height:44px;margin:0;border-radius:5px;background:#f4ca0c;color:#151515;font-size:25px}
+.cinema-app.streaming-home .cinema-rating-caption{position:static;grid-column:2;grid-row:1;width:auto;max-width:none;margin:0;min-height:0;font-size:12px;line-height:1.5}
+.cinema-app.streaming-home .cinema-sound{grid-column:3;grid-row:1;display:flex;flex-wrap:wrap;gap:10px;max-width:none;margin:0;min-width:0}
+.cinema-app.streaming-home .cinema-sound button{border:0;padding:8px 0;background:transparent;color:#eee;min-height:44px;font-size:12px;white-space:normal}
+.cinema-app.streaming-home .cinema-sound :is(.sound-wave){display:none}.cinema-app.streaming-home .sound-volume{width:70px}.cinema-app.streaming-home .sound-volume input{width:70px;min-height:32px;padding:0}
+.cinema-app.streaming-home .cinema-motion{position:static;grid-column:4;grid-row:1;margin:0;min-height:44px;background:transparent;border:0}
+.cinema-app.streaming-home .cinema-progress{position:static;grid-column:5;grid-row:1;display:flex;justify-content:flex-end;gap:7px;width:auto;padding:0;margin:0}
+.cinema-app.streaming-home .cinema-progress button{width:22px;height:32px;min-height:32px;padding:8px 5px;flex:none;background:transparent;border:0}
+.cinema-app.streaming-home .cinema-progress button span{width:10px;height:10px;display:block;border-radius:50%;background:#ffffff55;animation:none}
+.cinema-app.streaming-home .cinema-progress button[aria-current=true] span{background:#ff6b12}
+.cinema-app.streaming-home .cinema-thumbnails{display:none}
+.cinema-app.streaming-home .cinema-rating-advisory{position:absolute;left:6%;right:auto;bottom:82px;max-width:290px;width:calc(100% - 32px);margin:0}
+.cinema-app.streaming-home .cinema-frame-art-label{font-size:10px;opacity:.7}
+.cinema-app.streaming-home .cinema-arrow{width:32px;opacity:.5}
+.streaming-shelf,.streaming-participation{width:88%;margin:0 auto 24px;box-sizing:border-box}
+.streaming-shelf-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.streaming-shelf h2{font-size:25px;margin:0}.streaming-shelf-heading>a{font-size:13px;color:#c9c3bd;text-decoration:none}
+.streaming-story-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.streaming-story-card{position:relative;display:block;aspect-ratio:16/9;border:1px solid #ffffff24;border-radius:5px;overflow:hidden;color:#fff;text-decoration:none;background:#171717;isolation:isolate}
+.streaming-story-card img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .2s}
+.streaming-story-card:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#000e,transparent 65%);z-index:0}
+.streaming-story-card span{position:absolute;bottom:10px;left:12px;right:12px;font-size:14px;font-weight:700;line-height:1.3;z-index:1}
+.streaming-story-card:hover img{transform:scale(1.04)}
+.streaming-participation{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:18px 24px;border:1px solid #ffffff30;border-radius:9px;background:linear-gradient(90deg,#2d1a10,#191919 45%);margin-top:24px}
+.streaming-participation h2{font-size:23px;margin:0 0 4px}.streaming-participation p{font-size:13px;color:#c9c3bd;margin:0}.streaming-participation>a{white-space:nowrap;flex:none}
+.cinema-app.streaming-home .cinema-tabs{width:88%;padding:0 0 18px;margin:0 auto;gap:12px;border-bottom:1px solid #ffffff1c;background:transparent;justify-content:flex-start;min-height:0}
+.cinema-app.streaming-home .cinema-tabs button{border-radius:5px;background:transparent;color:#bdb8b2;border:1px solid #ffffff24;padding:8px 18px;font-size:13px;flex:none}
+.cinema-app.streaming-home .cinema-social-grid{width:88%;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;margin:24px auto}
+.cinema-app.streaming-home .cinema-social-grid>section{border:0;box-shadow:none;border-radius:0;background:transparent;padding:0;min-height:0}
+.cinema-app.streaming-home .cinema-social-grid h2{font-size:25px}.cinema-app.streaming-home .cinema-community-intro-card{grid-column:1;grid-row:1}.cinema-app.streaming-home .cinema-business-invitation{grid-column:2;grid-row:1;border-left:1px solid #ffffff26;padding-left:32px}
+.cinema-app.streaming-home .cinema-live-card{grid-column:1/-1;grid-row:2;border-top:1px solid #ffffff26;padding-top:24px}
+.cinema-app.streaming-home .cinema-figurantes{justify-content:flex-start;margin:18px 0;gap:14px}
+.cinema-app.streaming-home :is(.cinema-community-feed,.cinema-sponsors,.cinema-live-queue,.cinema-bottom-actions,.cinema-editorial){width:88%;margin:24px auto}
+@media(max-width:1000px){.cinema-app.streaming-home .cinema-toolbar{grid-template-columns:44px minmax(150px,1fr) minmax(180px,1fr) 44px}.cinema-app.streaming-home .cinema-progress{grid-column:1/-1;grid-row:2;justify-content:center}.streaming-story-track{gap:10px}.streaming-story-card span{font-size:12px;left:8px;bottom:8px}.streaming-participation h2{font-size:20px}}
+@media(max-width:700px){
+ .cinema-app.streaming-home header{padding:12px 16px;min-height:68px}.cinema-app.streaming-home header .brand{font-size:28px}
+ .cinema-app.streaming-home .cinema-copy{padding:160px 24px 28px;min-height:0;max-width:none}
+ .cinema-app.streaming-home .cinema-coming{font-size:10px;letter-spacing:.16em}.cinema-app.streaming-home .cinema-copy h1{font-size:clamp(70px,22vw,96px)}
+ .cinema-app.streaming-home .cinema-part{font-size:27px;letter-spacing:.3em}.cinema-app.streaming-home .cinema-tagline{font-size:25px}.cinema-app.streaming-home .cinema-original{font-size:14px}
+ .cinema-app.streaming-home .cinema-actions{flex-direction:column;gap:12px}.cinema-app.streaming-home .cinema-actions :is(a,button){width:100%;min-height:48px}
+ .cinema-app.streaming-home .cinema-toolbar{grid-template-columns:44px minmax(0,1fr) 48px;padding:12px 24px 24px;gap:12px;background:#090909}
+ .cinema-app.streaming-home .cinema-rating-caption{grid-column:2/-1;grid-row:1;font-size:13px}.cinema-app.streaming-home .cinema-sound{grid-column:1/3;grid-row:2;gap:8px}.cinema-app.streaming-home .cinema-motion{grid-column:3;grid-row:2}.cinema-app.streaming-home .cinema-progress{grid-row:3}
+ .cinema-app.streaming-home .cinema-rating-advisory{left:16px;bottom:150px}
+ .streaming-shelf,.streaming-participation,.cinema-app.streaming-home :is(.cinema-tabs,.cinema-social-grid,.cinema-community-feed,.cinema-sponsors,.cinema-live-queue,.cinema-bottom-actions,.cinema-editorial){width:calc(100% - 32px)}
+ .streaming-shelf-heading{align-items:baseline}.streaming-shelf h2{font-size:23px}.streaming-shelf-heading>a{font-size:12px}
+ .streaming-story-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 0 12px}.streaming-story-card{flex:0 0 78%;scroll-snap-align:start}.streaming-story-card span{font-size:16px;left:14px;bottom:12px}
+ .streaming-participation{flex-direction:column;align-items:stretch;gap:16px;padding:20px 16px}.streaming-participation h2{font-size:22px}.streaming-participation p{font-size:14px}.streaming-participation>a{text-align:center}
+ .cinema-app.streaming-home .cinema-tabs{flex-wrap:wrap;gap:8px}.cinema-app.streaming-home .cinema-tabs button{flex:1 1 28%;padding:10px 8px;min-height:48px}.cinema-app.streaming-home .cinema-series-label{width:100%}
+ .cinema-app.streaming-home .cinema-social-grid{grid-template-columns:minmax(0,1fr);gap:24px}.cinema-app.streaming-home .cinema-social-grid>section{grid-column:1;grid-row:auto;min-width:0;padding:0 0 24px;border:0;border-bottom:1px solid #ffffff26}.cinema-app.streaming-home .cinema-social-grid h2{font-size:24px}
+ .cinema-app.streaming-home .cinema-figurantes{flex-wrap:wrap}.cinema-app.streaming-home .cinema-figurantes .avatar-portrait{width:48px;height:48px}
+}
