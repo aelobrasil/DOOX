@@ -207,3 +207,16 @@ html{scroll-padding-bottom:100px}body.cinema-app{font:16px/1.6 var(--ui-font);ba
 .cinema-app.streaming-home .cinema-hero .cinema-prev{left:12px;right:auto}
 .cinema-app.streaming-home .cinema-hero .cinema-next{right:12px;left:auto}
 @media(max-width:700px){.cinema-app.streaming-home .cinema-hero .cinema-arrow{top:110px}}
+/* Payment and tracking use an independent white/blue surface. */
+.cinema-app :is(.payment-screen,.payment-card){background:#f6faff;color:#163455;border:1px solid #d5e3f1;box-shadow:none;border-radius:18px}
+.cinema-app :is(.payment-screen,.payment-card) :is(h1,h2,h3,strong,.section-title,.section-title em,.eyebrow,.subheading,.quote){color:#163455}
+.cinema-app :is(.payment-screen,.payment-card) :is(.paper,.payment-card,.tracking-progress){background:#fff;color:#163455;border:1px solid #d5e3f1;border-radius:14px;box-shadow:none}
+.cinema-app :is(.payment-screen,.payment-card) :is(p,.hint,small,.payment-kicker,.payment-note,.community-profile-summary span){color:#4c6680}
+.cinema-app :is(.payment-screen,.payment-card) .payment-note,.cinema-app :is(.payment-screen,.payment-card) .payment-mark{background:#eaf4ff;color:#1266b4}
+.cinema-app :is(.payment-screen,.payment-card) :is(.btn,.payment-primary){background:#126bc5;border:1px solid #126bc5;color:#fff}
+.cinema-app :is(.payment-screen,.payment-card) :is(.btn.secondary,.btn.ghost){background:#fff;color:#1266b4;border:1px solid #99c2e8}
+.cinema-app :is(.payment-screen,.payment-card) .badge{background:#eaf4ff;color:#1266b4;border-color:#c3ddf5}
+.cinema-app :is(.payment-screen,.payment-card) .payment-amount{color:#1266b4}
+.cinema-app :is(.payment-screen,.payment-card) a:not(.btn){color:#1266b4}
+.tracking-progress{padding:24px;margin:24px 0}.tracking-progress h2{font-size:22px;margin:0 0 20px}.tracking-progress ol{list-style:none;padding:0;margin:0;display:grid;gap:0}.tracking-progress li{display:flex;gap:14px;align-items:flex-start;padding:0 0 24px;position:relative}.tracking-progress li:not(:last-child):before{content:'';position:absolute;left:17px;top:35px;bottom:0;width:2px;background:#d5e3f1}.tracking-progress li>span{display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:50%;background:#edf3f9;color:#54708b;font-size:16px;font-weight:700;z-index:1}.tracking-progress li.is-complete>span{background:#126bc5;color:#fff}.tracking-progress li>div{min-width:0;display:grid;gap:3px}.tracking-progress li strong{font-size:15px;line-height:1.5}.tracking-progress li small{font-size:13px}.tracking-progress p{font-size:14px;line-height:1.6;margin:0 0 8px}.tracking-progress>small{font-size:12px}
+@media(max-width:700px){.tracking-progress{padding:20px 16px}.tracking-progress h2{font-size:21px}}
