@@ -3,7 +3,7 @@ export async function createSponsorPix({accessToken,code,priceCents,email,cnpj,c
  if(!/^HC-SP-[A-F0-9]{12}$/.test(code)||!Number.isSafeInteger(priceCents)||priceCents<1||priceCents>999999)throw Error('Pedido Pix inválido.');
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email||''))throw Error('Confira o e-mail cadastrado para gerar o Pix.');
  if(!/^\d{14}$/.test(cnpj||''))throw Error('Para este cadastro, continue pelo checkout seguro para pagar.');
- const expires=Math.min(Date.parse(createdAt)+48*3600000,now+24*3600000);
+ const expires=Date.parse(createdAt)+48*3600000;
  if(!Number.isFinite(expires)||expires-now<30*60000)throw Error('Continue pelo checkout seguro para conferir o prazo do pagamento.');
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hocco:sponsor:'+code+':pix'));
  const idempotency=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
