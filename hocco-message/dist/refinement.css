@@ -77,3 +77,59 @@ html{scroll-padding-bottom:100px}body.cinema-app{font:16px/1.6 var(--ui-font);ba
 .cinema-app .cinema-hero .cinema-controls{position:relative;left:auto;right:auto;bottom:auto;grid-template-columns:minmax(200px,1fr) auto 44px;margin-right:210px;width:auto;gap:20px}
 @media(max-width:1199px){.cinema-app .cinema-hero .cinema-controls{grid-template-columns:minmax(0,1fr) 44px;margin-right:190px;gap:12px}}
 @media(max-width:700px){.cinema-app .cinema-hero .cinema-controls{display:grid;grid-template-columns:minmax(0,1fr) 44px;margin:0;padding-bottom:8px;gap:12px}.cinema-app .cinema-hero .cinema-progress{position:static;grid-column:1/-1;width:100%;margin:0;padding:0}.cinema-app .cinema-sound{max-width:100%}.cinema-app .cinema-motion{margin:0}.cinema-app .cinema-toolbar .cinema-age-rating{left:20px;right:auto;bottom:18px;width:38px;height:44px}.cinema-app .cinema-rating-caption{left:70px;right:20px;bottom:18px;width:auto;max-width:calc(100% - 90px);min-height:44px;display:flex;align-items:center;font-size:12px;line-height:1.5}}
+
+/* Mobile layout: let content set card height and give every control its own space. */
+@media(max-width:700px){
+ .cinema-app{font-size:16px;line-height:1.6}
+ .cinema-app main,.cinema-app main section,.cinema-app main form,.cinema-app main fieldset{min-width:0;box-sizing:border-box}
+ .cinema-app main :is(h1,h2,h3,p,label,.hint,.badge){overflow-wrap:anywhere}
+ .cinema-app main :is(input:not([type=checkbox]):not([type=radio]),select,textarea){min-width:0;max-width:100%;font-size:16px}
+ .cinema-app :is(.btn,button:not(.cinema-progress button):not(.cinema-thumbnails button),.sponsor-join){min-height:48px}
+ .cinema-app .cinema-home{padding-top:0}
+ .cinema-app .founder-notice{position:relative;inset:auto;width:calc(100% - 32px);max-height:none;margin:12px 16px;overflow:visible}
+ .cinema-app .cinema-hero{min-height:0}
+ .cinema-app .cinema-copy{padding:160px 24px 40px;min-height:0}
+ .cinema-app .cinema-copy h1{font-size:clamp(64px,21vw,88px)}
+ .cinema-app .cinema-actions{flex-direction:column;align-items:stretch;width:100%;gap:12px}
+ .cinema-app .cinema-toolbar{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:16px 12px;padding:20px 16px;background:#101010}
+ .cinema-app .cinema-hero .cinema-controls{grid-column:1/-1;grid-row:1;grid-template-columns:minmax(0,1fr) 48px;padding:0;gap:16px 12px;min-width:0}
+ .cinema-app .cinema-sound{width:100%;max-width:none;gap:12px;flex-wrap:wrap}
+ .cinema-app .cinema-toolbar .cinema-age-rating{position:static;grid-column:1;grid-row:2;width:44px;height:48px;margin:0}
+ .cinema-app .cinema-rating-caption{position:static;grid-column:2;grid-row:2;width:auto;max-width:none;min-height:0;margin:0;font-size:13px}
+ .cinema-app .cinema-rating-advisory{position:static;grid-column:1/-1;grid-row:3;width:auto;max-width:100%;margin:0}
+ .cinema-app .cinema-social-grid>section{min-height:0;height:auto;padding:24px 20px}
+ .cinema-app .cinema-location,.cinema-app .location-filters,.cinema-app .sponsor-field-grid>.location-filters{grid-template-columns:minmax(0,1fr);gap:16px}
+ .cinema-app .profile-screen{padding:16px 0;background:transparent}
+ .cinema-app .profile-card{grid-template-columns:minmax(0,1fr);gap:20px;padding:24px 16px}
+ .cinema-app .profile-card>*{grid-column:1;min-width:0;max-width:100%}
+ .cinema-app .profile-avatar-button{width:112px;height:112px;justify-self:center}
+ .cinema-app .profile-identity{gap:12px;width:100%}
+ .cinema-app .profile-identity input{min-height:48px;padding:10px 0;line-height:1.4;letter-spacing:0}
+ .cinema-app .profile-photo-hint{font-size:14px;line-height:1.6}
+ .cinema-app .profile-stats{grid-template-columns:minmax(0,1fr);gap:12px;margin:24px 0}
+ .cinema-app .profile-stat{padding:16px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+ .cinema-app .profile-stat span{font-size:15px}
+ .cinema-app .profile-history-card{grid-template-columns:5px minmax(0,1fr) 16px;gap:12px;padding:16px 12px}
+ .cinema-app .profile-history-copy{min-width:0}
+ .cinema-app .profile-history-status{grid-column:2;max-width:none;justify-self:start;white-space:normal}
+ .cinema-app .profile-reset{flex-direction:column;align-items:stretch;gap:16px}
+ .cinema-app .payment-screen{padding:20px 12px}
+ .cinema-app .payment-card{padding:20px 12px;margin:24px 0}
+ .cinema-app .payment-heading,.cinema-app .payment-product{align-items:flex-start;gap:16px}
+ .cinema-app .payment-heading>.badge{margin-left:0;white-space:normal}
+ .cinema-app .payment-product{flex-direction:column}
+ .cinema-app .destination-picker{grid-template-columns:minmax(0,1fr);gap:16px}
+ .cinema-app .destination-option>span{min-height:0;height:auto;padding:18px;gap:8px}
+ .cinema-app .destination-option b,.cinema-app .destination-option strong{font-size:16px}
+ .cinema-app .destination-option small{font-size:14px;min-height:0}
+ .cinema-app .sponsor-directory-heading{flex-direction:column;align-items:stretch}
+ .cinema-app .sponsor-directory-grid,.cinema-app .sponsor-field-grid,.cinema-app .sponsor-upload-grid{grid-template-columns:minmax(0,1fr);gap:20px}
+ .cinema-app .sponsor-form-card{padding:24px 16px}
+ .cinema-app .sponsor-form-card .field label{font-size:15px;line-height:1.5;margin-bottom:8px}
+ .cinema-app .sponsor-form-card .field small,.cinema-app .sponsor-form-card .check,.cinema-app .sponsor-form-actions p{font-size:14px;line-height:1.6}
+ .cinema-app .sponsor-form-card input:not([type=file]):not([type=checkbox]),.cinema-app .sponsor-form-card select{min-height:48px;font-size:16px}
+ .cinema-app .sponsor-form-actions{gap:16px}
+ .cinema-app .cinema-tabs{flex-wrap:wrap}
+ .cinema-app .cinema-tabs button{flex:1 1 calc(50% - 8px);white-space:normal}
+ .cinema-app .empty{padding:20px 16px}
+}
