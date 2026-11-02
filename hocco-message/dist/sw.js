@@ -1,4 +1,4 @@
-const CACHE='hocco-message-shell-v58';
+const CACHE='hocco-message-shell-v59';
 const SHELL=["/","/index.html","/cliente/","/cliente/index.html","/cliente/entry.mjs","/ir-alem/","/ir-alem/index.html","/ir-alem/app.mjs","/style.css","/cinema.css","/refinement.css","/experience.mjs","/config.mjs","/payment-state.mjs","/avatars.mjs","/app.mjs","/cinema.mjs","/cinema-shell.mjs","/location.mjs","/city-offers.mjs","/navigation-ui.mjs","/carousel-advisory.mjs","/community-carousel.mjs","/community-reactions.mjs","/purchase-draft.mjs","/support.mjs","/pwa.mjs","/policies.mjs","/manifest.webmanifest","/assets/hocco-message-icon.svg"];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

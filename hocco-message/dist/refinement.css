@@ -202,3 +202,8 @@ html{scroll-padding-bottom:100px}body.cinema-app{font:16px/1.6 var(--ui-font);ba
  .cinema-app.streaming-home .cinema-social-grid{grid-template-columns:minmax(0,1fr);gap:24px}.cinema-app.streaming-home .cinema-social-grid>section{grid-column:1;grid-row:auto;min-width:0;padding:0 0 24px;border:0;border-bottom:1px solid #ffffff26}.cinema-app.streaming-home .cinema-social-grid h2{font-size:24px}
  .cinema-app.streaming-home .cinema-figurantes{flex-wrap:wrap}.cinema-app.streaming-home .cinema-figurantes .avatar-portrait{width:48px;height:48px}
 }
+.cinema-app.streaming-home .cinema-actions .cinema-participation-cta{order:0}
+.cinema-app.streaming-home .cinema-hero .cinema-arrow{top:35%;bottom:auto}
+.cinema-app.streaming-home .cinema-hero .cinema-prev{left:12px;right:auto}
+.cinema-app.streaming-home .cinema-hero .cinema-next{right:12px;left:auto}
+@media(max-width:700px){.cinema-app.streaming-home .cinema-hero .cinema-arrow{top:110px}}

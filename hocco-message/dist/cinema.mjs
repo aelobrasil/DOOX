@@ -3,7 +3,7 @@ import {suggestCity} from './location.mjs';
 import {mountCarouselAdvisory} from './carousel-advisory.mjs';
 import {cityOffers} from './city-offers.mjs';
 export const cinemaGallery=[
- {image:'/assets/cinema/streaming-hero.webp',alt:'Balanço vazio diante de uma escola, com uma borboleta laranja sobre o assento',label:'O começo',position:'center',mobilePosition:'78% center'},
+ {image:'/assets/cinema/origin-v2.webp',alt:'Balanço vazio diante de uma escola, com uma borboleta laranja sobre o assento',label:'O começo',position:'center',mobilePosition:'78% center'},
  {image:'/assets/cinema/instant-v2.webp',alt:'Leito hospitalar vazio iluminado pela janela, com uma borboleta laranja na cabeceira',label:'O instante',position:'center',mobilePosition:'76% center'},
  {image:'/assets/cinema/transformation-v2.webp',alt:'Borboleta laranja em um galho ao lado da crisálida vazia, em um cenário em preto e branco',label:'A transformação',position:'center',mobilePosition:'75% center'},
  {image:'/assets/cinema/community-art.webp',alt:'Ilustração dos Figurantes reunidos diante da cidade',label:'Nossa comunidade',position:'65% center'},
