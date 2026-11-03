@@ -64,3 +64,6 @@ html[data-theme=light] body.cinema-app :is(.sponsor-faq,.sponsor-directory-foot)
 html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow)>header :is(.brand,nav a){color:#ecf3ff}
 html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) :is(input,textarea)::placeholder{color:#a6b5c8;opacity:1}
 html[data-theme=light] body.cinema-app .cinema-watch h1{color:#24211d}
+html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) :is(.eyebrow,.participation-price,.participation-options b){color:#86c3ff}
+html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) :is(.participation-options span,.participation-options small,.participation-links a,.field-foot,.counter,.form-bottom){color:#b9cbe2}
+html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) .payment-card :is(b,span){color:inherit}
