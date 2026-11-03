@@ -52,7 +52,7 @@ test('audit failed database write does not announce confirmed payment',async()=>
 const now=Date.parse('2026-10-27T12:00:00Z');
 for(const kind of ['community','live','video','sponsor'])test(`audit laboratory ${kind}: unpaid, paid and refund presentation`,()=>{
  const s=createScenario(kind,'Mensagem fictícia para auditoria',now);
- assert.equal(s.published_at,null);assert.equal(paymentState(s,kind,now).state,'pending');
+ assert.equal(s.published_at,null);assert.equal(paymentState(s,kind,now).state,kind==='sponsor'?'review':'pending');
  const paid=transitionScenario(s,'pay',now);
  if(kind==='sponsor'){
   assert.equal(paid.review,'pending');assert.equal(paid.published_at,null);assert.equal(paymentState(paid,kind,now).state,'review');

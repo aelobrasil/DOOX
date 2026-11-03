@@ -31,9 +31,9 @@ test('team controls cannot confirm a pending payment manually', () => {
   assert.match(edge, /O pagamento só pode ser confirmado automaticamente pelo Mercado Pago/);
 });
 
-test('sponsor curation waits for verified payment and rejection requests a provider refund when available', () => {
-  assert.match(edge, /A curadoria só pode começar após a confirmação do pagamento pelo Mercado Pago/);
+test('sponsor curation precedes payment and legacy paid rejection requests a provider refund', () => {
+  assert.match(edge, /Resolva a revisão financeira antes da aprovação/);
   assert.match(edge, /externalReference:paymentReference\('sponsor',s\.code\)/);
   assert.match(edge, /updates\.payment='refunded'/);
-  assert.match(admin, /Aguardando pagamento confirmado/);
+  assert.match(admin, /Aguardando análise antes do pagamento/);
 });
