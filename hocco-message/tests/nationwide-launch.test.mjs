@@ -26,9 +26,20 @@ test('expired benefit does not conceal an otherwise active sponsor',()=>{
  assert.equal(publicBenefit(offers[3],t),'');
  assert.equal(publicBenefit(offers[0],t),'10% OFF');
 });
+test('city-only discovery on home and directory retains registration UF and core controls',()=>{
+ const directory=readFileSync(new URL('../dist/ir-alem/app.mjs',import.meta.url),'utf8');
+ assert.match(directory,/Sua cidade está na HOCCO/);
+ assert.match(directory,/data-hocco-city/);
+ assert.doesNotMatch(directory,/id="directory-uf"/);
+ assert.match(directory,/id="sponsor-state"/);
+ const src=readFileSync(new URL('../dist/cinema.mjs',import.meta.url),'utf8');
+ assert.match(src,/Sua cidade está na HOCCO/);
+ assert.doesNotMatch(src,/id="cinema-uf"/);
+ assert.match(src,/data-cinema-city/);
+});
 test('hero mounts national-safe selector and retains core participation controls',()=>{
  const src=readFileSync(new URL('../dist/cinema.mjs',import.meta.url),'utf8');
- assert.match(src,/publicOffers\(rows,\{city,uf,category\}\)/);
+ assert.match(src,/publicOffers\(rows,\{city,category\}\)/);
  assert.match(src,/publicBenefit\(s\)/);
  assert.match(src,/id="cinema-participate"/);
  assert.match(src,/id="community-send"/);
