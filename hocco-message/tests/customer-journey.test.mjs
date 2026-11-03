@@ -6,7 +6,7 @@ const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
 
 test('the customer tracking tab has a renderer and opens private links for video orders', () => {
   assert.match(app, /function renderLookup\(\)/);
-  assert.match(app, /if\(parts\[0\]==='acompanhar'&&parts\.length===1\)return renderLookup\(\)/);
+  assert.match(app, /if\(parts\[0\]==='acompanhar'&&parts\.length===1\)\{renderLookup\(\);startSavedSync\(\);return\}/);
   assert.match(app, /tracking-link-form/);
   assert.match(app, /location\.hash=`#\$\{kind\}\/\$\{code\}\/\$\{secret\}`/);
 });

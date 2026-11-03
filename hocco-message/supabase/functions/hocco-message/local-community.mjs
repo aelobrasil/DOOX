@@ -9,8 +9,8 @@ export function validateLocation(input){
  return {city,state_code:state,offer_conditions:input.offerEnabled?conditions:'',offer_expires_on:input.offerEnabled&&date?date:null};
 }
 export function validateProgramming(input){
- const topic=String(input.topic||'').trim(),liveTitle=String(input.liveTitle||'').trim(),liveAt=String(input.liveAt||''),capacity=Number(input.capacity);
- if(topic.length>180||liveTitle.length>120||!Number.isInteger(capacity)||capacity<1||capacity>500||typeof input.accepting!=='boolean'||liveAt&&!Number.isFinite(Date.parse(liveAt)))throw Error('Confira assunto, título, horário e capacidade da LIVE.');
+ const topic=String(input.topic||'').trim(),liveTitle=String(input.liveTitle||'').trim(),liveAt=String(input.liveAt||''),capacity=50;
+ if(topic.length>180||liveTitle.length>120||typeof input.accepting!=='boolean'||liveAt&&!Number.isFinite(Date.parse(liveAt)))throw Error('Confira assunto, título, horário da LIVE.');
  if(input.accepting&&((liveAt&&Date.parse(liveAt)<=Date.now())||liveTitle.length<2))throw Error('Defina um título e, se informar uma data, escolha um horário futuro.');
  return {topic,liveTitle,liveAt,capacity,accepting:input.accepting};
 }
