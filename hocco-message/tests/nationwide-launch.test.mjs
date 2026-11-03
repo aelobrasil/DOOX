@@ -47,3 +47,13 @@ test('hero mounts national-safe selector and retains core participation controls
  assert.match(src,/id="cinema-sound"/);
  assert.match(src,/href="#enviar"/);
 });
+
+test('city name alone returns matching companies across UFs without hiding homonyms',()=>{
+ const companies=[{id:'same-sp',city:'Santa Helena',state_code:'SP',community_offer:''},{id:'same-pr',city:'Santa Helena',state_code:'PR',community_offer:''},{id:'other',city:'Ibitinga',state_code:'SP',community_offer:''}];
+ assert.deepEqual(publicOffers(companies,{city:'SANTA HELENA'}).map(x=>x.id),['same-sp','same-pr']);
+});
+test('no audience threshold appears in sponsor onboarding UI',()=>{
+ const directory=readFileSync(new URL('../dist/ir-alem/app.mjs',import.meta.url),'utf8');
+ assert.match(directory,/Cadastros abertos para empresas de todo o Brasil/);
+ assert.doesNotMatch(directory,/100 acessos|100 visitantes|100 visualiza[cç]/i);
+});
