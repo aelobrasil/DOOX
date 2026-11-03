@@ -1,4 +1,8 @@
 import {esc} from './config.mjs';
+export function privateTrackingHash(order,page='acompanhar'){
+ const route=/^HC-CM-[A-F0-9]{12}$/.test(order.code||'')?'comunidade-pagamento':page;
+ return `${route}/${order.code}/${order.trackingToken}`;
+}
 // Providers may append checkout metadata after the hash. Only remove a query
 // suffix after a complete private token; never accept a partial secret.
 export function normalizeTrackingHash(hash,saved=[]){
@@ -8,7 +12,7 @@ export function normalizeTrackingHash(hash,saved=[]){
  const [,route,code,raw='']=match;
  const clean=raw.match(/^([a-f0-9]{64})(?:[?&].*)?$/)?.[1];
  const key=clean||(!raw||/^[?&]/.test(raw)?saved.find(item=>item.code===code&&/^[a-f0-9]{64}$/.test(item.trackingToken||''))?.trackingToken:null);
- return key?'#'+route+'/'+code+'/'+key:hash;
+ return key?'#'+privateTrackingHash({code,trackingToken:key},route):hash;
 }
 export function communityProgress(post,now=Date.now()){
  const removed=!!post.content_removed_at,expired=!!post.published_at&&Number.isFinite(Date.parse(post.expires_at))&&Date.parse(post.expires_at)<=now;
