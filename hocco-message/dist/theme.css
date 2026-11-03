@@ -69,7 +69,7 @@ html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) :is
 html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) .payment-card :is(b,span){color:inherit}
 
 /* Legible form hierarchy in both themes, including formerly pale nested cards. */
-body.business-flow .sponsor-signup-layout,body.participation-flow{--form-ink:#172b46;--form-muted:#455b74;--form-surface:#edf4fc}
+body.business-flow,body.participation-flow{--form-ink:#172b46;--form-muted:#455b74;--form-surface:#edf4fc}
 body.business-flow :is(.sponsor-form-card,.sponsor-signup-story),body.participation-flow :is(.paper,.price){color:var(--form-ink)}
 body.business-flow :is(.wizard-price,.sponsor-notice-options,.sponsor-value-card,.sponsor-security-note),body.participation-flow .price{background:var(--form-surface);color:var(--form-ink);border:1px solid #b8cadf}
 body.business-flow :is(.hint,small,.sponsor-form-title p,.sponsor-story-lead,.sponsor-process small,.sponsor-price-note,.wizard-progress small),body.participation-flow .price small{color:var(--form-muted)}
@@ -86,3 +86,13 @@ body.business-flow .business-how{padding:20px 0;line-height:1.65;color:var(--for
 body.business-flow .business-how ol{padding-left:22px;display:grid;gap:8px}
 body.business-flow .sponsor-wizard-step{min-width:0}
 body.business-flow .registration-review dd{overflow-wrap:anywhere;margin:0 0 14px}
+
+.cinema-app.business-flow .business-form-intro{padding:0 0 24px;margin:0 0 24px;border-bottom:1px solid var(--theme-border)}
+.cinema-app.business-flow .business-form-intro h1{font-size:clamp(26px,5vw,36px);line-height:1.18;letter-spacing:-.7px;margin:0 0 12px}
+.cinema-app.business-flow .business-form-intro p{margin:0 0 16px;line-height:1.6}
+.cinema-app.business-flow .business-form-intro .business-how{padding:0}
+.cinema-app.business-flow .business-form-intro .business-how ol{font-size:14px;margin:10px 0 0;gap:6px}
+.cinema-app.business-flow .business-form-intro summary{cursor:pointer;font-weight:700}
+html[data-theme=light] body.cinema-app.business-flow .business-form-intro :is(h1,p,summary,li){color:#172b46}
+html[data-theme=dark] body.cinema-app.business-flow .business-form-intro :is(h1,summary){color:#e3ebf6}
+html[data-theme=dark] body.cinema-app.business-flow .business-form-intro :is(p,li){color:#b4c4d9}
