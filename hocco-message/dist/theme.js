@@ -5,7 +5,7 @@
  const paint=value=>{
   const theme=valid(value)?value:'dark';root.dataset.theme=theme;root.style.colorScheme=theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='light'?'#f7f5f1':'#090909');
-  const button=document.querySelector('#theme-toggle');if(button){button.textContent=theme==='light'?'☾':'☀';button.setAttribute('aria-label',theme==='light'?'Ativar tema escuro':'Ativar tema claro');button.setAttribute('aria-pressed',String(theme==='light'));button.title=theme==='light'?'Tema claro · mudar para escuro':'Tema escuro · mudar para claro'}
+  const button=document.querySelector('#theme-toggle');if(button){button.innerHTML=theme==='light'?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>';button.setAttribute('aria-label',theme==='light'?'Ativar tema escuro':'Ativar tema claro');button.setAttribute('aria-pressed',String(theme==='light'));button.title=theme==='light'?'Tema claro · mudar para escuro':'Tema escuro · mudar para claro'}
  };
  paint(read());
  const mount=()=>{if(!document.querySelector('#theme-toggle')){const header=document.querySelector('body>header');if(header){const button=document.createElement('button');button.type='button';button.id='theme-toggle';button.className='theme-toggle';button.addEventListener('click',()=>{const next=root.dataset.theme==='light'?'dark':'light';try{localStorage.setItem(key,next)}catch{}paint(next)});const before=header.querySelector('.avatar,#install-app');header.insertBefore(button,before);}}paint(root.dataset.theme)};

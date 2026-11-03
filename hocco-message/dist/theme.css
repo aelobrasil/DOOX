@@ -52,3 +52,15 @@ html[data-theme=light] .cinema-app :is(.cinema-business-actions a,.cinema-tiktok
 html[data-theme=light] .cinema-app .cinema-business-invitation :is(h2,strong){color:#24211d}
 html[data-theme=light] .cinema-app :is(.cinema-rating-caption,.cinema-copy .cinema-original){color:#ddd}
 html[data-theme=dark] .cinema-app.participation-flow .participation-preview summary{color:#86c3ff}
+html[data-theme=light] body.cinema-app .profile-identity :is(#profile-name,#profile-username){background:#fff;color:#24211d;border-color:#b5ada4}
+html[data-theme=light] body.cinema-app .profile-stat :is(span,small){color:#625b54}
+html[data-theme=light] body.cinema-app .profile-stat strong{color:#24211d}
+html[data-theme=light] .cinema-app :is(.profile-active,.profile-active span){color:#c8f2d2}
+.theme-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html[data-theme=light] body.cinema-app :is(#app,#sponsor-app) :is(h1,h2,h3,h4,label,legend){color:#24211d}
+html[data-theme=light] body.cinema-app :is(#app,#sponsor-app) :is(.cinema-hero,.video-preview,.cinema-watch-poster) :is(h1,h2,h3,h4,label,legend){color:#fff}
+html[data-theme=light] body.cinema-app :is(.sponsor-faq,.sponsor-company,.company-description,.company-offer,.sponsor-offer-box){background:#fff;color:#24211d;border-color:#dcd6cf}
+html[data-theme=light] body.cinema-app :is(.sponsor-faq,.sponsor-directory-foot) :is(p,span){color:#625b54}
+html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow)>header :is(.brand,nav a){color:#ecf3ff}
+html[data-theme=dark] body.cinema-app:is(.participation-flow,.business-flow) :is(input,textarea)::placeholder{color:#a6b5c8;opacity:1}
+html[data-theme=light] body.cinema-app .cinema-watch h1{color:#24211d}
