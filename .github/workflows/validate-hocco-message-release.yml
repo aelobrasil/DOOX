@@ -26,7 +26,6 @@ jobs:
         run: |
           node --check dist/city-offers.mjs
           node --check dist/cinema.mjs
-          node --check supabase/functions/hocco-message/index.ts || true
       - name: Run full application regression suite
         working-directory: hocco-message
         run: npm test
