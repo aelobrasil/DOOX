@@ -1,0 +1,54 @@
+/* Global preference applies to all public routes, dialogs and checkout flows. */
+html[data-theme=light]{color-scheme:light;--ui-surface:#fff;--ui-raised:#f0ede8;--ui-muted:#625b54;--ui-line:#dcd6cf;--theme-bg:#f7f5f1;--theme-text:#24211d;--theme-card:#fff;--theme-muted:#625b54;--theme-border:#dcd6cf}
+html[data-theme=dark]{color-scheme:dark;--theme-bg:#090909;--theme-text:#f7f3ed;--theme-card:#181716;--theme-muted:#c1bbb5;--theme-border:#ffffff26}
+.cinema-app>header .theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;flex:0 0 44px;padding:0;border:1px solid var(--theme-border);border-radius:50%;background:var(--theme-card);color:var(--theme-text);font-size:24px;line-height:1;cursor:pointer}
+html[data-theme] body.cinema-app{background:var(--theme-bg);color:var(--theme-text);--ui-surface:var(--theme-card);--ui-muted:var(--theme-muted);--ui-line:var(--theme-border)}
+html[data-theme=light] .cinema-app :is(header,.bottom-nav,footer){background:#f7f5f1;color:#24211d;border-color:#dcd6cf}
+html[data-theme=light] .cinema-app :is(header .brand,header nav a,.bottom-nav a,footer .brand,.header-search,.participation-back){color:#24211d}
+html[data-theme=light] .cinema-app :is(header nav a.active,.bottom-nav a.active){color:#b44a00}
+html[data-theme=light] .cinema-app :is(.profile-screen,.cinema-watch,.cinema-editorial,.paper,.profile-card,.profile-history-card,.profile-history-empty,.profile-reset,.payment-card,.payment-method,.sponsor-form-card,.sponsor-directory-card,.sponsor-card,.sponsor-profile,.sponsor-price-card,.legal-summary,.note,.empty,.community-empty,.live-queue-empty,.cinema-sponsor-empty,.search-results,.cinema-search-results a,.install-help,dialog,.destination-option>span,.participation-options>button,.participation-options>a){background:#fff;color:#24211d;border-color:#dcd6cf;box-shadow:none}
+html[data-theme=light] .cinema-app :is(.profile-stats .profile-stat,.profile-history,.acceptance-box,.legal-text,.sponsor-wizard-panel,.community-profile-summary,.participation-dialog-shell,.participation-scene,.form-side,.checkout,.tracking){background:#f7f5f1;color:#24211d;border-color:#dcd6cf}
+html[data-theme=light] .cinema-app :is(.profile-screen,.cinema-watch,.cinema-editorial,.paper,.profile-card,.profile-history-card,.profile-history-empty,.profile-stat,.payment-screen,.checkout,.tracking,.sponsor-profile,.sponsor-directory-card,.sponsor-form-card,.sponsor-wizard,.legal-page,.info-page,dialog,.participation-dialog-shell) :is(h1,h2,h3,h4,strong,label,legend,dt,dd){color:#24211d}
+html[data-theme=light] .cinema-app :is(.profile-screen,.cinema-watch,.cinema-editorial,.paper,.profile-history-card,.profile-stat,.payment-screen,.checkout,.tracking,.sponsor-profile,.sponsor-directory-card,.sponsor-form-card,.sponsor-wizard,.legal-page,.info-page,dialog) :is(p,small,.hint,.subheading,.lead){color:#625b54}
+html[data-theme=light] .cinema-app :is(.hint,.profile-photo-hint,.subheading,.payment-note,.sponsor-price-note small,.section-eyebrow,.cinema-section-heading>a,.home-view-all,.footer-info-link,.revenue-note,.doox-origin,.community-heading p,.profile-heading p,.profile-identity .profile-photo-hint,.live-availability){color:#625b54}
+html[data-theme=light] .cinema-app :is(.community-heading h2,.cinema-section-heading h2,.streaming-shelf h2,.streaming-participation h2,.cinema-business-invitation h2,.profile-history-heading h2,.cinema-live-queue h2){color:#24211d}
+html[data-theme=light] .cinema-app :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background:#fff;color:#24211d;border-color:#b5ada4}
+html[data-theme=light] .cinema-app input::placeholder,html[data-theme=light] .cinema-app textarea::placeholder{color:#756d65;opacity:1}
+html[data-theme=light] .cinema-app.streaming-home :is(.community-card,.live-queue-item){background:#fff;border-color:#dcd6cf;color:#24211d}
+html[data-theme=light] .cinema-app.streaming-home :is(.community-card>p,.live-queue-item p,.community-identity strong,.live-queue-item strong){color:#24211d}
+html[data-theme=light] .cinema-app.streaming-home :is(.community-identity span,.community-identity small,.live-queue-item small,.community-brand-reaction){color:#625b54}
+html[data-theme=light] .cinema-app :is(.community-like,.community-scroll-controls button,.cinema-tabs button,.home-view-all,.cinema-categories button,.watch-tabs a,.close,.btn.secondary,.btn.ghost,.cinema-secondary,.cinema-search-results a){background:#eee9e2;color:#24211d;border-color:#d3cbc1}
+html[data-theme=light] .cinema-app :is(.cinema-tabs button.is-active,.cinema-categories button.is-active,.watch-tabs a[aria-current=page],.community-like.is-liked){background:#ffe4cc;color:#903900;border-color:#d76c16}
+html[data-theme=light] .cinema-app :is(.streaming-participation,.founder-notice){background:#f5e9da;color:#3b2a18;border-color:#d9bea0}
+html[data-theme=light] .cinema-app :is(.eyebrow,.section-eyebrow){color:#a74400}
+html[data-theme=light] .cinema-app :is(.error,.profile-reset-button){color:#ae1828}
+html[data-theme=light] .cinema-app .badge{background:#eee9e2;color:#443c34}
+html[data-theme=light] .cinema-app :is(.cinema-copy,.cinema-toolbar,.cinema-watch-poster,.streaming-story-card,.video-preview){color:#fff}
+html[data-theme=light] .cinema-app :is(.cinema-copy,.cinema-toolbar,.cinema-watch-poster,.video-preview) :is(h1,p,small,strong,span){color:inherit}
+html[data-theme=light] .cinema-app .cinema-copy h1 span{color:#ff7900}
+html[data-theme=light] .cinema-app .cinema-copy .cinema-secondary{background:#10101070;color:#fff;border-color:#b7b2ac}
+html[data-theme=light] .cinema-app.streaming-home .cinema-toolbar{background:transparent}
+html[data-theme=light] .cinema-app .cinema-toolbar .cinema-age-rating{background:#f4ca0c;color:#151515}
+/* Payment and registration keep their blue identity in both selected themes. */
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow){background:#0b1422;color:#ecf3ff;--ui-surface:#142237;--ui-muted:#b9cbe2;--ui-line:#334b68;--theme-card:#142237;--theme-bg:#0b1422;--theme-text:#ecf3ff;--theme-muted:#b9cbe2;--theme-border:#334b68}
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow) :is(header,footer,.participation-dialog-shell,.participation-scene,.form-side,.checkout,.tracking,.payment-screen,.community-profile-summary,.paper,.payment-card,.payment-method,.sponsor-form-card,.sponsor-wizard,.sponsor-wizard-panel,.destination-option>span,.participation-options>button,.participation-options>a,#community-form,.acceptance-box,dialog){background:#142237;color:#ecf3ff;border-color:#334b68;box-shadow:none}
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow) :is(h1,h2,h3,strong,label,legend,dt,dd,.participation-back,.participation-dialog-brand,.participation-progress strong,.quote,.destination-option b,.destination-option strong){color:#ecf3ff}
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow) :is(p,small,.hint,.subheading,.lead,.destination-option small,.community-profile-summary span){color:#b9cbe2}
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background:#0b1422;color:#ecf3ff;border-color:#526b88}
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow) :is(.close,.btn.secondary,.btn.ghost){background:#203550;color:#ecf3ff;border-color:#526b88}
+html[data-theme=dark] .cinema-app:is(.participation-flow,.business-flow) .destination-option input:checked+span{background:#193f68;border-color:#65b8ff}
+html[data-theme=light] .cinema-app .destination-option input:checked+span{background:#fff0e2;border-color:#d96a11}
+html[data-theme=light] .cinema-app .official-poster-dialog{background:#090909;color:#fff}
+@media(max-width:700px){.cinema-app>header .theme-toggle{width:38px;height:38px;min-width:38px;flex-basis:38px;font-size:22px}.cinema-app>header{gap:8px}.cinema-app>header .header-search{margin-left:auto}}
+html[data-theme] .cinema-app.participation-flow>header>.theme-toggle{display:inline-flex!important;margin-left:0}
+html[data-theme=dark] .cinema-app.participation-flow>header .brand{color:#ecf3ff}
+html[data-theme=dark] .cinema-app.participation-flow :is(.participation-preview,.note,.tracking-progress,.participation-options>button,.participation-options>a){background:#142237;color:#ecf3ff;border-color:#334b68}
+html[data-theme=dark] .cinema-app.participation-flow .section-title em{color:#86c3ff}
+html[data-theme=dark] .cinema-app.participation-flow a:not(.btn):not(.brand){color:#86c3ff}
+html[data-theme=dark] .cinema-app.participation-flow :is(.badge,.tracking-progress li){background:#203550;color:#ecf3ff;border-color:#526b88}
+@media(max-width:700px){html[data-theme] .cinema-app.participation-flow>header .participation-back{font-size:12px;max-width:145px}html[data-theme] .cinema-app.participation-flow>header .brand{font-size:24px}}
+html[data-theme=light] .cinema-app :is(.cinema-business-invitation,.cinema-sponsors,#home-programming,.streaming-participation,.profile-history-empty,.legal-text) :is(p,small,label,legend,span){color:#625b54}
+html[data-theme=light] .cinema-app :is(.cinema-business-actions a,.cinema-tiktok,.streaming-shelf-heading>a,.profile-history-heading>a,.profile-info-link,.cinema-bottom-actions a){color:#954000}
+html[data-theme=light] .cinema-app .cinema-business-invitation :is(h2,strong){color:#24211d}
+html[data-theme=light] .cinema-app :is(.cinema-rating-caption,.cinema-copy .cinema-original){color:#ddd}
+html[data-theme=dark] .cinema-app.participation-flow .participation-preview summary{color:#86c3ff}

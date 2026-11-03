@@ -11,6 +11,6 @@ export function validateLocation(input){
 export function validateProgramming(input){
  const topic=String(input.topic||'').trim(),liveTitle=String(input.liveTitle||'').trim(),liveAt=String(input.liveAt||''),capacity=Number(input.capacity);
  if(topic.length>180||liveTitle.length>120||!Number.isInteger(capacity)||capacity<1||capacity>500||typeof input.accepting!=='boolean'||liveAt&&!Number.isFinite(Date.parse(liveAt)))throw Error('Confira assunto, título, horário e capacidade da LIVE.');
- if(input.accepting&&(!liveAt||Date.parse(liveAt)<=Date.now()||liveTitle.length<2))throw Error('Defina título e data futura para abrir a fila da LIVE.');
+ if(input.accepting&&((liveAt&&Date.parse(liveAt)<=Date.now())||liveTitle.length<2))throw Error('Defina um título e, se informar uma data, escolha um horário futuro.');
  return {topic,liveTitle,liveAt,capacity,accepting:input.accepting};
 }
