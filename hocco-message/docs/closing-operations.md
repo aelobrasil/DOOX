@@ -1,4 +1,24 @@
-# Operação após esta publicação
+# Controle simplificado · versão de 3 de novembro de 2026
+
+O menu principal tem cinco áreas: **Início**, **Compras e mensagens**, **Empresas**, **Financeiro** e **Gestão**. As telas antigas continuam acessíveis pelos comandos de operação e cartões da Gestão; nenhuma ação de curadoria, pagamento, histórico ou limpeza foi removida.
+
+A busca do cabeçalho pesquisa nome público, nome de empresa, contato empresarial, cidade, código e @ nos registros já carregados pela equipe. Os resultados de mensagens e empresas são identificados por modalidade; a busca não transfere nome completo, telefone ou IP do cofre privado para a lista geral. A área de Remetentes mantém a consulta privada durante as 48h. A lista de compras começa pelos pagamentos confirmados e possui filtros e páginas de 50 registros.
+
+Os cartões de operação usam detalhes expansíveis. As ações existentes, histórico, aceites, imagens e campos permanecem nos detalhes. A aprovação da empresa, aprovação da mensagem e leitura da LIVE ficam acessíveis como ação rápida quando disponíveis. Configurações menos frequentes ficam recolhidas na própria área.
+
+## Conteúdo e LIVE
+
+**Gestão → Conteúdo e LIVE** salva em uma transação o vídeo em destaque e a programação. A LIVE pode ter link HTTPS do YouTube ou TikTok. O link aparece na área da LIVE do app; abrir a fila para receber mensagens é uma opção separada. A rota `/#live` abre o app na seção da LIVE. O editor antigo permanece acessível na área avançada.
+
+## Avisos manuais do app
+
+**Gestão → Notificações do app** permite escrever um aviso, escolher um destino interno e conferir a quantidade de aparelhos autorizados antes da confirmação. Os destinos são Início, Vídeo em destaque, Comunidade, LIVE, envio de participação ou Empresas. Links externos são administrados no conteúdo; os avisos abrem primeiro o app.
+
+Públicos: aparelhos ausentes há 48h, aparelhos cujo último pedido associado está pago, ou todos os aparelhos autorizados. A contagem é de aparelhos, não pessoas únicas. A confirmação cria uma campanha na fila do servidor, processada a cada cinco minutos. A chave idempotente evita duplicar a campanha em uma repetição do mesmo envio. A entrega continua respeitando o cancelamento da inscrição e a validade do serviço push.
+
+O histórico apresenta quantidade selecionada, aceita pelo serviço push, pendente, falha e ignorada. Interromper um aviso cancela os próximos envios e não recolhe notificações já enviadas. Uma execução interrompida não repete automaticamente anúncios manuais de entrega incerta. Campanhas encerradas são eliminadas após 90 dias. Nenhum aviso manual foi enviado a clientes nesta publicação; os testes usam transações revertidas e transportes simulados.
+
+## Operação e retenção
 
 ## Controle
 

@@ -5,9 +5,10 @@ export function pushDeviceToken(create=false){try{let key=localStorage.getItem(K
 const supported=()=>typeof Notification!=='undefined'&&'serviceWorker'in navigator&&'PushManager'in window;
 const publicBytes=value=>Uint8Array.from(atob(value.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0));
 const setEnabled=value=>{try{localStorage.setItem(OPT,value?'true':'false')}catch{}};
-export function notificationRows(items){return items.length?items.map(x=>`<article class="app-notification-item ${x.read_at?'':'is-unread'}"><strong>${esc(x.title)}</strong><p>${esc(x.body)}</p><small>${esc(new Date(x.created_at).toLocaleString('pt-BR'))}</small><button class="btn secondary small" data-notification-read="${esc(x.id)}">${x.read_at?'Voltar ao Reality':'Ler e voltar ao Reality'}</button></article>`).join(''):'<p class="hint">Nenhuma notificação por aqui ainda.</p>'}
+export function notificationTarget(raw){try{const u=new URL(raw||'/#inicio','https://hocco-message.vercel.app');if(u.origin!=='https://hocco-message.vercel.app')return'/#inicio';const route=u.pathname+u.hash;return new Set(['/#inicio','/#assistir','/#episodios','/#comunidade','/#live','/#enviar','/ir-alem/']).has(route)?route:'/#inicio'}catch{return'/#inicio'}}
+export function notificationRows(items){return items.length?items.map(x=>`<article class="app-notification-item ${x.read_at?'':'is-unread'}"><strong>${esc(x.title)}</strong><p>${esc(x.body)}</p><small>${esc(new Date(x.created_at).toLocaleString('pt-BR'))}</small><button class="btn secondary small" data-notification-read="${esc(x.id)}">${x.read_at?'Abrir no app':'Ler e abrir no app'}</button></article>`).join(''):'<p class="hint">Nenhuma notificação por aqui ainda.</p>'}
 export function mountReturnActivity(){
- let last=0,busy=false,composing=false;const root=document.querySelector('#app');
+ let last=0,busy=false,composing=false;const root=document.querySelector('#app,#sponsor-app')||document.body;
  const configPromise=api('push.config').catch(()=>({enabled:false}));
  const registrationPromise=supported()?navigator.serviceWorker.register('/sw.js').then(()=>navigator.serviceWorker.ready).catch(()=>null):Promise.resolve(null);
  function context(){return{deviceToken:pushDeviceToken(),composing}}
@@ -29,7 +30,7 @@ export function mountReturnActivity(){
  await api('push.subscribe',{deviceToken,subscription:subscription.toJSON(),version:config.version,consent:true,noticeVersion:'2026-11-03.push.v1'});setEnabled(true);last=Date.now();enable.hidden=true;stop.hidden=false;status.textContent='Notificações ativadas neste aparelho.';
  }catch(error){status.textContent=Notification.permission==='denied'?'Você não permitiu notificações. Sua participação continua disponível.':error.message||'Não foi possível ativar as notificações.';enable.disabled=false}};
  stop.onclick=async()=>{stop.disabled=true;try{await disable();stop.hidden=true;enable.hidden=false;enable.disabled=false;status.textContent='Notificações desativadas neste aparelho.'}catch(e){status.textContent=e.message;stop.disabled=false}};
- dialog.querySelectorAll('[data-notification-read]').forEach(button=>button.onclick=async()=>{try{await api('push.read',{deviceToken:pushDeviceToken(),id:button.dataset.notificationRead});dialog.close();location.hash='inicio'}catch(e){status.textContent=e.message}});
+ dialog.querySelectorAll('[data-notification-read]').forEach(button=>button.onclick=async()=>{try{await api('push.read',{deviceToken:pushDeviceToken(),id:button.dataset.notificationRead});const item=(result.items||[]).find(x=>x.id===button.dataset.notificationRead);dialog.close();location.assign(notificationTarget(item?.url))}catch(e){status.textContent=e.message}});
  }catch(e){if(dialog.isConnected)status.textContent=e.message}
  }
  function mount(){const header=document.querySelector('body>header');if(header&&!header.querySelector('[data-app-notifications]')){const button=document.createElement('button');button.type='button';button.className='app-notification-bell';button.dataset.appNotifications='';button.setAttribute('aria-label','Notificações do HOCCO');button.title='Notificações do app';button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></svg>';button.onclick=open;header.insertBefore(button,header.querySelector('.avatar'))}

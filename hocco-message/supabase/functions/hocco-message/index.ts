@@ -1,3 +1,4 @@
+import {validateManualNotice} from './control-content.mjs';
 import {validateDeviceToken,validatePushSubscription,publicPushConfig,defaultPushSender,dispatchAppPush} from './push-reactivation.mjs';
 import {validateSenderIdentity} from './sender-identity.mjs';
 import {readAll} from './read-all.mjs';
@@ -92,7 +93,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const rows=await db('rpc/get_push_runtime_secrets','POST',{}),secrets=Array.isArray(rows)?rows[0]:rows;
    if(!secrets?.cron_secret||req.headers.get('x-hocco-cron')!==secrets.cron_secret)return reply({error:'Acesso não autorizado.'},401);
    const config=await publicPushConfig(db);if(!config.enabled||!secrets.vapid_private_key)return reply({error:'Notificações indisponíveis.'},503);
-   return reply(await dispatchAppPush({db,send:pushSender,config,privateKey:secrets.vapid_private_key,origin:PUBLIC_ORIGIN}));
+   const manual=await dispatchAppPush({db,send:pushSender,config,privateKey:secrets.vapid_private_key,origin:PUBLIC_ORIGIN,manual:true}),automatic=await dispatchAppPush({db,send:pushSender,config,privateKey:secrets.vapid_private_key,origin:PUBLIC_ORIGIN});return reply({...automatic,manual});
   }
   if(action==='reminders.run'){
    const cronSecret=env?.get('HM_REMINDER_CRON_SECRET'),authorization=req.headers.get('Authorization')||'';if(!cronSecret||authorization!=='Bearer '+cronSecret)return reply({error:'Acesso não autorizado.'},401);let sent=0,failed=0,sponsorSent=0,sponsorFailed=0;
@@ -146,6 +147,14 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const authorization=req.headers.get('Authorization');if(!authorization?.startsWith('Bearer '))return reply({error:'Entre com a conta autorizada da equipe.'},401);
    const res=await fetcher(`${url}/auth/v1/user`,{headers:{...headers,Authorization:authorization}});if(!res.ok)return reply({error:'Sessão inválida ou expirada.'},401);const user=await res.json();if(!user.id||!user.email_confirmed_at)return reply({error:'Conta não autorizada.'},403);
    const members=await db(`hm_team_members?user_id=eq.${encodeURIComponent(user.id)}&active=eq.true&select=user_id`);if(!members.length)return reply({error:'Acesso restrito à equipe HOCCO.'},403);
+   if(action==='admin.content.update'){
+    const p=b.payload||{},title=String(p.episodeTitle||'').trim(),raw=String(p.episodeUrl||'').trim();if((!title)!==(!raw)||title.length>120||raw.length>500)throw Error('Confira o título e o link do vídeo em destaque.');
+    const episodeUrl=raw?normalizeVideo(raw,0).replace('&t=0s',''):'';return reply(await db('rpc/hm_update_content_controls','POST',{p_actor:user.id,p_title:title,p_url:episodeUrl,p_programming:validateProgramming(p)}));
+   }
+   if(action==='admin.notices.history')return reply({campaigns:await db('rpc/hm_notice_history','POST',{p_actor:user.id}),channelReady:(await publicPushConfig(db)).enabled});
+   if(action==='admin.notices.preview'){const p=validateManualNotice(b.payload||{});return reply(await db('rpc/hm_notice_preview','POST',{p_actor:user.id,p_audience:p.audience}))}
+   if(action==='admin.notices.enqueue'){const p=validateManualNotice(b.payload||{});if(b.confirmed!==true||!(/^[a-f0-9-]{36}$/i).test(b.requestKey||'')||!Number.isInteger(b.expectedCount)||b.expectedCount<1)throw Error('Confira a prévia e confirme o aviso antes de enviá-lo.');return reply(await db('rpc/hm_notice_enqueue','POST',{p_actor:user.id,p_key:b.requestKey,p_payload:p,p_expected:b.expectedCount}))}
+   if(action==='admin.notices.cancel'){if(!(/^[a-f0-9-]{36}$/i).test(b.id||'')||b.confirmed!==true)throw Error('Confirme a interrupção do aviso.');return reply(await db('rpc/hm_notice_cancel','POST',{p_actor:user.id,p_id:b.id}))}
    if(action==='admin.episode.update'){
     const title=String(b.payload?.title||'').trim(),raw=String(b.payload?.url||'').trim();
     if((!title)!==(!raw)||title.length>120||raw.length>500)throw Error('Informe o título de até 120 caracteres e o link do episódio, ou deixe ambos vazios para retirar o destaque.');
@@ -316,7 +325,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
   if(action==='catalog'){
    const settings=await db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,community_enabled,live_enabled,video_enabled,community_duration_hours,founder_notice,founder_notice_active,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds');const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.video_enabled!==false&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:false,pushEnabled:(await publicPushConfig(db)).enabled,availability:[1,2].map(slot=>({slot,available:null,unlimited:true})),paymentsEnabled})
   }
-  if(action==='programming'){const cfg=(await db('hm_programming?id=eq.1&select=topic,next_live_title,next_live_at,live_accepting,updated_at'))[0];return reply({programming:cfg?{...cfg,next_live_at:Date.parse(cfg.next_live_at)>Date.now()?cfg.next_live_at:null,available:null,unlimited:true}:null})}
+  if(action==='programming'){const cfg=(await db('hm_programming?id=eq.1&select=topic,next_live_title,next_live_at,next_live_url,live_accepting,updated_at'))[0];return reply({programming:cfg?{...cfg,next_live_at:Date.parse(cfg.next_live_at)>Date.now()?cfg.next_live_at:null,available:null,unlimited:true}:null})}
   if(action==='sponsor.catalog'){const[config,rows,pix]=await Promise.all([db('hm_sponsor_settings?id=eq.1&select=price_cents,enabled'),readAll(db,'hm_sponsors?archived_at=is.null&select=id,company_name,category,city,state_code,offer_conditions,offer_expires_on,company_description,logo_url,cover_url,destination_url,community_offer,expires_at,starts_at,renewal_of,review,payment,payment_hold,created_at&order=created_at.asc'),db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name')]);const now=Date.now(),active=rows.filter(s=>s.review==='approved'&&s.payment==='confirmed'&&!s.payment_hold&&Date.parse(s.starts_at||0)<=now&&Date.parse(s.expires_at)>now);return reply({cities:await db('hm_city_markets?status=eq.open&select=city,state_code&order=city.asc&limit=1000'),settings:config[0]||{price_cents:6990,enabled:true},active:active.map(s=>({id:s.id,company_name:s.company_name,category:s.category||'Outros',city:s.city||'',state_code:s.state_code||'',offer_conditions:s.offer_conditions||'',offer_expires_on:s.offer_expires_on,company_description:s.company_description||'',logo_url:s.logo_url,cover_url:s.cover_url,destination_url:s.destination_url,community_offer:s.community_offer||'',expires_at:s.expires_at})),pix:pix[0]||{}})}
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
   const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:action==='community.like'?120:['create','sponsor.create','community.create','push.subscribe'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
@@ -334,7 +343,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     await db('rpc/hm_push_activity','POST',{p_hash:deviceHash,p_composing:b.composing===true,p_disable:action==='push.disable',p_notification:notification});return reply({ok:true});
    }
    if(action==='push.read'){if(!/^[a-f0-9-]{36}$/i.test(b.id||''))throw Error('Notificação inválida.');await db('rpc/hm_push_read','POST',{p_hash:deviceHash,p_id:b.id});return reply({ok:true})}
-   const devices=await db('hm_push_devices?device_hash=eq.'+deviceHash+'&select=enabled,failure_count&limit=1'),items=devices.length?await db('hm_push_inbox?device_hash=eq.'+deviceHash+'&select=id,title,body,created_at,read_at&order=created_at.desc&limit=50'):[];
+   const devices=await db('hm_push_devices?device_hash=eq.'+deviceHash+'&select=enabled,failure_count&limit=1'),items=devices.length?await db('hm_push_inbox?device_hash=eq.'+deviceHash+'&select=id,title,body,url,created_at,read_at&order=created_at.desc&limit=50'):[];
    return reply({enabled:Boolean(devices[0]?.enabled),paused:(devices[0]?.failure_count||0)>=3,items});
   }
   if(action==='customer.activity'){

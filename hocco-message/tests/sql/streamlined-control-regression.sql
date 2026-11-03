@@ -1,0 +1,47 @@
+begin;
+do $$
+declare actor uuid;version smallint;h1 text:=repeat('a',64);h2 text:=repeat('b',64);payload jsonb;preview jsonb;c jsonb;again jsonb;batch jsonb;item jsonb;k uuid:=gen_random_uuid();k2 uuid:=gen_random_uuid();original_count integer;before_cfg jsonb;before_program public.hm_programming;after_program public.hm_programming;
+begin
+ select t.user_id into actor from public.hm_team_members t where t.active limit 1;select vapid_version into version from public.hocco_push_config where id=true;
+ perform public.hm_push_register(h1,'{"endpoint":"https://fcm.googleapis.com/fcm/send/manual-rollback-a","keys":{"p256dh":"test","auth":"test"}}',version);
+ perform public.hm_push_register(h2,'{"endpoint":"https://fcm.googleapis.com/fcm/send/manual-rollback-b","keys":{"p256dh":"test","auth":"test"}}',version);
+ update public.hm_push_devices set last_activity_at=now()-interval '49 hours' where device_hash=h1;
+ payload:=jsonb_build_object('title','Aviso de teste','body','Aviso transacional sem envio externo.','url','/#episodios','audience','inactive');
+ preview:=public.hm_notice_preview(actor,'inactive');
+ c:=public.hm_notice_enqueue(actor,k,payload,(preview->>'recipients')::integer);
+ again:=public.hm_notice_enqueue(actor,k,payload,(preview->>'recipients')::integer);
+ if c->>'campaignId' is distinct from again->>'campaignId' or not (again->>'duplicate')::boolean then raise exception 'Duplicate campaign';end if;
+ begin perform public.hm_notice_enqueue(actor,k,payload||'{"body":"Conteúdo diferente"}',1);raise exception 'Changed retry accepted';exception when raise_exception then if sqlerrm='Changed retry accepted' then raise;end if;end;
+ batch:=public.hm_notice_claim(50);select x into item from jsonb_array_elements(batch) x where x->>'deviceHash'=h1 and x->>'campaignId'=c->>'campaignId';
+ if item is null or not public.hm_notice_dispatch_valid(h1,(item->>'dispatchId')::uuid) then raise exception 'No manual claim';end if;
+ perform public.hm_push_activity(h1,false,false,null);
+ if public.hm_notice_dispatch_valid(h1,(item->>'dispatchId')::uuid) then raise exception 'Returned device still eligible for inactive campaign';end if;
+ perform public.hm_notice_skip(h1,(item->>'dispatchId')::uuid);
+ if exists(select 1 from public.hm_push_inbox where id=(item->>'notificationId')::uuid) then raise exception 'Skipped notice left in inbox';end if;
+ preview:=public.hm_notice_preview(actor,'all');payload:=payload||'{"audience":"all","url":"/#live"}';
+ c:=public.hm_notice_enqueue(actor,k2,payload,(preview->>'recipients')::integer);batch:=public.hm_notice_claim(50);
+ select x into item from jsonb_array_elements(batch)x where x->>'deviceHash'=h2 and x->>'campaignId'=c->>'campaignId';
+ if item is null or item->>'url'<>'/#live' then raise exception 'Destination missing';end if;
+ select sent_count into original_count from public.hm_push_devices where device_hash=h2;
+ perform public.hm_notice_finish(h2,(item->>'dispatchId')::uuid,true,false,'');perform public.hm_notice_finish(h2,(item->>'dispatchId')::uuid,true,false,'');
+ if (select sent_count<>original_count+1 from public.hm_push_devices where device_hash=h2) then raise exception 'Repeated receipt counted twice';end if;
+ if not exists(select 1 from public.hm_push_inbox where id=(item->>'notificationId')::uuid and url='/#live' and status='sent') then raise exception 'Inbox mismatch';end if;
+ if not (select next_send_at>=now()+interval '48 hours' from public.hm_push_devices where device_hash=h2) then raise exception 'Automatic call not deferred';end if;
+ perform public.hm_notice_cancel(actor,(c->>'campaignId')::uuid);
+ if exists(select 1 from public.hm_notice_deliveries where campaign_id=(c->>'campaignId')::uuid and status in ('pending','claimed')) then raise exception 'Cancellation incomplete';end if;
+ if not exists(select 1 from jsonb_array_elements(public.hm_notice_history(actor)) x where x->>'id'=c->>'campaignId') then raise exception 'Missing campaign history';end if;
+ select jsonb_build_object('title',featured_episode_title,'url',featured_episode_url) into before_cfg from public.hm_settings where id=1;select * into before_program from public.hm_programming where id=1;
+ begin
+  perform public.hm_update_content_controls(actor,'Teste atômico','https://www.youtube.com/watch?v=abcdefghijk',jsonb_build_object('topic','Teste','liveTitle','Teste','liveAt','','accepting',false,'liveUrl','javascript:invalid'));
+  raise exception 'Unsafe LIVE link accepted';
+ exception when check_violation then null;end;
+ if (select jsonb_build_object('title',featured_episode_title,'url',featured_episode_url) from public.hm_settings where id=1) is distinct from before_cfg then raise exception 'Partial content update';end if;
+ perform public.hm_update_content_controls(actor,'Teste atômico','https://www.youtube.com/watch?v=abcdefghijk',jsonb_build_object('topic','Teste','liveTitle','Teste','liveAt','','accepting',false,'liveUrl','https://www.tiktok.com/@hoccpov/live'));
+ select * into after_program from public.hm_programming where id=1;
+ if after_program.next_live_url<>'https://www.tiktok.com/@hoccpov/live' then raise exception 'LIVE link not saved';end if;
+ perform public.hm_update_programming(actor,jsonb_build_object('topic','Legado','liveTitle','Teste','liveAt','','accepting',false,'capacity',50));
+ if (select next_live_url from public.hm_programming where id=1)<>'https://www.tiktok.com/@hoccpov/live' then raise exception 'Legacy edit erased LIVE link';end if;
+ if has_function_privilege('anon','public.hm_notice_enqueue(uuid,uuid,jsonb,integer)','execute') or has_table_privilege('authenticated','public.hm_notice_deliveries','select') then raise exception 'Manual push grants exposed';end if;
+end $$;
+select 'PASS: campaign idempotency, changing audience, push destination, single receipt, cancellation, atomic content/LIVE update, legacy compatibility and private access' result;
+rollback;

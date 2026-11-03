@@ -8,13 +8,14 @@ export function validatePushSubscription(input){
 }
 export async function publicPushConfig(db){const rows=await db('hocco_push_config?id=eq.true&select=enabled,vapid_public_key,vapid_version&limit=1'),c=rows[0];return{enabled:Boolean(c?.enabled&&c.vapid_public_key),publicKey:c?.vapid_public_key||'',version:c?.vapid_version||0}}
 export async function defaultPushSender(subscription,payload,options){const{sendNotification}=await import('npm:web-push-neo@0.1.2');return sendNotification(subscription,payload,options)}
-export async function dispatchAppPush({db,send,config,privateKey,origin}){
- const due=await db('rpc/hm_push_claim','POST',{p_limit:50});let sent=0,failed=0,skipped=0,cursor=0;
+export async function dispatchAppPush({db,send,config,privateKey,origin,manual=false}){
+ const due=await db(manual?'rpc/hm_notice_claim':'rpc/hm_push_claim','POST',{p_limit:50});let sent=0,failed=0,skipped=0,cursor=0;
  async function worker(){while(cursor<due.length){const item=due[cursor++];try{
- if(!await db('rpc/hm_push_dispatch_valid','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId})){skipped++;continue}
- await send({endpoint:item.endpoint,keys:item.keys},JSON.stringify({id:item.notificationId,title:item.title,body:item.body,url:'/?hocco_return='+encodeURIComponent(item.notificationId)+'#inicio',tag:'hocco-reality-return'}),{vapidDetails:{subject:origin,publicKey:config.publicKey,privateKey},TTL:3600,urgency:'normal',topic:'hocco-reality-return',signal:AbortSignal.timeout(10000)});
- await db('rpc/hm_push_finish','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId,p_sent:true,p_gone:false,p_error:''});sent++;
- }catch(error){const status=Number(error?.statusCode||error?.status||0);await db('rpc/hm_push_finish','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId,p_sent:false,p_gone:status===404||status===410,p_error:status?'Serviço push: HTTP '+status:'Falha temporária no envio push'});failed++}
+ if(!await db(manual?'rpc/hm_notice_dispatch_valid':'rpc/hm_push_dispatch_valid','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId})){if(manual)await db('rpc/hm_notice_skip','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId});skipped++;continue}
+ const target=new URL(item.url||'/#inicio',origin);if(target.origin!==origin)throw Error('Destino inválido.');target.searchParams.set('hocco_return',item.notificationId);const tag=manual?'hocco-notice-'+String(item.campaignId).replaceAll('-','').slice(0,16):'hocco-reality-return';
+ await send({endpoint:item.endpoint,keys:item.keys},JSON.stringify({id:item.notificationId,title:item.title,body:item.body,url:target.pathname+target.search+target.hash,tag}),{vapidDetails:{subject:origin,publicKey:config.publicKey,privateKey},TTL:3600,urgency:'normal',topic:tag,signal:AbortSignal.timeout(10000)});
+ await db(manual?'rpc/hm_notice_finish':'rpc/hm_push_finish','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId,p_sent:true,p_gone:false,p_error:''});sent++;
+ }catch(error){const status=Number(error?.statusCode||error?.status||0);await db(manual?'rpc/hm_notice_finish':'rpc/hm_push_finish','POST',{p_hash:item.deviceHash,p_dispatch:item.dispatchId,p_sent:false,p_gone:status===404||status===410,p_error:status?'Serviço push: HTTP '+status:'Falha temporária no envio push'});failed++}
  }}
  await Promise.all(Array.from({length:Math.min(10,due.length)},worker));return{sent,failed,skipped};
 }

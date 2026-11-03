@@ -1,3 +1,4 @@
+import {validateLiveLink} from './control-content.mjs';
 export const BRAZIL_STATES=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 export function validateLocation(input){
  const city=String(input.city||'').normalize('NFC').trim().replace(/\s+/g,' '),state=String(input.stateCode||'').trim().toUpperCase();
@@ -12,5 +13,5 @@ export function validateProgramming(input){
  const topic=String(input.topic||'').trim(),liveTitle=String(input.liveTitle||'').trim(),liveAt=String(input.liveAt||''),capacity=50;
  if(topic.length>180||liveTitle.length>120||typeof input.accepting!=='boolean'||liveAt&&!Number.isFinite(Date.parse(liveAt)))throw Error('Confira assunto, título, horário da LIVE.');
  if(input.accepting&&((liveAt&&Date.parse(liveAt)<=Date.now())||liveTitle.length<2))throw Error('Defina um título e, se informar uma data, escolha um horário futuro.');
- return {topic,liveTitle,liveAt,capacity,accepting:input.accepting};
+ return {topic,liveTitle,liveAt,capacity,accepting:input.accepting,...(Object.prototype.hasOwnProperty.call(input,'liveUrl')?{liveUrl:validateLiveLink(input.liveUrl)}:{})};
 }

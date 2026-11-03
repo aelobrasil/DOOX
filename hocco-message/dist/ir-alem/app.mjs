@@ -1,9 +1,11 @@
+import {mountReturnActivity} from '/reactivation.mjs';
 import {normalizeTrackingHash} from '/tracking-progress.mjs';
 import {mountSponsorPix} from '/pix-checkout.mjs';
 import {mountSponsorWizard} from '/sponsor-wizard.mjs';
 import {preparePurchaseDraft,clearPurchaseDraft} from '/purchase-draft.mjs';
 import {suggestCity} from '/location.mjs';
 import{api,money,esc,paymentCard,paymentFeedback,canPaySponsor}from'/config.mjs';
+mountReturnActivity();
 const app=document.querySelector('#sponsor-app');let catalog=null,timer,sponsorPoll=null,sponsorView=0;const stopSponsorPoll=()=>{clearInterval(sponsorPoll);sponsorPoll=null};
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 const citySuggestion=suggestCity();
