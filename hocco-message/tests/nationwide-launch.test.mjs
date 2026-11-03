@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {publicOffers} from '../dist/city-offers.mjs';
+import {publicOffers,publicBenefit} from '../dist/city-offers.mjs';
 import {readFileSync} from 'node:fs';
 
 const t=Date.parse('2026-11-03T15:00:00Z');
@@ -12,20 +12,24 @@ const offers=[
  {id:'expired',city:'São Paulo',state_code:'SP',community_offer:'Antigo',offer_expires_on:'2026-11-02'}
 ];
 test('home lists all current sponsors without requiring location',()=>{
- assert.deepEqual(publicOffers(offers,{},t).map(s=>s.id),['sp','rj','no-city']);
+ assert.deepEqual(publicOffers(offers,{},t).map(s=>s.id),['sp','rj','no-city','empty-offer','expired']);
 });
 test('user can filter by city, UF, category separately or in combination',()=>{
- assert.deepEqual(publicOffers(offers,{uf:'SP'},t).map(s=>s.id),['sp']);
+ assert.deepEqual(publicOffers(offers,{uf:'SP'},t).map(s=>s.id),['sp','empty-offer','expired']);
  assert.deepEqual(publicOffers(offers,{city:'RIO DE JANEIRO'},t).map(s=>s.id),['rj']);
  assert.deepEqual(publicOffers(offers,{category:'Serviços'},t).map(s=>s.id),['sp','no-city']);
  assert.deepEqual(publicOffers(offers,{city:'São Paulo',uf:'RJ'},t),[]);
 });
-test('offer expiry is honored even in nationwide mode',()=>{
- assert.deepEqual(publicOffers(offers,{city:'São Paulo'},t).map(s=>s.id),['sp']);
+test('expired benefit does not conceal an otherwise active sponsor',()=>{
+ assert.deepEqual(publicOffers(offers,{city:'São Paulo'},t).map(s=>s.id),['sp','empty-offer','expired']);
+ assert.equal(publicBenefit(offers[4],t),'');
+ assert.equal(publicBenefit(offers[3],t),'');
+ assert.equal(publicBenefit(offers[0],t),'10% OFF');
 });
 test('hero mounts national-safe selector and retains core participation controls',()=>{
  const src=readFileSync(new URL('../dist/cinema.mjs',import.meta.url),'utf8');
  assert.match(src,/publicOffers\(rows,\{city,uf,category\}\)/);
+ assert.match(src,/publicBenefit\(s\)/);
  assert.match(src,/id="cinema-participate"/);
  assert.match(src,/id="community-send"/);
  assert.match(src,/id="cinema-sponsor-content"/);
