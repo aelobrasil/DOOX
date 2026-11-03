@@ -45,3 +45,39 @@ html[data-theme=light] .cinema-app.streaming-home .streaming-participation{backg
 @media(max-width:700px){
 .cinema-app.streaming-home .cinema-copy{padding:130px 24px 20px;min-height:0}.cinema-app.streaming-home .cinema-copy h1{font-size:68px}.cinema-app.streaming-home .cinema-tagline{font-size:19px}.cinema-app.streaming-home .cinema-part{font-size:13px}.cinema-app.streaming-home .community-heading h2{font-size:27px}.cinema-app.streaming-home .community-card{padding:18px}.cinema-app.streaming-home .community-card>p{font-size:18px}.cinema-app.streaming-home .community-card-head>.avatar-portrait{width:68px;height:68px;flex-basis:68px}.cinema-app.participation-flow .participation-preview .preview-caption{flex-wrap:wrap;font-size:11px}
 }
+
+
+/* HOCCO cinematic banner — 2026-11-03. Decorative changes only; existing actions and slider runtime remain intact. */
+.cinema-app.streaming-home .cinema-hero{position:relative;isolation:isolate;background:#070707;border-radius:0 0 18px 18px;box-shadow:0 28px 80px rgba(0,0,0,.3)}
+.cinema-app.streaming-home .cinema-hero .cinema-frames{overflow:hidden}
+.cinema-app.streaming-home .cinema-hero .cinema-frame{object-fit:cover;filter:contrast(1.08) saturate(.76);transform:scale(1.025);transition:opacity .8s ease,transform 8s ease}
+.cinema-app.streaming-home .cinema-hero .cinema-frame.is-current{transform:scale(1)}
+.cinema-app.streaming-home .cinema-hero .cinema-shade{background:linear-gradient(90deg,rgba(3,3,4,.96) 0%,rgba(5,5,7,.79) 37%,rgba(5,5,7,.17) 76%),linear-gradient(0deg,#080808 0%,transparent 37%),linear-gradient(180deg,rgba(0,0,0,.30),transparent 32%)}
+.cinema-app.streaming-home .cinema-hero .cinema-copy{position:relative;z-index:2;max-width:820px;padding:clamp(48px,6vw,96px) clamp(24px,5vw,76px) 32px;min-height:clamp(460px,52vw,690px);display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.cinema-app.streaming-home .cinema-hero .cinema-coming{color:#f4c5a6;letter-spacing:.19em;font-weight:800;text-transform:uppercase}
+.cinema-app.streaming-home .cinema-hero .cinema-copy h1{font-size:clamp(72px,10vw,152px);line-height:.83;letter-spacing:-.08em;color:#fff;text-shadow:0 12px 36px rgba(0,0,0,.35);margin:14px 0 25px}
+.cinema-app.streaming-home .cinema-hero .cinema-copy h1 span{color:#ff641a}
+.cinema-app.streaming-home .cinema-hero .cinema-part{color:#ffb17f;font-size:clamp(12px,1.3vw,16px);letter-spacing:.22em}
+.cinema-app.streaming-home .cinema-hero .cinema-tagline{color:#fff;font-size:clamp(23px,3.1vw,40px);font-weight:800;line-height:1.15;max-width:570px;text-wrap:balance}
+.cinema-app.streaming-home .cinema-hero .cinema-original{color:#e2ded9;font-size:clamp(12px,1vw,15px);max-width:480px}
+.cinema-app.streaming-home .cinema-hero .cinema-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px;position:relative;z-index:3}
+.cinema-app.streaming-home .cinema-hero .cinema-actions :is(a,button){min-height:50px;border-radius:8px;font-size:14px;font-weight:800;transition:transform .18s ease,filter .18s ease}
+.cinema-app.streaming-home .cinema-hero .cinema-actions :is(a,button):hover{transform:translateY(-2px);filter:brightness(1.09)}
+.cinema-app.streaming-home .cinema-hero .cinema-participation-cta{background:#d9111b;border:1px solid #f4434b;color:#fff}
+.cinema-app.streaming-home .cinema-hero :is(button,a):focus-visible{outline:3px solid #ff9c53;outline-offset:3px}
+.cinema-app.streaming-home .cinema-sponsors{scroll-margin-top:92px}
+.cinema-app.streaming-home .cinema-sponsor-grid{gap:16px}
+.cinema-app.streaming-home .cinema-sponsor-card{border:1px solid #ffffff2e;background:#1b1b1b;transition:transform .2s,border-color .2s}
+.cinema-app.streaming-home .cinema-sponsor-card:hover{transform:translateY(-3px);border-color:#ff823d}
+.cinema-app.streaming-home .cinema-location :is(input,select){color:var(--theme-text,#f5f5f5);background:var(--theme-card,#222);border:1px solid #ffffff5a}
+@media(max-width:700px){
+ .cinema-app.streaming-home .cinema-hero{border-radius:0 0 14px 14px}
+ .cinema-app.streaming-home .cinema-hero .cinema-shade{background:linear-gradient(0deg,#070707 0%,rgba(7,7,7,.89) 25%,rgba(7,7,7,.28) 95%),linear-gradient(90deg,#07070790,transparent)}
+ .cinema-app.streaming-home .cinema-hero .cinema-copy{min-height:560px;padding:180px 20px 16px;justify-content:flex-end;max-width:100%}
+ .cinema-app.streaming-home .cinema-hero .cinema-copy h1{font-size:clamp(64px,17vw,104px);margin:9px 0 15px}
+ .cinema-app.streaming-home .cinema-hero .cinema-tagline{font-size:clamp(22px,6vw,31px);margin:10px 0}
+ .cinema-app.streaming-home .cinema-hero .cinema-actions{width:100%;gap:10px}
+ .cinema-app.streaming-home .cinema-hero .cinema-actions :is(a,button){flex:1 1 170px;min-height:46px;padding:10px 12px;font-size:12px;justify-content:center}
+ .cinema-app.streaming-home .cinema-hero .cinema-original{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.cinema-app.streaming-home .cinema-hero .cinema-frame{transform:none;transition:none}}
