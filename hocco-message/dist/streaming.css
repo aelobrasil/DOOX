@@ -81,3 +81,36 @@ html[data-theme=light] .cinema-app.streaming-home .streaming-participation{backg
  .cinema-app.streaming-home .cinema-hero .cinema-original{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.cinema-app.streaming-home .cinema-hero .cinema-frame{transform:none;transition:none}}
+
+
+/* HOCCO hero controls: compact, content-sized buttons; only participation is red. */
+.cinema-app.streaming-home .cinema-hero .cinema-actions{
+ width:auto;max-width:100%;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:10px;
+}
+.cinema-app.streaming-home .cinema-hero .cinema-actions :is(a,button){
+ width:auto;max-width:100%;flex:0 1 auto;min-height:42px;padding:9px 15px;font-size:13px;line-height:1.25;font-weight:700;border-radius:9px;
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center;
+}
+.cinema-app.streaming-home .cinema-hero .cinema-actions .cinema-primary{
+ background:#252525;color:#fff;border:1px solid #8d8d8d;box-shadow:none;
+}
+.cinema-app.streaming-home .cinema-hero .cinema-actions .cinema-participation-cta{
+ background:#d9111b;color:#fff;border:1px solid #f4434b;box-shadow:none;
+}
+.cinema-app.streaming-home .cinema-hero .cinema-actions :is(a,button) svg{width:17px;height:17px;flex:none}
+@media(max-width:700px){
+ .cinema-app.streaming-home .cinema-hero .cinema-actions{width:auto;max-width:100%;gap:8px;flex-wrap:wrap}
+ .cinema-app.streaming-home .cinema-hero .cinema-actions :is(a,button){width:auto;flex:0 1 auto;min-height:41px;padding:9px 12px;font-size:12px}
+}
+/* Restore the lateral slide animation: the streaming skin must not override
+   the translateX offsets written by the carousel controller. */
+.cinema-app.streaming-home .cinema-hero .cinema-frames{overflow:hidden}
+.cinema-app.streaming-home .cinema-hero .cinema-frame{
+ opacity:1;transform:translateX(calc(var(--slide-offset,1)*100%));
+ transition:transform .65s cubic-bezier(.22,.61,.36,1);will-change:transform;
+}
+.cinema-app.streaming-home .cinema-hero.slide-immediate .cinema-frame{transition:none}
+.cinema-app.streaming-home .cinema-hero .cinema-frame:not(.is-current):not(.is-leaving){transition:none}
+@media(prefers-reduced-motion:reduce){
+ .cinema-app.streaming-home .cinema-hero .cinema-frame{transition:none;will-change:auto}
+}
