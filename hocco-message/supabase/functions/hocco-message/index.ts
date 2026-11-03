@@ -1,3 +1,4 @@
+import {validateSenderIdentity} from './sender-identity.mjs';
 import {readAll} from './read-all.mjs';
 import {createSponsorPix} from './pix-checkout.mjs';
 import {readJsonBody} from './request-body.mjs';
@@ -10,7 +11,7 @@ import { validateCommunityPricing } from "./pricing.mjs";
 // No browser secrets. Service credentials are supplied only by the Edge runtime.
 const PUBLIC_ORIGIN='https://hocco-message.vercel.app';
 const LEGACY_PUBLIC_ORIGINS=['https://hocco.loyallion10.chatgpt.site','https://hocco-message-6gpcxo23w-aelobrasils-projects.vercel.app','https://hocco-message-git-codex-hocco-messa-7dcea7-aelobrasils-projects.vercel.app'];
-const LEGAL_VERSION='2026-10-31.v12';
+const LEGAL_VERSION='2026-11-03.v13';
 const SPONSOR_TERMS_VERSION='2026-10-19.patrocinio.v3';
 const SPONSOR_CATEGORIES=['Alimentação e bebidas','Casa e construção','Educação e cultura','Moda e acessórios','Serviços','Tecnologia','Outros'];
 export const sha=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -152,6 +153,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
     const result=await db('rpc/hm_admin_city_market','POST',{p_actor:user.id,p_city:input.city,p_uf:input.state_code,p_status:status});return reply({city:result});
    }
    if(action==='admin.sponsor.metrics'){const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);return reply({metrics:await db('hm_sponsor_daily_metrics?day=gte.'+since+'&select=day,sponsor_id,event,city,state_code,category,total&order=day.desc&limit=5000')})}
+   if(action==='admin.sender.lookup'){if(!['order','community'].includes(b.kind)||!(/^(?:HM-26-|HC-CM-)[A-F0-9]{12}$/).test(b.code||''))throw Error('Código de mensagem inválido.');return reply({sender:await db('rpc/hm_read_sender_evidence','POST',{p_actor:user.id,p_kind:b.kind,p_code:b.code,p_reason:String(b.reason||'').trim()})})}
    if(action==='admin.lab.authorize')return reply({ok:true,actorId:user.id});
    if(action==='admin.programming.update')return reply({programming:await db('rpc/hm_update_programming','POST',{p_actor:user.id,p_payload:validateProgramming(b.payload||{})})});
    if(action==='admin.programming')return reply({programming:(await db('hm_programming?id=eq.1&select=*'))[0]});
@@ -344,7 +346,7 @@ if(kind==='sponsor'&&row.payment==='pending'&&Date.parse(row.created_at||0)<Date
   }
   if(action==='sponsor.event'){if(!/^[a-f0-9-]{36}$/i.test(b.id||'')||!['profile','click'].includes(b.event))throw Error('Evento inválido.');await db('rpc/hm_count_sponsor_event','POST',{p_id:b.id,p_event:b.event});return reply({ok:true},202)}
   if(action==='community.feed'){
-   const now=encodeURIComponent(new Date().toISOString()),rows=await readAll(db,`hm_community_messages?content_removed_at=is.null&review=eq.approved&payment=eq.confirmed&payment_hold=eq.false&hidden_at=is.null&published_at=not.is.null&expires_at=gt.${now}&select=id,member_name,member_username,avatar_index,message,published_at,expires_at,likes_count&order=published_at.desc&limit=100`);
+   const now=encodeURIComponent(new Date().toISOString()),rows=await readAll(db,`hm_community_messages?destination=eq.community&content_removed_at=is.null&review=eq.approved&payment=eq.confirmed&payment_hold=eq.false&hidden_at=is.null&published_at=not.is.null&expires_at=gt.${now}&select=id,member_name,member_username,avatar_index,message,published_at,expires_at,likes_count&order=published_at.desc&limit=100`);
    return reply({messages:rows})
   }
   if(action==='community.like'){
@@ -357,12 +359,12 @@ if(kind==='sponsor'&&row.payment==='pending'&&Date.parse(row.created_at||0)<Date
   }
   if(action==='community.create'){
    if(b.terms!==true||b.legalVersion!==LEGAL_VERSION)return reply({error:'Atualize o app e confirme os termos e a autorização da mensagem.'},409);
-   const v=validateCommunityInput(b),moderation=moderateCommunityMessage(v.message);
+   const identity=validateSenderIdentity(b,req.headers),v=validateCommunityInput(b),moderation=moderateCommunityMessage(v.message);
    const controls=(await db('hm_settings?id=eq.1&select=community_enabled,live_enabled'))[0];if(!controls)throw Error('Os controles da Comunidade estão indisponíveis.');if(v.destination==='community'&&controls.community_enabled===false)return reply({error:'O envio para a Comunidade está temporariamente pausado.'},503);if(v.destination==='live'&&controls.live_enabled===false)return reply({error:'O envio para a LIVE está temporariamente pausado.'},503);
    if(!moderation.approved&&!moderation.requiresReview)return reply({error:'Esta mensagem pode não seguir as regras da Comunidade. Revise o texto e os termos antes de tentar novamente.'},422);
    if(v.destination==='live'&&b.liveScheduledAt){const cfg=(await db('hm_programming?id=eq.1&select=next_live_at'))[0];if(!cfg?.next_live_at||Date.parse(cfg.next_live_at)!==Date.parse(b.liveScheduledAt))return reply({error:'A programação da LIVE mudou. Abra novamente o envio para conferir a data.'},409)}
    const trackingHash=await sha(b.trackingToken),code='HC-CM-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
-   const post=await db('rpc/hm_create_community_purchase','POST',{p_data:{code,tracking_hash:trackingHash,name:v.name,username:v.username,avatar:v.avatar,message:v.message,destination:v.destination,requires_review:moderation.requiresReview,expected_price:b.expectedPrice,legal_version:b.legalVersion,terms:b.terms,live_scheduled_at:b.liveScheduledAt||null}});
+   const post=await db('rpc/hm_create_identified_message','POST',{p_kind:'community',p_identity:identity,p_data:{code,tracking_hash:trackingHash,name:v.name,username:v.username,avatar:v.avatar,message:v.message,destination:v.destination,requires_review:moderation.requiresReview,expected_price:b.expectedPrice,legal_version:b.legalVersion,terms:b.terms,live_scheduled_at:b.liveScheduledAt||null}});
    return reply({post:safeCommunityMessage(post),trackingToken:b.trackingToken,needsReview:moderation.requiresReview},201)
   }
   if(['community.lookup','community.payment_claim'].includes(action)){
@@ -423,8 +425,8 @@ if(kind==='sponsor'&&row.payment==='pending'&&Date.parse(row.created_at||0)<Date
   if(action!=='create'&&!['lookup','payment_claim','reminder_optout'].includes(action))return reply({error:'Ação inválida.'},400);
   if(action==='create'){
    const live=await db('hm_settings?id=eq.1&select=demo_mode,video_enabled,pix_key,payee_name,payee_city,publication_deadline,display_duration_seconds');const cfg=live[0];if(!cfg||cfg.demo_mode||cfg.video_enabled===false||!cfg.pix_key||!cfg.payee_name||!cfg.payee_city||!cfg.publication_deadline||new Date(cfg.publication_deadline)<=new Date()||!cfg.display_duration_seconds)return reply({error:'O envio de pedidos está temporariamente indisponível.'},503);
-   const v=validateInput(b),messageModeration=moderateCommunityMessage(v.message);if(!messageModeration.approved&&!messageModeration.requiresReview)return reply({error:'A mensagem contém conteúdo que não pode ser publicado. Revise as regras da HOCCO e tente novamente.'},422);if(v.optIn&&!waConfig()||v.reminderOptIn&&!waConfig(true))return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
-   const o=await db('rpc/hm_create_order','POST',{p_code:code,p_tracking_hash:hash,p_name:v.name,p_message:v.message,p_phone:v.phone,p_opt_in:v.optIn,p_reminder_opt_in:v.reminderOptIn,p_social_platform:v.platform,p_social_handle:v.handle,p_slot:b.slot,p_legal_version:b.legalVersion,p_expected_price:b.expectedPrice,p_settings_version:b.settingsVersion});
+   const identity=validateSenderIdentity(b,req.headers),v=validateInput(b),messageModeration=moderateCommunityMessage(v.message);if(!messageModeration.approved&&!messageModeration.requiresReview)return reply({error:'A mensagem contém conteúdo que não pode ser publicado. Revise as regras da HOCCO e tente novamente.'},422);if(v.optIn&&!waConfig()||v.reminderOptIn&&!waConfig(true))return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
+   const o=await db('rpc/hm_create_identified_message','POST',{p_kind:'order',p_identity:identity,p_data:{code,tracking_hash:hash,name:v.name,message:v.message,phone:v.phone,opt_in:v.optIn,reminder_opt_in:v.reminderOptIn,social_platform:v.platform,social_handle:v.handle,slot:b.slot,legal_version:b.legalVersion,expected_price:b.expectedPrice,settings_version:b.settingsVersion}});
    return reply({order:safe(o),trackingToken:b.trackingToken},201)
   }
   if(!['lookup','payment_claim','reminder_optout'].includes(action))return reply({error:'Ação inválida.'},400);
