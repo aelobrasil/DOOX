@@ -166,6 +166,9 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    if(action==='admin.programming.update')return reply({programming:await db('rpc/hm_update_programming','POST',{p_actor:user.id,p_payload:validateProgramming(b.payload||{})})});
    if(action==='admin.programming')return reply({programming:(await db('hm_programming?id=eq.1&select=*'))[0]});
    if(action==='admin.finance'){const rows=await readAll(db,'hm_payments?select=*&order=updated_at.desc');return reply({payments:rows})}
+   if(action==='admin.data.status')return reply(await db('rpc/hm_data_cleanup_status','POST',{p_actor:user.id}));
+   if(action==='admin.data.preferences'){if(typeof b.enabled!=='boolean')throw Error('Escolha a opção de limpeza automática.');return reply(await db('rpc/hm_update_cleanup_preferences','POST',{p_actor:user.id,p_enabled:b.enabled}))}
+   if(action==='admin.data.cleanup'){if(b.confirmExpired!==true)throw Error('Confira os vencidos e confirme a limpeza.');return reply(await db('rpc/hm_run_expired_cleanup','POST',{p_actor:user.id}))}
    if(action==='admin.cleanup'){
     const scope=String(b.scope||''),ids=b.ids||[];
     if(!['orders','sponsors','community','live','trash','reports','visits'].includes(scope)||!Array.isArray(ids)||ids.length>1000||ids.some(id=>!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(String(id)))||typeof b.execute!=='boolean')throw Error('Confira a área e os registros da limpeza.');

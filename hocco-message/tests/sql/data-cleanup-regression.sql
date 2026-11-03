@@ -1,0 +1,38 @@
+begin;
+do $$
+declare actor uuid;cfg public.hm_settings;unpaid jsonb;active jsonb;finished jsonb;live jsonb;identity jsonb;result jsonb;old_event bigint;recent_event bigint;
+begin
+ select t.user_id into actor from public.hm_team_members t where t.active limit 1;select * into cfg from public.hm_settings where id=1;
+ identity:=jsonb_build_object('fullName','Teste de Limpeza','phone','5511999999999','ip','203.0.113.9');
+ unpaid:=public.hm_create_identified_message('community',jsonb_build_object('code','HC-CM-ABCD11110001','tracking_hash',repeat('1',64),'name','Teste','username','teste_1','avatar',1,'message','Comentário não pago de teste','destination','community','requires_review',false,'expected_price',cfg.community_price_cents,'legal_version','2026-11-03.v13','terms',true),identity);
+ active:=public.hm_create_identified_message('community',jsonb_build_object('code','HC-CM-ABCD11110002','tracking_hash',repeat('2',64),'name','Teste','username','teste_2','avatar',1,'message','Conteúdo ativo protegido','destination','community','requires_review',false,'expected_price',cfg.community_price_cents,'legal_version','2026-11-03.v13','terms',true),identity);
+ finished:=public.hm_create_identified_message('community',jsonb_build_object('code','HC-CM-ABCD11110003','tracking_hash',repeat('3',64),'name','Teste','username','teste_3','avatar',1,'message','Conteúdo encerrado de teste','destination','community','requires_review',false,'expected_price',cfg.community_price_cents,'legal_version','2026-11-03.v13','terms',true),identity);
+ live:=public.hm_create_identified_message('community',jsonb_build_object('code','HC-CM-ABCD11110004','tracking_hash',repeat('4',64),'name','Teste','username','teste_4','avatar',1,'message','LIVE ainda na fila','destination','live','requires_review',false,'expected_price',cfg.live_price_cents,'legal_version','2026-11-03.v13','terms',true),identity);
+ update public.hm_community_messages set payment='confirmed' where code in (active->>'code',finished->>'code',live->>'code');
+ update public.hm_community_messages set published_at=now()-interval '1 hour',expires_at=now()+interval '3 hours' where code=active->>'code';
+ update public.hm_reconciliation_jobs set status='done' where kind='community' and code=finished->>'code';
+ update public.hm_community_messages set published_at=now()-interval '26 hours',expires_at=now()-interval '22 hours' where code=finished->>'code';
+ update public.hm_community_messages set live_status='queued',published_at=now()-interval '3 days',expires_at=now()-interval '2 days' where code=live->>'code';
+ update public.hm_community_messages set created_at=now()-interval '21 minutes' where code=unpaid->>'code';
+ insert into public.hm_sender_evidence(kind,code,provided_name,phone,observed_ip,recorded_at,expires_at,notice_version) values('community','HC-CM-ABCD11119999','Teste Vencido','5511999999999','203.0.113.10',now()-interval '50 hours',now()-interval '2 hours','2026-11-03.v13');
+ insert into public.hm_alex_events(event_type,route,created_at) values('site_view','/',now()-interval '31 days') returning id into old_event;
+ insert into public.hm_alex_events(event_type,route,created_at) values('site_view','/',now()) returning id into recent_event;
+ perform public.hm_update_cleanup_preferences(actor,false);
+ result:=public.hm_data_cleanup_status(actor);
+ if (result#>>'{eligible,senderExpired}')::int<1 or (result#>>'{protected,senders}')::int<4 then raise exception 'Wrong preview';end if;
+ result:=public.hm_run_expired_cleanup(actor);
+ if exists(select 1 from public.hm_community_messages where code=unpaid->>'code') then raise exception 'Unpaid not removed';end if;
+ if not exists(select 1 from public.hm_sender_evidence where code=unpaid->>'code') then raise exception 'Private identity lost early';end if;
+ if not exists(select 1 from public.hm_community_messages where code=active->>'code' and content_removed_at is null and message='Conteúdo ativo protegido') then raise exception 'Active content removed';end if;
+ if not exists(select 1 from public.hm_community_messages where code=live->>'code' and content_removed_at is null and message='LIVE ainda na fila') then raise exception 'Queued LIVE removed';end if;
+ if not exists(select 1 from public.hm_community_messages where code=finished->>'code' and content_removed_at is not null and payment='confirmed' and price_cents=cfg.community_price_cents) then raise exception 'Receipt not preserved';end if;
+ if not exists(select 1 from public.hm_sender_evidence where code=finished->>'code' and purchase->>'message'='Conteúdo encerrado de teste' and expires_at>now()) then raise exception 'Private snapshot lost';end if;
+ if exists(select 1 from public.hm_sender_evidence where code='HC-CM-ABCD11119999') then raise exception 'Expired identity not removed';end if;
+ if not exists(select 1 from public.hm_alex_events where id=old_event) then raise exception 'Disabled optional cleaning ignored';end if;
+ perform public.hm_update_cleanup_preferences(actor,true);perform public.hm_run_expired_cleanup(actor);
+ if exists(select 1 from public.hm_alex_events where id=old_event) then raise exception 'Old event not cleaned';end if;
+ if not exists(select 1 from public.hm_alex_events where id=recent_event) then raise exception 'Recent event removed';end if;
+ if has_function_privilege('anon','public.hm_data_cleanup_status(uuid)','execute') or has_function_privilege('authenticated','public.hm_run_expired_cleanup(uuid)','execute') then raise exception 'Unauthorized cleanup exposed';end if;
+end $$;
+select 'PASS: preview, deadlines, private identities, original message snapshot, receipts, queued LIVE, optional preference and restricted access' result;
+rollback;
