@@ -96,3 +96,10 @@ body.business-flow .registration-review dd{overflow-wrap:anywhere;margin:0 0 14p
 html[data-theme=light] body.cinema-app.business-flow .business-form-intro :is(h1,p,summary,li){color:#172b46}
 html[data-theme=dark] body.cinema-app.business-flow .business-form-intro :is(h1,summary){color:#e3ebf6}
 html[data-theme=dark] body.cinema-app.business-flow .business-form-intro :is(p,li){color:#b4c4d9}
+
+.cinema-app>header .app-notification-bell{width:38px;height:38px;min-width:38px;padding:8px;border:1px solid var(--theme-border);border-radius:50%;background:var(--theme-card);color:var(--theme-text);cursor:pointer;display:grid;place-items:center}
+.app-notification-bell svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cinema-app dialog.app-notifications{width:min(620px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:26px;background:var(--theme-card);color:var(--theme-text);border:1px solid var(--theme-border);border-radius:22px}
+.app-notifications .dialog-head{display:flex;justify-content:space-between;align-items:start;gap:16px}.app-notifications h2{font-size:26px;line-height:1.2;margin:0 0 12px}.app-notifications :is(p,small){line-height:1.65;color:var(--theme-muted)}
+.app-notifications .actions{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.app-notification-item{padding:20px 0;border-top:1px solid var(--theme-border)}.app-notification-item strong{font-size:18px}.app-notification-item small{display:block;margin-bottom:12px}.app-notification-item.is-unread{border-left:3px solid #f57923;padding-left:14px}
+@media(max-width:600px){.cinema-app>header .app-notification-bell{width:34px;height:34px;min-width:34px;padding:6px}.cinema-app dialog.app-notifications{padding:22px 18px}.app-notifications h2{font-size:23px}}

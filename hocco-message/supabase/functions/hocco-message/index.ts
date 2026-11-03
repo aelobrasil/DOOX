@@ -1,4 +1,4 @@
-import {reactivationConfig,reactivationPayload} from './reactivation.mjs';
+import {validateDeviceToken,validatePushSubscription,publicPushConfig,defaultPushSender,dispatchAppPush} from './push-reactivation.mjs';
 import {validateSenderIdentity} from './sender-identity.mjs';
 import {readAll} from './read-all.mjs';
 import {createSponsorPix} from './pix-checkout.mjs';
@@ -37,7 +37,7 @@ export function safeHttps(value,label='O link'){
 export function whatsappTemplatePayload(order,template,language){const phone='55'+String(order.phone||'').replace(/\D/g,'').replace(/^55/,'');if(!order.whatsapp_opt_in||!/^55[1-9][0-9]{9,10}$/.test(phone)||!order.video_url)throw Error('Pedido sem autorização ou dados de WhatsApp.');return{messaging_product:'whatsapp',to:phone,type:'template',template:{name:template,language:{code:language},components:[{type:'body',parameters:[{type:'text',text:order.name},{type:'text',text:order.code},{type:'text',text:order.video_url}]}]}}}
 export function whatsappReminderTemplatePayload(reminder,template,language,origin=PUBLIC_ORIGIN){const phone='55'+String(reminder.phone||'').replace(/\D/g,'').replace(/^55/,'');if(!/^55[1-9][0-9]{9,10}$/.test(phone)||!reminder.name)throw Error('Lembrete sem número ou nome válidos.');return{messaging_product:'whatsapp',to:phone,type:'template',template:{name:template,language:{code:language},components:[{type:'body',parameters:[{type:'text',text:reminder.name},{type:'text',text:origin}]}]}}}
 export function whatsappSponsorTemplatePayload(sponsor,kind,template,language,origin=PUBLIC_ORIGIN){const phone='55'+String(sponsor.phone||'').replace(/\D/g,'').replace(/^55/,'');if(!/^55[1-9][0-9]{9,10}$/.test(phone)||!sponsor.company_name||!['thank','expiry'].includes(kind))throw Error('Aviso de patrocinador sem consentimento ou dados válidos.');return{messaging_product:'whatsapp',to:phone,type:'template',template:{name:template,language:{code:language},components:[{type:'body',parameters:[{type:'text',text:sponsor.company_name},{type:'text',text:origin+'/ir-alem/'}]}]}}}
-export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
+export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSender=defaultPushSender){
  const origin=req.headers.get('origin');
  const origins=new Set([PUBLIC_ORIGIN,...LEGACY_PUBLIC_ORIGINS,'http://terminal.local:4173',...(env?.get('HM_PUBLIC_ORIGIN')||'').split(',').filter(Boolean),...(env?.get('HM_ALLOWED_ORIGINS')||'').split(',').filter(Boolean)]);
  const isTrustedPreviewOrigin=value=>{try{const u=new URL(value);return u.protocol==='https:'&&u.origin===value&&/^hocco-message(?:-[a-z0-9-]+)?-aelobrasils-projects\.vercel\.app$/i.test(u.hostname)}catch{return false}};
@@ -88,9 +88,14 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   if(!['sponsor.create','customer.reset'].includes(action)&&bodySize>12000)return reply({error:'Solicitação muito grande.'},413);
   if(typeof action!=='string')return reply({error:'Ação inválida.'},400);
   // The random private tracking token authenticates order access; team actions require a verified user JWT and active membership.
+  if(action==='push.run'){
+   const rows=await db('rpc/get_push_runtime_secrets','POST',{}),secrets=Array.isArray(rows)?rows[0]:rows;
+   if(!secrets?.cron_secret||req.headers.get('x-hocco-cron')!==secrets.cron_secret)return reply({error:'Acesso não autorizado.'},401);
+   const config=await publicPushConfig(db);if(!config.enabled||!secrets.vapid_private_key)return reply({error:'Notificações indisponíveis.'},503);
+   return reply(await dispatchAppPush({db,send:pushSender,config,privateKey:secrets.vapid_private_key,origin:PUBLIC_ORIGIN}));
+  }
   if(action==='reminders.run'){
    const cronSecret=env?.get('HM_REMINDER_CRON_SECRET'),authorization=req.headers.get('Authorization')||'';if(!cronSecret||authorization!=='Bearer '+cronSecret)return reply({error:'Acesso não autorizado.'},401);let sent=0,failed=0,sponsorSent=0,sponsorFailed=0;
-   const config=reactivationConfig(env);if(config){const due=await db('rpc/hm_claim_reactivation','POST',{p_limit:50});for(const item of due){try{if(!await db('rpc/hm_reactivation_dispatch_valid','POST',{p_hash:item.activityHash,p_dispatch:item.dispatchId}))continue;const payload=reactivationPayload(item,config,PUBLIC_ORIGIN);const response=await fetcher(`https://graph.facebook.com/${config.apiVersion}/${encodeURIComponent(config.sender)}/messages`,{method:'POST',headers:{Authorization:`Bearer ${config.access}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(12000)});let result={};try{result=await response.json()}catch{}if(!response.ok)throw Error(result.error?.message||'O WhatsApp recusou a mensagem.');await db('rpc/hm_finish_reactivation','POST',{p_hash:item.activityHash,p_dispatch:item.dispatchId,p_sent:true,p_detail:{messageId:result.messages?.[0]?.id||''}});sent++}catch(error){await db('rpc/hm_finish_reactivation','POST',{p_hash:item.activityHash,p_dispatch:item.dispatchId,p_sent:false,p_detail:{reason:String(error.message||'provider_error').slice(0,300)}});failed++}}}
    for(const kind of ['thank','expiry']){const sponsorConfig=sponsorWaConfig(kind);if(!sponsorConfig)continue;const due=await db('rpc/hm_claim_due_sponsor_notifications','POST',{p_kind:kind,p_limit:50});for(const sponsor of due){try{const payload=whatsappSponsorTemplatePayload(sponsor,kind,sponsorConfig.template,sponsorConfig.language,PUBLIC_ORIGIN);const response=await fetcher(`https://graph.facebook.com/${sponsorConfig.apiVersion}/${encodeURIComponent(sponsorConfig.sender)}/messages`,{method:'POST',headers:{Authorization:`Bearer ${sponsorConfig.access}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});let result={};try{result=await response.json()}catch{}if(!response.ok)throw Error(result.error?.message||'A API do WhatsApp recusou o aviso.');await db('rpc/hm_finish_sponsor_notification','POST',{p_id:sponsor.id,p_kind:kind,p_sent:true,p_detail:{messageId:result.messages?.[0]?.id||''}});sponsorSent++}catch(error){await db('rpc/hm_finish_sponsor_notification','POST',{p_id:sponsor.id,p_kind:kind,p_sent:false,p_detail:{reason:String(error.message||'provider_error').slice(0,300)}});sponsorFailed++}}}
    try{await db('hm_alex_events','POST',{event_type:'reminder_run',severity:failed||sponsorFailed?'warning':'info',detail:{sent,failed,sponsorSent,sponsorFailed}})}catch{}
    return reply({sent,failed,sponsorSent,sponsorFailed})
@@ -155,7 +160,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
    }
    if(action==='admin.sponsor.metrics'){const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);return reply({metrics:await db('hm_sponsor_daily_metrics?day=gte.'+since+'&select=day,sponsor_id,event,city,state_code,category,total&order=day.desc&limit=5000')})}
    if(action==='admin.sender.list')return reply(await db('rpc/hm_list_sender_evidence','POST',{p_actor:user.id,p_search:String(b.search||'').slice(0,120),p_offset:Math.max(0,Math.min(1000000,Math.trunc(Number(b.offset)||0)))}));
-   if(action==='admin.reactivation')return reply({...await db('rpc/hm_reactivation_dashboard','POST',{p_actor:user.id,p_offset:Math.max(0,Math.min(1000000,Math.trunc(Number(b.offset)||0)))}),channelReady:Boolean(reactivationConfig(env))});
+   if(action==='admin.reactivation')return reply({...await db('rpc/hm_push_dashboard','POST',{p_actor:user.id,p_offset:Math.max(0,Math.min(1000000,Math.trunc(Number(b.offset)||0)))}),channelReady:(await publicPushConfig(db)).enabled,channel:'push'});
    if(action==='admin.sender.lookup'){if(!['order','community'].includes(b.kind)||!(/^(?:HM-26-|HC-CM-)[A-F0-9]{12}$/).test(b.code||''))throw Error('Código de mensagem inválido.');return reply({sender:await db('rpc/hm_read_sender_evidence','POST',{p_actor:user.id,p_kind:b.kind,p_code:b.code,p_reason:String(b.reason||'').trim()})})}
    if(action==='admin.lab.authorize')return reply({ok:true,actorId:user.id});
    if(action==='admin.programming.update')return reply({programming:await db('rpc/hm_update_programming','POST',{p_actor:user.id,p_payload:validateProgramming(b.payload||{})})});
@@ -306,12 +311,29 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch){
   }
   if(action==='series.episode'){const rows=await db('hm_settings?id=eq.1&select=featured_episode_title,featured_episode_url,featured_episode_updated_at&limit=1'),s=rows[0];return reply({episode:s?.featured_episode_title&&s?.featured_episode_url?{title:s.featured_episode_title,url:s.featured_episode_url,updatedAt:s.featured_episode_updated_at}:null})}
   if(action==='catalog'){
-   const settings=await db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,community_enabled,live_enabled,video_enabled,community_duration_hours,founder_notice,founder_notice_active,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds');const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.video_enabled!==false&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:Boolean(reactivationConfig(env)),availability:[1,2].map(slot=>({slot,available:null,unlimited:true})),paymentsEnabled})
+   const settings=await db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,community_enabled,live_enabled,video_enabled,community_duration_hours,founder_notice,founder_notice_active,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds');const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.video_enabled!==false&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:false,pushEnabled:(await publicPushConfig(db)).enabled,availability:[1,2].map(slot=>({slot,available:null,unlimited:true})),paymentsEnabled})
   }
   if(action==='programming'){const cfg=(await db('hm_programming?id=eq.1&select=topic,next_live_title,next_live_at,live_accepting,updated_at'))[0];return reply({programming:cfg?{...cfg,next_live_at:Date.parse(cfg.next_live_at)>Date.now()?cfg.next_live_at:null,available:null,unlimited:true}:null})}
   if(action==='sponsor.catalog'){const[config,rows,pix]=await Promise.all([db('hm_sponsor_settings?id=eq.1&select=price_cents,enabled'),readAll(db,'hm_sponsors?archived_at=is.null&select=id,company_name,category,city,state_code,offer_conditions,offer_expires_on,company_description,logo_url,cover_url,destination_url,community_offer,expires_at,starts_at,renewal_of,review,payment,payment_hold,created_at&order=created_at.asc'),db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name')]);const now=Date.now(),active=rows.filter(s=>s.review==='approved'&&s.payment==='confirmed'&&!s.payment_hold&&Date.parse(s.starts_at||0)<=now&&Date.parse(s.expires_at)>now);return reply({cities:await db('hm_city_markets?status=eq.open&select=city,state_code&order=city.asc&limit=1000'),settings:config[0]||{price_cents:6990,enabled:true},active:active.map(s=>({id:s.id,company_name:s.company_name,category:s.category||'Outros',city:s.city||'',state_code:s.state_code||'',offer_conditions:s.offer_conditions||'',offer_expires_on:s.offer_expires_on,company_description:s.company_description||'',logo_url:s.logo_url,cover_url:s.cover_url,destination_url:s.destination_url,community_offer:s.community_offer||'',expires_at:s.expires_at})),pix:pix[0]||{}})}
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
-  const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:action==='community.like'?120:['create','sponsor.create','community.create'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
+  const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:action==='community.like'?120:['create','sponsor.create','community.create','push.subscribe'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
+  if(action==='push.config')return reply(await publicPushConfig(db));
+  if(['push.subscribe','push.activity','push.disable','push.inbox','push.read'].includes(action)){
+   const deviceHash=await sha(validateDeviceToken(b.deviceToken));
+   if(action==='push.subscribe'){
+    if(b.consent!==true||b.noticeVersion!=='2026-11-03.push.v1')throw Error('Confirme a ativação das notificações deste app.');
+    const subscription=validatePushSubscription(b.subscription),config=await publicPushConfig(db);
+    if(!config.enabled||b.version!==config.version)return reply({error:'Atualize o app e tente ativar as notificações novamente.'},409);
+    await db('rpc/hm_push_register','POST',{p_hash:deviceHash,p_subscription:subscription,p_version:config.version});return reply({ok:true});
+   }
+   if(action==='push.activity'||action==='push.disable'){
+    const notification=b.notificationId&&/^[a-f0-9-]{36}$/i.test(b.notificationId)?b.notificationId:null;
+    await db('rpc/hm_push_activity','POST',{p_hash:deviceHash,p_composing:b.composing===true,p_disable:action==='push.disable',p_notification:notification});return reply({ok:true});
+   }
+   if(action==='push.read'){if(!/^[a-f0-9-]{36}$/i.test(b.id||''))throw Error('Notificação inválida.');await db('rpc/hm_push_read','POST',{p_hash:deviceHash,p_id:b.id});return reply({ok:true})}
+   const devices=await db('hm_push_devices?device_hash=eq.'+deviceHash+'&select=enabled,failure_count&limit=1'),items=devices.length?await db('hm_push_inbox?device_hash=eq.'+deviceHash+'&select=id,title,body,created_at,read_at&order=created_at.desc&limit=50'):[];
+   return reply({enabled:Boolean(devices[0]?.enabled),paused:(devices[0]?.failure_count||0)>=3,items});
+  }
   if(action==='customer.activity'){
    if(!Array.isArray(b.tokens)||b.tokens.length>100||b.tokens.some(t=>!(/^[a-f0-9]{64}$/).test(t)))throw Error('Identificadores de atividade inválidos.');
    await db('rpc/hm_reactivation_activity','POST',{p_hashes:await Promise.all(b.tokens.map(sha)),p_disable:b.disable===true});return reply({ok:true});
@@ -366,14 +388,14 @@ if(kind==='sponsor'&&row.payment==='pending'&&Date.parse(row.created_at||0)<Date
   }
   if(action==='community.create'){
    if(b.terms!==true||b.legalVersion!==LEGAL_VERSION)return reply({error:'Atualize o app e confirme os termos e a autorização da mensagem.'},409);
-   if(b.reminderOptIn===true&&!reactivationConfig(env))return reply({error:'As mensagens de retorno estão temporariamente indisponíveis.'},503);
+   if(b.pushDeviceToken)validateDeviceToken(b.pushDeviceToken);
    const identity=validateSenderIdentity(b,req.headers),v=validateCommunityInput(b),moderation=moderateCommunityMessage(v.message);
    const controls=(await db('hm_settings?id=eq.1&select=community_enabled,live_enabled'))[0];if(!controls)throw Error('Os controles da Comunidade estão indisponíveis.');if(v.destination==='community'&&controls.community_enabled===false)return reply({error:'O envio para a Comunidade está temporariamente pausado.'},503);if(v.destination==='live'&&controls.live_enabled===false)return reply({error:'O envio para a LIVE está temporariamente pausado.'},503);
    if(!moderation.approved&&!moderation.requiresReview)return reply({error:'Esta mensagem pode não seguir as regras da Comunidade. Revise o texto e os termos antes de tentar novamente.'},422);
    if(v.destination==='live'&&b.liveScheduledAt){const cfg=(await db('hm_programming?id=eq.1&select=next_live_at'))[0];if(!cfg?.next_live_at||Date.parse(cfg.next_live_at)!==Date.parse(b.liveScheduledAt))return reply({error:'A programação da LIVE mudou. Abra novamente o envio para conferir a data.'},409)}
    const trackingHash=await sha(b.trackingToken),code='HC-CM-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
    const post=await db('rpc/hm_create_identified_message','POST',{p_kind:'community',p_identity:identity,p_data:{code,tracking_hash:trackingHash,name:v.name,username:v.username,avatar:v.avatar,message:v.message,destination:v.destination,requires_review:moderation.requiresReview,expected_price:b.expectedPrice,legal_version:b.legalVersion,terms:b.terms,live_scheduled_at:b.liveScheduledAt||null}});
-   if(b.reminderOptIn===true)await db('rpc/hm_register_reactivation','POST',{p_hash:trackingHash,p_phone:identity.phone,p_name:v.name,p_kind:'community',p_code:post.code});
+   if(b.pushDeviceToken)await db('rpc/hm_push_bind_purchase','POST',{p_hash:await sha(validateDeviceToken(b.pushDeviceToken)),p_kind:'community',p_code:post.code});
    return reply({post:safeCommunityMessage(post),trackingToken:b.trackingToken,needsReview:moderation.requiresReview},201)
   }
   if(['community.lookup','community.payment_claim'].includes(action)){
@@ -433,10 +455,11 @@ if(kind==='sponsor'&&row.payment==='pending'&&Date.parse(row.created_at||0)<Date
   }
   if(action!=='create'&&!['lookup','payment_claim','reminder_optout'].includes(action))return reply({error:'Ação inválida.'},400);
   if(action==='create'){
+   b.reminderOptIn=false;if(b.pushDeviceToken)validateDeviceToken(b.pushDeviceToken);
    const live=await db('hm_settings?id=eq.1&select=demo_mode,video_enabled,pix_key,payee_name,payee_city,publication_deadline,display_duration_seconds');const cfg=live[0];if(!cfg||cfg.demo_mode||cfg.video_enabled===false||!cfg.pix_key||!cfg.payee_name||!cfg.payee_city||!cfg.publication_deadline||new Date(cfg.publication_deadline)<=new Date()||!cfg.display_duration_seconds)return reply({error:'O envio de pedidos está temporariamente indisponível.'},503);
-   const identity=validateSenderIdentity(b,req.headers),v=validateInput(b),messageModeration=moderateCommunityMessage(v.message);if(!messageModeration.approved&&!messageModeration.requiresReview)return reply({error:'A mensagem contém conteúdo que não pode ser publicado. Revise as regras da HOCCO e tente novamente.'},422);if(v.optIn&&!waConfig()||v.reminderOptIn&&!reactivationConfig(env))return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
-   const o=await db('rpc/hm_create_identified_message','POST',{p_kind:'order',p_identity:identity,p_data:{code,tracking_hash:hash,name:v.name,message:v.message,phone:v.phone?identity.phone:'',opt_in:v.optIn,reminder_opt_in:v.reminderOptIn,social_platform:v.platform,social_handle:v.handle,slot:b.slot,legal_version:b.legalVersion,expected_price:b.expectedPrice,settings_version:b.settingsVersion}});
-   if(v.reminderOptIn)await db('rpc/hm_register_reactivation','POST',{p_hash:hash,p_phone:identity.phone,p_name:v.name,p_kind:'order',p_code:o.code});
+   const identity=validateSenderIdentity(b,req.headers),v=validateInput(b),messageModeration=moderateCommunityMessage(v.message);if(!messageModeration.approved&&!messageModeration.requiresReview)return reply({error:'A mensagem contém conteúdo que não pode ser publicado. Revise as regras da HOCCO e tente novamente.'},422);if(v.optIn&&!waConfig())return reply({error:'O canal de WhatsApp escolhido está temporariamente indisponível.'},503);const hash=await sha(b.trackingToken),code='HM-26-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
+   const o=await db('rpc/hm_create_identified_message','POST',{p_kind:'order',p_identity:identity,p_data:{code,tracking_hash:hash,name:v.name,message:v.message,phone:v.phone?identity.phone:'',opt_in:v.optIn,reminder_opt_in:false,social_platform:v.platform,social_handle:v.handle,slot:b.slot,legal_version:b.legalVersion,expected_price:b.expectedPrice,settings_version:b.settingsVersion}});
+   if(b.pushDeviceToken)await db('rpc/hm_push_bind_purchase','POST',{p_hash:await sha(validateDeviceToken(b.pushDeviceToken)),p_kind:'order',p_code:o.code});
    return reply({order:safe(o),trackingToken:b.trackingToken},201)
   }
   if(!['lookup','payment_claim','reminder_optout'].includes(action))return reply({error:'Ação inválida.'},400);
