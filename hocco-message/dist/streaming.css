@@ -1,0 +1,47 @@
+/* Contemporary streaming language, shared by the two customer themes. */
+html[data-theme=dark] body.cinema-app:not(.participation-flow):not(.business-flow){--theme-bg:#101010;--theme-card:#1b1b1b;--theme-border:#ffffff20;--theme-text:#f5f5f5;--theme-muted:#b5b5b5;--ui-raised:#242424}
+body.cinema-app{font-family:'DM Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.cinema-app :is(button,.btn,.cinema-primary,.cinema-secondary,.cinema-message-button){border-radius:7px;letter-spacing:0}
+.cinema-app>header{border-bottom:1px solid var(--theme-border);background:var(--theme-bg)}
+.cinema-app>header .brand{font-family:'DM Sans',Arial,sans-serif;font-weight:900;letter-spacing:-.055em}
+.cinema-app>header nav a{font-weight:600;font-size:14px}
+.cinema-app.streaming-home .cinema-copy h1{font-family:'DM Sans',Arial,sans-serif;font-weight:900;letter-spacing:-.065em;font-size:clamp(70px,8vw,112px);line-height:1}
+.cinema-app.streaming-home .cinema-copy{padding-top:32px;padding-bottom:22px;min-height:325px}
+.cinema-app.streaming-home .cinema-coming{font-size:10px;letter-spacing:.16em;border:0;background:transparent;padding:0;margin-bottom:10px}
+.cinema-app.streaming-home .cinema-part{font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:.18em;margin:9px 0 14px}
+.cinema-app.streaming-home .cinema-tagline{font-size:22px;font-weight:600;line-height:1.35;letter-spacing:-.02em}
+.cinema-app.streaming-home .cinema-original{font-size:13px;line-height:1.5;max-width:500px}
+.cinema-app.streaming-home .cinema-actions .cinema-primary{background:#e50914;border-color:#e50914;border-radius:6px;font-size:15px;min-height:46px}
+.cinema-app.streaming-home .cinema-actions .cinema-secondary{background:#ffffff22;border:1px solid #ffffff55;border-radius:6px;backdrop-filter:blur(8px)}
+.cinema-app.streaming-home :is(.community-heading h2,.cinema-section-heading h2){font-family:'DM Sans',Arial,sans-serif;font-weight:800;font-size:clamp(24px,2.4vw,34px);line-height:1.22;letter-spacing:-.04em}
+.cinema-app.streaming-home .section-eyebrow{font-size:10px;letter-spacing:.15em;font-weight:700}
+.cinema-app.streaming-home .community-heading p{font-size:14px;margin-top:8px}
+.cinema-app.streaming-home .cinema-message-button{border-radius:7px;background:#e50914;border-color:#e50914;color:#fff;font-weight:700;padding:12px 18px}
+.cinema-app.streaming-home .community-card{border-radius:10px;background:#1c1c1c;border-color:#ffffff1c;padding:22px;min-height:215px}
+.cinema-app.streaming-home .community-card-head>.avatar-portrait{width:72px;height:72px;flex-basis:72px;border-color:#ffffff24}
+.cinema-app.streaming-home .community-identity strong{font-size:16px;letter-spacing:-.02em}
+.cinema-app.streaming-home .community-card>p,.cinema-app.streaming-home .live-queue-item p{font-family:'DM Sans',Arial,sans-serif;font-size:18px;font-weight:500;line-height:1.55;letter-spacing:-.01em}
+.cinema-app.streaming-home .community-card-head{margin-bottom:18px}
+.cinema-app.streaming-home .community-like{border-radius:6px}
+.cinema-app.streaming-home .home-view-all{border-radius:6px;font-size:12px}
+.cinema-app.streaming-home :is(.cinema-sponsor-card,.streaming-story-card){border-radius:8px}
+.cinema-app.streaming-home .streaming-participation{border-radius:10px;background:#202020;border-color:#ffffff24}
+.cinema-app.streaming-home .streaming-participation h2{font-size:22px;font-weight:800;letter-spacing:-.03em}
+.cinema-app.streaming-home .cinema-business-invitation h2{font-size:26px;font-weight:800}
+.cinema-app :is(.profile-screen,.profile-card,.profile-history-card,.profile-stat,.profile-history-empty,.profile-reset,.cinema-watch,.cinema-editorial,.sponsor-directory-card,.sponsor-faq){border-radius:10px}
+html[data-theme=dark] body.cinema-app:not(.participation-flow):not(.business-flow) :is(.profile-screen,.profile-card,.profile-stat,.profile-history-card,.profile-history-empty,.profile-reset,.cinema-watch,.cinema-editorial,.sponsor-directory-card,.sponsor-faq){background:#1b1b1b;border-color:#ffffff20;color:#f5f5f5}
+html[data-theme=dark] .cinema-app :is(.profile-identity #profile-name,.profile-identity #profile-username){background:#242424;border-color:#ffffff2e}
+html[data-theme=dark] .cinema-app :is(.profile-stat span,.profile-photo-hint,.profile-heading p,.sponsor-directory-content p){color:#b5b5b5}
+html[data-theme=light] .cinema-app.streaming-home .community-card{background:#fff;border-color:#dedede}
+html[data-theme=light] .cinema-app.streaming-home .streaming-participation{background:#ececec;border-color:#d7d7d7}
+.cinema-app .profile-save,.cinema-app .profile-send-button{border-radius:7px}
+/* The simulation stays visible above the message form. Collapsing is optional. */
+.cinema-app.participation-flow .compose-layout>.participation-preview{order:0;display:block;padding:16px;margin:0;background:var(--theme-card);border-radius:10px}
+.cinema-app.participation-flow .compose-layout>.form-side{order:1}
+.cinema-app.participation-flow .participation-preview>.simulation-area{display:block;padding:12px 0 0}
+.cinema-app.participation-flow .participation-preview .video-preview{display:block;width:100%;aspect-ratio:16/9;border-radius:8px;background:#090909}
+.cinema-app.participation-flow .participation-preview video{display:block;width:100%;height:100%;object-fit:contain}
+.cinema-app.participation-flow .participation-preview .preview-caption{display:flex;gap:12px;justify-content:space-between;padding-top:10px;font-size:12px}
+@media(max-width:700px){
+.cinema-app.streaming-home .cinema-copy{padding:130px 24px 20px;min-height:0}.cinema-app.streaming-home .cinema-copy h1{font-size:68px}.cinema-app.streaming-home .cinema-tagline{font-size:19px}.cinema-app.streaming-home .cinema-part{font-size:13px}.cinema-app.streaming-home .community-heading h2{font-size:27px}.cinema-app.streaming-home .community-card{padding:18px}.cinema-app.streaming-home .community-card>p{font-size:18px}.cinema-app.streaming-home .community-card-head>.avatar-portrait{width:68px;height:68px;flex-basis:68px}.cinema-app.participation-flow .participation-preview .preview-caption{flex-wrap:wrap;font-size:11px}
+}
