@@ -337,3 +337,17 @@ body.cinema-app.participation-flow{background:#edf5ff;color:#142c50;--ui-muted:#
 }
 
 .sender-identification{min-width:0;margin:24px 0;padding:20px;border:1px solid var(--theme-border,#d5e3f1);border-radius:12px}.sender-identification legend{font-weight:700;padding:0 8px}.sender-identification .hint{line-height:1.7;font-size:13px}.sender-identification .field{margin-bottom:18px}
+
+/* HOCCO city discovery — browse active sponsors without a UF form field. */
+.cinema-app :is(.hocco-cities,.hocco-city-discovery){padding:clamp(18px,3vw,30px);margin:20px 0 24px;background:linear-gradient(135deg,#26180e,#141210 60%);border:1px solid #715035;border-radius:18px;color:#f6eee6}
+.cinema-app :is(.hocco-cities,.hocco-city-discovery) h2,.cinema-app .hocco-city-discovery h3{font-size:clamp(23px,3vw,31px);line-height:1.2;margin:0 0 9px;color:#fff}
+.cinema-app :is(.hocco-cities,.hocco-city-discovery)>p{font-size:14px;color:#e2cdbc;margin:0 0 16px}
+.cinema-app :is(.hocco-cities,.hocco-city-discovery) .location-filters,.cinema-app .hocco-city-discovery .cinema-location{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.cinema-app :is(.hocco-cities,.hocco-city-discovery) .field{flex:1 1 220px}
+.cinema-app .hocco-city-discovery label{color:#eee0d2;font-size:14px;font-weight:700}
+.cinema-app #cinema-city{width:min(100%,420px);min-width:220px}
+.cinema-app :is(.hocco-city-list,.hocco-city-shortcuts){display:flex;flex-wrap:wrap;gap:9px;max-height:160px;overflow:auto;scrollbar-width:thin}
+.cinema-app :is(.hocco-city-list,.hocco-city-shortcuts) button{min-height:40px;background:#241b14;color:#f4e9db;border:1px solid #8b6343;border-radius:999px;padding:8px 13px;font-size:13px;box-shadow:none}
+.cinema-app :is(.hocco-city-list,.hocco-city-shortcuts) button:hover,.cinema-app :is(.hocco-city-list,.hocco-city-shortcuts) button:focus-visible{background:#563015;border-color:#ff9b32}
+.cinema-app :is(.hocco-city-list,.hocco-city-shortcuts) small{font-size:11px;color:#ffc78e}
+@media(max-width:600px){.cinema-app :is(.hocco-cities,.hocco-city-discovery){padding:18px 14px}.cinema-app :is(.hocco-cities,.hocco-city-discovery) .location-filters,.cinema-app .hocco-city-discovery .cinema-location{align-items:stretch;flex-direction:column}.cinema-app #cinema-city{min-width:0;width:100%}.cinema-app :is(.hocco-city-list,.hocco-city-shortcuts){max-height:190px}}
