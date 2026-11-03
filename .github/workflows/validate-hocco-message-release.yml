@@ -1,0 +1,32 @@
+name: Validate HOCCO Message Release
+
+on:
+  push:
+    branches:
+      - 'hocco-message/release-readiness-*'
+      - 'hocco-message/banner-empresas-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Setup Node
+        uses: actions/setup-node@1e60f620b9541d292f52c1d4127a5e0c1f78c5a5
+        with:
+          node-version: '24'
+      - name: Check syntax
+        working-directory: hocco-message
+        run: |
+          node --check dist/city-offers.mjs
+          node --check dist/cinema.mjs
+          node --check supabase/functions/hocco-message/index.ts || true
+      - name: Run full application regression suite
+        working-directory: hocco-message
+        run: npm test
