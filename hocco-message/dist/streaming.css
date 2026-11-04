@@ -114,3 +114,17 @@ html[data-theme=light] .cinema-app.streaming-home .streaming-participation{backg
 @media(prefers-reduced-motion:reduce){
  .cinema-app.streaming-home .cinema-hero .cinema-frame{transition:none;will-change:auto}
 }
+
+/* HOCCO streaming navigation and cinematic image dissolve */
+.cinema-app.streaming-home .hocco-stream-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:22px auto 30px;max-width:1320px;padding:0 20px}
+.cinema-app.streaming-home .hocco-stream-nav a{display:grid;grid-template-columns:48px 1fr;grid-template-rows:auto auto;align-items:center;column-gap:12px;min-height:88px;padding:17px;background:linear-gradient(130deg,#242327,#141416);border:1px solid #ffffff24;border-radius:12px;text-decoration:none;color:#fff;transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.cinema-app.streaming-home .hocco-stream-nav a:hover,.cinema-app.streaming-home .hocco-stream-nav a:focus-visible{transform:translateY(-3px);border-color:#ff893e;outline-offset:3px}
+.cinema-app.streaming-home .hocco-stream-nav a>span{grid-row:1/3;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#e76b251f;border:1px solid #e76b2560;color:#ff9b5d;font-size:23px}
+.cinema-app.streaming-home .hocco-stream-nav a:nth-child(3)>span{background:#d522321c;border-color:#d5223260;color:#ff515b}
+.cinema-app.streaming-home .hocco-stream-nav strong{font-size:15px;font-weight:800;align-self:end}
+.cinema-app.streaming-home .hocco-stream-nav small{font-size:12px;color:#b9b8bb;align-self:start;line-height:1.4}
+.cinema-app.streaming-home .cinema-hero .cinema-frame{transition:opacity 1.3s ease-in-out,transform 8s ease;will-change:opacity}
+.cinema-app.streaming-home .cinema-hero .cinema-actions .cinema-primary{background:#f5f5f5!important;border-color:#f5f5f5!important;color:#151515!important}
+.cinema-app.streaming-home .cinema-hero .cinema-actions .cinema-secondary{background:#c91b25!important;border:1px solid #d52e39!important;color:#fff!important}
+@media(max-width:850px){.cinema-app.streaming-home .hocco-stream-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 14px}.cinema-app.streaming-home .hocco-stream-nav a{min-height:76px;padding:12px;grid-template-columns:38px 1fr;column-gap:9px}.cinema-app.streaming-home .hocco-stream-nav a>span{width:38px;height:38px;font-size:18px}.cinema-app.streaming-home .hocco-stream-nav strong{font-size:13px}.cinema-app.streaming-home .hocco-stream-nav small{font-size:11px}}
+@media(max-width:360px){.cinema-app.streaming-home .hocco-stream-nav a{grid-template-columns:1fr;gap:4px}.cinema-app.streaming-home .hocco-stream-nav a>span{grid-row:auto}.cinema-app.streaming-home .hocco-stream-nav small{font-size:10px}}
