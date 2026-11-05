@@ -1,4 +1,5 @@
 import {esc,money,trackExperience} from './config.mjs';
+import {mountCnpjVerification} from './cnpj-verification.mjs';
 export function mountSponsorWizard(form,price,validCnpj){
  if(!form)return;form.dataset.wizard='true';form.noValidate=true;
  const steps=[['Cadastre sua empresa','Identificação'],['Apresente sua marca','Participação e materiais'],['Confira antes de enviar','Revisão']];
@@ -13,6 +14,7 @@ export function mountSponsorWizard(form,price,validCnpj){
  const review=document.createElement('section');review.className='registration-review';panels[2].append(review);
  for(const element of [form.querySelector('.sponsor-notice-options'),form.querySelector('.sponsor-consent')])if(element)panels[2].append(element);
  form.querySelectorAll('.sponsor-field-grid,.registration-section').forEach(el=>el.remove());
+ const checkCnpj=mountCnpjVerification(form);
  const actions=form.querySelector('.sponsor-form-actions'),submit=form.querySelector('[type=submit]');panels.forEach(panel=>form.insertBefore(panel,actions));
  const navigation=document.createElement('div');navigation.className='wizard-navigation';navigation.innerHTML='<button class="btn secondary" type="button" data-wizard-back>Voltar</button><button class="btn" type="button" data-wizard-next>Continuar</button>';form.insertBefore(navigation,actions);
  const back=navigation.querySelector('[data-wizard-back]'),next=navigation.querySelector('[data-wizard-next]');let step=0;
@@ -21,7 +23,7 @@ export function mountSponsorWizard(form,price,validCnpj){
  for(const [name,selector] of [['cover','.wizard-cover'],['logo','.wizard-logo']]){const image=form.querySelector('#'+name+'-preview img');if(image){const copy=image.cloneNode();copy.alt=name==='cover'?'Prévia da capa':'Prévia do logo';review.querySelector(selector).append(copy)}}
  review.querySelector('[data-wizard-edit]').onclick=()=>show(0);trackExperience('company_review')};
  const show=index=>{step=index;panels.forEach((panel,i)=>panel.hidden=i!==step);title.textContent=steps[step][0];subtitle.textContent=(step+1)+' de 3 · '+steps[step][1];progress.innerHTML='<ol class="wizard-progress" aria-label="Etapas do cadastro">'+steps.map(([,label],i)=>'<li '+(i===step?'aria-current="step"':'')+' class="'+(i<=step?'is-active':'')+'"><span>'+(i+1)+'</span><small>'+label+'</small></li>').join('')+'</ol>';back.hidden=step===0;next.hidden=step===2;next.textContent=step===1?'Revisar cadastro':'Continuar';actions.hidden=step!==2;navigation.hidden=step===2;submit.textContent='ENVIAR SOLICITAÇÃO';if(step===2)drawReview();title.tabIndex=-1;title.focus({preventScroll:true});holder.scrollIntoView({block:'start',behavior:'smooth'})};
- back.onclick=()=>show(step-1);next.onclick=()=>{if(valid(step))show(step+1)};
- form.addEventListener('submit',event=>{if(step<2){event.preventDefault();event.stopImmediatePropagation();if(valid(step))show(step+1);return}for(let i=0;i<3;i++){if(!valid(i)){event.preventDefault();event.stopImmediatePropagation();show(i);return}}form.dataset.reviewReady='true'},true);
+ back.onclick=()=>show(step-1);next.onclick=async()=>{if(!valid(step))return;next.disabled=true;try{if(step!==0||await checkCnpj())show(step+1)}finally{next.disabled=false}};
+ form.addEventListener('submit',async event=>{if(step<2){event.preventDefault();event.stopImmediatePropagation();if(valid(step)&&(step!==0||await checkCnpj()))show(step+1);return}for(let i=0;i<3;i++){if(!valid(i)){event.preventDefault();event.stopImmediatePropagation();show(i);return}}form.dataset.reviewReady='true'},true);
  show(0);
 }
