@@ -2,7 +2,7 @@
 export const normalizeCnpj = value => String(value ?? '').toUpperCase().replace(/[^0-9A-Z]/g, '');
 export function validCnpj(value) {
  const s=normalizeCnpj(value);
- if (!/^[0-9A-Z]{12}[0-9]{2}$/.test(s) || /^(.)\1{14}$/.test(s)) return false;
+ if (!/^[0-9A-Z]{12}[0-9]{2}$/.test(s) || /^(.)\1{13}$/.test(s)) return false;
  const nums=[...s].map(ch=>ch.charCodeAt(0)-48);
  const checksum=(end,weights)=>{const rem=nums.slice(0,end).reduce((sum,n,i)=>sum+n*weights[i],0)%11;return rem<2?0:11-rem};
  return nums[12]===checksum(12,[5,4,3,2,9,8,7,6,5,4,3,2])&&nums[13]===checksum(13,[6,5,4,3,2,9,8,7,6,5,4,3,2]);
