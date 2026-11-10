@@ -21,7 +21,7 @@ declare m public.hm_community_messages; message_price integer;
 begin
  if p_code !~ '^HC-CM-[A-F0-9]{12}$' or p_tracking_hash !~ '^[a-f0-9]{64}$' then raise exception 'Identificador de envio inválido.'; end if;
  if p_destination is null or p_destination not in ('community','live') then raise exception 'Destino inválido.'; end if;
- if p_social_url is not null and p_social_url !~ '^https://www\\.(instagram\\.com/[^/]+/?|tiktok\\.com/@[^/]+/?)(\\?.*)?$' then raise exception 'Link de rede social inválido.'; end if;
+ if p_social_url is not null and p_social_url !~ '^https://www\.(instagram\.com/[^/]+/?|tiktok\.com/@[^/]+/?)(\?.*)?$' then raise exception 'Link de rede social inválido.'; end if;
  if char_length(trim(p_name)) not between 1 and 40 or p_username !~ '^[A-Za-z0-9._]{3,24}$'
     or p_avatar_index not between 1 and 20 or char_length(trim(p_message)) not between 1 and 180 then
    raise exception 'Confira seu perfil e a mensagem de até 180 caracteres.';
@@ -53,7 +53,7 @@ declare m public.hm_community_messages; message_price integer;
 begin
  if p_code !~ '^HC-CM-[A-F0-9]{12}$' or p_tracking_hash !~ '^[a-f0-9]{64}$' then raise exception 'Identificador de envio inválido.'; end if;
  if p_destination is null or p_destination not in ('community','live') then raise exception 'Destino inválido.'; end if;
- if p_social_url is not null and p_social_url !~ '^https://www\\.(instagram\\.com/[^/]+/?|tiktok\\.com/@[^/]+/?)(\\?.*)?$' then raise exception 'Link de rede social inválido.'; end if;
+ if p_social_url is not null and p_social_url !~ '^https://www\.(instagram\.com/[^/]+/?|tiktok\.com/@[^/]+/?)(\?.*)?$' then raise exception 'Link de rede social inválido.'; end if;
  if char_length(trim(p_name)) not between 1 and 40 or p_username !~ '^[A-Za-z0-9._]{3,24}$'
     or p_avatar_index not between 1 and 20 or char_length(trim(p_message)) not between 1 and 180 then
    raise exception 'Confira seu perfil e a mensagem de até 180 caracteres.';
