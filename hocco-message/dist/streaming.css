@@ -166,3 +166,45 @@ html[data-theme=light] .cinema-app.streaming-home .streaming-participation{backg
    opacity:0!important;
  }
 }
+
+
+/* Community profile action: high-contrast blue follow link. */
+.cinema-app.streaming-home .community-social-row{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px;
+  margin-top:3px;
+}
+.cinema-app.streaming-home .community-social-row .community-social-handle{
+  color:#8fc5ff;
+  font-size:12px;
+  font-weight:600;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+.cinema-app.streaming-home .community-social-row .community-follow-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:5px 12px;
+  border:1px solid #1877f2;
+  border-radius:6px;
+  background:#1877f2;
+  color:#fff !important;
+  font:700 12px/1 'DM Sans',Arial,sans-serif;
+  text-decoration:none !important;
+  opacity:1;
+  visibility:visible;
+  box-shadow:0 2px 8px #1877f244;
+}
+.cinema-app.streaming-home .community-social-row .community-follow-button:hover{
+  background:#0d65d9;
+  border-color:#0d65d9;
+  color:#fff !important;
+}
+.cinema-app.streaming-home .community-social-row .community-follow-button:focus-visible{
+  outline:2px solid #8fc5ff;
+  outline-offset:3px;
+}
