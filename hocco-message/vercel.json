@@ -3,6 +3,16 @@
   "outputDirectory": "dist",
   "redirects": [
     {
+      "source": "/ir-alem",
+      "destination": "/#inicio",
+      "permanent": false
+    },
+    {
+      "source": "/ir-alem/:path*",
+      "destination": "/#inicio",
+      "permanent": false
+    },
+    {
       "source": "/equipe",
       "destination": "/controle/",
       "permanent": true
