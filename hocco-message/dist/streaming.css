@@ -128,3 +128,41 @@ html[data-theme=light] .cinema-app.streaming-home .streaming-participation{backg
 .cinema-app.streaming-home .cinema-hero .cinema-actions .cinema-secondary{background:#c91b25!important;border:1px solid #d52e39!important;color:#fff!important}
 @media(max-width:850px){.cinema-app.streaming-home .hocco-stream-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 14px}.cinema-app.streaming-home .hocco-stream-nav a{min-height:76px;padding:12px;grid-template-columns:38px 1fr;column-gap:9px}.cinema-app.streaming-home .hocco-stream-nav a>span{width:38px;height:38px;font-size:18px}.cinema-app.streaming-home .hocco-stream-nav strong{font-size:13px}.cinema-app.streaming-home .hocco-stream-nav small{font-size:11px}}
 @media(max-width:360px){.cinema-app.streaming-home .hocco-stream-nav a{grid-template-columns:1fr;gap:4px}.cinema-app.streaming-home .hocco-stream-nav a>span{grid-row:auto}.cinema-app.streaming-home .hocco-stream-nav small{font-size:10px}}
+
+
+/* Community message social profile controls and follow action. */
+.cinema-app .community-social-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.cinema-app .community-social-handle{color:#d9c2ff;text-decoration:none;font-weight:700;font-size:12px}
+.cinema-app .community-social-handle:hover,.cinema-app .community-social-handle:focus-visible{text-decoration:underline}
+.cinema-app .community-follow-button{display:inline-flex;align-items:center;min-height:26px;padding:4px 9px;border:1px solid #ffffff35;border-radius:999px;background:#ffffff0b;color:#fff;font-size:10px;font-weight:700;text-decoration:none}
+.cinema-app .community-follow-button:hover,.cinema-app .community-follow-button:focus-visible{border-color:#ff8c35;background:#ff8c3518}
+.cinema-app .community-social-field{margin:18px 0;padding:16px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff06}
+.cinema-app .community-social-field legend{padding:0 6px;color:#f2eee8;font-size:12px;font-weight:800}
+.cinema-app .community-social-controls{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(180px,1fr);gap:12px}
+.cinema-app .community-social-field .field{margin:10px 0}
+.cinema-app .community-social-field label{color:#e5ddd4;font-size:11px}
+.cinema-app .community-social-field select,.cinema-app .community-social-field input{background:#111;color:#fff;border-color:#ffffff2c}
+.cinema-app .social-handle-input{display:flex;align-items:center;border:1px solid #ffffff2c;border-radius:10px;background:#111;overflow:hidden}
+.cinema-app .social-handle-input>span{padding-left:12px;color:#a88bd2;font-weight:800}
+.cinema-app .social-handle-input input{border:0;border-radius:0;padding-left:5px}
+.cinema-app .community-social-field[hidden]{display:none!important}
+@media(max-width:700px){
+ .cinema-app .community-social-controls{grid-template-columns:1fr}
+ .cinema-app .community-social-field{padding:14px}
+}
+
+/* Mobile hero carousel: one frame at a time, clean cut, no stacked/overlapping slides. */
+@media(max-width:700px){
+ .cinema-app.streaming-home .cinema-hero .cinema-frame{
+   opacity:0!important;
+   transform:none!important;
+   transition:none!important;
+   will-change:auto;
+ }
+ .cinema-app.streaming-home .cinema-hero .cinema-frame.is-current{
+   opacity:1!important;
+ }
+ .cinema-app.streaming-home .cinema-hero .cinema-frame.is-leaving{
+   opacity:0!important;
+ }
+}
