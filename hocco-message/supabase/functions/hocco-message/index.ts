@@ -368,7 +368,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const held=slots.filter(x=>x.active_sponsor_id||(x.reserved_order_id&&Date.parse(x.reserved_until)>Date.now())).length;
    return reply({settings:settings[0]||{price_cents:3990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,50-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,expires_at:s.expires_at,slot_no:s.slot_no}))});
   }
-  if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.refresh'].includes(action)){
+  if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.checkout','reality_sponsor.refresh'].includes(action)){
    const realityIp=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
    const realityMax=['reality_sponsor.create','reality_sponsor.renew'].includes(action)?5:30;
    if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor:${action}:${await sha(realityIp)}:${Math.floor(Date.now()/60000)}`,p_max:realityMax}))return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
@@ -404,6 +404,23 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     const sponsor=(await db('hm_reality_sponsors?id=eq.'+order.sponsor_id+'&select=id,sponsor_type,display_name,username,segment,logo_url,status,slot_no,starts_at,expires_at,renewal_opt_out,email&limit=1'))[0];if(!sponsor)return reply({error:'Cadastro de patrocinador não encontrado.'},404);
     const slot=(await db('hm_reality_sponsor_slots?slot_no=eq.'+sponsor.slot_no+'&select=active_sponsor_id&limit=1'))[0],slotOccupied=Boolean(slot?.active_sponsor_id&&slot.active_sponsor_id!==sponsor.id);
     if(action==='reality_sponsor.lookup')return reply({order:{code:order.code,status:order.status,purpose:order.purpose,price_cents:order.price_cents,reserved_until:order.reserved_until,needs_attention:order.needs_attention},sponsor:{id:sponsor.id,type:sponsor.sponsor_type,name:sponsor.display_name,username:sponsor.username,segment:sponsor.segment,logo_url:sponsor.logo_url,status:sponsor.status,slot_no:sponsor.slot_no,starts_at:sponsor.starts_at,expires_at:sponsor.expires_at,renewal_opt_out:sponsor.renewal_opt_out,slot_occupied:slotOccupied}});
+    if(action==='reality_sponsor.checkout'){
+     if(order.status!=='pending'||Date.parse(order.reserved_until)<=Date.now())return reply({error:'A reserva de 10 minutos terminou. Consulte as vagas e inicie uma nova inscrição ou renovação.'},409);
+     const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Mercado Pago temporariamente indisponível.'},503);
+     const checkout=await createPreference({
+      accessToken,
+      externalReference:paymentReference('reality_sponsor',code),
+      title:'Patrocinador Oficial do Reality HOCCO · 7 dias',
+      priceCents:Number(order.price_cents),
+      origin:PUBLIC_ORIGIN,
+      returnPath:'/patrocinadores/?pedido='+encodeURIComponent(code)+'&token='+encodeURIComponent(token),
+      notificationUrl:'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment',
+      payerEmail:sponsor.email,
+      expiresAt:order.reserved_until,
+      validFrom:order.created_at
+     });
+     return reply({checkout});
+    }
     if(action==='reality_sponsor.pix'){
      if(order.status!=='pending'||Date.parse(order.reserved_until)<=Date.now())return reply({error:'A reserva de 10 minutos terminou. Consulte as vagas e inicie uma nova inscrição ou renovação.'},409);
      const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Pix Mercado Pago temporariamente indisponível.'},503);
