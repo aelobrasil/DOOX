@@ -374,8 +374,10 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor:${action}:${await sha(realityIp)}:${Math.floor(Date.now()/60000)}`,p_max:realityMax}))return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
    if(action==='reality_sponsor.create'){
     const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),deviceToken=validateDeviceToken(b.deviceToken||'');
-    if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira nome, @, segmento, e-mail e WhatsApp.');
+    if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira nome, @, segmento e e-mail.');
     if(b.terms!==true||b.termsVersion!=='2026-11-11.reality-sponsor.v1'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
+    if(/(?:https?:\\/\\/|www\\.|wa\\.me|t\\.me|instagram\\.com|tiktok\\.com)/i.test(name+' '+segment))throw Error('Não informe links, sites, telefones ou destinos externos nos campos públicos.');
+    const sponsorModeration=moderateCommunityMessage(name+' '+username+' '+segment);if(!sponsorModeration.approved&&!sponsorModeration.requiresReview)return reply({error:'Os dados públicos contêm conteúdo que não pode ser exibido. Revise o nome e o segmento.'},422);
     const deviceHash=await sha(deviceToken),device=(await db('hm_push_devices?device_hash=eq.'+deviceHash+'&enabled=eq.true&select=device_hash&limit=1'))[0];
     if(!device)return reply({error:'Ative as notificações do HOCCO neste aparelho para receber o aviso de renovação 24 horas antes do fim do período.'},409);
     const cfg=(await db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,enabled'))[0];if(!cfg?.enabled)return reply({error:'As vagas estão temporariamente fechadas.'},403);
@@ -392,7 +394,9 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
      const uploaded=await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'POST',headers:{...headers,'x-upsert':'false','Content-Type':mime,'cache-control':'3600'},body:bytes});
      if(!uploaded.ok)throw Error('Não foi possível armazenar o logo. Tente novamente.');
      logoUrl=url+'/storage/v1/object/public/hocco-sponsor-logos/'+path;
-     const result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_device_hash:deviceHash,p_price_cents:Number(cfg.price_cents),p_consent:{terms_version:b.termsVersion,accepted_at:new Date().toISOString()}});
+     let result;
+     try{result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_device_hash:deviceHash,p_price_cents:Number(cfg.price_cents),p_consent:{terms_version:b.termsVersion,accepted_at:new Date().toISOString()}})}
+     catch(error){try{await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'DELETE',headers})}catch{}throw error}
      return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201);
     }
     const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
