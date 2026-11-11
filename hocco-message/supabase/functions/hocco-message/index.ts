@@ -373,7 +373,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const realityMax=['reality_sponsor.create','reality_sponsor.renew'].includes(action)?5:30;
    if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor:${action}:${await sha(realityIp)}:${Math.floor(Date.now()/60000)}`,p_max:realityMax}))return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
    if(action==='reality_sponsor.create'){
-    const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),deviceToken=validateDeviceToken(b.deviceToken||'');
+    const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),rawDeviceToken=String(b.deviceToken||'').trim(),deviceToken=rawDeviceToken&&/^[a-f0-9]{64}$/.test(rawDeviceToken)?rawDeviceToken:'';
     if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira nome, @, segmento e e-mail.');
     if(b.terms!==true||b.termsVersion!=='2026-11-11.reality-sponsor.v2'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
     if(/(?:https?:\\x2f\\x2f|www\\.|wa\\.me|t\\.me|instagram\\.com|tiktok\\.com)/i.test(name+' '+segment))throw Error('Não informe links, sites, telefones ou destinos externos nos campos públicos.');
