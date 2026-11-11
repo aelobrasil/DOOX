@@ -362,6 +362,9 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    return reply({settings:settings[0]||{price_cents:3990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,50-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,expires_at:s.expires_at,slot_no:s.slot_no}))});
   }
   if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.refresh'].includes(action)){
+   const realityIp=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
+   const realityMax=['reality_sponsor.create','reality_sponsor.renew'].includes(action)?5:30;
+   if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor:${action}:${await sha(realityIp)}:${Math.floor(Date.now()/60000)}`,p_max:realityMax}))return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
    if(action==='reality_sponsor.create'){
     const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),deviceToken=validateDeviceToken(b.deviceToken||'');
     if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira nome, @, segmento, e-mail e WhatsApp.');
