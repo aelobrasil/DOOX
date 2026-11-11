@@ -83,7 +83,7 @@ function showPix(pix){
  +'<p class="reality-sponsor-warning">A reserva da vaga dura 10 minutos. O QR Code pode permanecer válido por mais tempo, mas pagamentos recebidos após a reserva poderão exigir análise da equipe. Não pague depois do fim da reserva.</p><p class="reality-sponsor-legal">Confira o nome do recebedor e o valor antes de confirmar no banco.</p><p role="status" id="sponsor-payment-status">Aguardando confirmação automática do Mercado Pago…</p>';
  host.querySelector('#copy-sponsor-pix').onclick=async()=>{try{await navigator.clipboard.writeText(pix.qrCode);host.querySelector('#copy-sponsor-pix').textContent='Código Pix copiado'}catch{host.querySelector('#sponsor-pix-code').select()}};
 }
-async function showOrder(code,trackingToken){
+async function showOrder(code,trackingToken,returned=false){
  clearInterval(pollTimer);
  root.innerHTML=header('Finalize sua participação','Sua solicitação foi recebida. A vaga ficará reservada por 10 minutos.')
  +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
@@ -100,7 +100,15 @@ async function showOrder(code,trackingToken){
    root.querySelector('#sponsor-pix').innerHTML='<div class="reality-sponsor-success"><strong>Pagamento confirmado</strong><p>Vaga '+current.sponsor.slot_no+' · ativo até '+new Date(current.sponsor.expires_at).toLocaleString('pt-BR')+'</p></div><a class="btn full" href="/patrocinadores/">Ver patrocinadores</a>';
    root.querySelector('#sponsor-pix').hidden=false;return;
   }
-  const result=await api('reality_sponsor.pix',{code,trackingToken});showPix(result.pix);startPolling(code,trackingToken)
+  if(!returned){
+   const result=await api('reality_sponsor.checkout',{code,trackingToken});
+   location.href=result.checkout.checkoutUrl;
+   return;
+  }
+  const host=root.querySelector('#sponsor-pix');host.hidden=false;
+  host.innerHTML='<div class="reality-sponsor-notice"><strong>Você voltou do Mercado Pago.</strong><p>Estamos conferindo automaticamente a situação do pagamento.</p></div><button class="btn full" id="continue-mp">Continuar para o Mercado Pago</button><p role="status" id="sponsor-payment-status">Aguardando confirmação automática do Mercado Pago…</p>';
+  host.querySelector('#continue-mp').onclick=async()=>{try{const result=await api('reality_sponsor.checkout',{code,trackingToken});location.href=result.checkout.checkoutUrl}catch(e){host.querySelector('#sponsor-payment-status').textContent=e.message}};
+  startPolling(code,trackingToken)
  }catch(e){root.querySelector('.reality-sponsor-legal').textContent=e.message;root.querySelector('.reality-sponsor-legal').classList.add('reality-sponsor-error')}
 }
 function startPolling(code,trackingToken){
@@ -147,7 +155,7 @@ async function route(){
  const hash=location.hash.slice(1);
  if(hash==='novo'){renderForm();return}
  if(hash==='renovar'){await renderRenewal();return}
- if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2]);return}}
+ const query=new URLSearchParams(location.search);if(query.get('pedido')&&query.get('token')){saved.code=query.get('pedido');saved.trackingToken=query.get('token');save();await showOrder(saved.code,saved.trackingToken,true);return}if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2],true);return}}
  try{await loadCatalog();renderDirectory()}catch(e){root.innerHTML='<div class="empty"><h2>Não foi possível carregar a vitrine.</h2><p>'+esc(e.message)+'</p><button class="btn" id="retry-sponsor-catalog">Tentar novamente</button></div>';root.querySelector('#retry-sponsor-catalog').onclick=route}
 }
 mountReturnActivity();
