@@ -12,7 +12,7 @@ async function stableIdempotencyKey(value) {
 }
 
 export function paymentReference(kind, code) {
-  if (!["order", "community", "sponsor"].includes(kind) || !/^[A-Z0-9-]{8,24}$/.test(code)) {
+  if (!["order", "community", "sponsor", "reality_sponsor"].includes(kind) || !/^[A-Z0-9-]{8,24}$/.test(code)) {
     throw new Error("Referência de pagamento inválida.");
   }
   return `hocco:${kind}:${code}`;
