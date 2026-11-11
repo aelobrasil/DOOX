@@ -15,16 +15,18 @@ function header(title,description){return '<section class="reality-sponsor-headi
 async function loadCatalog(){catalog=await api('reality_sponsor.catalog');return catalog}
 function card(s){
  const logo=s.logo_url?'<img src="'+esc(s.logo_url)+'" alt="" loading="lazy">':'<span>'+esc(initials(s.name))+'</span>';
- return '<article class="reality-sponsor-card"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong><span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></article>';
+ const badge=s.example?'<em class="reality-sponsor-example">EXEMPLO</em>':'';
+ return '<article class="reality-sponsor-card '+(s.example?'is-example':'')+'"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong>'+badge+'<span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></article>';
 }
 function renderDirectory(){
  clearInterval(pollTimer);
  const people=(catalog?.active||[]).filter(s=>s.type==='person'),companies=(catalog?.active||[]).filter(s=>s.type==='company');
+ const example={type:'person',name:'Marina Costa',username:'marinacosta',segment:'Criadora de conteúdo',logo_url:'/patrocinadores/exemplo-perfil.svg',example:true};
  root.innerHTML=header('Patrocinadores Oficiais do Reality HOCCO','Pessoas e empresas que apoiam a continuidade do Reality. Cada presença permanece ativa por 7 dias após a confirmação do pagamento.')
  +'<section class="reality-sponsor-capacity"><div><span>VAGAS DISPONÍVEIS</span><strong>+ '+Number(catalog?.available||0)+' vagas</strong></div><p>Limite de 50 patrocinadores simultâneos.</p></section>'
  +'<section class="reality-sponsor-explainer"><h2>Uma presença oficial, por tempo determinado.</h2><p>O patrocínio custa <strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong> por 7 dias. Não é investimento, não oferece participação societária e não promete retorno financeiro, ganhos, tráfego ou vendas.</p></section>'
  +'<div class="reality-sponsor-tabs" role="tablist"><button type="button" data-kind="person" class="is-active" aria-selected="true">Pessoas <span>'+people.length+'</span></button><button type="button" data-kind="company" aria-selected="false">Empresas <span>'+companies.length+'</span></button></div>'
- +'<section class="reality-sponsor-list" data-list="person">'+(people.length?people.map(card).join(''):'<p class="reality-sponsor-empty">Ainda não há pessoas nesta vitrine.</p>')+'</section>'
+ +'<section class="reality-sponsor-list" data-list="person">'+(people.length?people.map(card).join(''):'')+card(example)+'</section>'
  +'<section class="reality-sponsor-list" data-list="company" hidden>'+(companies.length?companies.map(card).join(''):'<p class="reality-sponsor-empty">Ainda não há empresas nesta vitrine.</p>')+'</section>'
  +'<section class="reality-sponsor-join"><div><span class="section-eyebrow">FAÇA PARTE</span><h2>Seja um Patrocinador Oficial</h2><p>Inscrição para pessoa física ou empresa. Pagamento avulso por Pix.</p></div><div><strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong><small>7 dias de presença oficial</small><button class="btn full" id="start-sponsor" '+(catalog?.settings?.enabled&&catalog?.available>0?'':'disabled')+'>Quero participar</button></div></section>'
  +'<p class="reality-sponsor-legal">O valor corresponde exclusivamente à presença temporária como Patrocinador Oficial do Reality HOCCO. Não há promessa de retorno financeiro, ganhos, audiência, contatos ou vendas. A renovação é manual e exige novo pagamento.</p>';
