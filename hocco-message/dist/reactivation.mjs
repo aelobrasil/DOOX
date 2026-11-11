@@ -5,7 +5,7 @@ export function pushDeviceToken(create=false){try{let key=localStorage.getItem(K
 const supported=()=>typeof Notification!=='undefined'&&'serviceWorker'in navigator&&'PushManager'in window;
 const publicBytes=value=>Uint8Array.from(atob(value.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0));
 const setEnabled=value=>{try{localStorage.setItem(OPT,value?'true':'false')}catch{}};
-export function notificationTarget(raw){try{const u=new URL(raw||'/#inicio','https://hocco-message.vercel.app');if(u.origin!=='https://hocco-message.vercel.app')return'/#inicio';const route=u.pathname+u.hash;return new Set(['/#inicio','/#assistir','/#episodios','/#comunidade','/#live','/#enviar','/ir-alem/']).has(route)?route:'/#inicio'}catch{return'/#inicio'}}
+export function notificationTarget(raw){try{const u=new URL(raw||'/#inicio','https://hocco-message.vercel.app');if(u.origin!=='https://hocco-message.vercel.app')return'/#inicio';const route=u.pathname+u.hash;return new Set(['/#inicio','/#assistir','/#episodios','/#comunidade','/#live','/#enviar','/ir-alem/','/patrocinadores/']).has(route)?route:'/#inicio'}catch{return'/#inicio'}}
 export function notificationRows(items){return items.length?items.map(x=>`<article class="app-notification-item ${x.read_at?'':'is-unread'}"><strong>${esc(x.title)}</strong><p>${esc(x.body)}</p><small>${esc(new Date(x.created_at).toLocaleString('pt-BR'))}</small><button class="btn secondary small" data-notification-read="${esc(x.id)}">${x.read_at?'Abrir no app':'Ler e abrir no app'}</button></article>`).join(''):'<p class="hint">Nenhuma notificação por aqui ainda.</p>'}
 export function mountReturnActivity(){
  let last=0,busy=false,composing=false;const root=document.querySelector('#app,#sponsor-app')||document.body;
