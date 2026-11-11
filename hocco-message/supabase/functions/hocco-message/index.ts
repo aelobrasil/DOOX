@@ -99,6 +99,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
   }
   if(action==='reminders.run'){
    const cronSecret=env?.get('HM_REMINDER_CRON_SECRET'),authorization=req.headers.get('Authorization')||'';if(!cronSecret||authorization!=='Bearer '+cronSecret)return reply({error:'Acesso não autorizado.'},401);let sent=0,failed=0,sponsorSent=0,sponsorFailed=0;
+   await db('rpc/hm_reality_sponsor_expire_due','POST',{});
    for(const kind of ['thank','expiry']){const sponsorConfig=sponsorWaConfig(kind);if(!sponsorConfig)continue;const due=await db('rpc/hm_claim_due_sponsor_notifications','POST',{p_kind:kind,p_limit:50});for(const sponsor of due){try{const payload=whatsappSponsorTemplatePayload(sponsor,kind,sponsorConfig.template,sponsorConfig.language,PUBLIC_ORIGIN);const response=await fetcher(`https://graph.facebook.com/${sponsorConfig.apiVersion}/${encodeURIComponent(sponsorConfig.sender)}/messages`,{method:'POST',headers:{Authorization:`Bearer ${sponsorConfig.access}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});let result={};try{result=await response.json()}catch{}if(!response.ok)throw Error(result.error?.message||'A API do WhatsApp recusou o aviso.');await db('rpc/hm_finish_sponsor_notification','POST',{p_id:sponsor.id,p_kind:kind,p_sent:true,p_detail:{messageId:result.messages?.[0]?.id||''}});sponsorSent++}catch(error){await db('rpc/hm_finish_sponsor_notification','POST',{p_id:sponsor.id,p_kind:kind,p_sent:false,p_detail:{reason:String(error.message||'provider_error').slice(0,300)}});sponsorFailed++}}}
    let realitySponsorSent=0,realitySponsorFailed=0;
    try{
@@ -351,6 +352,8 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
   }
   if(action==='programming'){const cfg=(await db('hm_programming?id=eq.1&select=topic,next_live_title,next_live_at,next_live_url,live_accepting,updated_at'))[0];return reply({programming:cfg?{...cfg,next_live_at:Date.parse(cfg.next_live_at)>Date.now()?cfg.next_live_at:null,available:null,unlimited:true}:null})}
   if(action==='reality_sponsor.catalog'){
+   const catalogIp=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
+   if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor-catalog:${await sha(catalogIp)}:${Math.floor(Date.now()/60000)}`,p_max:60}))return reply({error:'Muitas consultas. Aguarde um minuto.'},429);
    await db('rpc/hm_reality_sponsor_expire_due','POST',{});
    const now=encodeURIComponent(new Date().toISOString());
    const[settings,slots,active]=await Promise.all([
