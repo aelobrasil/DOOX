@@ -363,8 +363,8 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
   }
   if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.refresh'].includes(action)){
    if(action==='reality_sponsor.create'){
-    const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone=String(b.phone||'').replace(/\\D/g,''),token=String(b.trackingToken||''),deviceToken=validateDeviceToken(b.deviceToken||'');
-    if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254||!/^((55)?[1-9][0-9]{9,10})$/.test(phone))throw Error('Confira nome, @, segmento, e-mail e WhatsApp.');
+    const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone=String(b.phone||'').replace(/\D/g,''),token=String(b.trackingToken||''),deviceToken=validateDeviceToken(b.deviceToken||'');
+    if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||!/^((55)?[1-9][0-9]{9,10})$/.test(phone))throw Error('Confira nome, @, segmento, e-mail e WhatsApp.');
     if(b.terms!==true||b.termsVersion!=='2026-11-11.reality-sponsor.v1'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
     const deviceHash=await sha(deviceToken),device=(await db('hm_push_devices?device_hash=eq.'+deviceHash+'&enabled=eq.true&select=device_hash&limit=1'))[0];
     if(!device)return reply({error:'Ative as notificações do HOCCO neste aparelho para receber o aviso de renovação 24 horas antes do fim do período.'},409);
