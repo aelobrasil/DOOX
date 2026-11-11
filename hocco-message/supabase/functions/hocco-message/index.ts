@@ -115,9 +115,10 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
        const payload=JSON.stringify({id:notificationId,title,body,url:'/patrocinadores/#renovar',tag:'hocco-sponsor-renewal'});
        await pushSender({endpoint:device.endpoint,keys:{p256dh:device.p256dh,auth:device.auth_key}},payload,{vapidDetails:{subject:PUBLIC_ORIGIN,publicKey:config.publicKey,privateKey:secrets.vapid_private_key},TTL:3600,urgency:'normal',topic:'hocco-sponsor-renewal',signal:AbortSignal.timeout(10000)});
        await db('hm_push_inbox','POST',{id:notificationId,device_hash:sponsor.device_hash,variant:'sponsor_renewal',title,body,url:'/patrocinadores/#renovar',status:'sent',sent_at:new Date().toISOString(),dispatch_id:dispatchId});
+       await db('rpc/hm_reality_sponsor_finish_notice','POST',{p_id:sponsor.id,p_sent:true,p_error:''});
        realitySponsorSent++;
       }catch(error){
-       await db('hm_reality_sponsors?id=eq.'+encodeURIComponent(sponsor.sponsor_id),'PATCH',{renewal_notice_sent_at:null,updated_at:new Date().toISOString()});
+       await db('rpc/hm_reality_sponsor_finish_notice','POST',{p_id:sponsor.id,p_sent:false,p_error:String(error.message||'push_error').slice(0,300)});
        realitySponsorFailed++;
       }
      }
