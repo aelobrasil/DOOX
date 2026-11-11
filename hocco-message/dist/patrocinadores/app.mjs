@@ -81,8 +81,16 @@ function showPix(pix){
 async function showOrder(code,trackingToken){
  clearInterval(pollTimer);
  root.innerHTML=header('Finalize sua participação','Sua solicitação foi recebida. A vaga ficará reservada por 10 minutos.')
- +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(3990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
- try{const result=await api('reality_sponsor.pix',{code,trackingToken});showPix(result.pix);startPolling(code,trackingToken)}catch(e){root.querySelector('.reality-sponsor-legal').textContent=e.message;root.querySelector('.reality-sponsor-legal').classList.add('reality-sponsor-error')}
+ +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
+ try{
+  const current=await api('reality_sponsor.lookup',{code,trackingToken});
+  if(current.order.status==='confirmed'&&current.sponsor.status==='active'){
+   saved.sponsorId=current.sponsor.id;saved.status='active';saved.expiresAt=current.sponsor.expires_at;saved.initialCode=saved.initialCode||code;saved.initialToken=saved.initialToken||trackingToken;save();
+   root.querySelector('#sponsor-pix').innerHTML='<div class="reality-sponsor-success"><strong>Pagamento confirmado</strong><p>Vaga '+current.sponsor.slot_no+' · ativo até '+new Date(current.sponsor.expires_at).toLocaleString('pt-BR')+'</p></div><a class="btn full" href="/patrocinadores/">Ver patrocinadores</a>';
+   root.querySelector('#sponsor-pix').hidden=false;return;
+  }
+  const result=await api('reality_sponsor.pix',{code,trackingToken});showPix(result.pix);startPolling(code,trackingToken)
+ }catch(e){root.querySelector('.reality-sponsor-legal').textContent=e.message;root.querySelector('.reality-sponsor-legal').classList.add('reality-sponsor-error')}
 }
 function startPolling(code,trackingToken){
  clearInterval(pollTimer);let count=0;
@@ -98,6 +106,7 @@ function startPolling(code,trackingToken){
 }
 async function renderRenewal(){
  clearInterval(pollTimer);
+ if(!catalog)try{await loadCatalog()}catch{}
  if(!saved?.initialCode||!saved?.initialToken){root.innerHTML=header('Renovação do patrocínio','Para renovar, abra o link privado recebido ao concluir o cadastro.');return}
  root.innerHTML=header('Seu período está perto do fim','Você pode renovar por mais 7 dias ou escolher não renovar.')
  +'<section class="reality-sponsor-form-wrap"><div id="renewal-content">Consultando seu patrocínio…</div></section>';
