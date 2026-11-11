@@ -2,7 +2,7 @@ import {validateManualNotice} from './control-content.mjs';
 import {validateDeviceToken,validatePushSubscription,publicPushConfig,defaultPushSender,dispatchAppPush} from './push-reactivation.mjs';
 import {validateSenderIdentity} from './sender-identity.mjs';
 import {readAll} from './read-all.mjs';
-import {createSponsorPix} from './pix-checkout.mjs';
+import {createSponsorPix,createRealitySponsorPix} from './pix-checkout.mjs';
 import {readJsonBody} from './request-body.mjs';
 import {checkoutBlock,isUnpaidCommentExpired,paymentExpiresAt} from './purchase-lifecycle.mjs';
 import {validateLocation,validateProgramming} from './local-community.mjs';
@@ -62,6 +62,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
   if(!accountResponse.ok)throw Error('Não foi possível verificar a conta recebedora.');
   const account=await accountResponse.json(),mode=String(env?.get('MP_ENVIRONMENT')||env?.get('MP_Environment')||'production').toLowerCase();
   const event=verifiedPaymentEvent(payment,{kind,code:row.code,priceCents:Number(row.price_cents),collectorId:account.id,production:!['test','sandbox','testing'].includes(mode)});
+  if(kind==='reality_sponsor')return event?await db('rpc/hm_reality_sponsor_apply_payment','POST',{p_code:row.code,p_payment_id:event.p_payment_id,p_amount_cents:event.p_amount_cents,p_status:event.p_status,p_updated_at:event.p_updated_at}):{received:true,ignored:true};
   return event?await db('rpc/hm_apply_verified_payment','POST',event):{received:true,ignored:true};
  };
  const safe=o=>{const{tracking_hash,phone,mercado_pago_payment_id,...rest}=o;return {...rest,payment_expires_at:paymentExpiresAt(rest,'order')}};
@@ -78,15 +79,16 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    // A genuine 404 means there is no payment to apply; acknowledge it so the test does not retry forever.
    if(paymentResponse.status===404)return reply({received:true,ignored:true});
    if(!paymentResponse.ok){const providerError=typeof payment.error==='string'?payment.error:'';const causeCodes=Array.isArray(payment.cause)?payment.cause.map((cause:any)=>typeof cause?.code==='string'?cause.code:'').filter(Boolean).slice(0,5):[];console.error('Mercado Pago webhook payment lookup failed',{status:paymentResponse.status,error:providerError,causeCodes});return reply({error:'Não foi possível consultar o pagamento.'},502);}
-   const reference=String(payment.external_reference||''),match=/^hocco:(order|community|sponsor):([A-Z0-9-]{8,24})$/.exec(reference);if(!match||!['approved','refunded','charged_back','in_mediation'].includes(payment.status))return reply({received:true});
+   const reference=String(payment.external_reference||''),match=/^hocco:(order|community|sponsor|reality_sponsor):([A-Z0-9-]{8,24})$/.exec(reference);if(!match||!['approved','refunded','charged_back','in_mediation'].includes(payment.status))return reply({received:true});
    const [,kind,code]=match;let row,path,amount;
    if(kind==='order'){row=(await db(`hm_orders?code=eq.${encodeURIComponent(code)}&select=*&limit=1`))[0];path=row&&`hm_orders?id=eq.${encodeURIComponent(row.id)}`}
    if(kind==='community'){row=(await db(`hm_community_messages?code=eq.${encodeURIComponent(code)}&select=*&limit=1`))[0];path=row&&`hm_community_messages?id=eq.${encodeURIComponent(row.id)}`}
    if(kind==='sponsor'){row=(await db(`hm_sponsors?code=eq.${encodeURIComponent(code)}&select=*&limit=1`))[0];path=row&&`hm_sponsors?id=eq.${encodeURIComponent(row.id)}`}
-   if(!row&&kind!=='sponsor')row=await expiredPurchase(kind,code);
+   if(kind==='reality_sponsor')row=(await db(`hm_reality_sponsor_orders?code=eq.${encodeURIComponent(code)}&select=*&limit=1`))[0];
+   if(!row&&kind!=='sponsor'&&kind!=='reality_sponsor')row=await expiredPurchase(kind,code);
    if(!row)return reply({received:true});return reply(await applyPayment(payment,kind,row));
   }
-  if(!['sponsor.create','customer.reset'].includes(action)&&bodySize>12000)return reply({error:'Solicitação muito grande.'},413);
+  if(!['sponsor.create','customer.reset','reality_sponsor.create'].includes(action)&&bodySize>12000)return reply({error:'Solicitação muito grande.'},413);if(action==='reality_sponsor.create'&&bodySize>1500000)return reply({error:'A imagem deve ter até 1 MB.'},413);
   if(typeof action!=='string')return reply({error:'Ação inválida.'},400);
   // The random private tracking token authenticates order access; team actions require a verified user JWT and active membership.
   if(action==='push.run'){
@@ -98,8 +100,30 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
   if(action==='reminders.run'){
    const cronSecret=env?.get('HM_REMINDER_CRON_SECRET'),authorization=req.headers.get('Authorization')||'';if(!cronSecret||authorization!=='Bearer '+cronSecret)return reply({error:'Acesso não autorizado.'},401);let sent=0,failed=0,sponsorSent=0,sponsorFailed=0;
    for(const kind of ['thank','expiry']){const sponsorConfig=sponsorWaConfig(kind);if(!sponsorConfig)continue;const due=await db('rpc/hm_claim_due_sponsor_notifications','POST',{p_kind:kind,p_limit:50});for(const sponsor of due){try{const payload=whatsappSponsorTemplatePayload(sponsor,kind,sponsorConfig.template,sponsorConfig.language,PUBLIC_ORIGIN);const response=await fetcher(`https://graph.facebook.com/${sponsorConfig.apiVersion}/${encodeURIComponent(sponsorConfig.sender)}/messages`,{method:'POST',headers:{Authorization:`Bearer ${sponsorConfig.access}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});let result={};try{result=await response.json()}catch{}if(!response.ok)throw Error(result.error?.message||'A API do WhatsApp recusou o aviso.');await db('rpc/hm_finish_sponsor_notification','POST',{p_id:sponsor.id,p_kind:kind,p_sent:true,p_detail:{messageId:result.messages?.[0]?.id||''}});sponsorSent++}catch(error){await db('rpc/hm_finish_sponsor_notification','POST',{p_id:sponsor.id,p_kind:kind,p_sent:false,p_detail:{reason:String(error.message||'provider_error').slice(0,300)}});sponsorFailed++}}}
-   try{await db('hm_alex_events','POST',{event_type:'reminder_run',severity:failed||sponsorFailed?'warning':'info',detail:{sent,failed,sponsorSent,sponsorFailed}})}catch{}
-   return reply({sent,failed,sponsorSent,sponsorFailed})
+   let realitySponsorSent=0,realitySponsorFailed=0;
+   try{
+    const due=await db('rpc/hm_reality_sponsor_claim_due','POST',{});
+    if(due.length){
+     const config=await publicPushConfig(db),secretRows=await db('rpc/get_push_runtime_secrets','POST',{}),secrets=Array.isArray(secretRows)?secretRows[0]:secretRows;
+     for(const sponsor of due){
+      try{
+       if(!config.enabled||!secrets?.vapid_private_key||!sponsor.device_hash)throw Error('Notificações push indisponíveis.');
+       const device=(await db('hm_push_devices?device_hash=eq.'+encodeURIComponent(sponsor.device_hash)+'&enabled=eq.true&select=endpoint,p256dh,auth_key&limit=1'))[0];
+       if(!device)throw Error('Aparelho sem notificações ativas.');
+       const notificationId=crypto.randomUUID(),dispatchId=crypto.randomUUID(),title='Seu período na HOCCO termina amanhã',body='Deseja renovar sua presença como Patrocinador Oficial por mais 7 dias?';
+       const payload=JSON.stringify({id:notificationId,title,body,url:'/patrocinadores/#renovar',tag:'hocco-sponsor-renewal'});
+       await pushSender({endpoint:device.endpoint,keys:{p256dh:device.p256dh,auth:device.auth_key}},payload,{vapidDetails:{subject:PUBLIC_ORIGIN,publicKey:config.publicKey,privateKey:secrets.vapid_private_key},TTL:3600,urgency:'normal',topic:'hocco-sponsor-renewal',signal:AbortSignal.timeout(10000)});
+       await db('hm_push_inbox','POST',{id:notificationId,device_hash:sponsor.device_hash,variant:'sponsor_renewal',title,body,url:'/patrocinadores/#renovar',status:'sent',sent_at:new Date().toISOString(),dispatch_id:dispatchId});
+       realitySponsorSent++;
+      }catch(error){
+       await db('hm_reality_sponsors?id=eq.'+encodeURIComponent(sponsor.sponsor_id),'PATCH',{renewal_notice_sent_at:null,updated_at:new Date().toISOString()});
+       realitySponsorFailed++;
+      }
+     }
+    }
+   }catch(error){realitySponsorFailed++}
+   try{await db('hm_alex_events','POST',{event_type:'reminder_run',severity:failed||sponsorFailed||realitySponsorFailed?'warning':'info',detail:{sent,failed,sponsorSent,sponsorFailed,realitySponsorSent,realitySponsorFailed}})}catch{}
+   return reply({sent,failed,sponsorSent,sponsorFailed,realitySponsorSent,realitySponsorFailed})
   }
   if(action==='analytics.event'){
    const event=String(b.event||'');if(!['participation_open','compose_video','compose_community','compose_live','company_registration','company_review','checkout_open','checkout_error','channel_open','company_directory','order_lookup'].includes(event))return reply({error:'Evento inválido.'},400);
@@ -326,9 +350,77 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const settings=await db('hm_settings?id=eq.1&select=prices,community_price_cents,live_price_cents,community_enabled,live_enabled,video_enabled,community_duration_hours,founder_notice,founder_notice_active,episode,capacity_per_slot,version,demo_mode,pix_key,payment_url,payee_name,payee_city,bank_name,publication_deadline,display_duration_seconds');const s=settings[0],paymentsEnabled=Boolean(s&&!s.demo_mode&&s.video_enabled!==false&&s.pix_key&&s.payee_name&&s.payee_city&&s.publication_deadline&&new Date(s.publication_deadline)>new Date()&&s.display_duration_seconds);return reply({settings:s,whatsappNoticeEnabled:Boolean(waConfig()),remindersEnabled:false,pushEnabled:(await publicPushConfig(db)).enabled,availability:[1,2].map(slot=>({slot,available:null,unlimited:true})),paymentsEnabled})
   }
   if(action==='programming'){const cfg=(await db('hm_programming?id=eq.1&select=topic,next_live_title,next_live_at,next_live_url,live_accepting,updated_at'))[0];return reply({programming:cfg?{...cfg,next_live_at:Date.parse(cfg.next_live_at)>Date.now()?cfg.next_live_at:null,available:null,unlimited:true}:null})}
+  if(action==='reality_sponsor.catalog'){
+   await db('rpc/hm_reality_sponsor_expire_due','POST',{});
+   const now=encodeURIComponent(new Date().toISOString());
+   const[settings,slots,active]=await Promise.all([
+    db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,capacity,duration_days,enabled'),
+    db('hm_reality_sponsor_slots?select=slot_no,active_sponsor_id,reserved_order_id,reserved_until'),
+    readAll(db,'hm_reality_sponsors?status=eq.active&expires_at=gt.'+now+'&select=id,sponsor_type,display_name,username,segment,logo_url,expires_at,slot_no&order=slot_no.asc&limit=50')
+   ]);
+   const held=slots.filter(x=>x.active_sponsor_id||(x.reserved_order_id&&Date.parse(x.reserved_until)>Date.now())).length;
+   return reply({settings:settings[0]||{price_cents:3990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,50-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,expires_at:s.expires_at,slot_no:s.slot_no}))});
+  }
+  if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.refresh'].includes(action)){
+   if(action==='reality_sponsor.create'){
+    const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone=String(b.phone||'').replace(/\\D/g,''),token=String(b.trackingToken||''),deviceToken=validateDeviceToken(b.deviceToken||'');
+    if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254||!/^((55)?[1-9][0-9]{9,10})$/.test(phone))throw Error('Confira nome, @, segmento, e-mail e WhatsApp.');
+    if(b.terms!==true||b.termsVersion!=='2026-11-11.reality-sponsor.v1'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
+    const deviceHash=await sha(deviceToken),device=(await db('hm_push_devices?device_hash=eq.'+deviceHash+'&enabled=eq.true&select=device_hash&limit=1'))[0];
+    if(!device)return reply({error:'Ative as notificações do HOCCO neste aparelho para receber o aviso de renovação 24 horas antes do fim do período.'},409);
+    const cfg=(await db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,enabled'))[0];if(!cfg?.enabled)return reply({error:'As vagas estão temporariamente fechadas.'},403);
+    const hash=await sha(token),existing=(await db('hm_reality_sponsor_orders?tracking_hash=eq.'+hash+'&select=code&limit=1'))[0];
+    if(existing)return reply({code:existing.code,trackingToken:token},200);
+    let logoUrl=null;
+    if(type==='company'){
+     const mime=String(b.logoMime||''),encoded=String(b.logoBase64||''),ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[mime];
+     if(!ext||encoded.length<12||encoded.length>1400000||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))throw Error('Anexe o logo da empresa em PNG, JPG ou WebP, com até 1 MB.');
+     const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));if(bytes.length>1048576)throw Error('O logo deve ter até 1 MB.');
+     const validImage=mime==='image/png'&&bytes.length>=8&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)||mime==='image/jpeg'&&bytes.length>=3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255||mime==='image/webp'&&bytes.length>=12&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP';
+     if(!validImage)throw Error('O arquivo enviado não é uma imagem válida.');
+     const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase(),path='reality-sponsors/'+code.toLowerCase()+'.'+ext;
+     const uploaded=await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'POST',headers:{...headers,'x-upsert':'false','Content-Type':mime,'cache-control':'3600'},body:bytes});
+     if(!uploaded.ok)throw Error('Não foi possível armazenar o logo. Tente novamente.');
+     logoUrl=url+'/storage/v1/object/public/hocco-sponsor-logos/'+path;
+     const result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_device_hash:deviceHash,p_price_cents:Number(cfg.price_cents),p_consent:{terms_version:b.termsVersion,accepted_at:new Date().toISOString()}});
+     return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201);
+    }
+    const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
+    const result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:null,p_device_hash:deviceHash,p_price_cents:Number(cfg.price_cents),p_consent:{terms_version:b.termsVersion,accepted_at:new Date().toISOString()}});
+    return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201);
+   }
+   if(action==='reality_sponsor.lookup'||action==='reality_sponsor.pix'||action==='reality_sponsor.refresh'){
+    const code=String(b.code||''),token=String(b.trackingToken||'');if(!/^HC-RS-[A-F0-9]{12}$/.test(code)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Link privado de acompanhamento inválido.'},404);
+    const hash=await sha(token),order=(await db('hm_reality_sponsor_orders?code=eq.'+code+'&tracking_hash=eq.'+hash+'&select=*&limit=1'))[0];if(!order)return reply({error:'Pedido de patrocínio não encontrado.'},404);
+    const sponsor=(await db('hm_reality_sponsors?id=eq.'+order.sponsor_id+'&select=id,sponsor_type,display_name,username,segment,logo_url,status,slot_no,starts_at,expires_at,renewal_opt_out,email&limit=1'))[0];if(!sponsor)return reply({error:'Cadastro de patrocinador não encontrado.'},404);
+    if(action==='reality_sponsor.lookup')return reply({order:{code:order.code,status:order.status,purpose:order.purpose,price_cents:order.price_cents,reserved_until:order.reserved_until,needs_attention:order.needs_attention},sponsor:{id:sponsor.id,type:sponsor.sponsor_type,name:sponsor.display_name,username:sponsor.username,segment:sponsor.segment,logo_url:sponsor.logo_url,status:sponsor.status,slot_no:sponsor.slot_no,starts_at:sponsor.starts_at,expires_at:sponsor.expires_at,renewal_opt_out:sponsor.renewal_opt_out}});
+    if(action==='reality_sponsor.pix'){
+     if(order.status!=='pending'||Date.parse(order.reserved_until)<=Date.now())return reply({error:'A reserva de 10 minutos terminou. Consulte as vagas e inicie uma nova inscrição ou renovação.'},409);
+     const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Pix Mercado Pago temporariamente indisponível.'},503);
+     const pix=await createRealitySponsorPix({accessToken,code,priceCents:Number(order.price_cents),email:sponsor.email,notificationUrl:'https://vebqvedmhfaebvdantiu.supabase.co/functions/v1/hocco-message?type=payment',fetcher});return reply({pix});
+    }
+    const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Consulta de pagamento temporariamente indisponível.'},503);
+    const found=await fetcher('https://api.mercadopago.com/v1/payments/search?external_reference='+encodeURIComponent(paymentReference('reality_sponsor',code))+'&sort=date_created&criteria=desc&limit=10',{headers:{Authorization:'Bearer '+accessToken},signal:AbortSignal.timeout(12000)});
+    if(!found.ok)return reply({error:'Não foi possível consultar o pagamento agora.'},502);
+    const data=await found.json();for(const payment of data.results||[])if(['approved','refunded','charged_back','in_mediation'].includes(payment.status))await applyPayment(payment,'reality_sponsor',order);
+    return reply({ok:true});
+   }
+   if(action==='reality_sponsor.renew'){
+    const sponsorId=String(b.sponsorId||''),token=String(b.trackingToken||'');if(!/^[0-9a-f-]{36}$/i.test(sponsorId)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Identificação privada inválida.'},404);
+    const hash=await sha(token),initial=(await db('hm_reality_sponsor_orders?sponsor_id=eq.'+sponsorId+'&tracking_hash=eq.'+hash+'&purpose=eq.initial&status=eq.confirmed&select=id&limit=1'))[0];if(!initial)return reply({error:'Patrocínio não encontrado para renovação.'},404);
+    const cfg=(await db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,enabled'))[0];if(!cfg?.enabled)return reply({error:'Renovações temporariamente indisponíveis.'},403);
+    const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase(),renewToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),renewHash=await sha(renewToken);
+    try{const result=await db('rpc/hm_reality_sponsor_renew','POST',{p_sponsor_id:sponsorId,p_tracking_hash:hash,p_code:code,p_new_tracking_hash:renewHash,p_price_cents:Number(cfg.price_cents)});return reply({code,trackingToken:renewToken,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201)}catch(error){return reply({error:String(error.message||'Não foi possível reservar a vaga.')},409)}
+   }
+   if(action==='reality_sponsor.optout'){
+    const sponsorId=String(b.sponsorId||''),token=String(b.trackingToken||'');if(!/^[0-9a-f-]{36}$/i.test(sponsorId)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Identificação privada inválida.'},404);
+    const hash=await sha(token),initial=(await db('hm_reality_sponsor_orders?sponsor_id=eq.'+sponsorId+'&tracking_hash=eq.'+hash+'&purpose=eq.initial&status=eq.confirmed&select=id&limit=1'))[0];if(!initial)return reply({error:'Patrocínio não encontrado.'},404);
+    const ok=await db('rpc/hm_reality_sponsor_optout','POST',{p_sponsor_id:sponsorId,p_tracking_hash:hash});return reply({ok:Boolean(ok)});
+   }
+  }
   if(action==='sponsor.catalog'){const[config,rows,pix]=await Promise.all([db('hm_sponsor_settings?id=eq.1&select=price_cents,enabled'),readAll(db,'hm_sponsors?archived_at=is.null&select=id,company_name,category,city,state_code,offer_conditions,offer_expires_on,company_description,logo_url,cover_url,destination_url,community_offer,expires_at,starts_at,renewal_of,review,payment,payment_hold,created_at&order=created_at.asc'),db('hm_settings?id=eq.1&select=pix_key,payee_name,payee_city,bank_name')]);const now=Date.now(),active=rows.filter(s=>s.review==='approved'&&s.payment==='confirmed'&&!s.payment_hold&&Date.parse(s.starts_at||0)<=now&&Date.parse(s.expires_at)>now);return reply({cities:await db('hm_city_markets?status=eq.open&select=city,state_code&order=city.asc&limit=1000'),settings:config[0]||{price_cents:6990,enabled:true},active:active.map(s=>({id:s.id,company_name:s.company_name,category:s.category||'Outros',city:s.city||'',state_code:s.state_code||'',offer_conditions:s.offer_conditions||'',offer_expires_on:s.offer_expires_on,company_description:s.company_description||'',logo_url:s.logo_url,cover_url:s.cover_url,destination_url:s.destination_url,community_offer:s.community_offer||'',expires_at:s.expires_at})),pix:pix[0]||{}})}
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
-  const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:action==='community.like'?120:['create','sponsor.create','community.create','push.subscribe'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
+  const bucket=`${action}:${await sha(ip)}:${Math.floor(Date.now()/60000)}`;const limit=await db('rpc/hm_rate_limit','POST',{p_bucket:bucket,p_max:action==='community.like'?120:['create','sponsor.create','reality_sponsor.create','reality_sponsor.renew','community.create','push.subscribe'].includes(action)?5:60});if(!limit)return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
   if(action==='push.config')return reply(await publicPushConfig(db));
   if(['push.subscribe','push.activity','push.disable','push.inbox','push.read'].includes(action)){
    const deviceHash=await sha(validateDeviceToken(b.deviceToken));
