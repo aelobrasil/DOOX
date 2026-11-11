@@ -21,7 +21,7 @@ export async function createSponsorPix({accessToken,code,priceCents,email,cnpj,c
 export async function createRealitySponsorPix({accessToken,code,priceCents,email,notificationUrl,fetcher=fetch,now=Date.now()}){
  if(!accessToken)throw Error('O Pix está temporariamente indisponível.');
  if(!/^HC-RS-[A-F0-9]{12}$/.test(code)||!Number.isSafeInteger(priceCents)||priceCents<1||priceCents>999999)throw Error('Pedido Pix inválido.');
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email||''))throw Error('Confira o e-mail cadastrado para gerar o Pix.');
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email||''))throw Error('Confira o e-mail cadastrado para gerar o Pix.');
  const expires=new Date(now+30*60000).toISOString();
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hocco:reality_sponsor:'+code+':pix'));
  const idempotency=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
