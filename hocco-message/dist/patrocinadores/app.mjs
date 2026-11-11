@@ -35,7 +35,7 @@ function renderDirectory(){
  root.querySelector('#start-sponsor')?.addEventListener('click',()=>{location.hash='novo'});
 }
 function readImage(file){
- return new Promise((resolve,reject)=>{if(!file)return resolve(null);if(file.size>1048576)return reject(Error('O logo deve ter até 1 MB.'));const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler o logo.'));reader.onload=()=>resolve({mime:file.type,base64:String(reader.result).split(',')[1]||''});reader.readAsDataURL(file)});
+ return new Promise((resolve,reject)=>{if(!file)return reject(Error('Envie a imagem solicitada para o seu perfil de patrocinador.'));if(file.size>1048576)return reject(Error('A imagem deve ter até 1 MB.'));const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler o logo.'));reader.onload=()=>resolve({mime:file.type,base64:String(reader.result).split(',')[1]||''});reader.readAsDataURL(file)});
 }
 function renderForm(){
  clearInterval(pollTimer);
@@ -67,7 +67,7 @@ function renderForm(){
   const deviceToken=pushDeviceToken()||'';
   button.disabled=true;button.textContent='Reservando sua vaga…';
   try{
-   const data=new FormData(form),type=data.get('type'),file=data.get('logo'),logo=type==='company'?await readImage(file):null;
+   const data=new FormData(form),type=data.get('type'),file=data.get('logo'),logo=await readImage(file);
    const trackingToken=token();
    const result=await api('reality_sponsor.create',{type,name:data.get('name'),username:data.get('username'),segment:data.get('segment'),email:data.get('email'),logoMime:logo?.mime,logoBase64:logo?.base64,deviceToken,trackingToken,terms:data.get('terms')==='on',termsVersion:TERMS});
    saved={...(saved||{}),code:result.code,trackingToken:result.trackingToken||trackingToken,sponsorId:null,initialCode:result.code,initialToken:result.trackingToken||trackingToken};save();
