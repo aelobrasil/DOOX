@@ -85,6 +85,12 @@ async function showOrder(code,trackingToken){
  +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
  try{
   const current=await api('reality_sponsor.lookup',{code,trackingToken});
+  if(current.order.status==='attention'||current.order.needs_attention){
+   const host=root.querySelector('#sponsor-pix');host.hidden=false;host.innerHTML='<div class="reality-sponsor-warning">O pagamento foi registrado para análise. Não pague novamente. A equipe verificará a situação da vaga.</div><button class="btn secondary full" id="sponsor-payment-support">Falar com o suporte HOCCO</button>';host.querySelector('#sponsor-payment-support').onclick=()=>support('Meu pedido de Patrocinador Oficial '+code+' foi registrado para análise. Preciso de suporte.');return;
+  }
+  if(current.order.status==='expired'){
+   const host=root.querySelector('#sponsor-pix');host.hidden=false;host.innerHTML='<div class="reality-sponsor-warning">A reserva de 10 minutos terminou. Não pague este QR Code. Consulte a situação da sua vaga antes de iniciar outro pagamento.</div><a class="btn full" href="/patrocinadores/#renovar">Ver opções de renovação</a>';return;
+  }
   if(current.order.status==='confirmed'&&current.sponsor.status==='active'){
    saved.sponsorId=current.sponsor.id;saved.status='active';saved.expiresAt=current.sponsor.expires_at;saved.initialCode=saved.initialCode||code;saved.initialToken=saved.initialToken||trackingToken;save();
    root.querySelector('#sponsor-pix').innerHTML='<div class="reality-sponsor-success"><strong>Pagamento confirmado</strong><p>Vaga '+current.sponsor.slot_no+' · ativo até '+new Date(current.sponsor.expires_at).toLocaleString('pt-BR')+'</p></div><a class="btn full" href="/patrocinadores/">Ver patrocinadores</a>';
@@ -98,6 +104,7 @@ function startPolling(code,trackingToken){
  pollTimer=setInterval(async()=>{if(document.hidden)return;try{
   count++;if(count%2===0)await api('reality_sponsor.refresh',{code,trackingToken});
   const result=await api('reality_sponsor.lookup',{code,trackingToken});
+  if(['expired','refunded','cancelled'].includes(result.order.status)){clearInterval(pollTimer);root.innerHTML=header('Reserva encerrada','Não pague este QR Code. Consulte a situação da sua vaga antes de iniciar outro pagamento.')+'<section class="reality-sponsor-form-wrap"><a class="btn full" href="/patrocinadores/#renovar">Ver opções de renovação</a></section>';return;}
   if(result.order.status==='attention'||result.order.needs_attention){clearInterval(pollTimer);root.innerHTML=header('Pagamento em análise','O Mercado Pago informou um pagamento fora da reserva da vaga. A equipe precisa conferir o caso antes de ativar o patrocínio.')+'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-warning">Não pague novamente. O pagamento foi registrado para conferência e a vaga de outro patrocinador não será alterada.</div><button class="btn secondary full" id="sponsor-payment-support">Falar com o suporte HOCCO</button></section>';root.querySelector('#sponsor-payment-support').onclick=()=>support('Meu pagamento de Patrocinador Oficial foi registrado para análise. Código: '+code+'. Preciso de suporte.');return;}
   if(result.order.status==='confirmed'&&result.sponsor.status==='active'){
    clearInterval(pollTimer);saved.sponsorId=result.sponsor.id;saved.status='active';saved.expiresAt=result.sponsor.expires_at;saved.initialCode=saved.initialCode||code;saved.initialToken=saved.initialToken||trackingToken;save();
@@ -121,7 +128,7 @@ async function renderRenewal(){
   if(s.status==='active'&&Date.parse(s.expires_at)-Date.now()>24*60*60*1000){host.innerHTML='<p>A renovação será liberada 24 horas antes do fim do período. O app enviará uma notificação neste aparelho.</p><a class="btn full" href="/patrocinadores/">Voltar à vitrine</a>';return}
   if(s.status==='expired')host.innerHTML='<div class="reality-sponsor-notice"><strong>Seu período terminou, mas a vaga ainda está disponível.</strong><p>Você pode reservar a mesma vaga por 10 minutos para renovar por mais 7 dias.</p></div>';
   host.innerHTML+='<div class="reality-sponsor-success"><strong>'+esc(s.name)+'</strong><p>@'+esc(s.username)+' · '+esc(s.segment)+'</p><p>Vaga '+s.slot_no+' · termina em '+new Date(s.expires_at).toLocaleString('pt-BR')+'</p></div>'
-   +'<p>Renovar custa <strong>R$ 39,90</strong> por mais 7 dias. Não existe cobrança automática.</p>'
+   +'<p>Renovar custa <strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong> por mais 7 dias. Não existe cobrança automática.</p>'
    +'<button class="btn full" id="renew-sponsor">Renovar por mais 7 dias</button><button class="btn secondary full" id="no-renew-sponsor">Não renovar</button><div id="renewal-pix" hidden></div><p class="reality-sponsor-error" id="renewal-error" role="alert"></p>';
   host.querySelector('#renew-sponsor').onclick=async()=>{
    const button=host.querySelector('#renew-sponsor'),error=host.querySelector('#renewal-error');button.disabled=true;error.textContent='';
