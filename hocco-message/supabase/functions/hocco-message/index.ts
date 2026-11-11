@@ -106,7 +106,9 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     const due=await db('rpc/hm_reality_sponsor_claim_due','POST',{});
     if(due.length){
      const config=await publicPushConfig(db),secretRows=await db('rpc/get_push_runtime_secrets','POST',{}),secrets=Array.isArray(secretRows)?secretRows[0]:secretRows;
-     for(const sponsor of due){
+     let cursor=0;
+     const sendWorker=async()=>{while(cursor<due.length){
+      const sponsor=due[cursor++];
       try{
        if(!config.enabled||!secrets?.vapid_private_key||!sponsor.device_hash)throw Error('Notificações push indisponíveis.');
        const device=(await db('hm_push_devices?device_hash=eq.'+encodeURIComponent(sponsor.device_hash)+'&enabled=eq.true&select=endpoint,p256dh,auth_key&limit=1'))[0];
@@ -121,7 +123,8 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
        await db('rpc/hm_reality_sponsor_finish_notice','POST',{p_id:sponsor.id,p_sent:false,p_error:String(error.message||'push_error').slice(0,300)});
        realitySponsorFailed++;
       }
-     }
+     }};
+     await Promise.all(Array.from({length:Math.min(10,due.length)},sendWorker));
     }
    }catch(error){realitySponsorFailed++}
    try{await db('hm_alex_events','POST',{event_type:'reminder_run',severity:failed||sponsorFailed||realitySponsorFailed?'warning':'info',detail:{sent,failed,sponsorSent,sponsorFailed,realitySponsorSent,realitySponsorFailed}})}catch{}
