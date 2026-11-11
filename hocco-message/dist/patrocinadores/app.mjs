@@ -2,7 +2,7 @@ import {api,esc,money} from '/config.mjs';
 import {pushDeviceToken,mountReturnActivity} from '/reactivation.mjs';
 const root=document.querySelector('#reality-sponsor-app');
 const STORE='hocco-reality-sponsor-v1';
-const TERMS='2026-11-11.reality-sponsor.v1';
+const TERMS='2026-11-11.reality-sponsor.v2';
 let saved={};
 try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')||{}}catch{}
 const token=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
@@ -10,7 +10,6 @@ const initials=value=>String(value||'?').trim().slice(0,1).toUpperCase();
 const moneyBRL=cents=>money(Number(cents)||3990);
 const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(saved))}catch{}};
 const support=(message='')=>{const input=document.querySelector('#support-message');if(input&&message)input.value=message;const button=document.querySelector('.support-launcher');if(button)button.click();else alert('Abra o suporte do HOCCO para falar com a equipe.')};
-const activatePush=()=>{const button=document.querySelector('[data-app-notifications]');if(button)button.click();else alert('Use o ícone de notificações no cabeçalho do app para ativar os avisos.')};
 let catalog=null,pollTimer=null;
 function header(title,description){return '<section class="reality-sponsor-heading"><span class="reality-sponsor-new">NOVO</span><p class="section-eyebrow">HOCCO · REALITY EM TEMPO REAL</p><h1>'+esc(title)+'</h1><p>'+esc(description)+'</p></section>'}
 async function loadCatalog(){catalog=await api('reality_sponsor.catalog');return catalog}
@@ -50,18 +49,22 @@ function renderForm(){
  +'<label>E-mail para o pagamento<input name="email" type="email" maxlength="254" required placeholder="voce@exemplo.com"></label>'
  +'<label class="reality-company-logo" hidden>Logo da empresa<input name="logo" type="file" accept="image/png,image/jpeg,image/webp"><small>PNG, JPG ou WebP. Até 1 MB. O logo aparece somente na vitrine.</small></label>'
  +'<div class="reality-sponsor-notice"><strong>Antes de continuar</strong><p>Você precisa ativar as notificações do HOCCO neste aparelho. O app enviará um aviso 24 horas antes do fim do período para você decidir se deseja renovar.</p><button type="button" class="btn secondary small" id="enable-sponsor-push">Ativar notificações</button></div>'
- +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>O patrocínio custa R$ 39,90 por 7 dias e não é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O app envia um aviso aproximadamente 24 horas antes do término para você decidir se deseja renovar.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
+ +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>O patrocínio custa R$ 39,90 por 7 dias e não é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo; para pessoas, uma foto de perfil. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
  +'<label class="reality-sponsor-check"><input type="checkbox" name="terms" required> Li e aceito as condições do Patrocínio Oficial do Reality HOCCO.</label>'
  +'<p class="reality-sponsor-legal">Após a confirmação do pagamento, a vaga é ativada automaticamente por 7 dias. A vaga fica reservada por 10 minutos durante a finalização do pedido.</p>'
  +'<button class="btn full" type="submit">Continuar para o Pix</button><p class="reality-sponsor-error" id="form-error" role="alert"></p><button type="button" class="btn ghost full" id="back-directory">Voltar à vitrine</button>'
  +'</form></section>';
- const form=root.querySelector('#reality-sponsor-form'),logoLabel=form.querySelector('.reality-company-logo');
- form.querySelectorAll('[name=type]').forEach(r=>r.addEventListener('change',()=>{const company=form.querySelector('[name=type]:checked').value==='company';logoLabel.hidden=!company;form.querySelector('[name=logo]').required=company}));
- root.querySelector('#enable-sponsor-push').onclick=activatePush;
+ const form=root.querySelector('#reality-sponsor-form'),imageLabel=form.querySelector('#sponsor-image-label'),imageHelp=form.querySelector('#sponsor-image-help'),imageInput=form.querySelector('[name=logo]');
+ form.querySelectorAll('[name=type]').forEach(r=>r.addEventListener('change',()=>{
+  const company=form.querySelector('[name=type]:checked').value==='company';
+  imageLabel.textContent=company?'Logo da empresa':'Foto do perfil';
+  imageHelp.textContent=company?'PNG, JPG ou WebP. Até 1 MB. O logo será exibido na vitrine como identificação da empresa.':'PNG, JPG ou WebP. Até 1 MB. A foto será exibida na vitrine como imagem do seu perfil.';
+  imageInput.required=true;
+ }));
  root.querySelector('#back-directory').onclick=()=>{location.hash=''};
  form.onsubmit=async event=>{
   event.preventDefault();const error=root.querySelector('#form-error'),button=form.querySelector('[type=submit]');error.textContent='';
-  const deviceToken=pushDeviceToken();if(!deviceToken){error.textContent='Ative as notificações pelo botão acima e tente novamente.';return}
+  const deviceToken=pushDeviceToken()||'';
   button.disabled=true;button.textContent='Reservando sua vaga…';
   try{
    const data=new FormData(form),type=data.get('type'),file=data.get('logo'),logo=type==='company'?await readImage(file):null;
