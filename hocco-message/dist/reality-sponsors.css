@@ -72,3 +72,93 @@
  .reality-sponsor-card-body{min-height:88px}
  .reality-sponsor-cover{height:112px}
 }
+
+
+/* HOCCO Sponsor Gallery — art direction v2 */
+.reality-sponsors-app{background:#080808;color:#f3eee7}
+.reality-sponsors-app main{max-width:1320px;padding:34px clamp(18px,4vw,64px) 90px}
+.reality-sponsor-heading{max-width:1180px;text-align:left;margin:0 auto 22px;position:relative}
+.reality-sponsor-heading:before{content:"";display:block;width:46px;height:2px;background:#c58d5d;margin:0 0 18px}
+.reality-sponsor-heading h1{font-family:'Barlow Condensed',Impact,sans-serif;font-size:clamp(48px,8vw,92px);font-weight:800;line-height:.82;letter-spacing:-.035em;text-transform:uppercase;margin:0;color:#f4efe8}
+.reality-sponsor-heading>p:last-child{font-size:13px;color:#a69b8e;letter-spacing:.03em;margin:17px 0 0}
+.reality-sponsor-hero{max-width:1200px;min-height:470px;margin:34px auto 76px;border:0;border-radius:0;overflow:hidden;position:relative;display:grid;grid-template-columns:1.5fr .72fr;background:#12100e}
+.reality-sponsor-hero-image{min-height:470px;padding:34px;justify-content:flex-end;background:linear-gradient(90deg,#090909d9 0%,#09090966 54%,transparent 100%),radial-gradient(ellipse at 76% 24%,#c28c604d,transparent 32%),linear-gradient(135deg,#4b3b30 0%,#24201c 40%,#101010 76%)}
+.reality-sponsor-hero-image:after{content:"";position:absolute;width:48%;height:130%;right:4%;top:-16%;border:1px solid #d9b18a40;border-radius:50%;transform:rotate(-22deg);box-shadow:0 0 0 22px #ffffff05,0 0 0 60px #ffffff03}
+.reality-sponsor-hero-image span{font-size:9px;letter-spacing:3px;color:#d5ad88;margin-bottom:22px}
+.reality-sponsor-hero-image strong{font-size:clamp(46px,6vw,78px);max-width:660px;line-height:.86;letter-spacing:-.025em}
+.reality-sponsor-hero-info{padding:36px 30px;background:linear-gradient(145deg,#191613,#0c0c0c);border-left:1px solid #ffffff12}
+.reality-sponsor-hero-info .section-eyebrow,.reality-sponsor-section-head .section-eyebrow{color:#c79568;letter-spacing:2.4px}
+.reality-sponsor-hero-info h2{font-size:clamp(30px,3vw,43px);line-height:.94;letter-spacing:-.02em}
+.reality-sponsor-hero-info p{font-size:12px;color:#aaa096}
+.reality-sponsor-hero-price{font-size:40px;color:#e0b48d}
+.reality-sponsor-hero-info .btn,.reality-sponsor-join .btn{border-radius:2px;background:#c58d5d;color:#100d0a;letter-spacing:.08em;text-transform:uppercase;font-size:10px;font-weight:900;min-height:48px}
+.reality-sponsor-capacity{max-width:1200px;margin:-38px auto 78px;padding:17px 0;border:0;border-top:1px solid #ffffff24;border-bottom:1px solid #ffffff24;border-radius:0;background:transparent}
+.reality-sponsor-capacity strong{font-family:'Barlow Condensed',sans-serif;font-size:30px;color:#e0b48d}
+.reality-sponsor-capacity p{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7e766e}
+.reality-sponsor-featured,.reality-sponsor-directory{max-width:1200px;margin:0 auto 82px}
+.reality-sponsor-section-head{margin-bottom:25px}
+.reality-sponsor-section-head h2{font-size:clamp(36px,5vw,54px);letter-spacing:-.02em}
+.reality-sponsor-featured-grid{grid-template-columns:1.35fr 1fr 1fr;gap:18px;align-items:stretch}
+.reality-sponsor-card{border:0;border-radius:0;background:transparent;overflow:visible;position:relative;transition:transform .25s ease}
+.reality-sponsor-card:hover{transform:translateY(-5px)}
+.reality-sponsor-card.is-featured:first-child{grid-row:span 1}
+.reality-sponsor-cover{height:205px;padding:18px;background-color:#171411}
+.reality-sponsor-cover:after{inset:8px;border:1px solid #ffffff30}
+.reality-sponsor-cover span{font-size:8px;letter-spacing:2.4px}
+.reality-sponsor-cover.cover-editorial{background:radial-gradient(ellipse at 75% 20%,#c7a27a88,transparent 30%),linear-gradient(130deg,#4d4035,#1b1714 65%,#090909)}
+.reality-sponsor-cover.cover-urbano{background:linear-gradient(125deg,transparent 45%,#ffffff15 46%,transparent 47%),radial-gradient(circle at 80% 30%,#78909b66,transparent 28%),linear-gradient(130deg,#17232b,#0a0d10)}
+.reality-sponsor-cover.cover-criativo{background:radial-gradient(circle at 70% 30%,#a77a9e88,transparent 32%),linear-gradient(130deg,#38253c,#151018 70%)}
+.reality-sponsor-cover.cover-negocios{background:radial-gradient(ellipse at 80% 25%,#8da18a66,transparent 30%),linear-gradient(130deg,#27352f,#111713 72%)}
+.reality-sponsor-cover.cover-essencial{background:radial-gradient(ellipse at 75% 25%,#d0c2a477,transparent 30%),linear-gradient(130deg,#575047,#1a1815 70%)}
+.reality-sponsor-card-body{min-height:120px;padding:0 8px 14px;gap:14px;border-bottom:1px solid #ffffff22}
+.reality-sponsor-avatar{width:72px;height:72px;flex-basis:72px;margin-top:-35px;border:4px solid #090909;background:#27211b}
+.reality-sponsor-avatar.is-company{border-radius:4px}
+.reality-sponsor-card-copy{padding-top:9px;gap:6px}
+.reality-sponsor-card-copy strong{font-family:'Barlow Condensed',sans-serif;font-size:21px;line-height:1.05;letter-spacing:.01em}
+.reality-sponsor-username{color:#c79568;font-size:11px;letter-spacing:.03em}
+.reality-sponsor-card-copy small{color:#8e877f;font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+.reality-sponsor-level{background:transparent;border:0;border-left:1px solid #c79568;border-radius:0;padding:2px 0 2px 7px;color:#d5ad88;font-size:8px;letter-spacing:1.2px}
+.reality-sponsor-card.is-example .reality-sponsor-example{background:#c79568;color:#17110c;border-radius:0;padding:4px 7px}
+.reality-sponsor-tabs{gap:24px;border-bottom:1px solid #ffffff24;padding-bottom:12px}
+.reality-sponsor-tabs button{background:transparent;border:0;border-radius:0;padding:9px 0;color:#8e877f;text-transform:uppercase;font-size:10px;letter-spacing:.12em}
+.reality-sponsor-tabs button.is-active{background:transparent;color:#e2b58e;border-bottom:2px solid #c58d5d}
+.reality-sponsor-list{max-width:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:34px 20px}
+.reality-sponsor-list .reality-sponsor-cover{height:155px}
+.reality-sponsor-empty{border:0;border-top:1px solid #ffffff22;border-radius:0;text-align:left;padding:26px 0;color:#8e877f}
+.reality-sponsor-join{max-width:1200px;padding:38px 0;border:0;border-top:1px solid #ffffff35;border-bottom:1px solid #ffffff35;border-radius:0;background:transparent}
+.reality-sponsor-join h2{font-family:'Barlow Condensed',sans-serif;font-size:42px;text-transform:uppercase}
+.reality-sponsor-join p{max-width:470px;font-size:11px;line-height:1.8}
+.reality-sponsor-join>div:last-child{min-width:220px}
+.reality-sponsor-join>div:last-child strong{font-family:'Barlow Condensed',sans-serif;font-size:38px;color:#e0b48d}
+.reality-sponsor-legal{max-width:900px;text-align:left;color:#77716a;font-size:10px}
+.reality-sponsor-form-wrap{border:1px solid #ffffff1c;border-radius:2px;background:#10100f;padding:clamp(20px,4vw,38px)}
+.reality-sponsor-price{border-radius:0;background:linear-gradient(120deg,#211a15,#111);border-left:2px solid #c58d5d}
+.reality-sponsor-price strong{font-family:'Barlow Condensed',sans-serif;font-size:46px;color:#e0b48d}
+.reality-sponsor-form-wrap input:not([type=radio]):not([type=checkbox]),.reality-sponsor-form-wrap textarea{border-radius:2px;background:#090909;border-color:#ffffff22}
+.reality-sponsor-form-wrap .btn{border-radius:2px;letter-spacing:.08em;text-transform:uppercase;font-size:10px;min-height:46px}
+@media(max-width:760px){
+ .reality-sponsors-app main{padding:22px 18px 60px}
+ .reality-sponsor-heading h1{font-size:clamp(52px,15vw,76px)}
+ .reality-sponsor-hero{grid-template-columns:1fr;margin:28px -18px 55px}
+ .reality-sponsor-hero-image{min-height:300px;padding:24px}
+ .reality-sponsor-hero-image strong{font-size:clamp(48px,13vw,68px)}
+ .reality-sponsor-hero-info{padding:25px 22px;border-left:0;border-top:1px solid #ffffff16}
+ .reality-sponsor-capacity{margin:0 auto 58px;padding:14px 0}
+ .reality-sponsor-featured,.reality-sponsor-directory{margin-bottom:60px}
+ .reality-sponsor-featured-grid{grid-template-columns:1fr 1fr;gap:20px 12px}
+ .reality-sponsor-featured-grid .reality-sponsor-card:first-child{grid-column:1/-1}
+ .reality-sponsor-featured-grid .reality-sponsor-card:first-child .reality-sponsor-cover{height:220px}
+ .reality-sponsor-list{grid-template-columns:1fr 1fr;gap:26px 12px}
+ .reality-sponsor-list .reality-sponsor-cover{height:120px}
+ .reality-sponsor-card-body{padding:0 3px 12px;gap:8px}
+ .reality-sponsor-avatar{width:54px;height:54px;flex-basis:54px;margin-top:-26px}
+ .reality-sponsor-card-copy strong{font-size:18px}
+ .reality-sponsor-card-copy small{font-size:9px}
+ .reality-sponsor-join{padding:28px 0}
+ .reality-sponsor-join h2{font-size:36px}
+}
+@media(max-width:390px){
+ .reality-sponsor-featured-grid,.reality-sponsor-list{grid-template-columns:1fr}
+ .reality-sponsor-featured-grid .reality-sponsor-card:first-child{grid-column:auto}
+ .reality-sponsor-cover,.reality-sponsor-list .reality-sponsor-cover{height:150px}
+}
