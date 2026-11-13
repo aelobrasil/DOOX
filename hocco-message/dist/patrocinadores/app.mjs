@@ -2,7 +2,7 @@ import {api,esc,money} from '/config.mjs';
 import {pushDeviceToken,mountReturnActivity} from '/reactivation.mjs';
 const root=document.querySelector('#reality-sponsor-app');
 const STORE='hocco-reality-sponsor-v1';
-const TERMS='2026-11-13.reality-sponsor.v3';
+const TERMS='2026-11-13.reality-sponsor.v4';
 let saved={};
 try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')||{}}catch{}
 const token=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
@@ -26,7 +26,7 @@ function renderDirectory(){
  const example={type:'person',name:'Marina Costa',username:'marinacosta',segment:'Criadora de conteúdo',logo_url:'/patrocinadores/exemplo-perfil.svg',example:true};
  const featured=[...active.filter(s=>s.tier==='featured'),example,...active.filter(s=>s.tier!=='featured')].slice(0,3);
  const all=[...active.filter(s=>s.tier==='featured'),...people.filter(s=>s.tier!=='featured'),...companies.filter(s=>s.tier!=='featured')];
- const price=moneyBRL(catalog?.settings?.price_cents||4990);
+ const price=moneyBRL(catalog?.settings?.normal_price_cents??catalog?.settings?.price_cents??4990);
  root.innerHTML=header('Patrocinadores Oficiais','Quem escolheu fazer parte do Reality da HOCCO.')
  +'<section class="reality-sponsor-hero"><div class="reality-sponsor-hero-image"><span>UMA SÉRIE ORIGINAL DOOX STUDIOS</span><strong>O Reality acontece.<br>Quem acredita, faz parte.</strong></div><div class="reality-sponsor-hero-info"><div><span class="section-eyebrow">PRESENÇA OFICIAL NO REALITY</span><h2>Faça parte desta história.</h2><p>Uma presença oficial na vitrine de patrocinadores do Reality da HOCCO.</p><strong class="reality-sponsor-hero-price">'+price+' <small>/ 7 dias</small></strong><small class="reality-sponsor-no-renew">Pagamento único. Sem renovação automática.</small></div><button class="btn full" id="start-sponsor" '+(catalog?.settings?.enabled&&catalog?.available>0?'':'disabled')+'>Quero ser patrocinador</button></div></section>'
  +'<section class="reality-sponsor-capacity"><div><span>VAGAS DISPONÍVEIS</span><strong>+ '+Number(catalog?.available||0)+' vagas</strong></div><p>Até 50 patrocinadores simultâneos.</p></section>'
@@ -53,17 +53,17 @@ function renderForm(){
  clearInterval(pollTimer);
  root.innerHTML=header('Seja Patrocinador Oficial','Escolha sua modalidade de presença no Reality HOCCO por 7 dias.')
  +'<section class="reality-sponsor-form-wrap"><form id="reality-sponsor-form">'
- +'<fieldset class="reality-sponsor-tier"><legend>Escolha sua presença</legend><label><input type="radio" name="tier" value="normal" checked><span><strong>Patrocinador normal</strong><b>R$ 49,90</b><small>Presença na vitrine por 7 dias.</small></span></label><label><input type="radio" name="tier" value="featured"><span><strong>Patrocinador em destaque</strong><b>R$ 59,90</b><small>Fica fixado na área de destaque por 7 dias.</small></span></label></fieldset>'
+ +'<fieldset class="reality-sponsor-tier"><legend>Escolha sua presença</legend><label><input type="radio" name="tier" value="normal" checked><span><strong>Patrocinador normal</strong><b>'+moneyBRL(catalog?.settings?.normal_price_cents??catalog?.settings?.price_cents??4990)+'</b><small>Presença na vitrine por 7 dias.</small></span></label><label><input type="radio" name="tier" value="featured"><span><strong>Patrocinador em destaque</strong><b>'+moneyBRL(catalog?.settings?.featured_price_cents??5990)+'</b><small>Fica fixado na área de destaque por 7 dias.</small></span></label></fieldset>'
  +'<fieldset><legend>Tipo de inscrição</legend><label class="reality-sponsor-choice"><input type="radio" name="type" value="person" checked> Pessoa</label><label class="reality-sponsor-choice"><input type="radio" name="type" value="company"> Empresa</label></fieldset>'
  +'<label>Nome que será exibido<input name="name" maxlength="80" required placeholder="Seu nome ou nome da empresa"></label>'
  +'<label>Identificação @<input name="username" maxlength="24" required placeholder="seuusuario" autocomplete="off"><small>O @ será exibido apenas como texto. Não será um link.</small></label>'
  +'<label>Segmento<input name="segment" maxlength="60" required placeholder="Ex.: Educação, tecnologia, alimentação"></label>'
  +'<label>E-mail para o pagamento<input name="email" type="email" maxlength="254" required placeholder="voce@exemplo.com"></label>'
  +'<label class="reality-sponsor-image"><span id="sponsor-image-label">Foto do perfil</span><input name="logo" type="file" accept="image/png,image/jpeg,image/webp" required><small id="sponsor-image-help">PNG, JPG ou WebP. Até 1 MB. A foto será exibida na vitrine como imagem do seu perfil.</small></label>'
- +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>O patrocínio normal custa R$ 49,90 por 7 dias. O patrocínio em destaque custa R$ 59,90 por 7 dias e fica fixado na área de destaque. Nenhuma modalidade é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo; para pessoas, uma foto de perfil. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
+ +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>Os valores das modalidades normal e em destaque são apresentados no formulário conforme a tabela de preços vigente no momento da contratação. O preço efetivamente contratado aparece no resumo do pedido e no checkout. Nenhuma modalidade é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo; para pessoas, uma foto de perfil. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
  +'<label class="reality-sponsor-check"><input type="checkbox" name="terms" required> Li e aceito as condições do Patrocínio Oficial do Reality HOCCO.</label>'
  +'<p class="reality-sponsor-legal">Após a confirmação do pagamento, a vaga é ativada automaticamente por 7 dias. A vaga fica reservada por 10 minutos durante a finalização do pedido.</p>'
- +'<button class="btn full" type="submit">Continuar para o Pix</button><p class="reality-sponsor-error" id="form-error" role="alert"></p><button type="button" class="btn ghost full" id="back-directory">Voltar à vitrine</button>'
+ +'<button class="btn full" type="submit">Continuar para pagamento</button><p class="reality-sponsor-error" id="form-error" role="alert"></p><button type="button" class="btn ghost full" id="back-directory">Voltar à vitrine</button>'
  +'</form></section>';
  const form=root.querySelector('#reality-sponsor-form'),imageLabel=form.querySelector('#sponsor-image-label'),imageHelp=form.querySelector('#sponsor-image-help'),imageInput=form.querySelector('[name=logo]');
  form.querySelectorAll('[name=type]').forEach(r=>r.addEventListener('change',()=>{
@@ -96,9 +96,10 @@ function showPix(pix){
 async function showOrder(code,trackingToken,returned=false){
  clearInterval(pollTimer);
  root.innerHTML=header('Finalize sua participação','Sua solicitação foi recebida. A vaga ficará reservada por 10 minutos.')
- +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||4990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
+ +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong id="sponsor-order-price">Consultando pedido…</strong><small id="sponsor-order-tier">7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
  try{
   const current=await api('reality_sponsor.lookup',{code,trackingToken});
+  const priceNode=root.querySelector('#sponsor-order-price'),tierNode=root.querySelector('#sponsor-order-tier');if(priceNode)priceNode.textContent=moneyBRL(current.order.price_cents);if(tierNode)tierNode.textContent=(current.sponsor.tier==='featured'?'Patrocinador em destaque':'Patrocinador normal')+' · 7 dias · pagamento único';
   if(current.order.status==='attention'||current.order.needs_attention){
    const host=root.querySelector('#sponsor-pix');host.hidden=false;host.innerHTML='<div class="reality-sponsor-warning">O pagamento foi registrado para análise. Não pague novamente. A equipe verificará a situação da vaga.</div><button class="btn secondary full" id="sponsor-payment-support">Falar com o suporte HOCCO</button>';host.querySelector('#sponsor-payment-support').onclick=()=>support('Meu pedido de Patrocinador Oficial '+code+' foi registrado para análise. Preciso de suporte.');return;
   }
@@ -150,7 +151,7 @@ async function renderRenewal(){
   if(s.status==='active'&&Date.parse(s.expires_at)-Date.now()>24*60*60*1000){host.innerHTML='<p>A renovação será liberada 24 horas antes do fim do período. O app enviará uma notificação neste aparelho.</p><a class="btn full" href="/patrocinadores/">Voltar à vitrine</a>';return}
   if(s.status==='expired')host.innerHTML='<div class="reality-sponsor-notice"><strong>Seu período terminou, mas a vaga ainda está disponível.</strong><p>Você pode reservar a mesma vaga por 10 minutos para renovar por mais 7 dias.</p></div>';
   host.innerHTML+='<div class="reality-sponsor-success"><strong>'+esc(s.name)+'</strong><p>@'+esc(s.username)+' · '+esc(s.segment)+'</p><p>Vaga '+s.slot_no+' · termina em '+new Date(s.expires_at).toLocaleString('pt-BR')+'</p></div>'
-   +'<p>Renovar custa <strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong> por mais 7 dias. Não existe cobrança automática.</p>'
+   +'<p>Renovar custa <strong>'+moneyBRL(s.tier==='featured'?(catalog?.settings?.featured_price_cents??5990):(catalog?.settings?.normal_price_cents??catalog?.settings?.price_cents??4990))+'</strong> por mais 7 dias. Não existe cobrança automática.</p>'
    +'<button class="btn full" id="renew-sponsor">Renovar por mais 7 dias</button><button class="btn secondary full" id="no-renew-sponsor">Não renovar</button><div id="renewal-pix" hidden></div><p class="reality-sponsor-error" id="renewal-error" role="alert"></p>';
   host.querySelector('#renew-sponsor').onclick=async()=>{
    const button=host.querySelector('#renew-sponsor'),error=host.querySelector('#renewal-error');button.disabled=true;error.textContent='';
@@ -163,7 +164,7 @@ async function renderRenewal(){
 async function route(){
  clearInterval(pollTimer);
  const hash=location.hash.slice(1);
- if(hash==='novo'){renderForm();return}
+ if(hash==='novo'){if(!catalog)await loadCatalog();renderForm();return}
  if(hash==='renovar'){await renderRenewal();return}
  const query=new URLSearchParams(location.search);if(query.get('pedido')&&query.get('token')){saved.code=query.get('pedido');saved.trackingToken=query.get('token');save();await showOrder(saved.code,saved.trackingToken,true);return}if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2],true);return}}
  try{await loadCatalog();renderDirectory()}catch(e){root.innerHTML='<div class="empty"><h2>Não foi possível carregar a vitrine.</h2><p>'+esc(e.message)+'</p><button class="btn" id="retry-sponsor-catalog">Tentar novamente</button></div>';root.querySelector('#retry-sponsor-catalog').onclick=route}
