@@ -23,8 +23,7 @@ function renderDirectory(){
  clearInterval(pollTimer);
  const active=catalog?.active||[];
  const people=active.filter(s=>s.type==='person'),companies=active.filter(s=>s.type==='company');
- const example={type:'person',name:'Marina Costa',username:'marinacosta',segment:'Criadora de conteúdo',logo_url:'/patrocinadores/exemplo-perfil.svg',example:true};
- const featured=[...active.filter(s=>s.tier==='featured'),example,...active.filter(s=>s.tier!=='featured')].slice(0,3);
+ const featured=active.filter(s=>s.tier==='featured');
  const all=[...active.filter(s=>s.tier==='featured'),...people.filter(s=>s.tier!=='featured'),...companies.filter(s=>s.tier!=='featured')];
  const price=moneyBRL(catalog?.settings?.normal_price_cents??catalog?.settings?.price_cents??4990);
  root.innerHTML=header('Patrocinadores Oficiais','Quem escolheu fazer parte do Reality da HOCCO.')
