@@ -363,19 +363,19 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const[settings,slots,active]=await Promise.all([
     db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,capacity,duration_days,enabled'),
     db('hm_reality_sponsor_slots?select=slot_no,active_sponsor_id,reserved_order_id,reserved_until'),
-    readAll(db,'hm_reality_sponsors?status=eq.active&expires_at=gt.'+now+'&select=id,sponsor_type,display_name,username,segment,logo_url,expires_at,slot_no&order=slot_no.asc&limit=50')
+    readAll(db,'hm_reality_sponsors?status=eq.active&expires_at=gt.'+now+'&select=id,sponsor_type,display_name,username,segment,logo_url,expires_at,slot_no,consent&order=slot_no.asc&limit=50')
    ]);
    const held=slots.filter(x=>x.active_sponsor_id||(x.reserved_order_id&&Date.parse(x.reserved_until)>Date.now())).length;
-   return reply({settings:settings[0]||{price_cents:3990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,50-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,expires_at:s.expires_at,slot_no:s.slot_no}))});
+   return reply({settings:settings[0]||{price_cents:4990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,50-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,expires_at:s.expires_at,slot_no:s.slot_no,tier:s.consent?.tier==='featured'?'featured':'normal'}))});
   }
   if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.checkout','reality_sponsor.refresh'].includes(action)){
    const realityIp=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
    const realityMax=['reality_sponsor.create','reality_sponsor.renew'].includes(action)?5:30;
    if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor:${action}:${await sha(realityIp)}:${Math.floor(Date.now()/60000)}`,p_max:realityMax}))return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
    if(action==='reality_sponsor.create'){
-    const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),rawDeviceToken=String(b.deviceToken||'').trim(),deviceToken=rawDeviceToken&&/^[a-f0-9]{64}$/.test(rawDeviceToken)?rawDeviceToken:'';
+    const tier=String(b.tier||'normal');if(!['normal','featured'].includes(tier))throw Error('Escolha uma modalidade válida.');const priceCents=tier==='featured'?5990:4990;const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),rawDeviceToken=String(b.deviceToken||'').trim(),deviceToken=rawDeviceToken&&/^[a-f0-9]{64}$/.test(rawDeviceToken)?rawDeviceToken:'';
     if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira nome, @, segmento e e-mail.');
-    if(b.terms!==true||b.termsVersion!=='2026-11-11.reality-sponsor.v2'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
+    if(b.terms!==true||b.termsVersion!=='2026-11-13.reality-sponsor.v3'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
     if(/(?:https?:\\x2f\\x2f|www\\.|wa\\.me|t\\.me|instagram\\.com|tiktok\\.com)/i.test(name+' '+segment))throw Error('Não informe links, sites, telefones ou destinos externos nos campos públicos.');
     const sponsorModeration=moderateCommunityMessage(name+' '+username+' '+segment);if(!sponsorModeration.approved&&!sponsorModeration.requiresReview)return reply({error:'Os dados públicos contêm conteúdo que não pode ser exibido. Revise o nome e o segmento.'},422);
     const deviceHash=deviceToken&&/^[a-f0-9]{64}$/.test(deviceToken)?await sha(deviceToken):null;
@@ -394,16 +394,16 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     if(!uploaded.ok)throw Error('Não foi possível armazenar a imagem. Tente novamente.');
     logoUrl=url+'/storage/v1/object/public/hocco-sponsor-logos/'+path;
     let result;
-    try{result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_device_hash:deviceHash,p_price_cents:Number(cfg.price_cents),p_consent:{terms_version:b.termsVersion,accepted_at:new Date().toISOString()}})}
+    try{result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_device_hash:deviceHash,p_price_cents:priceCents,p_consent:{tier,terms_version:b.termsVersion,accepted_at:new Date().toISOString()}})}
     catch(error){try{await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'DELETE',headers})}catch{}throw error}
-    return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201);
+    return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents},201);
    }
    if(action==='reality_sponsor.lookup'||action==='reality_sponsor.pix'||action==='reality_sponsor.refresh'){
     const code=String(b.code||''),token=String(b.trackingToken||'');if(!/^HC-RS-[A-F0-9]{12}$/.test(code)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Link privado de acompanhamento inválido.'},404);
     const hash=await sha(token),order=(await db('hm_reality_sponsor_orders?code=eq.'+code+'&tracking_hash=eq.'+hash+'&select=*&limit=1'))[0];if(!order)return reply({error:'Pedido de patrocínio não encontrado.'},404);
-    const sponsor=(await db('hm_reality_sponsors?id=eq.'+order.sponsor_id+'&select=id,sponsor_type,display_name,username,segment,logo_url,status,slot_no,starts_at,expires_at,renewal_opt_out,email&limit=1'))[0];if(!sponsor)return reply({error:'Cadastro de patrocinador não encontrado.'},404);
+    const sponsor=(await db('hm_reality_sponsors?id=eq.'+order.sponsor_id+'&select=id,sponsor_type,display_name,username,segment,logo_url,status,slot_no,starts_at,expires_at,renewal_opt_out,email,consent&limit=1'))[0];if(!sponsor)return reply({error:'Cadastro de patrocinador não encontrado.'},404);
     const slot=(await db('hm_reality_sponsor_slots?slot_no=eq.'+sponsor.slot_no+'&select=active_sponsor_id&limit=1'))[0],slotOccupied=Boolean(slot?.active_sponsor_id&&slot.active_sponsor_id!==sponsor.id);
-    if(action==='reality_sponsor.lookup')return reply({order:{code:order.code,status:order.status,purpose:order.purpose,price_cents:order.price_cents,reserved_until:order.reserved_until,needs_attention:order.needs_attention},sponsor:{id:sponsor.id,type:sponsor.sponsor_type,name:sponsor.display_name,username:sponsor.username,segment:sponsor.segment,logo_url:sponsor.logo_url,status:sponsor.status,slot_no:sponsor.slot_no,starts_at:sponsor.starts_at,expires_at:sponsor.expires_at,renewal_opt_out:sponsor.renewal_opt_out,slot_occupied:slotOccupied}});
+    if(action==='reality_sponsor.lookup')return reply({order:{code:order.code,status:order.status,purpose:order.purpose,price_cents:order.price_cents,reserved_until:order.reserved_until,needs_attention:order.needs_attention},sponsor:{id:sponsor.id,type:sponsor.sponsor_type,name:sponsor.display_name,username:sponsor.username,segment:sponsor.segment,logo_url:sponsor.logo_url,status:sponsor.status,slot_no:sponsor.slot_no,starts_at:sponsor.starts_at,expires_at:sponsor.expires_at,renewal_opt_out:sponsor.renewal_opt_out,tier:sponsor.consent?.tier==='featured'?'featured':'normal',slot_occupied:slotOccupied}});
     if(action==='reality_sponsor.checkout'){
      if(order.status!=='pending'||Date.parse(order.reserved_until)<=Date.now())return reply({error:'A reserva de 10 minutos terminou. Consulte as vagas e inicie uma nova inscrição ou renovação.'},409);
      const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Mercado Pago temporariamente indisponível.'},503);
@@ -437,7 +437,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     const hash=await sha(token),initial=(await db('hm_reality_sponsor_orders?sponsor_id=eq.'+sponsorId+'&tracking_hash=eq.'+hash+'&purpose=eq.initial&status=eq.confirmed&select=id&limit=1'))[0];if(!initial)return reply({error:'Patrocínio não encontrado para renovação.'},404);
     const cfg=(await db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,enabled'))[0];if(!cfg?.enabled)return reply({error:'Renovações temporariamente indisponíveis.'},403);
     const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase(),renewToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join(''),renewHash=await sha(renewToken);
-    try{const result=await db('rpc/hm_reality_sponsor_renew','POST',{p_sponsor_id:sponsorId,p_tracking_hash:hash,p_code:code,p_new_tracking_hash:renewHash,p_price_cents:Number(cfg.price_cents)});return reply({code,trackingToken:renewToken,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201)}catch(error){return reply({error:String(error.message||'Não foi possível reservar a vaga.')},409)}
+    try{const result=await db('rpc/hm_reality_sponsor_renew','POST',{p_sponsor_id:sponsorId,p_tracking_hash:hash,p_code:code,p_new_tracking_hash:renewHash,p_price_cents:(sponsor.consent?.tier==='featured'?5990:4990)});return reply({code,trackingToken:renewToken,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents:Number(cfg.price_cents)},201)}catch(error){return reply({error:String(error.message||'Não foi possível reservar a vaga.')},409)}
    }
    if(action==='reality_sponsor.optout'){
     const sponsorId=String(b.sponsorId||''),token=String(b.trackingToken||'');if(!/^[0-9a-f-]{36}$/i.test(sponsorId)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Identificação privada inválida.'},404);
