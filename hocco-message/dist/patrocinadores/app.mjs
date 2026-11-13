@@ -96,7 +96,7 @@ function showPix(pix){
 async function showOrder(code,trackingToken,returned=false){
  clearInterval(pollTimer);
  root.innerHTML=header('Finalize sua participação','Sua solicitação foi recebida. A vaga ficará reservada por 10 minutos.')
- +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
+ +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||4990)+'</strong><small>7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
  try{
   const current=await api('reality_sponsor.lookup',{code,trackingToken});
   if(current.order.status==='attention'||current.order.needs_attention){
