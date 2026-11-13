@@ -162,3 +162,16 @@
  .reality-sponsor-featured-grid .reality-sponsor-card:first-child{grid-column:auto}
  .reality-sponsor-cover,.reality-sponsor-list .reality-sponsor-cover{height:150px}
 }
+
+/* Pricing tiers and fixed featured sponsor placement */
+.reality-sponsor-tier{border:0;padding:0;margin:0;display:grid;gap:12px}
+.reality-sponsor-tier legend{font-weight:800;color:#fff;margin-bottom:10px}
+.reality-sponsor-tier label{display:flex;gap:12px;align-items:center;padding:17px;border:1px solid #45413d;background:#171615;cursor:pointer}
+.reality-sponsor-tier label:has(input:checked){border-color:#d5a15f;background:#211c17}
+.reality-sponsor-tier label input{accent-color:#d5a15f}
+.reality-sponsor-tier label span{display:grid;gap:5px;flex:1}
+.reality-sponsor-tier label strong{color:#fff;font-size:14px}
+.reality-sponsor-tier label b{color:#e5b779;font-size:22px}
+.reality-sponsor-tier label small{color:#aaa;font-size:12px}
+.reality-sponsor-level.is-featured{color:#f2c17c;border-color:#9c713d}
+.reality-sponsor-card.is-pinned{border-color:#a77a47;box-shadow:0 0 0 1px #a77a4740}
