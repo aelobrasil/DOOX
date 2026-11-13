@@ -2,12 +2,12 @@ import {api,esc,money} from '/config.mjs';
 import {pushDeviceToken,mountReturnActivity} from '/reactivation.mjs';
 const root=document.querySelector('#reality-sponsor-app');
 const STORE='hocco-reality-sponsor-v1';
-const TERMS='2026-11-11.reality-sponsor.v2';
+const TERMS='2026-11-13.reality-sponsor.v3';
 let saved={};
 try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')||{}}catch{}
 const token=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
 const initials=value=>String(value||'?').trim().slice(0,1).toUpperCase();
-const moneyBRL=cents=>money(Number(cents)||3990);
+const moneyBRL=cents=>money(Number(cents)||4990);
 const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(saved))}catch{}};
 const support=(message='')=>{const input=document.querySelector('#support-message');if(input&&message)input.value=message;const button=document.querySelector('.support-launcher');if(button)button.click();else alert('Abra o suporte do HOCCO para falar com a equipe.')};
 let catalog=null,pollTimer=null;
@@ -15,18 +15,18 @@ function header(title,description){return '<section class="reality-sponsor-headi
 async function loadCatalog(){catalog=await api('reality_sponsor.catalog');return catalog}
 function card(s,index=0,featured=false){
  const logo=s.logo_url?'<img src="'+esc(s.logo_url)+'" alt="" loading="lazy">':'<span>'+esc(initials(s.name))+'</span>';
- const badge=s.example?'<em class="reality-sponsor-example">EXEMPLO</em>':(s.level_label?'<em class="reality-sponsor-level">'+esc(s.level_label)+'</em>':'<em class="reality-sponsor-level">PATROCINADOR OFICIAL</em>');
+ const badge=s.tier==='featured'?'<em class="reality-sponsor-level is-featured">EM DESTAQUE</em>':(s.example?'<em class="reality-sponsor-example">EXEMPLO</em>':(s.level_label?'<em class="reality-sponsor-level">'+esc(s.level_label)+'</em>':'<em class="reality-sponsor-level">PATROCINADOR OFICIAL</em>'));
  const coverClass=['cover-editorial','cover-urbano','cover-criativo','cover-negocios','cover-essencial'][index%5];
- return '<article class="reality-sponsor-card '+(featured?'is-featured ':'')+(s.example?'is-example':'')+'"><div class="reality-sponsor-cover '+coverClass+'"><span>REALITY HOCCO</span></div><div class="reality-sponsor-card-body"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong>'+badge+'<span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></div></article>';
+ return '<article class="reality-sponsor-card '+(s.tier==='featured'?'is-pinned ':'')+(featured?'is-featured ':'')+(s.example?'is-example':'')+'"><div class="reality-sponsor-cover '+coverClass+'"><span>REALITY HOCCO</span></div><div class="reality-sponsor-card-body"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong>'+badge+'<span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></div></article>';
 }
 function renderDirectory(){
  clearInterval(pollTimer);
  const active=catalog?.active||[];
  const people=active.filter(s=>s.type==='person'),companies=active.filter(s=>s.type==='company');
  const example={type:'person',name:'Marina Costa',username:'marinacosta',segment:'Criadora de conteúdo',logo_url:'/patrocinadores/exemplo-perfil.svg',example:true};
- const featured=[example,...active].slice(0,3);
- const all=[...people,...companies];
- const price=moneyBRL(catalog?.settings?.price_cents||3990);
+ const featured=[...active.filter(s=>s.tier==='featured'),example,...active.filter(s=>s.tier!=='featured')].slice(0,3);
+ const all=[...active.filter(s=>s.tier==='featured'),...people.filter(s=>s.tier!=='featured'),...companies.filter(s=>s.tier!=='featured')];
+ const price=moneyBRL(catalog?.settings?.price_cents||4990);
  root.innerHTML=header('Patrocinadores Oficiais','Quem escolheu fazer parte do Reality da HOCCO.')
  +'<section class="reality-sponsor-hero"><div class="reality-sponsor-hero-image"><span>UMA SÉRIE ORIGINAL DOOX STUDIOS</span><strong>O Reality acontece.<br>Quem acredita, faz parte.</strong></div><div class="reality-sponsor-hero-info"><div><span class="section-eyebrow">PRESENÇA OFICIAL NO REALITY</span><h2>Faça parte desta história.</h2><p>Uma presença oficial na vitrine de patrocinadores do Reality da HOCCO.</p><strong class="reality-sponsor-hero-price">'+price+' <small>/ 7 dias</small></strong><small class="reality-sponsor-no-renew">Pagamento único. Sem renovação automática.</small></div><button class="btn full" id="start-sponsor" '+(catalog?.settings?.enabled&&catalog?.available>0?'':'disabled')+'>Quero ser patrocinador</button></div></section>'
  +'<section class="reality-sponsor-capacity"><div><span>VAGAS DISPONÍVEIS</span><strong>+ '+Number(catalog?.available||0)+' vagas</strong></div><p>Até 50 patrocinadores simultâneos.</p></section>'
@@ -51,7 +51,7 @@ function readImage(file){
 }
 function renderForm(){
  clearInterval(pollTimer);
- root.innerHTML=header('Seja Patrocinador Oficial','Escolha como deseja aparecer na vitrine do Reality HOCCO por 7 dias.')
+ root.innerHTML=header('Seja Patrocinador Oficial','Escolha sua modalidade de presença no Reality HOCCO por 7 dias.')
  +'<section class="reality-sponsor-form-wrap"><form id="reality-sponsor-form">'
  +'<div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong>'+moneyBRL(catalog?.settings?.price_cents||3990)+'</strong><small>7 dias · pagamento único · sem renovação automática</small></div>'
  +'<fieldset><legend>Tipo de inscrição</legend><label class="reality-sponsor-choice"><input type="radio" name="type" value="person" checked> Pessoa</label><label class="reality-sponsor-choice"><input type="radio" name="type" value="company"> Empresa</label></fieldset>'
@@ -60,7 +60,7 @@ function renderForm(){
  +'<label>Segmento<input name="segment" maxlength="60" required placeholder="Ex.: Educação, tecnologia, alimentação"></label>'
  +'<label>E-mail para o pagamento<input name="email" type="email" maxlength="254" required placeholder="voce@exemplo.com"></label>'
  +'<label class="reality-sponsor-image"><span id="sponsor-image-label">Foto do perfil</span><input name="logo" type="file" accept="image/png,image/jpeg,image/webp" required><small id="sponsor-image-help">PNG, JPG ou WebP. Até 1 MB. A foto será exibida na vitrine como imagem do seu perfil.</small></label>'
- +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>O patrocínio custa R$ 39,90 por 7 dias e não é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo; para pessoas, uma foto de perfil. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
+ +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>O patrocínio normal custa R$ 49,90 por 7 dias. O patrocínio em destaque custa R$ 59,90 por 7 dias e fica fixado na área de destaque e não é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo; para pessoas, uma foto de perfil. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
  +'<label class="reality-sponsor-check"><input type="checkbox" name="terms" required> Li e aceito as condições do Patrocínio Oficial do Reality HOCCO.</label>'
  +'<p class="reality-sponsor-legal">Após a confirmação do pagamento, a vaga é ativada automaticamente por 7 dias. A vaga fica reservada por 10 minutos durante a finalização do pedido.</p>'
  +'<button class="btn full" type="submit">Continuar para o Pix</button><p class="reality-sponsor-error" id="form-error" role="alert"></p><button type="button" class="btn ghost full" id="back-directory">Voltar à vitrine</button>'
@@ -80,7 +80,7 @@ function renderForm(){
   try{
    const data=new FormData(form),type=data.get('type'),file=data.get('logo'),logo=await readImage(file);
    const trackingToken=token();
-   const result=await api('reality_sponsor.create',{type,name:data.get('name'),username:data.get('username'),segment:data.get('segment'),email:data.get('email'),logoMime:logo?.mime,logoBase64:logo?.base64,deviceToken,trackingToken,terms:data.get('terms')==='on',termsVersion:TERMS});
+   const tier=data.get('tier')==='featured'?'featured':'normal';const result=await api('reality_sponsor.create',{tier,type,name:data.get('name'),username:data.get('username'),segment:data.get('segment'),email:data.get('email'),logoMime:logo?.mime,logoBase64:logo?.base64,deviceToken,trackingToken,terms:data.get('terms')==='on',termsVersion:TERMS});
    saved={...(saved||{}),code:result.code,trackingToken:result.trackingToken||trackingToken,sponsorId:null,initialCode:result.code,initialToken:result.trackingToken||trackingToken};save();
    await showOrder(result.code,result.trackingToken||trackingToken);
   }catch(e){error.textContent=e.message||'Não foi possível concluir a inscrição.';button.disabled=false;button.textContent='Tentar novamente'}
