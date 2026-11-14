@@ -17,7 +17,8 @@ function card(s,index=0,featured=false){
  const logo=s.logo_url?'<img src="'+esc(s.logo_url)+'" alt="" loading="lazy">':'<span>'+esc(initials(s.name))+'</span>';
  const badge=s.tier==='featured'?'<em class="reality-sponsor-level is-featured">EM DESTAQUE</em>':(s.example?'<em class="reality-sponsor-example">EXEMPLO</em>':(s.level_label?'<em class="reality-sponsor-level">'+esc(s.level_label)+'</em>':'<em class="reality-sponsor-level">PATROCINADOR OFICIAL</em>'));
  const coverClass=['cover-editorial','cover-urbano','cover-criativo','cover-negocios','cover-essencial'][index%5];
- return '<article class="reality-sponsor-card '+(s.tier==='featured'?'is-pinned ':'')+(featured?'is-featured ':'')+(s.example?'is-example':'')+'"><div class="reality-sponsor-cover '+coverClass+'"><span>REALITY HOCCO</span></div><div class="reality-sponsor-card-body"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong>'+badge+'<span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></div></article>';
+ const cover=s.cover_url?'<img src="'+esc(s.cover_url)+'" alt="" loading="lazy">':'';
+ return '<article class="reality-sponsor-card '+(s.tier==='featured'?'is-pinned ':'')+(featured?'is-featured ':'')+(s.example?'is-example':'')+'"><div class="reality-sponsor-cover '+coverClass+'">'+cover+'<span>REALITY HOCCO</span></div><div class="reality-sponsor-card-body"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong>'+badge+'<span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></div></article>';
 }
 function renderDirectory(){
  clearInterval(pollTimer);
@@ -58,18 +59,18 @@ function renderForm(){
  +'<label>Identificação @<input name="username" maxlength="24" required placeholder="seuusuario" autocomplete="off"><small>O @ será exibido apenas como texto. Não será um link.</small></label>'
  +'<label>Segmento<input name="segment" maxlength="60" required placeholder="Ex.: Educação, tecnologia, alimentação"></label>'
  +'<label>E-mail para o pagamento<input name="email" type="email" maxlength="254" required placeholder="voce@exemplo.com"></label>'
- +'<label class="reality-sponsor-image"><span id="sponsor-image-label">Foto do perfil</span><input name="logo" type="file" accept="image/png,image/jpeg,image/webp" required><small id="sponsor-image-help">PNG, JPG ou WebP. Até 1 MB. A foto será exibida na vitrine como imagem do seu perfil.</small></label>'
- +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>Os valores das modalidades normal e em destaque são apresentados no formulário conforme a tabela de preços vigente no momento da contratação. O preço efetivamente contratado aparece no resumo do pedido e no checkout. Nenhuma modalidade é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento; para empresas, também o logo; para pessoas, uma foto de perfil. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
+ +'<label class="reality-sponsor-image"><span id="sponsor-image-label">Foto do perfil</span><input name="logo" type="file" accept="image/png,image/jpeg,image/webp" required><small id="sponsor-image-help">PNG, JPG ou WebP. Até 1 MB. Esta imagem será usada como foto de perfil na vitrine.</small></label>'+'<label class="reality-sponsor-image"><span>Foto de capa</span><input name="cover" type="file" accept="image/png,image/jpeg,image/webp" required><small>PNG, JPG ou WebP. Até 1 MB. Esta imagem será usada como capa da sua presença no Reality HOCCO.</small></label>'
+ +'<details class="reality-sponsor-terms"><summary>Leia as condições do patrocínio</summary><p>Os valores das modalidades normal e em destaque são apresentados no formulário conforme a tabela de preços vigente no momento da contratação. O preço efetivamente contratado aparece no resumo do pedido e no checkout. Nenhuma modalidade é investimento, participação societária ou promessa de retorno financeiro. São 50 vagas simultâneas. A vaga pode ser reservada por 10 minutos durante a inscrição ou renovação. Serão exibidos nome, @ e segmento, além da foto de perfil e da foto de capa; para empresas, a foto de perfil corresponde ao logo da empresa. O @ é texto simples, sem link, telefone, WhatsApp ou endereço externo. Não há cobrança recorrente. A renovação é uma nova contratação e exige novo Pix. O aviso de renovação é enviado pelo sistema de notificações do app, sem uma autorização separada para o patrocínio.</p><p><a href="/patrocinadores/termos.html" target="_blank" rel="noopener">Ler os Termos de Participação completos</a></p></details>'
  +'<label class="reality-sponsor-check"><input type="checkbox" name="terms" required> Li e aceito as condições do Patrocínio Oficial do Reality HOCCO.</label>'
  +'<p class="reality-sponsor-legal">Após a confirmação do pagamento, a vaga é ativada automaticamente por 7 dias. A vaga fica reservada por 10 minutos durante a finalização do pedido.</p>'
  +'<button class="btn full" type="submit">Continuar para pagamento</button><p class="reality-sponsor-error" id="form-error" role="alert"></p><button type="button" class="btn ghost full" id="back-directory">Voltar à vitrine</button>'
  +'</form></section>';
- const form=root.querySelector('#reality-sponsor-form'),imageLabel=form.querySelector('#sponsor-image-label'),imageHelp=form.querySelector('#sponsor-image-help'),imageInput=form.querySelector('[name=logo]');
+ const form=root.querySelector('#reality-sponsor-form'),imageLabel=form.querySelector('#sponsor-image-label'),imageHelp=form.querySelector('#sponsor-image-help'),imageInput=form.querySelector('[name=logo]'),coverInput=form.querySelector('[name=cover]');
  form.querySelectorAll('[name=type]').forEach(r=>r.addEventListener('change',()=>{
   const company=form.querySelector('[name=type]:checked').value==='company';
   imageLabel.textContent=company?'Logo da empresa':'Foto do perfil';
-  imageHelp.textContent=company?'PNG, JPG ou WebP. Até 1 MB. O logo será exibido na vitrine como identificação da empresa.':'PNG, JPG ou WebP. Até 1 MB. A foto será exibida na vitrine como imagem do seu perfil.';
-  imageInput.required=true;
+  imageHelp.textContent=company?'PNG, JPG ou WebP. Até 1 MB. O logo será exibido como identificação da empresa.':'PNG, JPG ou WebP. Até 1 MB. A foto será exibida como imagem do seu perfil.';
+  imageInput.required=true;coverInput.required=true;
  }));
  root.querySelector('#back-directory').onclick=()=>{location.hash=''};
  form.onsubmit=async event=>{
@@ -77,9 +78,9 @@ function renderForm(){
   const deviceToken=pushDeviceToken()||'';
   button.disabled=true;button.textContent='Reservando sua vaga…';
   try{
-   const data=new FormData(form),type=data.get('type'),file=data.get('logo'),logo=await readImage(file);
+   const data=new FormData(form),type=data.get('type'),file=data.get('logo'),coverFile=data.get('cover'),logo=await readImage(file),cover=await readImage(coverFile);
    const trackingToken=token();
-   const tier=data.get('tier')==='featured'?'featured':'normal';const result=await api('reality_sponsor.create',{tier,type,name:data.get('name'),username:data.get('username'),segment:data.get('segment'),email:data.get('email'),logoMime:logo?.mime,logoBase64:logo?.base64,deviceToken,trackingToken,terms:data.get('terms')==='on',termsVersion:TERMS});
+   const tier=data.get('tier')==='featured'?'featured':'normal';const result=await api('reality_sponsor.create',{tier,type,name:data.get('name'),username:data.get('username'),segment:data.get('segment'),email:data.get('email'),logoMime:logo?.mime,logoBase64:logo?.base64,coverMime:cover?.mime,coverBase64:cover?.base64,deviceToken,trackingToken,terms:data.get('terms')==='on',termsVersion:TERMS});
    saved={...(saved||{}),code:result.code,trackingToken:result.trackingToken||trackingToken,sponsorId:null,initialCode:result.code,initialToken:result.trackingToken||trackingToken};save();
    await showOrder(result.code,result.trackingToken||trackingToken);
   }catch(e){error.textContent=e.message||'Não foi possível concluir a inscrição.';button.disabled=false;button.textContent='Tentar novamente'}
