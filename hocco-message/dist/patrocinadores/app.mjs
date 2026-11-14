@@ -207,7 +207,7 @@ async function route(){
  if(hash==='novo'){if(!catalog)await loadCatalog();renderForm();return}
  if(hash==='renovar'){await renderRenewal();return}
  const query=new URLSearchParams(location.search);if(query.get('pedido')&&query.get('token')){saved.code=query.get('pedido');saved.trackingToken=query.get('token');save();await showOrder(saved.code,saved.trackingToken,true);return}if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2],true);return}}
- try{await loadCatalog();renderDirectory();await showSponsorReturnStatus()}catch(e){root.innerHTML='<div class="empty"><h2>Não foi possível carregar a vitrine.</h2><p>'+esc(e.message)+'</p><button class="btn" id="retry-sponsor-catalog">Tentar novamente</button></div>';root.querySelector('#retry-sponsor-catalog').onclick=route}
+ try{await loadCatalog();renderDirectory()}catch(e){root.innerHTML='<div class="empty"><h2>Não foi possível carregar a vitrine.</h2><p>'+esc(e.message)+'</p><button class="btn" id="retry-sponsor-catalog">Tentar novamente</button></div>';root.querySelector('#retry-sponsor-catalog').onclick=route}
 }
 mountReturnActivity();
 route();
