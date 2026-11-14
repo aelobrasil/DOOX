@@ -175,3 +175,164 @@
 .reality-sponsor-tier label small{color:#aaa;font-size:12px}
 .reality-sponsor-level.is-featured{color:#f2c17c;border-color:#9c713d}
 .reality-sponsor-card.is-pinned{border-color:#a77a47;box-shadow:0 0 0 1px #a77a4740}
+
+
+/* HOCCO Visual System — no-box / editorial finish */
+:root{
+  --hm-bg:#080808;
+  --hm-surface:rgba(255,255,255,.035);
+  --hm-line:rgba(255,255,255,.12);
+  --hm-text:#f4efe8;
+  --hm-muted:#9f978f;
+  --hm-accent:#c58d5d;
+  --hm-accent-strong:#e0b48d;
+  --hm-radius:18px;
+}
+.reality-sponsors-app{
+  background:
+    radial-gradient(900px 500px at 80% -10%,rgba(197,141,93,.10),transparent 62%),
+    radial-gradient(700px 420px at -10% 35%,rgba(255,255,255,.035),transparent 65%),
+    var(--hm-bg);
+  min-height:100vh;
+}
+.reality-sponsors-app main{isolation:isolate}
+.reality-sponsor-heading h1,
+.reality-sponsor-section-head h2,
+.reality-sponsor-hero-info h2{
+  text-wrap:balance;
+}
+.reality-sponsor-hero{
+  border:1px solid var(--hm-line);
+  box-shadow:0 28px 80px rgba(0,0,0,.34);
+}
+.reality-sponsor-hero-image{
+  min-height:500px;
+  background:
+    linear-gradient(90deg,rgba(8,8,8,.92) 0%,rgba(8,8,8,.48) 55%,rgba(8,8,8,.08) 100%),
+    radial-gradient(circle at 72% 28%,rgba(224,180,141,.18),transparent 34%),
+    linear-gradient(135deg,#40342b,#171411 58%,#090909);
+}
+.reality-sponsor-hero-image strong{max-width:720px}
+.reality-sponsor-hero-info{backdrop-filter:blur(8px)}
+.reality-sponsor-hero-info .btn,
+.reality-sponsor-join .btn,
+.reality-sponsor-form-wrap .btn{
+  border-radius:999px;
+  min-height:48px;
+  padding-inline:22px;
+}
+.reality-sponsor-capacity{
+  background:transparent;
+}
+.reality-sponsor-featured-grid,
+.reality-sponsor-list{
+  align-items:start;
+}
+.reality-sponsor-card{
+  background:transparent;
+  border:0;
+}
+.reality-sponsor-card:hover{
+  transform:translateY(-4px);
+}
+.reality-sponsor-cover{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 14px 36px rgba(0,0,0,.22);
+}
+.reality-sponsor-cover:after{border-radius:12px}
+.reality-sponsor-card-body{
+  padding-inline:2px;
+  border-bottom:1px solid rgba(255,255,255,.14);
+}
+.reality-sponsor-avatar{
+  border-radius:50%!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.reality-sponsor-avatar.is-company{border-radius:16px!important}
+.reality-sponsor-card-copy strong{font-weight:700}
+.reality-sponsor-tabs{
+  gap:28px;
+}
+.reality-sponsor-tabs button{
+  min-height:38px;
+}
+.reality-sponsor-empty{
+  padding:42px 20px;
+  border:1px dashed rgba(255,255,255,.16);
+  border-radius:18px;
+  background:rgba(255,255,255,.018);
+}
+.reality-sponsor-join{
+  border-radius:22px;
+  padding:34px 38px;
+  box-shadow:0 20px 55px rgba(0,0,0,.22);
+}
+.reality-sponsor-form-wrap{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:24px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  box-shadow:0 25px 70px rgba(0,0,0,.28);
+}
+.reality-sponsor-form-wrap input:not([type=radio]):not([type=checkbox]),
+.reality-sponsor-form-wrap textarea{
+  border-radius:14px;
+  min-height:48px;
+  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.reality-sponsor-form-wrap input:not([type=radio]):not([type=checkbox]):focus,
+.reality-sponsor-form-wrap textarea:focus{
+  outline:none;
+  border-color:rgba(197,141,93,.75);
+  box-shadow:0 0 0 4px rgba(197,141,93,.10);
+  background:#11100f;
+}
+.reality-sponsor-form-wrap fieldset{
+  border:0;
+  padding:0;
+  gap:12px;
+}
+.reality-sponsor-form-wrap legend{
+  margin-bottom:5px;
+}
+.reality-sponsor-price,
+.reality-sponsor-notice,
+.reality-sponsor-success,
+.reality-sponsor-warning{
+  border-radius:18px;
+}
+.reality-sponsor-price{
+  background:linear-gradient(135deg,rgba(197,141,93,.12),rgba(255,255,255,.025));
+  border:1px solid rgba(197,141,93,.18);
+}
+.reality-sponsor-terms{
+  border-radius:16px;
+  background:rgba(255,255,255,.025);
+}
+@media(max-width:760px){
+  .reality-sponsors-app main{padding-inline:16px}
+  .reality-sponsor-heading h1{font-size:clamp(48px,15vw,72px)}
+  .reality-sponsor-hero{
+    border-radius:20px;
+    box-shadow:0 18px 45px rgba(0,0,0,.28);
+  }
+  .reality-sponsor-hero-image{min-height:330px}
+  .reality-sponsor-hero-info{padding:25px 22px}
+  .reality-sponsor-featured-grid,
+  .reality-sponsor-list{grid-template-columns:1fr}
+  .reality-sponsor-cover{height:180px}
+  .reality-sponsor-join{
+    padding:28px 22px;
+    border-radius:20px;
+  }
+  .reality-sponsor-form-wrap{
+    border-radius:20px;
+    padding:20px;
+  }
+}
+@media(max-width:420px){
+  .reality-sponsor-heading h1{font-size:50px}
+  .reality-sponsor-hero-image{min-height:290px}
+  .reality-sponsor-cover{height:160px}
+}
