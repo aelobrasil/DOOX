@@ -410,7 +410,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     catch(error){try{await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'DELETE',headers});await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+coverPath,{method:'DELETE',headers})}catch{}throw error}
     return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents},201);
    }
-   if(action==='reality_sponsor.lookup'||action==='reality_sponsor.pix'||action==='reality_sponsor.refresh'){
+   if(action==='reality_sponsor.lookup'||action==='reality_sponsor.checkout'||action==='reality_sponsor.pix'||action==='reality_sponsor.refresh'){
     const code=String(b.code||''),token=String(b.trackingToken||'');if(!/^HC-RS-[A-F0-9]{12}$/.test(code)||!/^[a-f0-9]{64}$/.test(token))return reply({error:'Link privado de acompanhamento inválido.'},404);
     const hash=await sha(token),order=(await db('hm_reality_sponsor_orders?code=eq.'+code+'&tracking_hash=eq.'+hash+'&select=*&limit=1'))[0];if(!order)return reply({error:'Pedido de patrocínio não encontrado.'},404);
     const sponsor=(await db('hm_reality_sponsors?id=eq.'+order.sponsor_id+'&select=id,sponsor_type,display_name,username,segment,logo_url,status,slot_no,starts_at,expires_at,renewal_opt_out,email,consent&limit=1'))[0];if(!sponsor)return reply({error:'Cadastro de patrocinador não encontrado.'},404);
