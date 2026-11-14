@@ -193,7 +193,7 @@ async function renderRenewal(){
   }
   document.body.classList.add('sponsor-decision-mode');
   showDecisionPage('<span class="sponsor-decision-eyebrow">PATROCINADORES OFICIAIS</span><h1>Sua vaga está garantida!</h1><div class="sponsor-decision-copy"><p>Sua participação como Patrocinador Oficial da série original da Doox Studios está chegando ao fim.</p><p class="sponsor-decision-emphasis">Deseja continuar fazendo parte dessa história por mais 7 dias?</p></div><div class="sponsor-decision-actions"><button class="sponsor-decision-primary" id="decision-yes">Sim, quero continuar</button><button class="sponsor-decision-secondary" id="decision-no">Não, obrigado</button></div><p class="sponsor-decision-footer">Uma série original Doox Studios</p>');
-  root.querySelector('#decision-yes').onclick=()=>{document.body.classList.remove('sponsor-decision-mode');root.innerHTML=header('Renovação do patrocínio','Confirme a continuidade da sua participação.')+'<section class="reality-sponsor-form-wrap"><div id="renewal-content"></div></section>';renderRenewalPayment(s)};
+  root.querySelector('#decision-yes').onclick=()=>{root.innerHTML='<section class="sponsor-decision"><div id="renewal-content"></div></section>';renderRenewalPayment(s)};
   root.querySelector('#decision-no').onclick=async()=>{
    const button=root.querySelector('#decision-no');button.disabled=true;
    try{await api('reality_sponsor.optout',{sponsorId:s.id,trackingToken:saved.initialToken});sponsorThanksScreen(false)}
