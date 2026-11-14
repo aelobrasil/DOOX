@@ -88,7 +88,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    if(!row&&kind!=='sponsor'&&kind!=='reality_sponsor')row=await expiredPurchase(kind,code);
    if(!row)return reply({received:true});return reply(await applyPayment(payment,kind,row));
   }
-  if(!['sponsor.create','customer.reset','reality_sponsor.create'].includes(action)&&bodySize>12000)return reply({error:'Solicitação muito grande.'},413);if(action==='reality_sponsor.create'&&bodySize>1500000)return reply({error:'A imagem deve ter até 1 MB.'},413);
+  if(!['sponsor.create','customer.reset','reality_sponsor.create'].includes(action)&&bodySize>12000)return reply({error:'Solicitação muito grande.'},413);if(action==='reality_sponsor.create'&&bodySize>3000000)return reply({error:'A imagem deve ter até 1 MB.'},413);
   if(typeof action!=='string')return reply({error:'Ação inválida.'},400);
   // The random private tracking token authenticates order access; team actions require a verified user JWT and active membership.
   if(action==='push.run'){
@@ -370,39 +370,44 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
    const[settings,slots,active]=await Promise.all([
     db('hm_reality_sponsor_settings?id=eq.1&select=price_cents,normal_price_cents,featured_price_cents,capacity,duration_days,enabled'),
     db('hm_reality_sponsor_slots?select=slot_no,active_sponsor_id,reserved_order_id,reserved_until'),
-    readAll(db,'hm_reality_sponsors?status=eq.active&expires_at=gt.'+now+'&select=id,sponsor_type,display_name,username,segment,logo_url,expires_at,slot_no,consent&order=slot_no.asc&limit=50')
+    readAll(db,'hm_reality_sponsors?status=eq.active&expires_at=gt.'+now+'&select=id,sponsor_type,display_name,username,segment,logo_url,cover_url,expires_at,slot_no,consent&order=slot_no.asc&limit=50')
    ]);
    const held=slots.filter(x=>x.active_sponsor_id||(x.reserved_order_id&&Date.parse(x.reserved_until)>Date.now())).length;
-   return reply({settings:settings[0]||{price_cents:4990,normal_price_cents:4990,featured_price_cents:5990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,Number(settings[0]?.capacity||50)-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,expires_at:s.expires_at,slot_no:s.slot_no,tier:s.consent?.tier==='featured'?'featured':'normal'}))});
+   return reply({settings:settings[0]||{price_cents:4990,normal_price_cents:4990,featured_price_cents:5990,capacity:50,duration_days:7,enabled:false},available:Math.max(0,Number(settings[0]?.capacity||50)-held),active:active.map(s=>({type:s.sponsor_type,name:s.display_name,username:s.username,segment:s.segment,logo_url:s.logo_url,cover_url:s.cover_url,expires_at:s.expires_at,slot_no:s.slot_no,tier:s.consent?.tier==='featured'?'featured':'normal'}))});
   }
   if(['reality_sponsor.create','reality_sponsor.lookup','reality_sponsor.renew','reality_sponsor.optout','reality_sponsor.pix','reality_sponsor.checkout','reality_sponsor.refresh'].includes(action)){
    const realityIp=req.headers.get('x-forwarded-for')?.split(',')[0].trim()||req.headers.get('x-real-ip')||'unknown';
    const realityMax=['reality_sponsor.create','reality_sponsor.renew'].includes(action)?5:30;
    if(!await db('rpc/hm_rate_limit','POST',{p_bucket:`reality-sponsor:${action}:${await sha(realityIp)}:${Math.floor(Date.now()/60000)}`,p_max:realityMax}))return reply({error:'Muitas tentativas. Aguarde um minuto.'},429);
    if(action==='reality_sponsor.create'){
-    const tier=String(b.tier||'normal');if(!['normal','featured'].includes(tier))throw Error('Escolha uma modalidade válida.');const priceCents=Number(tier==='featured'?cfg.featured_price_cents:cfg.normal_price_cents);if(!Number.isInteger(priceCents)||priceCents<100)throw Error('Preço da modalidade indisponível. Atualize a página e tente novamente.');const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),rawDeviceToken=String(b.deviceToken||'').trim(),deviceToken=rawDeviceToken&&/^[a-f0-9]{64}$/.test(rawDeviceToken)?rawDeviceToken:'';
+    const tier=String(b.tier||'normal');if(!['normal','featured'].includes(tier))throw Error('Escolha uma modalidade válida.');const type=String(b.type||''),name=String(b.name||'').trim(),username=String(b.username||'').trim().replace(/^@+/,'').toLowerCase(),segment=String(b.segment||'').trim(),email=String(b.email||'').trim(),phone='',token=String(b.trackingToken||''),rawDeviceToken=String(b.deviceToken||'').trim(),deviceToken=rawDeviceToken&&/^[a-f0-9]{64}$/.test(rawDeviceToken)?rawDeviceToken:'';
     if(!['person','company'].includes(type)||name.length<2||name.length>80||!/^[A-Za-z0-9._]{3,24}$/.test(username)||segment.length<2||segment.length>60||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Confira nome, @, segmento e e-mail.');
     if(b.terms!==true||b.termsVersion!=='2026-11-13.reality-sponsor.v4'||!/^[a-f0-9]{64}$/.test(token))throw Error('Aceite os termos de Patrocinador Oficial para continuar.');
     if(/(?:https?:\\x2f\\x2f|www\\.|wa\\.me|t\\.me|instagram\\.com|tiktok\\.com)/i.test(name+' '+segment))throw Error('Não informe links, sites, telefones ou destinos externos nos campos públicos.');
     const sponsorModeration=moderateCommunityMessage(name+' '+username+' '+segment);if(!sponsorModeration.approved&&!sponsorModeration.requiresReview)return reply({error:'Os dados públicos contêm conteúdo que não pode ser exibido. Revise o nome e o segmento.'},422);
     const deviceHash=deviceToken&&/^[a-f0-9]{64}$/.test(deviceToken)?await sha(deviceToken):null;
     const cfg=(await db('hm_reality_sponsor_settings?id=eq.1&select=normal_price_cents,featured_price_cents,enabled'))[0];if(!cfg?.enabled)return reply({error:'As vagas estão temporariamente fechadas.'},403);
+    const priceCents=Number(tier==='featured'?cfg.featured_price_cents:cfg.normal_price_cents);if(!Number.isInteger(priceCents)||priceCents<100)throw Error('Preço da modalidade indisponível. Atualize a página e tente novamente.');
     const hash=await sha(token),existing=(await db('hm_reality_sponsor_orders?tracking_hash=eq.'+hash+'&select=code&limit=1'))[0];
     if(existing)return reply({code:existing.code,trackingToken:token},200);
-    let logoUrl=null;
-    const mime=String(b.logoMime||''),encoded=String(b.logoBase64||''),ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[mime];
+    let logoUrl=null,coverUrl=null;
+    const mime=String(b.logoMime||''),encoded=String(b.logoBase64||''),coverMime=String(b.coverMime||''),coverEncoded=String(b.coverBase64||''),ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[mime],coverExt={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[coverMime];
     const imageLabel=type==='company'?'logo da empresa':'foto de perfil';
     if(!ext||encoded.length<12||encoded.length>1400000||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))throw Error('Anexe '+imageLabel+' em PNG, JPG ou WebP, com até 1 MB.');
-    const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));if(bytes.length>1048576)throw Error('A imagem deve ter até 1 MB.');
+    if(!coverExt||coverEncoded.length<12||coverEncoded.length>1400000||!/^[A-Za-z0-9+/]+={0,2}$/.test(coverEncoded))throw Error('Anexe a foto de capa em PNG, JPG ou WebP, com até 1 MB.');
+    const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)),coverBytes=Uint8Array.from(atob(coverEncoded),c=>c.charCodeAt(0));if(bytes.length>1048576||coverBytes.length>1048576)throw Error('Cada imagem deve ter até 1 MB.');
     const validImage=mime==='image/png'&&bytes.length>=8&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)||mime==='image/jpeg'&&bytes.length>=3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255||mime==='image/webp'&&bytes.length>=12&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP';
-    if(!validImage)throw Error('O arquivo enviado não é uma imagem válida.');
-    const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase(),path='reality-sponsors/'+code.toLowerCase()+'.'+ext;
+    const validCover=coverMime==='image/png'&&coverBytes.length>=8&&[137,80,78,71,13,10,26,10].every((v,i)=>coverBytes[i]===v)||coverMime==='image/jpeg'&&coverBytes.length>=3&&coverBytes[0]===255&&coverBytes[1]===216&&coverBytes[2]===255||coverMime==='image/webp'&&coverBytes.length>=12&&String.fromCharCode(...coverBytes.slice(0,4))==='RIFF'&&String.fromCharCode(...coverBytes.slice(8,12))==='WEBP';
+    if(!validImage||!validCover)throw Error('O arquivo enviado não é uma imagem válida.');
+    const code='HC-RS-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase(),path='reality-sponsors/'+code.toLowerCase()+'.'+ext,coverPath='reality-sponsors/'+code.toLowerCase()+'-cover.'+coverExt;
     const uploaded=await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'POST',headers:{...headers,'x-upsert':'false','Content-Type':mime,'cache-control':'3600'},body:bytes});
-    if(!uploaded.ok)throw Error('Não foi possível armazenar a imagem. Tente novamente.');
-    logoUrl=url+'/storage/v1/object/public/hocco-sponsor-logos/'+path;
+    if(!uploaded.ok)throw Error('Não foi possível armazenar a imagem de perfil. Tente novamente.');
+    const uploadedCover=await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+coverPath,{method:'POST',headers:{...headers,'x-upsert':'false','Content-Type':coverMime,'cache-control':'3600'},body:coverBytes});
+    if(!uploadedCover.ok){try{await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'DELETE',headers})}catch{}throw Error('Não foi possível armazenar a foto de capa. Tente novamente.');}
+    logoUrl=url+'/storage/v1/object/public/hocco-sponsor-logos/'+path;coverUrl=url+'/storage/v1/object/public/hocco-sponsor-logos/'+coverPath;
     let result;
-    try{result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_device_hash:deviceHash,p_price_cents:priceCents,p_consent:{tier,terms_version:b.termsVersion,accepted_at:new Date().toISOString()}})}
-    catch(error){try{await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'DELETE',headers})}catch{}throw error}
+    try{result=await db('rpc/hm_reality_sponsor_create','POST',{p_code:code,p_tracking_hash:hash,p_type:type,p_name:name,p_username:username,p_segment:segment,p_email:email,p_phone:phone,p_logo_url:logoUrl,p_cover_url:coverUrl,p_device_hash:deviceHash,p_price_cents:priceCents,p_consent:{tier,terms_version:b.termsVersion,accepted_at:new Date().toISOString()}})}
+    catch(error){try{await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+path,{method:'DELETE',headers});await fetcher(url+'/storage/v1/object/hocco-sponsor-logos/'+coverPath,{method:'DELETE',headers})}catch{}throw error}
     return reply({code,trackingToken:token,slot:result.slot_no,reservedUntil:result.reserved_until,priceCents},201);
    }
    if(action==='reality_sponsor.lookup'||action==='reality_sponsor.pix'||action==='reality_sponsor.refresh'){
@@ -410,7 +415,7 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
     const hash=await sha(token),order=(await db('hm_reality_sponsor_orders?code=eq.'+code+'&tracking_hash=eq.'+hash+'&select=*&limit=1'))[0];if(!order)return reply({error:'Pedido de patrocínio não encontrado.'},404);
     const sponsor=(await db('hm_reality_sponsors?id=eq.'+order.sponsor_id+'&select=id,sponsor_type,display_name,username,segment,logo_url,status,slot_no,starts_at,expires_at,renewal_opt_out,email,consent&limit=1'))[0];if(!sponsor)return reply({error:'Cadastro de patrocinador não encontrado.'},404);
     const slot=(await db('hm_reality_sponsor_slots?slot_no=eq.'+sponsor.slot_no+'&select=active_sponsor_id&limit=1'))[0],slotOccupied=Boolean(slot?.active_sponsor_id&&slot.active_sponsor_id!==sponsor.id);
-    if(action==='reality_sponsor.lookup')return reply({order:{code:order.code,status:order.status,purpose:order.purpose,price_cents:order.price_cents,reserved_until:order.reserved_until,needs_attention:order.needs_attention},sponsor:{id:sponsor.id,type:sponsor.sponsor_type,name:sponsor.display_name,username:sponsor.username,segment:sponsor.segment,logo_url:sponsor.logo_url,status:sponsor.status,slot_no:sponsor.slot_no,starts_at:sponsor.starts_at,expires_at:sponsor.expires_at,renewal_opt_out:sponsor.renewal_opt_out,tier:sponsor.consent?.tier==='featured'?'featured':'normal',slot_occupied:slotOccupied}});
+    if(action==='reality_sponsor.lookup')return reply({order:{code:order.code,status:order.status,purpose:order.purpose,price_cents:order.price_cents,reserved_until:order.reserved_until,needs_attention:order.needs_attention},sponsor:{id:sponsor.id,type:sponsor.sponsor_type,name:sponsor.display_name,username:sponsor.username,segment:sponsor.segment,logo_url:sponsor.logo_url,cover_url:sponsor.cover_url,status:sponsor.status,slot_no:sponsor.slot_no,starts_at:sponsor.starts_at,expires_at:sponsor.expires_at,renewal_opt_out:sponsor.renewal_opt_out,tier:sponsor.consent?.tier==='featured'?'featured':'normal',slot_occupied:slotOccupied}});
     if(action==='reality_sponsor.checkout'){
      if(order.status!=='pending'||Date.parse(order.reserved_until)<=Date.now())return reply({error:'A reserva de 10 minutos terminou. Consulte as vagas e inicie uma nova inscrição ou renovação.'},409);
      const accessToken=String(env?.get('MP_ACCESS_TOKEN')||'').trim();if(!accessToken)return reply({error:'Mercado Pago temporariamente indisponível.'},503);
