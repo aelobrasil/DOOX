@@ -21,6 +21,7 @@ function card(s,index=0,featured=false){
  return '<article class="reality-sponsor-card '+(s.tier==='featured'?'is-pinned ':'')+(featured?'is-featured ':'')+(s.example?'is-example':'')+'"><div class="reality-sponsor-cover '+coverClass+'">'+cover+'<span>REALITY HOCCO</span></div><div class="reality-sponsor-card-body"><div class="reality-sponsor-avatar '+(s.type==='company'?'is-company':'')+'">'+logo+'</div><div class="reality-sponsor-card-copy"><strong>'+esc(s.name)+'</strong>'+badge+'<span class="reality-sponsor-username">@'+esc(s.username)+'</span><small>'+esc(s.segment)+'</small></div></div></article>';
 }
 function renderDirectory(){
+ document.body.classList.remove('sponsor-decision-mode');
  clearInterval(pollTimer);
  const active=catalog?.active||[];
  const people=active.filter(s=>s.type==='person'),companies=active.filter(s=>s.type==='company');
@@ -52,23 +53,31 @@ function confirmedScreen(sponsor){
  return header('Você faz parte!','Bem-vindo ao Reality da HOCCO.')
   +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-success"><strong>✓ Sua participação foi confirmada.</strong></div><p>Agora, sua presença também faz parte dessa história.</p><p>A HOCCO é feita de momentos reais, pessoas reais e histórias que acontecem sem roteiro. A partir de agora, você está oficialmente entre os patrocinadores que acompanham e fazem parte dessa jornada.</p><div class="reality-sponsor-notice"><strong>Sua participação está ativa</strong><p>Modalidade: '+tier+'</p><p>Período: 7 dias</p><p>Status: Confirmado</p><p>Vaga '+sponsor.slot_no+' · ativa até '+end+'</p></div><p>Obrigado por estar aqui.</p><a class="btn full" href="/patrocinadores/">Voltar ao Reality da HOCCO</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p></section>';
 }
+function showDecisionPage(content){
+ document.body.classList.add('sponsor-decision-mode');
+ root.innerHTML='<section class="sponsor-decision">'+content+'</section>';
+}
+function sponsorThanksScreen(expired=false,canRenew=true){
+ const title=expired?'Sua participação chegou ao fim.':'Obrigado por fazer parte dessa história.';
+ const body=expired
+  ?'<p>Durante os últimos 7 dias, seu nome esteve entre os Patrocinadores Oficiais do Reality da HOCCO.</p><p>Sua participação foi encerrada. Você pode continuar acompanhando essa jornada e, se desejar, participar novamente.</p><p class="sponsor-decision-emphasis">A história continua. Será um prazer ter você novamente nessa jornada.</p>'
+  :'<p>Foi um prazer contar com sua participação entre os Patrocinadores Oficiais do Reality da HOCCO.</p><p>Sua participação será encerrada ao final do período contratado.</p><p>Agradecemos pela confiança e por ter feito parte dessa jornada.</p><p class="sponsor-decision-emphasis">Você continuará sendo bem-vindo caso queira participar novamente no futuro.</p>';
+ showDecisionPage('<span class="sponsor-decision-eyebrow">REALITY DA HOCCO</span><h1>'+title+'</h1><div class="sponsor-decision-copy">'+body+'</div><a class="sponsor-decision-secondary" href="'+(expired?(canRenew?'#renovar':'#novo'):'/patrocinadores/')+'">'+(expired?'Quero participar novamente':'Voltar ao Reality da HOCCO')+'</a><p class="sponsor-decision-footer">Uma série original Doox Studios</p>');
+}
 async function showSponsorReturnStatus(){
  if(!saved?.initialCode||!saved?.initialToken)return;
  try{
   const result=await api('reality_sponsor.lookup',{code:saved.initialCode,trackingToken:saved.initialToken});
   const s=result.sponsor;
   if(s.status!=='expired')return;
-  const section=document.createElement('section');
-  section.className='reality-sponsor-form-wrap';
-  section.innerHTML='<div class="reality-sponsor-notice"><strong>Sua participação chegou ao fim.</strong><p>Obrigado por fazer parte dessa história.</p><p>Durante os últimos 7 dias, seu nome esteve entre os Patrocinadores Oficiais do Reality da HOCCO.</p><p>Sua participação foi encerrada, mas você pode continuar acompanhando essa jornada e, se desejar, participar novamente.</p><p><strong>Período encerrado.</strong></p><p>Sua vaga foi liberada e poderá ser ocupada por outro patrocinador.</p><p>A história continua. Será um prazer ter você novamente nessa jornada.</p></div><a class="btn full" href="'+(s.renewal_opt_out?'#novo':'#renovar')+'">Quero participar novamente</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p>';
-  const heading=root.querySelector('.reality-sponsor-heading');
-  if(heading)heading.after(section);else root.prepend(section);
+  sponsorThanksScreen(true,!s.slot_occupied&&!s.renewal_opt_out);
  }catch{}
 }
 function readImage(file){
  return new Promise((resolve,reject)=>{if(!file)return reject(Error('Envie a imagem solicitada para o seu perfil de patrocinador.'));if(file.size>1048576)return reject(Error('A imagem deve ter até 1 MB.'));const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler a imagem.'));reader.onload=()=>resolve({mime:file.type,base64:String(reader.result).split(',')[1]||''});reader.readAsDataURL(file)});
 }
 function renderForm(){
+ document.body.classList.remove('sponsor-decision-mode');
  clearInterval(pollTimer);
  root.innerHTML=header('Seja Patrocinador Oficial','Escolha sua modalidade de presença no Reality HOCCO por 7 dias.')
  +'<section class="reality-sponsor-form-wrap"><form id="reality-sponsor-form">'
@@ -113,6 +122,7 @@ function showPix(pix){
  host.querySelector('#copy-sponsor-pix').onclick=async()=>{try{await navigator.clipboard.writeText(pix.qrCode);host.querySelector('#copy-sponsor-pix').textContent='Código Pix copiado'}catch{host.querySelector('#sponsor-pix-code').select()}};
 }
 async function showOrder(code,trackingToken,returned=false){
+ document.body.classList.remove('sponsor-decision-mode');
  clearInterval(pollTimer);
  root.innerHTML=header('Finalize sua participação','Sua solicitação foi recebida. A vaga ficará reservada por 10 minutos.')
  +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-price"><span>VALOR DO PERÍODO</span><strong id="sponsor-order-price">Consultando pedido…</strong><small id="sponsor-order-tier">7 dias · pagamento único</small></div><div id="sponsor-pix" hidden></div><p class="reality-sponsor-legal">A vaga só será ativada após a confirmação do pagamento pelo Mercado Pago.</p><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a></section>';
@@ -153,30 +163,43 @@ function startPolling(code,trackingToken){
    }
  }catch{}},8000);
 }
+function renderRenewalPayment(s){
+ const host=root.querySelector('#renewal-content');
+ host.innerHTML='<div class="sponsor-decision-payment"><span class="sponsor-decision-eyebrow">RENOVAÇÃO DE PARTICIPAÇÃO</span><h2>Vamos continuar essa história?</h2><p>Sua vaga está reservada temporariamente para a renovação da sua participação como Patrocinador Oficial.</p><div class="sponsor-decision-detail"><strong>Mais 7 dias de participação</strong><small>A renovação será confirmada após a aprovação do pagamento.</small><small>Prazo para concluir: 10 minutos.</small></div><button class="sponsor-decision-primary" id="renew-sponsor">Continuar para o pagamento</button><div id="renewal-pix" hidden></div><p class="reality-sponsor-error" id="renewal-error" role="alert"></p><button class="sponsor-decision-secondary" id="back-renewal">Voltar</button></div>';
+ host.querySelector('#back-renewal').onclick=()=>renderRenewal();
+ host.querySelector('#renew-sponsor').onclick=async()=>{
+  const button=host.querySelector('#renew-sponsor'),error=host.querySelector('#renewal-error');button.disabled=true;error.textContent='';
+  try{const result=await api('reality_sponsor.renew',{sponsorId:s.id,trackingToken:saved.initialToken});saved.code=result.code;saved.trackingToken=result.trackingToken;save();const pix=await api('reality_sponsor.pix',{code:result.code,trackingToken:result.trackingToken});const holder=host.querySelector('#renewal-pix');holder.hidden=false;holder.id='sponsor-pix';showPix(pix.pix);startPolling(result.code,result.trackingToken)}
+  catch(e){error.textContent=e.message;if(e.message.includes('Esta vaga foi ocupada')){const supportButton=document.createElement('button');supportButton.className='sponsor-decision-secondary';supportButton.textContent='Falar com o suporte HOCCO';supportButton.onclick=()=>support(e.message);error.after(supportButton)}button.disabled=false}
+ };
+}
 async function renderRenewal(){
  clearInterval(pollTimer);
+ document.body.classList.remove('sponsor-decision-mode');
  if(!catalog)try{await loadCatalog()}catch{}
  if(!saved?.initialCode||!saved?.initialToken){root.innerHTML=header('Renovação do patrocínio','Para renovar, abra o link privado recebido ao concluir o cadastro.');return}
- root.innerHTML=header('Seu período está perto do fim','Você pode renovar por mais 7 dias ou escolher não renovar.')
- +'<section class="reality-sponsor-form-wrap"><div id="renewal-content">Consultando seu patrocínio…</div></section>';
+ root.innerHTML=header('Renovação do patrocínio','Consultando sua participação…')+'<section class="reality-sponsor-form-wrap"><div id="renewal-content">Consultando seu patrocínio…</div></section>';
  try{
   const lookup=await api('reality_sponsor.lookup',{code:saved.initialCode,trackingToken:saved.initialToken}),s=lookup.sponsor;saved.sponsorId=s.id;save();
   const host=root.querySelector('#renewal-content');
   if(s.slot_occupied){host.innerHTML='<div class="reality-sponsor-warning">Esta vaga foi ocupada. Não foi possível concluir a renovação. Entre em contato com a equipe HOCCO para receber suporte.</div><button class="btn secondary full" id="renewal-support">Falar com o suporte HOCCO</button><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a>';host.querySelector('#renewal-support').onclick=()=>support('Minha vaga de Patrocinador Oficial foi ocupada e preciso de suporte para verificar a renovação.');return}
-  if(s.renewal_opt_out){host.innerHTML='<p>Você escolheu não renovar. Seu período termina no prazo contratado e a vaga será liberada automaticamente.</p><a class="btn full" href="/patrocinadores/">Voltar à vitrine</a>';return}
+  if(s.renewal_opt_out){sponsorThanksScreen(false);return}
   if(s.status!=='active'&&s.status!=='expired'){host.innerHTML='<p>Este patrocínio não está disponível para renovação.</p><a class="btn full" href="/patrocinadores/">Ver vagas disponíveis</a>';return}
-  if(s.status==='active'&&Date.parse(s.expires_at)-Date.now()>24*60*60*1000){host.innerHTML='<p>A renovação será liberada 24 horas antes do fim do período. O app enviará uma notificação neste aparelho.</p><a class="btn full" href="/patrocinadores/">Voltar à vitrine</a>';return}
-  if(s.status==='expired')host.innerHTML='<div class="reality-sponsor-notice"><strong>Seu período terminou, mas a vaga ainda está disponível.</strong><p>Você pode reservar a mesma vaga por 10 minutos para renovar por mais 7 dias.</p></div>';
-  host.innerHTML+='<div class="reality-sponsor-success"><strong>'+esc(s.name)+'</strong><p>@'+esc(s.username)+' · '+esc(s.segment)+'</p><p>Vaga '+s.slot_no+' · termina em '+new Date(s.expires_at).toLocaleString('pt-BR')+'</p></div>'
-   +'<p>Renovar custa <strong>'+moneyBRL(s.tier==='featured'?(catalog?.settings?.featured_price_cents??5990):(catalog?.settings?.normal_price_cents??catalog?.settings?.price_cents??4990))+'</strong> por mais 7 dias. Não existe cobrança automática.</p>'
-   +'<button class="btn full" id="renew-sponsor">Renovar por mais 7 dias</button><button class="btn secondary full" id="no-renew-sponsor">Não renovar</button><div id="renewal-pix" hidden></div><p class="reality-sponsor-error" id="renewal-error" role="alert"></p>';
-  host.querySelector('#renew-sponsor').onclick=async()=>{
-   const button=host.querySelector('#renew-sponsor'),error=host.querySelector('#renewal-error');button.disabled=true;error.textContent='';
-   try{const result=await api('reality_sponsor.renew',{sponsorId:s.id,trackingToken:saved.initialToken});saved.code=result.code;saved.trackingToken=result.trackingToken;save();const pix=await api('reality_sponsor.pix',{code:result.code,trackingToken:result.trackingToken});const holder=host.querySelector('#renewal-pix');holder.hidden=false;holder.id='sponsor-pix';showPix(pix.pix);startPolling(result.code,result.trackingToken)}
-   catch(e){error.textContent=e.message;if(e.message.includes('Esta vaga foi ocupada')){const button=document.createElement('button');button.className='btn secondary full';button.textContent='Falar com o suporte HOCCO';button.onclick=()=>support(e.message);error.after(button)}button.disabled=false}
+  if(s.status==='active'&&Date.parse(s.expires_at)-Date.now()>24*60*60*1000){host.innerHTML='<p>O aviso de renovação estará disponível 24 horas antes do fim do período contratado.</p><a class="btn full" href="/patrocinadores/">Voltar à vitrine</a>';return}
+  if(s.status==='expired'){
+   host.innerHTML='<div class="reality-sponsor-notice"><strong>Seu período terminou, mas a vaga ainda está disponível.</strong><p>Você pode reservar a mesma vaga por 10 minutos para renovar por mais 7 dias.</p></div><button class="btn full" id="renew-expired">Quero renovar</button><a class="btn ghost full" href="/patrocinadores/">Voltar à vitrine</a>';
+   host.querySelector('#renew-expired').onclick=()=>renderRenewalPayment(s);
+   return;
+  }
+  document.body.classList.add('sponsor-decision-mode');
+  showDecisionPage('<span class="sponsor-decision-eyebrow">PATROCINADORES OFICIAIS</span><h1>Sua vaga está garantida!</h1><div class="sponsor-decision-copy"><p>Sua participação como Patrocinador Oficial da série original da Doox Studios está chegando ao fim.</p><p class="sponsor-decision-emphasis">Deseja continuar fazendo parte dessa história por mais 7 dias?</p></div><div class="sponsor-decision-actions"><button class="sponsor-decision-primary" id="decision-yes">Sim, quero continuar</button><button class="sponsor-decision-secondary" id="decision-no">Não, obrigado</button></div><p class="sponsor-decision-footer">Uma série original Doox Studios</p>');
+  root.querySelector('#decision-yes').onclick=()=>{document.body.classList.remove('sponsor-decision-mode');root.innerHTML=header('Renovação do patrocínio','Confirme a continuidade da sua participação.')+'<section class="reality-sponsor-form-wrap"><div id="renewal-content"></div></section>';renderRenewalPayment(s)};
+  root.querySelector('#decision-no').onclick=async()=>{
+   const button=root.querySelector('#decision-no');button.disabled=true;
+   try{await api('reality_sponsor.optout',{sponsorId:s.id,trackingToken:saved.initialToken});sponsorThanksScreen(false)}
+   catch(e){button.disabled=false;const note=document.createElement('p');note.className='reality-sponsor-error';note.textContent=e.message;button.after(note)}
   };
-  host.querySelector('#no-renew-sponsor').onclick=async()=>{const button=host.querySelector('#no-renew-sponsor');button.disabled=true;try{await api('reality_sponsor.optout',{sponsorId:s.id,trackingToken:saved.initialToken});host.innerHTML='<p>Registramos sua decisão. Seu patrocínio termina no prazo contratado e a vaga será liberada automaticamente.</p><a class="btn full" href="/patrocinadores/">Voltar à vitrine</a>'}catch(e){host.querySelector('#renewal-error').textContent=e.message;button.disabled=false}};
- }catch(e){root.querySelector('#renewal-content').textContent=e.message}
+ }catch(e){const host=root.querySelector('#renewal-content');if(host)host.textContent=e.message}
 }
 async function route(){
  clearInterval(pollTimer);
