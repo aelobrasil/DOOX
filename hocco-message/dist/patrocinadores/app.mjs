@@ -46,6 +46,25 @@ function renderDirectory(){
  root.querySelector('#start-sponsor')?.addEventListener('click',begin);
  root.querySelector('#start-sponsor-bottom')?.addEventListener('click',begin);
 }
+function confirmedScreen(sponsor){
+ const end=new Date(sponsor.expires_at).toLocaleString('pt-BR');
+ const tier=sponsor.tier==='featured'?'Patrocinador em destaque':'Patrocinador normal';
+ return header('Você faz parte!','Bem-vindo ao Reality da HOCCO. Sua participação foi confirmada.')
+  +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-success"><strong>✓ Participação confirmada</strong><p>Agora, sua presença também faz parte dessa história.</p></div><p>A HOCCO é feita de momentos reais, pessoas reais e histórias que acontecem sem roteiro. A partir de agora, você está oficialmente entre os patrocinadores que acompanham e fazem parte dessa jornada.</p><div class="reality-sponsor-notice"><strong>Sua participação está ativa</strong><p>'+tier+' · 7 dias</p><p>Status: Confirmado</p><p>Vaga '+sponsor.slot_no+' · ativa até '+end+'</p></div><p>Obrigado por estar aqui.</p><a class="btn full" href="/patrocinadores/">Voltar ao Reality da HOCCO</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p></section>';
+}
+async function showSponsorReturnStatus(){
+ if(!saved?.initialCode||!saved?.initialToken)return;
+ try{
+  const result=await api('reality_sponsor.lookup',{code:saved.initialCode,trackingToken:saved.initialToken});
+  const s=result.sponsor;
+  if(s.status!=='expired')return;
+  const section=document.createElement('section');
+  section.className='reality-sponsor-form-wrap';
+  section.innerHTML='<div class="reality-sponsor-notice"><strong>Sua participação chegou ao fim.</strong><p>Obrigado por fazer parte dessa história. Durante os últimos 7 dias, seu nome esteve entre os Patrocinadores Oficiais do Reality da HOCCO.</p><p>Seu período foi encerrado e a vaga foi liberada, podendo ser ocupada por outro patrocinador.</p><p>A história continua. Será um prazer ter você novamente nesta jornada.</p></div><a class="btn full" href="'+(s.renewal_opt_out?'#novo':'#renovar')+'">Quero participar novamente</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p>';
+  const heading=root.querySelector('.reality-sponsor-heading');
+  if(heading)heading.after(section);else root.prepend(section);
+ }catch{}
+}
 function readImage(file){
  return new Promise((resolve,reject)=>{if(!file)return reject(Error('Envie a imagem solicitada para o seu perfil de patrocinador.'));if(file.size>1048576)return reject(Error('A imagem deve ter até 1 MB.'));const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler a imagem.'));reader.onload=()=>resolve({mime:file.type,base64:String(reader.result).split(',')[1]||''});reader.readAsDataURL(file)});
 }
@@ -108,8 +127,7 @@ async function showOrder(code,trackingToken,returned=false){
   }
   if(current.order.status==='confirmed'&&current.sponsor.status==='active'){
    saved.sponsorId=current.sponsor.id;saved.status='active';saved.expiresAt=current.sponsor.expires_at;saved.initialCode=saved.initialCode||code;saved.initialToken=saved.initialToken||trackingToken;save();
-   root.querySelector('#sponsor-pix').innerHTML='<div class="reality-sponsor-success"><strong>Pagamento confirmado</strong><p>Vaga '+current.sponsor.slot_no+' · ativo até '+new Date(current.sponsor.expires_at).toLocaleString('pt-BR')+'</p></div><a class="btn full" href="/patrocinadores/">Ver patrocinadores</a>';
-   root.querySelector('#sponsor-pix').hidden=false;return;
+   root.innerHTML=confirmedScreen(current.sponsor);return;
   }
   if(!returned){
    const result=await api('reality_sponsor.checkout',{code,trackingToken});
@@ -131,8 +149,7 @@ function startPolling(code,trackingToken){
   if(result.order.status==='attention'||result.order.needs_attention){clearInterval(pollTimer);root.innerHTML=header('Pagamento em análise','O Mercado Pago informou um pagamento fora da reserva da vaga. A equipe precisa conferir o caso antes de ativar o patrocínio.')+'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-warning">Não pague novamente. O pagamento foi registrado para conferência e a vaga de outro patrocinador não será alterada.</div><button class="btn secondary full" id="sponsor-payment-support">Falar com o suporte HOCCO</button></section>';root.querySelector('#sponsor-payment-support').onclick=()=>support('Meu pagamento de Patrocinador Oficial foi registrado para análise. Código: '+code+'. Preciso de suporte.');return;}
   if(result.order.status==='confirmed'&&result.sponsor.status==='active'){
    clearInterval(pollTimer);saved.sponsorId=result.sponsor.id;saved.status='active';saved.expiresAt=result.sponsor.expires_at;saved.initialCode=saved.initialCode||code;saved.initialToken=saved.initialToken||trackingToken;save();
-   root.innerHTML=header('Patrocínio confirmado','Sua presença está ativa na vitrine oficial da HOCCO por 7 dias.')
-    +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-success"><strong>Pagamento confirmado</strong><p>Vaga '+result.sponsor.slot_no+' · ativo até '+new Date(result.sponsor.expires_at).toLocaleString('pt-BR')+'</p></div><p>Seu nome, @ e segmento já podem aparecer na vitrine pública.</p><a class="btn full" href="/patrocinadores/">Ver patrocinadores</a><p class="reality-sponsor-legal">Guarde o link privado de acompanhamento. O app enviará um aviso 24 horas antes do fim do período, neste aparelho.</p></section>';
+   root.innerHTML=confirmedScreen(result.sponsor);
    }
  }catch{}},8000);
 }
@@ -167,7 +184,7 @@ async function route(){
  if(hash==='novo'){if(!catalog)await loadCatalog();renderForm();return}
  if(hash==='renovar'){await renderRenewal();return}
  const query=new URLSearchParams(location.search);if(query.get('pedido')&&query.get('token')){saved.code=query.get('pedido');saved.trackingToken=query.get('token');save();await showOrder(saved.code,saved.trackingToken,true);return}if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2],true);return}}
- try{await loadCatalog();renderDirectory()}catch(e){root.innerHTML='<div class="empty"><h2>Não foi possível carregar a vitrine.</h2><p>'+esc(e.message)+'</p><button class="btn" id="retry-sponsor-catalog">Tentar novamente</button></div>';root.querySelector('#retry-sponsor-catalog').onclick=route}
+ try{await loadCatalog();renderDirectory();await showSponsorReturnStatus()}catch(e){root.innerHTML='<div class="empty"><h2>Não foi possível carregar a vitrine.</h2><p>'+esc(e.message)+'</p><button class="btn" id="retry-sponsor-catalog">Tentar novamente</button></div>';root.querySelector('#retry-sponsor-catalog').onclick=route}
 }
 mountReturnActivity();
 route();
