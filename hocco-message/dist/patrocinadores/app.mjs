@@ -49,8 +49,8 @@ function renderDirectory(){
 function confirmedScreen(sponsor){
  const end=new Date(sponsor.expires_at).toLocaleString('pt-BR');
  const tier=sponsor.tier==='featured'?'Patrocinador em destaque':'Patrocinador normal';
- return header('Você faz parte!','Bem-vindo ao Reality da HOCCO. Sua participação foi confirmada.')
-  +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-success"><strong>✓ Participação confirmada</strong><p>Agora, sua presença também faz parte dessa história.</p></div><p>A HOCCO é feita de momentos reais, pessoas reais e histórias que acontecem sem roteiro. A partir de agora, você está oficialmente entre os patrocinadores que acompanham e fazem parte dessa jornada.</p><div class="reality-sponsor-notice"><strong>Sua participação está ativa</strong><p>'+tier+' · 7 dias</p><p>Status: Confirmado</p><p>Vaga '+sponsor.slot_no+' · ativa até '+end+'</p></div><p>Obrigado por estar aqui.</p><a class="btn full" href="/patrocinadores/">Voltar ao Reality da HOCCO</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p></section>';
+ return header('Você faz parte!','Bem-vindo ao Reality da HOCCO.')
+  +'<section class="reality-sponsor-form-wrap"><div class="reality-sponsor-success"><strong>✓ Sua participação foi confirmada.</strong></div><p>Agora, sua presença também faz parte dessa história.</p><p>A HOCCO é feita de momentos reais, pessoas reais e histórias que acontecem sem roteiro. A partir de agora, você está oficialmente entre os patrocinadores que acompanham e fazem parte dessa jornada.</p><div class="reality-sponsor-notice"><strong>Sua participação está ativa</strong><p>Modalidade: '+tier+'</p><p>Período: 7 dias</p><p>Status: Confirmado</p><p>Vaga '+sponsor.slot_no+' · ativa até '+end+'</p></div><p>Obrigado por estar aqui.</p><a class="btn full" href="/patrocinadores/">Voltar ao Reality da HOCCO</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p></section>';
 }
 async function showSponsorReturnStatus(){
  if(!saved?.initialCode||!saved?.initialToken)return;
@@ -60,7 +60,7 @@ async function showSponsorReturnStatus(){
   if(s.status!=='expired')return;
   const section=document.createElement('section');
   section.className='reality-sponsor-form-wrap';
-  section.innerHTML='<div class="reality-sponsor-notice"><strong>Sua participação chegou ao fim.</strong><p>Obrigado por fazer parte dessa história. Durante os últimos 7 dias, seu nome esteve entre os Patrocinadores Oficiais do Reality da HOCCO.</p><p>Seu período foi encerrado e a vaga foi liberada, podendo ser ocupada por outro patrocinador.</p><p>A história continua. Será um prazer ter você novamente nesta jornada.</p></div><a class="btn full" href="'+(s.renewal_opt_out?'#novo':'#renovar')+'">Quero participar novamente</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p>';
+  section.innerHTML='<div class="reality-sponsor-notice"><strong>Sua participação chegou ao fim.</strong><p>Obrigado por fazer parte dessa história.</p><p>Durante os últimos 7 dias, seu nome esteve entre os Patrocinadores Oficiais do Reality da HOCCO.</p><p>Sua participação foi encerrada, mas você pode continuar acompanhando essa jornada e, se desejar, participar novamente.</p><p><strong>Período encerrado.</strong></p><p>Sua vaga foi liberada e poderá ser ocupada por outro patrocinador.</p><p>A história continua. Será um prazer ter você novamente nessa jornada.</p></div><a class="btn full" href="'+(s.renewal_opt_out?'#novo':'#renovar')+'">Quero participar novamente</a><p class="reality-sponsor-legal">Uma série original Doox Studios</p>';
   const heading=root.querySelector('.reality-sponsor-heading');
   if(heading)heading.after(section);else root.prepend(section);
  }catch{}
