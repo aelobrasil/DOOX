@@ -16,6 +16,21 @@ const sections=[
 
 const risk=(label,cls)=>'<span class="badge '+cls+'">'+label+'</span>';
 
+const matrix=[
+ ['Preços','Alterar valor','MÉDIO','Novos pedidos/inscrições','Pedidos já criados','Confirmação + auditoria','Configuração anterior'],
+ ['Mensagens','Aprovar / rejeitar / editar / publicar','ALTO','Estado e conteúdo da mensagem','Pagamento e histórico financeiro','Permissão + auditoria','Revisão pelo histórico'],
+ ['Comunidade/LIVE','Aprovar / ocultar / restaurar','ALTO','Visibilidade e estado operacional','Registros financeiros protegidos','Confirmação + auditoria','Restauração quando elegível'],
+ ['Patrocinadores','Aprovar / recusar / preço / vagas','ALTO','Novos pedidos e exposição','Histórico e pagamentos','Confirmação + auditoria','Estado anterior quando suportado'],
+ ['Conteúdo','Programar / publicar / alterar','ALTO','Programação e conteúdo público','Histórico de publicação','Prévia + auditoria','Reprogramação quando elegível'],
+ ['Notificações','Criar / pré-visualizar / enviar / cancelar','MÉDIO','Comunicação pública','Auditoria de envio','Prévia + confirmação','Cancelamento quando ainda não enviado'],
+ ['Financeiro','Consultar / reconciliar / devolver','CRÍTICO','Estado financeiro permitido','Registros financeiros originais','Confirmação + provedor','Reconciliação; não apagar'],
+ ['Dados','Reter / limpar elegíveis / arquivar','CRÍTICO','Registros explicitamente elegíveis','Pagamentos, segurança e auditoria protegidos','Critério + confirmação + resultado','Recuperação de arquivados quando suportado'],
+ ['Segurança','Equipe / remetentes / evidências','CRÍTICO','Permissões e acesso','Evidências protegidas pela política','Acesso registrado','Sem exclusão genérica'],
+ ['Sistema','Fila / reprocessamento / integração','ALTO','Execução operacional','Dados de origem','Diagnóstico + auditoria','Reprocessar quando idempotente']
+];
+const matrixHtml=()=>'<div class="table-scroll"><table class="governance-matrix"><thead><tr><th>Domínio</th><th>Ação</th><th>Risco</th><th>Afeta</th><th>Não afeta</th><th>Proteção</th><th>Reversão</th></tr></thead><tbody>'+matrix.map(r=>'<tr>'+r.map((x,i)=>'<td class="'+(i===2?'risk-cell':'')+'">'+esc(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+
+
 export function mountGovernance(host,call,data,navigate){
  let disposed=false;
  host.innerHTML='<section><div class="control-page-head"><div><div class="eyebrow">HOCCO CONTROL · governança</div><h1>Governação central</h1><p>Uma única visão para administrar o comportamento do aplicativo. As áreas abaixo apontam para os controles que executam a mudança no servidor.</p></div><div class="actions"><button class="btn secondary" data-gov-refresh>Atualizar diagnóstico</button></div></div>'+
@@ -30,7 +45,7 @@ export function mountGovernance(host,call,data,navigate){
  '<div><strong>Exclusão</strong><span>“Lixeira” significa arquivamento recuperável. Exclusão física somente para registros explicitamente elegíveis pela política.</span>'+risk('AÇÃO CRÍTICA','orange')+'</div>'+
  '<div><strong>Servidor</strong><span>Esconder um botão não é segurança. As permissões são verificadas no backend antes da operação.</span>'+risk('BACKEND','success')+'</div>'+
  '</div></section>'+
- '<section class="paper" style="margin-top:18px"><h2>Como cada alteração deve aparecer</h2><ol class="governance-flow"><li><strong>Antes</strong><span>valor atual, alvo, impacto e risco.</span></li><li><strong>Confirmação</strong><span>ação crítica exige confirmação explícita.</span></li><li><strong>Execução</strong><span>servidor valida permissão e regra de negócio.</span></li><li><strong>Registro</strong><span>ação, ator, horário, objeto e resultado.</span></li><li><strong>Verificação</strong><span>controle atualiza o estado e informa sucesso ou bloqueio.</span></li></ol></section>'+
+ '<section class="paper" style="margin-top:18px"><h2>Matriz de autoridade do CONTROL</h2><p class="hint">Esta matriz define o contrato operacional de cada domínio. O editor de cada área deve respeitar estas mesmas regras no servidor; a tabela não substitui a autorização backend.</p>matrixHtml()</section><section class="paper" style="margin-top:18px"><h2>Como cada alteração deve aparecer</h2><ol class="governance-flow"><li><strong>Antes</strong><span>valor atual, alvo, impacto e risco.</span></li><li><strong>Confirmação</strong><span>ação crítica exige confirmação explícita.</span></li><li><strong>Execução</strong><span>servidor valida permissão e regra de negócio.</span></li><li><strong>Registro</strong><span>ação, ator, horário, objeto e resultado.</span></li><li><strong>Verificação</strong><span>controle atualiza o estado e informa sucesso ou bloqueio.</span></li></ol></section>'+
  '<section class="paper" style="margin-top:18px"><h2>Mapa operacional</h2><p class="hint">O CONTROL não precisa concentrar todos os campos numa única tela. Ele precisa concentrar a <strong>governança</strong>: cada domínio tem seu editor especializado, com a mesma autoridade, auditoria e proteção.</p><div class="actions"><button class="btn purple" data-gov-route="general">Abrir preços e disponibilidade</button><button class="btn secondary" data-gov-route="purchases">Abrir mensagens</button><button class="btn secondary" data-gov-route="sponsors">Abrir patrocinadores</button><button class="btn secondary" data-gov-route="data">Abrir dados e limpeza</button></div></section>'+
  '<div class="hint" style="margin-top:16px">Última leitura do painel: '+new Date().toLocaleString('pt-BR')+'.</div></section>';
  host.querySelector('[data-gov-refresh]').onclick=()=>navigate('governance');
