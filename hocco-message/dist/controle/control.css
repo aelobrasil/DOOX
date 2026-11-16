@@ -64,3 +64,12 @@ body.admin-body .sponsor-logo-fallback{background:#3a2c21;color:#ffb87e}
 .governance-flow span{color:#b9c4d6;font-size:12px;line-height:1.6}
 @media(max-width:1000px){.governance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.governance-flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.governance-grid,.governance-protections,.governance-flow{grid-template-columns:1fr}}
+
+.table-scroll{overflow:auto;margin-top:18px;border:1px solid #343641;border-radius:14px}
+.governance-matrix{width:100%;min-width:1050px;border-collapse:collapse;background:#17191f}
+.governance-matrix th,.governance-matrix td{padding:13px 14px;border-bottom:1px solid #30323c;text-align:left;vertical-align:top;font-size:11px;line-height:1.5}
+.governance-matrix th{background:#20222a;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.governance-matrix td{color:#c1c8d7}
+.governance-matrix tr:last-child td{border-bottom:0}
+.governance-matrix td:first-child{color:#fff;font-weight:700}
+.governance-matrix .risk-cell{font-weight:700;color:#ffb27c;white-space:nowrap}
