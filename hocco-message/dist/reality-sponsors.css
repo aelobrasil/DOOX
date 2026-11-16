@@ -398,3 +398,14 @@ body.sponsor-decision-mode>#reality-sponsor-app{
  .sponsor-decision-footer{margin-top:42px}
  .sponsor-decision-primary,.sponsor-decision-secondary{min-height:54px}
 }
+
+/* Isolated visual demo for the 50 sponsor slots */
+.sponsor-demo-banner{max-width:1050px;margin:0 auto 22px;padding:14px 18px;border:1px solid #d58a55;border-radius:10px;background:#21170f;display:flex;flex-direction:column;gap:5px}
+.sponsor-demo-banner strong{font-size:10px;letter-spacing:1.4px;color:#ffad72}
+.sponsor-demo-banner span{font-size:12px;line-height:1.5;color:#d5c4b4}
+.reality-sponsor-directory .reality-sponsor-list{max-width:1050px;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.reality-sponsor-directory .reality-sponsor-card{min-width:0}
+.reality-sponsor-directory .reality-sponsor-card-copy strong{font-size:13px}
+.reality-sponsor-directory .reality-sponsor-card.is-example{border-style:solid}
+@media(max-width:760px){.reality-sponsor-directory .reality-sponsor-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.reality-sponsor-directory .reality-sponsor-cover{height:90px}.reality-sponsor-directory .reality-sponsor-card-body{padding:0 10px 12px;gap:8px}.reality-sponsor-directory .reality-sponsor-avatar{width:42px;height:42px;flex-basis:42px}.reality-sponsor-directory .reality-sponsor-card-copy strong{font-size:11px}}
+@media(max-width:420px){.reality-sponsor-directory .reality-sponsor-list{grid-template-columns:1fr}}
