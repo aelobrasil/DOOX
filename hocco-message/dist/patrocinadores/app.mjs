@@ -217,7 +217,8 @@ async function renderRenewal(){
 }
 async function route(){
  clearInterval(pollTimer);
- if(new URLSearchParams(location.search).get('demo')==='1'){renderDemoDirectory();return}\n const hash=location.hash.slice(1);
+ if(new URLSearchParams(location.search).get('demo')==='1'){renderDemoDirectory();return}
+ const hash=location.hash.slice(1);
  if(hash==='novo'){if(!catalog)await loadCatalog();renderForm();return}
  if(hash==='renovar'){await renderRenewal();return}
  const query=new URLSearchParams(location.search);if(query.get('pedido')&&query.get('token')){saved.code=query.get('pedido');saved.trackingToken=query.get('token');save();await showOrder(saved.code,saved.trackingToken,true);return}if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2],true);return}}
