@@ -409,3 +409,117 @@ body.sponsor-decision-mode>#reality-sponsor-app{
 .reality-sponsor-directory .reality-sponsor-card.is-example{border-style:solid}
 @media(max-width:760px){.reality-sponsor-directory .reality-sponsor-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.reality-sponsor-directory .reality-sponsor-cover{height:90px}.reality-sponsor-directory .reality-sponsor-card-body{padding:0 10px 12px;gap:8px}.reality-sponsor-directory .reality-sponsor-avatar{width:42px;height:42px;flex-basis:42px}.reality-sponsor-directory .reality-sponsor-card-copy strong{font-size:11px}}
 @media(max-width:420px){.reality-sponsor-directory .reality-sponsor-list{grid-template-columns:1fr}}
+
+/* Release 50 sponsors: image-led cards with distinct person/company identity */
+.reality-sponsor-directory .reality-sponsor-list{
+  max-width:1200px;
+  width:100%;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:34px 22px;
+}
+.reality-sponsor-directory .reality-sponsor-card{
+  min-width:0;
+  width:100%;
+  overflow:visible;
+}
+.reality-sponsor-directory .reality-sponsor-cover{
+  position:relative;
+  height:220px;
+  min-height:220px;
+  overflow:hidden;
+  isolation:isolate;
+  background:#171411;
+}
+.reality-sponsor-directory .reality-sponsor-cover img{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  transition:transform .45s ease;
+}
+.reality-sponsor-directory .reality-sponsor-card:hover .reality-sponsor-cover img{
+  transform:scale(1.035);
+}
+.reality-sponsor-directory .reality-sponsor-cover:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:linear-gradient(180deg,rgba(0,0,0,.04) 30%,rgba(0,0,0,.58) 100%);
+  pointer-events:none;
+}
+.reality-sponsor-directory .reality-sponsor-cover:after{
+  z-index:2;
+  pointer-events:none;
+}
+.reality-sponsor-directory .reality-sponsor-cover span{
+  position:absolute;
+  z-index:3;
+  left:18px;
+  bottom:16px;
+  color:#fff;
+  text-shadow:0 2px 12px #000;
+}
+.reality-sponsor-directory .reality-sponsor-card-body{
+  min-height:112px;
+  padding:0 5px 16px;
+  gap:12px;
+}
+.reality-sponsor-directory .reality-sponsor-avatar{
+  width:68px;
+  height:68px;
+  flex:0 0 68px;
+  margin-top:-30px;
+  position:relative;
+  z-index:4;
+  overflow:hidden;
+}
+.reality-sponsor-directory .reality-sponsor-avatar img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.reality-sponsor-directory .reality-sponsor-card.is-company .reality-sponsor-avatar{
+  border-radius:14px!important;
+}
+.reality-sponsor-directory .reality-sponsor-card.is-person .reality-sponsor-avatar{
+  border-radius:50%!important;
+}
+.reality-sponsor-directory .reality-sponsor-card-copy strong{
+  font-size:20px;
+  line-height:1.1;
+}
+.reality-sponsor-directory .reality-sponsor-card-copy small{
+  font-size:10px;
+}
+.reality-sponsor-directory .reality-sponsor-tabs{
+  margin-bottom:22px;
+}
+@media(max-width:900px){
+  .reality-sponsor-directory .reality-sponsor-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:28px 16px;
+  }
+  .reality-sponsor-directory .reality-sponsor-cover{
+    height:200px;
+    min-height:200px;
+  }
+}
+@media(max-width:600px){
+  .reality-sponsor-directory .reality-sponsor-list{
+    grid-template-columns:1fr;
+    gap:28px;
+  }
+  .reality-sponsor-directory .reality-sponsor-cover{
+    height:210px;
+    min-height:210px;
+  }
+  .reality-sponsor-directory .reality-sponsor-card-copy strong{
+    font-size:21px;
+  }
+}
