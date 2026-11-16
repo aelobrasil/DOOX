@@ -54,6 +54,21 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
  if(!url||!secret)return reply({error:'Serviço indisponível.'},503);
  const headers={apikey:secret,'Content-Type':'application/json',...(secret.startsWith('eyJ')?{Authorization:`Bearer ${secret}`}:{})};
  const db=async(path,method='GET',body)=>{const res=await fetcher(`${url}/rest/v1/${path}`,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const text=await res.text();let data;try{data=JSON.parse(text)}catch{data={}}if(!res.ok)throw Error(data.message||'Não foi possível concluir a operação.');return data};
+ const logAccess=async({requestUrl,action})=>{
+  try{
+   const rawIp=req.headers.get('x-forwarded-for')||req.headers.get('x-real-ip')||req.headers.get('cf-connecting-ip')||'';
+   const observedIp=String(rawIp).split(',')[0].trim().slice(0,64)||null;
+   await db('hm_access_logs','POST',{
+    occurred_at:new Date().toISOString(),
+    observed_ip:observedIp,
+    request_id:String(req.headers.get('x-request-id')||'').slice(0,128)||null,
+    method:req.method,
+    path:requestUrl.pathname.slice(0,512),
+    action:String(action||'').slice(0,120)||null,
+    retention_until:new Date(Date.now()+183*24*60*60*1000).toISOString()
+   });
+  }catch{}
+ };
  const expiredPurchase=async(kind,code,hash)=>{const rows=await db('hm_expired_purchases?kind=eq.'+encodeURIComponent(kind)+'&code=eq.'+encodeURIComponent(code)+(hash?'&tracking_hash=eq.'+hash:'')+'&select=*&limit=1');return rows[0]?{...rows[0],id:rows[0].order_id,payment:'pending',expired_purchase:true}:null};
  const expiredReply=()=>reply({expired:true,error:'O prazo de 20 minutos terminou. O comentário não pago foi excluído. Envie uma nova mensagem. Se você já pagou, não pague novamente e procure o suporte com o código do pedido.'},410);
  const applyPayment=async(payment,kind,row)=>{
@@ -68,7 +83,9 @@ export async function handler(req,env=globalThis.Deno?.env,fetcher=fetch,pushSen
  const safe=o=>{const{tracking_hash,phone,mercado_pago_payment_id,...rest}=o;return {...rest,payment_expires_at:paymentExpiresAt(rest,'order')}};
  try{
   let bodySize=0;const b=await readJsonBody(req,undefined,size=>{bodySize=size}),action=b?.action;
-  const requestUrl=new URL(req.url),notificationType=requestUrl.searchParams.get('type')||String(b.type||''),notificationTopic=requestUrl.searchParams.get('topic')||'',isMpWebhook=notificationType==='payment'||notificationTopic==='payment'||notificationTopic==='merchant_order';
+  const requestUrl=new URL(req.url);
+  await logAccess({requestUrl,action:action||requestUrl.searchParams.get('type')||'webhook'});
+  const notificationType=requestUrl.searchParams.get('type')||String(b.type||''),notificationTopic=requestUrl.searchParams.get('topic')||'',isMpWebhook=notificationType==='payment'||notificationTopic==='payment'||notificationTopic==='merchant_order';
   if(isMpWebhook){
    const dataId=requestUrl.searchParams.get('data.id')||b.data?.id||'',requestId=req.headers.get('x-request-id')||'',signature=req.headers.get('x-signature')||'',classification=classifyMercadoPagoNotification({topic:notificationTopic,type:notificationType,dataId,requestId,signature});
    if(classification==='ignore')return reply({received:true,ignored:true});
