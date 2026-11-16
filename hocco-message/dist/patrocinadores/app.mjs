@@ -47,6 +47,20 @@ function renderDirectory(){
  root.querySelector('#start-sponsor')?.addEventListener('click',begin);
  root.querySelector('#start-sponsor-bottom')?.addEventListener('click',begin);
 }
+const demoSponsors=(()=>{
+ const names=['Aurora Café','Norte Engenharia','Casa Amora','Vértice Tecnologia','Raiz Natural','Estúdio Horizonte','Ponto Urbano','Vale Verde','Lume Design','Oficina Central','Clínica Plena','Caminho Solar','Mosaico Comunicação','Mercado do Bairro','Atlas Contábil','Flor de Lis','Conecta Sistemas','Brasa & Grão','Instituto Semente','Prisma Arquitetura','Rota 360','Essencial Farma','Madeira Viva','Órbita Digital','Doce Estação','Campo Forte','Nuvem Criativa','Aliança Seguros','Pé de Serra','Forma Fitness','Bossa Café','Pilar Construções','Aquarela Kids','EcoFlux','Casa Nativa','Link Mais','Trama Têxtil','Raio de Luz','Mundo Pet','Nova Safra','Cubo Mídia','Sabor da Terra','Clara Odonto','Ponto Certo','Viva Bem','Traço Fino','Horizonte Solar','Estação 21','Cia do Pão','Movimento Saúde'];
+ const segments=['Alimentação','Engenharia','Decoração','Tecnologia','Produtos naturais','Design','Comércio','Agronegócio','Comunicação','Serviços'];
+ return names.map((name,i)=>({id:'demo-'+(i+1),name,username:name.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,''),segment:segments[i%segments.length],type:i%5===0?'person':'company',tier:i<3?'featured':'normal',example:true,logo_url:'',cover_url:''}));
+})();
+function renderDemoDirectory(){
+ catalog={active:demoSponsors,available:0,settings:{enabled:false,normal_price_cents:2990,featured_price_cents:5990},demo:true};
+ renderDirectory();
+ const banner=document.createElement('div');banner.className='sponsor-demo-banner';
+ banner.innerHTML='<strong>DEMONSTRAÇÃO VISUAL · 50 PERFIS FICTÍCIOS</strong><span>Os nomes e segmentos são ilustrativos. Nenhuma inscrição ou cobrança será iniciada nesta página.</span>';
+ root.prepend(banner);
+ root.querySelectorAll('#start-sponsor,#start-sponsor-bottom').forEach(b=>{b.disabled=true;b.textContent='Demonstração — inscrições desativadas'});
+ const capacity=root.querySelector('.reality-sponsor-capacity');if(capacity){capacity.querySelector('strong').textContent='50 / 50';capacity.querySelector('p').textContent='Capacidade visual completa · 50 patrocinadores simultâneos';}
+}
 function confirmedScreen(sponsor){
  const end=new Date(sponsor.expires_at).toLocaleString('pt-BR');
  const tier=sponsor.tier==='featured'?'Patrocinador em destaque':'Patrocinador normal';
@@ -203,7 +217,7 @@ async function renderRenewal(){
 }
 async function route(){
  clearInterval(pollTimer);
- const hash=location.hash.slice(1);
+ if(new URLSearchParams(location.search).get('demo')==='1'){renderDemoDirectory();return}\n const hash=location.hash.slice(1);
  if(hash==='novo'){if(!catalog)await loadCatalog();renderForm();return}
  if(hash==='renovar'){await renderRenewal();return}
  const query=new URLSearchParams(location.search);if(query.get('pedido')&&query.get('token')){saved.code=query.get('pedido');saved.trackingToken=query.get('token');save();await showOrder(saved.code,saved.trackingToken,true);return}if(hash.startsWith('pedido/')){const parts=hash.split('/');if(parts[1]&&parts[2]){saved.code=parts[1];saved.trackingToken=parts[2];save();await showOrder(parts[1],parts[2],true);return}}
