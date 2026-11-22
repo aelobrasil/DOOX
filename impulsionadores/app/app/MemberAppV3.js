@@ -77,13 +77,15 @@ export default function MemberAppV3() {
 
   async function bootstrap(currentUser) {
     setLoading(true);
-    let { data: p } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', currentUser.id).maybeSingle();
+    let { data: p } = await supabase.rpc('get_my_impulsionador_profile');
     if (!p) {
       const created = await supabase.from('impulsionadores_perfis').insert({
         user_id: currentUser.id,
         nome_publico: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Membro HOCCO',
-      }).select().single();
-      p = created.data;
+      }).select('user_id,nome_publico').single();
+      if (created.error) return showToast('Não foi possível preparar sua conta.');
+      const own = await supabase.rpc('get_my_impulsionador_profile');
+      p = own.data;
     }
     setProfile(p || null);
 
@@ -110,7 +112,7 @@ export default function MemberAppV3() {
     const date = todayBR();
     const since = new Date(Date.now() - 30 * 86400000).toISOString();
     const [p, d, o, m, missions, game, sessions] = await Promise.all([
-      supabase.from('impulsionadores_perfis').select('*').eq('user_id', currentUser.id).single(),
+      supabase.rpc('get_my_impulsionador_profile'),
       supabase.from('hc_diario').select('*').eq('user_id', currentUser.id).eq('activity_date', date).maybeSingle(),
       supabase.from('hocco_ofertas').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(50),
       supabase.rpc('oferta_missao_progresso'),
@@ -176,7 +178,7 @@ export default function MemberAppV3() {
   async function loadProfileAndDaily() {
     if (!user) return;
     const [p, d, missions] = await Promise.all([
-      supabase.from('impulsionadores_perfis').select('*').eq('user_id', user.id).single(),
+      supabase.rpc('get_my_impulsionador_profile'),
       supabase.from('hc_diario').select('*').eq('user_id', user.id).eq('activity_date', todayBR()).maybeSingle(),
       supabase.from('impulsionadores_missoes_diarias').select('mission_key,completed_at').eq('user_id', user.id).eq('mission_date', todayBR()),
     ]);

@@ -38,7 +38,7 @@ export default function MemberGovernanceBridge(){
 
   async function refresh(uid){
     const [{data:p},{data:d}]=await Promise.all([
-      supabase.from('impulsionadores_perfis').select('governance_status,governance_reason').eq('user_id',uid).maybeSingle(),
+      supabase.rpc('get_my_impulsionador_profile'),
       supabase.from('hc_diario').select('hc_earned,frequency_hc,hype_hc,boards_hyped').eq('user_id',uid).eq('activity_date',todayBR()).maybeSingle(),
     ]);
     setState(p?.governance_status||'active');
