@@ -162,15 +162,17 @@ export default function MemberAppCore() {
   }, [user?.id, appInstalled]);
 
   async function ensureIdentity(currentUser) {
-    let { data: p, error } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', currentUser.id).maybeSingle();
+    let { data: p, error } = await supabase.rpc('get_my_impulsionador_profile');
     if (error) return showToast('Não foi possível carregar seu perfil.');
     if (!p) {
       const created = await supabase.from('impulsionadores_perfis').insert({
         user_id: currentUser.id,
         nome_publico: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Membro Hype',
-      }).select().single();
+      }).select('user_id,nome_publico').single();
       if (created.error) return showToast('Não foi possível preparar sua conta.');
-      p = created.data;
+      const own = await supabase.rpc('get_my_impulsionador_profile');
+      if (own.error || !own.data) return showToast('Não foi possível carregar seu perfil.');
+      p = own.data;
     }
     const phone = String(currentUser.user_metadata?.phone || '').replace(/\D/g, '');
     if (phone) await supabase.from('impulsionadores_contatos').upsert({
@@ -188,7 +190,7 @@ export default function MemberAppCore() {
   }
 
   async function loadProfile(currentUser = user) {
-    const { data, error } = await supabase.from('impulsionadores_perfis').select('*').eq('user_id', currentUser.id).single();
+    const { data, error } = await supabase.rpc('get_my_impulsionador_profile');
     if (!error && data) setProfile(data);
   }
 
@@ -245,7 +247,7 @@ export default function MemberAppCore() {
   }
 
   async function loadCommunity() {
-    const { data } = await supabase.from('impulsionadores_perfis').select('user_id,nome_publico,avatar_url,xp,nivel,ofensiva_dias').is('deleted_at', null).order('xp', { ascending: false }).limit(8);
+    const { data } = await supabase.rpc('get_public_impulsionador_profiles', { p_limit: 8 });
     setCommunity(data || []);
   }
 
