@@ -245,7 +245,7 @@ export default function MemberAppCore() {
   }
 
   async function loadCommunity() {
-    const { data } = await supabase.from('impulsionadores_perfil_publico').select('user_id,nome_publico,avatar_url,xp,nivel,ofensiva_dias').order('xp', { ascending: false }).limit(8);
+    const { data } = await supabase.rpc('get_public_impulsionador_profiles', { p_limit: 8 });
     setCommunity(data || []);
   }
 
